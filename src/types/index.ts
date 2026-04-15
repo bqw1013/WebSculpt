@@ -5,17 +5,17 @@ export interface CommandManifest {
 	action: string;
 	description?: string;
 	parameters?: string[];
-	outputSchema?: Record<string, any>;
+	outputSchema?: Record<string, unknown>;
 }
 
 /** Standard shape returned after a command execution. */
 export interface CommandResult {
 	success: boolean;
 	command: string | null;
-	data?: any;
+	data?: unknown;
 	meta?: {
 		duration: number;
-		[key: string]: any;
+		[key: string]: unknown;
 	};
 	error?: {
 		code: string;

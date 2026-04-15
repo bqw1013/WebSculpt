@@ -9,7 +9,7 @@ export async function runCommand(
 	manifest: CommandManifest,
 	commandPath: string,
 	args: Record<string, string>,
-): Promise<any> {
+): Promise<unknown> {
 	const module = await import(`${pathToFileURL(commandPath).href}?t=${Date.now()}`);
 	const handler = module.default || module.command || module;
 

@@ -8,6 +8,12 @@ import { handleCommandList, handleCommandRemove, handleCommandShow } from "./met
 import { handleConfigInit } from "./meta/config.js";
 import { printJson } from "./output.js";
 
+declare module "commander" {
+	interface Command {
+		_domainSource?: string;
+	}
+}
+
 class WebSculptHelp extends Help {
 	formatHelp(cmd: Command, helper: Help): string {
 		let out = "";
@@ -31,10 +37,10 @@ class WebSculptHelp extends Help {
 
 		const visibleCommands = helper.visibleCommands(cmd);
 		const metaNames = new Set(["command", "config"]);
-		const meta = visibleCommands.filter((c: Command) => metaNames.has(c.name()));
-		const domains = visibleCommands.filter((c: Command) => !metaNames.has(c.name()) && !c.name().startsWith("help"));
-		const builtinDomains = domains.filter((c: Command) => (c as any)._domainSource === "builtin");
-		const userDomains = domains.filter((c: Command) => (c as any)._domainSource === "user");
+		const meta = visibleCommands.filter((c) => metaNames.has(c.name()));
+		const domains = visibleCommands.filter((c) => !metaNames.has(c.name()) && !c.name().startsWith("help"));
+		const builtinDomains = domains.filter((c) => c._domainSource === "builtin");
+		const userDomains = domains.filter((c) => c._domainSource === "user");
 
 		if (meta.length > 0) {
 			out += "Meta Commands:\n";
@@ -112,7 +118,7 @@ async function main() {
 		const source = domainCommands.some((c) => c.source === "user") ? "user" : "builtin";
 		const domainCmd = program.command(domain).description(`${domain} commands`);
 		// Attach metadata for the custom help formatter to categorize domains correctly.
-		(domainCmd as any)._domainSource = source;
+		domainCmd._domainSource = source;
 
 		for (const c of domainCommands) {
 			const actionCmd = domainCmd
@@ -121,7 +127,7 @@ async function main() {
 			for (const key of c.manifest.parameters || []) {
 				actionCmd.option(`--${key} <value>`);
 			}
-			actionCmd.action(async (options: Record<string, any>) => {
+			actionCmd.action(async (options: Record<string, string | undefined>) => {
 				const start = Date.now();
 				const args: Record<string, string> = {};
 				for (const key of c.manifest.parameters || []) {
@@ -144,11 +150,12 @@ async function main() {
 						action: c.manifest.action,
 						result,
 					});
-				} catch (err: any) {
+				} catch (err: unknown) {
+					const message = err instanceof Error ? err.message : String(err);
 					const result = {
 						success: false,
 						command: `${c.manifest.domain}/${c.manifest.action}`,
-						error: { code: "EXECUTION_ERROR", message: err.message || String(err) },
+						error: { code: "EXECUTION_ERROR", message },
 						meta: { duration: Date.now() - start },
 					};
 					printJson(result);

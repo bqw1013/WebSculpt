@@ -31,3 +31,18 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# npm pack
+*.tgz
+
+# Cache / temp
+.cache/
+tmp/
+.tmp/
+
+# Process / seed files
+*.pid
+*.seed
+
+# nyc coverage intermediate
+.nyc_output/

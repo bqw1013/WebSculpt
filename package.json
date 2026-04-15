@@ -22,13 +22,13 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc; npm run copy:commands",
+    "build": "tsc && npm run copy:commands",
     "copy:commands": "node -e \"require('fs').cpSync('src/cli/builtin', 'dist/cli/builtin', {recursive:true, force:true})\"",
     "dev": "tsx src/cli/index.ts",
     "test": "vitest",
     "check": "biome check --write --error-on-warnings .",
     "format": "biome format --write .",
-    "prepublishOnly": "npm run build; npm run check; npm run test"
+    "prepublishOnly": "npm run build && npm run check && npm run test"
   },
   "keywords": [],
   "author": "",
