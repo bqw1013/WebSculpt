@@ -1,0 +1,7 @@
+{
+  "id": "example-hello",
+  "domain": "example",
+  "action": "hello",
+  "description": "Say hello to someone",
+  "parameters": ["name"]
+}
