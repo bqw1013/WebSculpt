@@ -3,5 +3,6 @@
   "domain": "example",
   "action": "hello",
   "description": "Say hello to someone",
-  "parameters": ["name"]
+  "parameters": ["name"],
+  "runtime": "node"
 }

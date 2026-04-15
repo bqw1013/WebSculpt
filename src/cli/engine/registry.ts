@@ -7,9 +7,22 @@ import { getBuiltinCommandsDir } from "./paths.js";
 /** A command that has been resolved to an on-disk module and its origin. */
 export interface ResolvedCommand {
 	manifest: CommandManifest;
-	/** Absolute path to command.js / command.ts */
+	/** Absolute path to the command entry file (e.g. command.js). */
 	commandPath: string;
 	source: "user" | "builtin";
+	/** Execution runtime derived from the manifest. */
+	runtime: string;
+}
+
+function resolveEntryFile(runtime: string | undefined): string {
+	switch (runtime) {
+		case "shell":
+			return "command.sh";
+		case "python":
+			return "command.py";
+		default:
+			return "command.js";
+	}
 }
 
 async function scanCommands(baseDir: string, source: "user" | "builtin"): Promise<ResolvedCommand[]> {
@@ -24,13 +37,15 @@ async function scanCommands(baseDir: string, source: "user" | "builtin"): Promis
 				if (!actionDir.isDirectory()) continue;
 				const actionPath = join(domainPath, actionDir.name);
 				const manifestPath = join(actionPath, "manifest.json");
-				const commandPath = join(actionPath, "command.js");
 				try {
 					await access(manifestPath);
-					await access(commandPath);
 					const raw = await readFile(manifestPath, "utf-8");
 					const manifest = JSON.parse(raw) as CommandManifest;
-					results.push({ manifest, commandPath, source });
+					const runtime = manifest.runtime || "node";
+					const entryFile = resolveEntryFile(runtime);
+					const commandPath = join(actionPath, entryFile);
+					await access(commandPath);
+					results.push({ manifest, commandPath, source, runtime });
 				} catch {
 					// Skip directories that are missing a manifest or command file.
 				}
