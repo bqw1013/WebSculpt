@@ -3,7 +3,7 @@ import { dirname, join } from "path";
 import { USER_COMMANDS_DIR } from "../../infra/paths.js";
 import type { CommandManifest } from "../../types/index.js";
 import { findCommand, listAllCommands } from "../engine/registry.js";
-import { printJson } from "../output.js";
+import type { MetaCommandResult } from "../output.js";
 
 const RESERVED_DOMAINS = new Set(["command", "config"]);
 
@@ -15,73 +15,54 @@ interface CommandPackage {
 	context?: string | Record<string, unknown>;
 }
 
-/** Lists all registered commands in a tabular format. */
-export async function handleCommandList(): Promise<void> {
+/** Lists all registered commands and returns them as a normalized result. */
+export async function handleCommandList(): Promise<MetaCommandResult> {
 	const commands = await listAllCommands();
-	if (commands.length === 0) {
-		console.log("No commands available.");
-		return;
-	}
-
-	const rows = commands.map((c) => ({
-		domain: c.manifest.domain,
-		action: c.manifest.action,
-		type: c.source,
-		id: c.manifest.id,
-		description: c.manifest.description || "-",
-		path: c.commandPath,
-	}));
-
-	// Compute column widths so the table aligns cleanly.
-	const typeMax = Math.max(...rows.map((r) => r.type.length), 4);
-	const domainMax = Math.max(...rows.map((r) => r.domain.length), 6);
-	const actionMax = Math.max(...rows.map((r) => r.action.length), 6);
-	const idMax = Math.max(...rows.map((r) => r.id.length), 2);
-
-	const pad = (s: string, n: number) => s.padEnd(n, " ");
-
-	console.log(
-		`${pad("Type", typeMax)}  ${pad("Domain", domainMax)}  ${pad("Action", actionMax)}  ${pad("ID", idMax)}  Description`,
-	);
-	console.log("-".repeat(typeMax + domainMax + actionMax + idMax + 14));
-
-	for (const r of rows) {
-		console.log(
-			`${pad(r.type, typeMax)}  ${pad(r.domain, domainMax)}  ${pad(r.action, actionMax)}  ${pad(r.id, idMax)}  ${r.description}`,
-		);
-	}
+	return {
+		success: true,
+		commands: commands.map((c) => ({
+			domain: c.manifest.domain,
+			action: c.manifest.action,
+			type: c.source,
+			id: c.manifest.id,
+			description: c.manifest.description || "-",
+		})),
+	};
 }
 
 /** Displays details for a specific command. (Not implemented) */
-export async function handleCommandShow(domain: string, action: string): Promise<void> {
-	console.log(`Command: ${domain}/${action}`);
-	console.log("Status: Not implemented yet");
+export async function handleCommandShow(_domain: string, _action: string): Promise<MetaCommandResult> {
+	return {
+		success: false,
+		error: {
+			code: "NOT_IMPLEMENTED",
+			message: "Command details are not implemented yet.",
+		},
+	};
 }
 
-/** Removes a user-defined command. */
-export async function handleCommandRemove(domain: string, action: string): Promise<void> {
+/** Removes a user-defined command and returns a normalized result. */
+export async function handleCommandRemove(domain: string, action: string): Promise<MetaCommandResult> {
 	try {
 		const resolved = await findCommand(domain, action);
 		if (!resolved) {
-			printJson({
+			return {
 				success: false,
 				error: {
 					code: "NOT_FOUND",
 					message: `Command "${domain}/${action}" does not exist.`,
 				},
-			});
-			return;
+			};
 		}
 
 		if (resolved.source === "builtin") {
-			printJson({
+			return {
 				success: false,
 				error: {
 					code: "CANNOT_REMOVE_BUILTIN",
 					message: `Built-in command "${domain}/${action}" cannot be removed.`,
 				},
-			});
-			return;
+			};
 		}
 
 		const actionDir = dirname(resolved.commandPath);
@@ -99,16 +80,16 @@ export async function handleCommandRemove(domain: string, action: string): Promi
 			// Swallow cleanup errors; the command itself was successfully removed.
 		}
 
-		printJson({
+		return {
 			success: true,
 			command: `${domain}/${action}`,
-		});
+		};
 	} catch (err: unknown) {
 		const message = err instanceof Error ? err.message : String(err);
-		printJson({
+		return {
 			success: false,
 			error: { code: "REMOVE_ERROR", message },
-		});
+		};
 	}
 }
 
@@ -161,70 +142,64 @@ export async function handleCommandCreate(
 	domain: string,
 	action: string,
 	options: { fromFile: string; force?: boolean },
-): Promise<void> {
+): Promise<MetaCommandResult> {
 	try {
 		if (RESERVED_DOMAINS.has(domain)) {
-			printJson({
+			return {
 				success: false,
 				error: {
 					code: "RESERVED_DOMAIN",
 					message: `Domain "${domain}" is reserved for meta commands`,
 				},
-			});
-			return;
+			};
 		}
 
 		let raw: string;
 		try {
 			raw = await readFile(options.fromFile, "utf-8");
 		} catch {
-			printJson({
+			return {
 				success: false,
 				error: { code: "FILE_NOT_FOUND", message: `Cannot read file: ${options.fromFile}` },
-			});
-			return;
+			};
 		}
 
 		let pkg: CommandPackage;
 		try {
 			pkg = JSON.parse(raw) as CommandPackage;
 		} catch {
-			printJson({
+			return {
 				success: false,
 				error: { code: "PARSE_ERROR", message: `Invalid JSON in file: ${options.fromFile}` },
-			});
-			return;
+			};
 		}
 
 		if (!pkg.manifest || typeof pkg.code !== "string") {
-			printJson({
+			return {
 				success: false,
 				error: { code: "INVALID_PACKAGE", message: "Package must contain 'manifest' and 'code' fields" },
-			});
-			return;
+			};
 		}
 
 		const validationError = validateManifest(pkg.manifest, domain, action);
 		if (validationError) {
-			printJson({
+			return {
 				success: false,
 				error: { code: "INVALID_MANIFEST", message: validationError },
-			});
-			return;
+			};
 		}
 
 		const commandDir = join(USER_COMMANDS_DIR, domain, action);
 		try {
 			await access(commandDir);
 			if (!options.force) {
-				printJson({
+				return {
 					success: false,
 					error: {
 						code: "ALREADY_EXISTS",
 						message: `Command "${domain}/${action}" already exists. Use --force to overwrite.`,
 					},
-				});
-				return;
+				};
 			}
 		} catch {
 			// Directory does not exist yet, proceed.
@@ -248,16 +223,16 @@ export async function handleCommandCreate(
 			await writeFile(join(commandDir, "context.md"), formatContext(pkg.context));
 		}
 
-		printJson({
+		return {
 			success: true,
 			command: `${domain}/${action}`,
 			path: commandDir,
-		});
+		};
 	} catch (err: unknown) {
 		const message = err instanceof Error ? err.message : String(err);
-		printJson({
+		return {
 			success: false,
 			error: { code: "CREATE_ERROR", message },
-		});
+		};
 	}
 }

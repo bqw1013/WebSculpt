@@ -1,7 +1,11 @@
 import { initStore } from "../../infra/store.js";
+import type { MetaCommandResult } from "../output.js";
 
-/** Initializes the WebSculpt environment and confirms success to the user. */
-export async function handleConfigInit(): Promise<void> {
+/** Initializes the WebSculpt environment and returns a normalized result. */
+export async function handleConfigInit(): Promise<MetaCommandResult> {
 	await initStore();
-	console.log("WebSculpt initialized.");
+	return {
+		success: true,
+		message: "WebSculpt initialized.",
+	};
 }

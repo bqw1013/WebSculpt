@@ -6,7 +6,7 @@ import { runCommand } from "./engine/command-runner.js";
 import { listAllCommands, type ResolvedCommand } from "./engine/registry.js";
 import { handleCommandCreate, handleCommandList, handleCommandRemove, handleCommandShow } from "./meta/command.js";
 import { handleConfigInit } from "./meta/config.js";
-import { printJson } from "./output.js";
+import { printJson, renderOutput } from "./output.js";
 
 declare module "commander" {
 	interface Command {
@@ -80,36 +80,37 @@ async function main() {
 		sortSubcommands: true,
 	});
 	program.createHelp = () => new WebSculptHelp();
+	program.option("-f, --format <human|json>", "Output format", "human");
 
 	const cmd = program.command("command").description("Manage commands");
 	cmd.command("list")
 		.description("List all commands")
 		.action(async () => {
-			await handleCommandList();
+			renderOutput(await handleCommandList(), program.opts().format);
 		});
 	cmd.command("create <domain> <action>")
 		.description("Create a user command from a package file")
 		.requiredOption("--from-file <path>", "Path to the command package JSON")
 		.option("--force", "Overwrite an existing command")
 		.action(async (domain: string, action: string, options: { fromFile: string; force?: boolean }) => {
-			await handleCommandCreate(domain, action, options);
+			renderOutput(await handleCommandCreate(domain, action, options), program.opts().format);
 		});
 	cmd.command("show <domain> <action>")
 		.description("Show command details")
 		.action(async (domain: string, action: string) => {
-			await handleCommandShow(domain, action);
+			renderOutput(await handleCommandShow(domain, action), program.opts().format);
 		});
 	cmd.command("remove <domain> <action>")
 		.description("Remove a user command")
 		.action(async (domain: string, action: string) => {
-			await handleCommandRemove(domain, action);
+			renderOutput(await handleCommandRemove(domain, action), program.opts().format);
 		});
 
 	const cfg = program.command("config").description("Manage configuration");
 	cfg.command("init")
 		.description("Initialize WebSculpt directories")
 		.action(async () => {
-			await handleConfigInit();
+			renderOutput(await handleConfigInit(), program.opts().format);
 		});
 
 	const commands = await listAllCommands();

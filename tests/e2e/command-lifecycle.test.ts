@@ -68,7 +68,7 @@ describe("source CLI: command workflows", () => {
 		await writeFile(commandPackagePath, JSON.stringify(packageBody, null, 2), "utf8");
 
 		const createResult = await runSourceCli(
-			["command", "create", "notes", "save", "--from-file", commandPackagePath],
+			["command", "create", "notes", "save", "--from-file", commandPackagePath, "--format", "json"],
 			homeDir,
 		);
 		const createPayload = parseJsonOutput<CommandCreateResult>(createResult.stdout);
@@ -128,7 +128,7 @@ describe("source CLI: command workflows", () => {
 		await writeFile(commandPackagePath, JSON.stringify(packageBody, null, 2), "utf8");
 
 		const result = await runSourceCli(
-			["command", "create", "command", "sync", "--from-file", commandPackagePath],
+			["command", "create", "command", "sync", "--from-file", commandPackagePath, "--format", "json"],
 			homeDir,
 		);
 		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
@@ -162,14 +162,14 @@ describe("source CLI: command workflows", () => {
 		await writeFile(commandPackagePath, JSON.stringify(packageBody, null, 2), "utf8");
 
 		const createResult = await runSourceCli(
-			["command", "create", "notes", "delete", "--from-file", commandPackagePath],
+			["command", "create", "notes", "delete", "--from-file", commandPackagePath, "--format", "json"],
 			homeDir,
 		);
 		const createPayload = parseJsonOutput<CommandCreateResult>(createResult.stdout);
 		expect(createResult.exitCode).toBe(0);
 		expect(createPayload.success).toBe(true);
 
-		const removeResult = await runSourceCli(["command", "remove", "notes", "delete"], homeDir);
+		const removeResult = await runSourceCli(["command", "remove", "notes", "delete", "--format", "json"], homeDir);
 		const removePayload = parseJsonOutput<CommandRemoveResult>(removeResult.stdout);
 		expect(removeResult.exitCode).toBe(0);
 		expect(removePayload).toEqual(
@@ -189,7 +189,7 @@ describe("source CLI: command workflows", () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
-		const result = await runSourceCli(["command", "remove", "example", "hello"], homeDir);
+		const result = await runSourceCli(["command", "remove", "example", "hello", "--format", "json"], homeDir);
 		const payload = parseJsonOutput<CommandRemoveResult>(result.stdout);
 
 		expect(result.exitCode).toBe(0);
