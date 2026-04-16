@@ -25,7 +25,11 @@
     "build": "tsc && npm run copy:commands",
     "copy:commands": "node -e \"require('fs').cpSync('src/cli/builtin', 'dist/cli/builtin', {recursive:true, force:true})\"",
     "dev": "tsx src/cli/index.ts",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:e2e": "vitest run --project e2e",
     "check": "biome check --write --error-on-warnings .",
     "format": "biome format --write .",
     "prepublishOnly": "npm run build && npm run check && npm run test"

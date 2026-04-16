@@ -12,7 +12,7 @@ WebSculpt 是一个面向 AI 时代的可扩展信息搜索命令行工具。它
 - **运行时**：Node.js >= 20
 - **CLI 框架**：Commander.js
 - **代码质量**：Biome（lint + format）
-- **测试框架**：Vitest（当前暂无测试文件）
+- **测试框架**：Vitest（当前已有 CLI e2e 测试，并预留 unit / integration / e2e 分层）
 
 ## 核心概念
 
@@ -72,16 +72,29 @@ openspec/
   config.yaml                   # OpenSpec 工作流配置
   changes/archive/              # 已完成的变更归档
   specs/                        # 规范目录（当前为空）
+tests/
+  unit/                         # 模块级测试（未来补充）
+  integration/                  # 多模块协作测试（未来补充）
+  e2e/                          # 从 CLI 入口验证关键用户路径
+    helpers/                    # CLI 进程、隔离 home 等测试辅助
 ```
 
 ## 关键现状与约束
 
 - **CLI 模块已收拢**：近期完成了一次重构，将原本分散在 `src/core`、`src/runner` 中的代码全部合并到 `src/cli/` 下，使其成为独立的入口适配器。
+- **当前测试以 CLI e2e 为主**：这和项目目前的 MVP 形态一致，但后续能力下沉后，应逐步补齐 unit / integration 测试。
 - **无 Web 访问能力**：尚未集成浏览器自动化或 HTTP 请求工具。
 - **无命令生成能力**：AI 还无法通过 CLI 自动创建新的扩展命令。
 - **无自愈能力**：当固化的命令因目标网站变更而失效时，暂无异常检测与自动修复机制。
 - **命令参数目前仅支持 `--key <value>` 形式的 options**，不支持 positional arguments。
 - **执行结果统一以 JSON 格式输出**，并追加写入 `~/.websculpt/log.jsonl`。
+
+## 测试策略
+
+- **unit**：覆盖纯逻辑和稳定边界，优先放命令清单校验、参数处理、manifest 校验等不需要起 CLI 进程的逻辑。
+- **integration**：覆盖模块协作，重点是 `registry`、`command-runner`、`store` 这类依赖文件系统或多个模块联动的能力，但不经过完整 CLI 进程。
+- **e2e**：只保留关键用户路径，例如 `config init`、`command create/list/run`、CLI 输出契约与错误处理。
+- **组织原则**：新增能力优先补 unit / integration；只有真正依赖命令行入口、进程行为或完整用户路径时，才进入 e2e。
 
 ## 常用脚本
 
@@ -98,8 +111,13 @@ npm run check
 # 格式化
 npm run format
 
-# 运行测试
+# 运行全部测试
 npm run test
+
+# 按测试层级运行
+npm run test:unit
+npm run test:integration
+npm run test:e2e
 ```
 
 ## 下一步方向（按优先级）
