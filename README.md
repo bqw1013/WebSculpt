@@ -39,7 +39,7 @@ WebSculpt 将命令分为两类：
 | `websculpt config init` | ✅ 已实现 | 初始化 `~/.websculpt` 目录（配置、命令库、日志文件） |
 | `websculpt command list` | ✅ 已实现 | 列出所有可用的扩展命令（区分 builtin / user） |
 | `websculpt command show <domain> <action>` | ⚠️ 占位 | 已注册，仅输出"Not implemented yet" |
-| `websculpt command remove <domain> <action>` | ⚠️ 占位 | 已注册，仅输出占位提示 |
+| `websculpt command remove <domain> <action>` | ✅ 已实现 | 删除用户自定义命令，自动清理空目录，保护内置命令 |
 
 ### 扩展命令
 
@@ -88,6 +88,9 @@ tests/
 - **无自愈能力**：当固化的命令因目标网站变更而失效时，暂无异常检测与自动修复机制。
 - **命令参数目前仅支持 `--key <value>` 形式的 options**，不支持 positional arguments。
 - **执行结果统一以 JSON 格式输出**，并追加写入 `~/.websculpt/log.jsonl`。
+- **`config.json` 当前仅作占位**：`config init` 会生成默认的 `config.json`，但业务代码目前尚未读取或消费其中的任何字段。
+- **`log.jsonl` 的写入范围与生命周期有限**：只有 domain 命令（如 `example hello`）执行后会追加日志；meta 命令（如 `config init`、`command list/create`）不会写入。此外，目前尚无自动清理、轮转或大小限制机制，长期使用文件会持续增长。
+- **运行时支持不完整**：`command create` 允许声明 `runtime` 为 `shell` 或 `python` 并会生成对应扩展名的入口文件，但 `command-runner` 目前仅实现了 `node` 运行时，执行非 `node` 命令会返回 `Unsupported runtime` 错误。
 
 ## 测试策略
 
@@ -122,7 +125,7 @@ npm run test:e2e
 
 ## 下一步方向（按优先级）
 
-1. 完善元命令（`show`、`remove`）的实际实现。
+1. 完善元命令（`show`）的实际实现。
 2. 为 AI 提供命令创建接口（从探索到固化的闭环）。
 3. 集成浏览器自动化或 HTTP 工具，增强多维探索能力。
 4. 建立异常检测与自愈机制。
