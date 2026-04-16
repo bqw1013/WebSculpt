@@ -4,7 +4,7 @@ import { Command, Help } from "commander";
 import { appendLog } from "../infra/store.js";
 import { runCommand } from "./engine/command-runner.js";
 import { listAllCommands, type ResolvedCommand } from "./engine/registry.js";
-import { handleCommandList, handleCommandRemove, handleCommandShow } from "./meta/command.js";
+import { handleCommandCreate, handleCommandList, handleCommandRemove, handleCommandShow } from "./meta/command.js";
 import { handleConfigInit } from "./meta/config.js";
 import { printJson } from "./output.js";
 
@@ -86,6 +86,13 @@ async function main() {
 		.description("List all commands")
 		.action(async () => {
 			await handleCommandList();
+		});
+	cmd.command("create <domain> <action>")
+		.description("Create a user command from a package file")
+		.requiredOption("--from-file <path>", "Path to the command package JSON")
+		.option("--force", "Overwrite an existing command")
+		.action(async (domain: string, action: string, options: { fromFile: string; force?: boolean }) => {
+			await handleCommandCreate(domain, action, options);
 		});
 	cmd.command("show <domain> <action>")
 		.description("Show command details")
