@@ -19,6 +19,15 @@ interface CommandCreateResult {
 	success: boolean;
 }
 
+interface CommandRemoveResult {
+	command?: string;
+	error?: {
+		code: string;
+		message: string;
+	};
+	success: boolean;
+}
+
 describe("source CLI: command workflows", () => {
 	const tempDirs: string[] = [];
 
@@ -129,6 +138,65 @@ describe("source CLI: command workflows", () => {
 		expect(payload.error).toEqual(
 			expect.objectContaining({
 				code: "RESERVED_DOMAIN",
+			}),
+		);
+	});
+
+	it("removes a user command and confirms absence via list", async () => {
+		const homeDir = await createIsolatedHome();
+		tempDirs.push(homeDir);
+
+		const commandPackagePath = join(homeDir, "note-delete-package.json");
+		const packageBody = {
+			code: 'export default async function() { return { deleted: true }; }\n',
+			manifest: {
+				action: "delete",
+				description: "Delete a note",
+				domain: "notes",
+				id: "notes-delete",
+				parameters: [],
+				runtime: "node",
+			},
+		};
+
+		await writeFile(commandPackagePath, JSON.stringify(packageBody, null, 2), "utf8");
+
+		const createResult = await runSourceCli(
+			["command", "create", "notes", "delete", "--from-file", commandPackagePath],
+			homeDir,
+		);
+		const createPayload = parseJsonOutput<CommandCreateResult>(createResult.stdout);
+		expect(createResult.exitCode).toBe(0);
+		expect(createPayload.success).toBe(true);
+
+		const removeResult = await runSourceCli(["command", "remove", "notes", "delete"], homeDir);
+		const removePayload = parseJsonOutput<CommandRemoveResult>(removeResult.stdout);
+		expect(removeResult.exitCode).toBe(0);
+		expect(removePayload).toEqual(
+			expect.objectContaining({
+				command: "notes/delete",
+				success: true,
+			}),
+		);
+
+		const listResult = await runSourceCli(["command", "list"], homeDir);
+		expect(listResult.exitCode).toBe(0);
+		expect(listResult.stdout).not.toContain("notes");
+		expect(listResult.stdout).not.toContain("delete");
+	});
+
+	it("forbids removal of built-in commands", async () => {
+		const homeDir = await createIsolatedHome();
+		tempDirs.push(homeDir);
+
+		const result = await runSourceCli(["command", "remove", "example", "hello"], homeDir);
+		const payload = parseJsonOutput<CommandRemoveResult>(result.stdout);
+
+		expect(result.exitCode).toBe(0);
+		expect(payload.success).toBe(false);
+		expect(payload.error).toEqual(
+			expect.objectContaining({
+				code: "CANNOT_REMOVE_BUILTIN",
 			}),
 		);
 	});

@@ -1,8 +1,8 @@
-import { access, mkdir, readFile, writeFile } from "fs/promises";
-import { join } from "path";
+import { access, mkdir, readdir, readFile, rm, rmdir, writeFile } from "fs/promises";
+import { dirname, join } from "path";
 import { USER_COMMANDS_DIR } from "../../infra/paths.js";
 import type { CommandManifest } from "../../types/index.js";
-import { listAllCommands } from "../engine/registry.js";
+import { findCommand, listAllCommands } from "../engine/registry.js";
 import { printJson } from "../output.js";
 
 const RESERVED_DOMAINS = new Set(["command", "config"]);
@@ -58,9 +58,58 @@ export async function handleCommandShow(domain: string, action: string): Promise
 	console.log("Status: Not implemented yet");
 }
 
-/** Removes a user-defined command. (Not implemented) */
+/** Removes a user-defined command. */
 export async function handleCommandRemove(domain: string, action: string): Promise<void> {
-	console.log(`Command "${domain}/${action}" removed successfully. (Not implemented yet)`);
+	try {
+		const resolved = await findCommand(domain, action);
+		if (!resolved) {
+			printJson({
+				success: false,
+				error: {
+					code: "NOT_FOUND",
+					message: `Command "${domain}/${action}" does not exist.`,
+				},
+			});
+			return;
+		}
+
+		if (resolved.source === "builtin") {
+			printJson({
+				success: false,
+				error: {
+					code: "CANNOT_REMOVE_BUILTIN",
+					message: `Built-in command "${domain}/${action}" cannot be removed.`,
+				},
+			});
+			return;
+		}
+
+		const actionDir = dirname(resolved.commandPath);
+		const domainDir = dirname(actionDir);
+
+		await rm(actionDir, { recursive: true, force: true });
+
+		// Best-effort cleanup of empty parent domain directory.
+		try {
+			const remaining = await readdir(domainDir);
+			if (remaining.length === 0) {
+				await rmdir(domainDir);
+			}
+		} catch {
+			// Swallow cleanup errors; the command itself was successfully removed.
+		}
+
+		printJson({
+			success: true,
+			command: `${domain}/${action}`,
+		});
+	} catch (err: unknown) {
+		const message = err instanceof Error ? err.message : String(err);
+		printJson({
+			success: false,
+			error: { code: "REMOVE_ERROR", message },
+		});
+	}
 }
 
 function resolveEntryFile(runtime: string | undefined): string {
