@@ -3,6 +3,7 @@ import { CONFIG_FILE, LOG_FILE, USER_COMMANDS_DIR, WEBSCULPT_DIR } from "./paths
 
 export interface Config {
 	version?: string;
+	cdpProxyPort?: number;
 	[key: string]: unknown;
 }
 
