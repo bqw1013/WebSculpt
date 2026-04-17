@@ -57,3 +57,21 @@ CLI.md 声明 "User 与 Builtin 的冲突以 User 为准"，但 `src/cli/index.t
 **计划修复方案**
 
 在 `appendLog` 中自动创建父目录（`mkdir(..., { recursive: true })`），或在命令执行前做更完善的环境校验与容错提示。
+
+## 6. `command show` 的功能定位尚未明确
+
+**描述**
+
+`command show <domain> <action>` 目前为占位实现（返回 `NOT_IMPLEMENTED`）。其根本问题在于功能边界不清晰：
+
+- 与 `command list` 的差异化不足。`list` 已提供命令目录级信息（domain、action、description、source），若 `show` 仅展示 `manifest.json` 原文，则只是"单个 vs 全部"的区别，价值有限。
+- 与扩展命令自身 `--help` 的互补性未定。扩展命令的 `--help` 由命令自己实现，面向调用者；`show` 作为元命令，若也面向"怎么用"，则存在重叠。
+- 更深层的矛盾在于：`show` 是固化资产的"观测面"，但 DESIGN.md 中"探索 → 固化 → 自愈"的闭环尚未真正跑通。固化流程到底沉淀什么文件（manifest、README、context、源码？）、参数与 schema 的声明规范、context.md 的编写标准——这些未定，导致 `show` 不知道该展示什么、展示多深。
+
+**影响**
+
+中。命令管理 CRUD 缺少 "Read" 闭环，但不阻塞当前已有功能。
+
+**计划修复方案**
+
+暂不实现，保持占位状态。待通过真实场景跑通至少一次"探索 → 固化"闭环后，根据实际信息缺口（AI 调用前需要什么、修复时需要哪些上下文）再确定 `show` 的输出结构和字段取舍。届时可能的方向：作为命令资产的"契约卡片"，聚合 manifest 签名、来源路径、关联文件存在性等框架级元信息，而非命令自己实现的 `--help`。

@@ -179,12 +179,16 @@ async function main() {
 				const name = typeof param === "string" ? param : param.name;
 				const description = typeof param === "string" ? undefined : param.description;
 				const flags = `--${name} <value>`;
-				if (typeof param !== "string" && param.required) {
-					actionCmd.requiredOption(flags, description, param.default);
-				} else {
-					const defaultValue = typeof param === "string" ? undefined : param.default;
-					actionCmd.option(flags, description, defaultValue);
+				const actionOption = actionCmd.createOption(flags, description);
+				if (typeof param !== "string") {
+					if (param.required) {
+						actionOption.makeOptionMandatory();
+					}
+					if (param.default !== undefined) {
+						actionOption.default(String(param.default));
+					}
 				}
+				actionCmd.addOption(actionOption);
 			}
 			actionCmd.action(async (options: Record<string, string | undefined>) => {
 				const start = Date.now();
