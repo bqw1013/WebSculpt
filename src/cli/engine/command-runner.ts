@@ -3,7 +3,8 @@ import type { CommandManifest } from "../../types/index.js";
 
 function buildParams(manifest: CommandManifest, args: Record<string, string>): Record<string, string> {
 	const params: Record<string, string> = {};
-	for (const key of manifest.parameters || []) {
+	for (const param of manifest.parameters || []) {
+		const key = typeof param === "string" ? param : param.name;
 		if (args[key] !== undefined) {
 			params[key] = args[key];
 		}

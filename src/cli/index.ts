@@ -69,13 +69,28 @@ class WebSculptHelp extends Help {
 			out += "\n";
 		}
 
+		if (cmd.name() === "websculpt") {
+			out += "Notes:\n";
+			out += "  Meta commands manage the system (config, command registry).\n";
+			out += "  Extension commands are user or AI-created business commands.\n";
+			out += "  Output defaults: meta commands → human text, extension commands → JSON.\n";
+			out += "  Command resolution: user > builtin > meta\n";
+			out += "\n";
+		}
+
 		return `${out.trimEnd()}\n`;
 	}
 }
 
 async function main() {
 	const program = new Command();
-	program.name("websculpt").description("WebSculpt CLI - AI command cache layer").version("0.0.1");
+	program
+		.name("websculpt")
+		.description(
+			"WebSculpt CLI - AI command cache layer\n\n" +
+				"Meta commands manage the system. Extension commands are user or AI-created business commands.",
+		)
+		.version("0.0.1");
 	program.configureHelp({
 		sortSubcommands: true,
 	});
@@ -90,7 +105,10 @@ async function main() {
 		});
 	cmd.command("create <domain> <action>")
 		.description("Create a user command from a package file")
-		.requiredOption("--from-file <path>", "Path to the command package JSON")
+		.requiredOption(
+			"--from-file <path>",
+			"Path to the command package JSON. Must contain 'manifest' and 'code'; may also contain 'readme' and 'context'.",
+		)
 		.option("--force", "Overwrite an existing command")
 		.action(async (domain: string, action: string, options: { fromFile: string; force?: boolean }) => {
 			renderOutput(await handleCommandCreate(domain, action, options), program.opts().format);
@@ -108,9 +126,34 @@ async function main() {
 
 	const cfg = program.command("config").description("Manage configuration");
 	cfg.command("init")
-		.description("Initialize WebSculpt directories")
+		.description("Initialize ~/.websculpt with config.json and log.jsonl")
 		.action(async () => {
 			renderOutput(await handleConfigInit(), program.opts().format);
+		});
+
+	program
+		.command("help [domain] [action]")
+		.description("Display help for a command or domain")
+		.action((domain?: string, action?: string) => {
+			if (!domain) {
+				program.help();
+				return;
+			}
+			const target = program.commands.find((c) => c.name() === domain);
+			if (!target) {
+				console.error(`Unknown command or domain: ${domain}`);
+				process.exit(1);
+			}
+			if (!action) {
+				target.help();
+				return;
+			}
+			const sub = target.commands.find((c) => c.name() === action);
+			if (!sub) {
+				console.error(`Unknown action: ${action}`);
+				process.exit(1);
+			}
+			sub.help();
 		});
 
 	const commands = await listAllCommands();
@@ -132,15 +175,24 @@ async function main() {
 			const actionCmd = domainCmd
 				.command(c.manifest.action)
 				.description(c.manifest.description || `${c.manifest.domain} ${c.manifest.action}`);
-			for (const key of c.manifest.parameters || []) {
-				actionCmd.option(`--${key} <value>`);
+			for (const param of c.manifest.parameters || []) {
+				const name = typeof param === "string" ? param : param.name;
+				const description = typeof param === "string" ? undefined : param.description;
+				const flags = `--${name} <value>`;
+				if (typeof param !== "string" && param.required) {
+					actionCmd.requiredOption(flags, description, param.default);
+				} else {
+					const defaultValue = typeof param === "string" ? undefined : param.default;
+					actionCmd.option(flags, description, defaultValue);
+				}
 			}
 			actionCmd.action(async (options: Record<string, string | undefined>) => {
 				const start = Date.now();
 				const args: Record<string, string> = {};
-				for (const key of c.manifest.parameters || []) {
-					if (options[key] !== undefined) {
-						args[key] = options[key];
+				for (const param of c.manifest.parameters || []) {
+					const name = typeof param === "string" ? param : param.name;
+					if (options[name] !== undefined) {
+						args[name] = options[name];
 					}
 				}
 				try {

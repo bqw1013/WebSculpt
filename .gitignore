@@ -46,3 +46,9 @@ tmp/
 
 # nyc coverage intermediate
 .nyc_output/
+
+# Agent artifacts
+.agents/
+
+# OpenSpec working files
+openspec/

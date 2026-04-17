@@ -3,6 +3,11 @@
   "domain": "example",
   "action": "hello",
   "description": "Say hello to someone",
-  "parameters": ["name"],
+  "parameters": [
+    {
+      "name": "name",
+      "description": "Name of the person to greet"
+    }
+  ],
   "runtime": "node"
 }

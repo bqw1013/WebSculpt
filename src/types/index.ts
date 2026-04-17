@@ -1,13 +1,21 @@
 /** Supported execution runtimes for a command entry. */
 export type CommandRuntime = "node" | "shell" | "python";
 
+/** Defines a single parameter for an extension command. */
+export interface CommandParameter {
+	name: string;
+	description?: string;
+	required?: boolean;
+	default?: string | number | boolean;
+}
+
 /** Defines the metadata and contract for a single WebSculpt command. */
 export interface CommandManifest {
 	id: string;
 	domain: string;
 	action: string;
 	description?: string;
-	parameters?: string[];
+	parameters?: (string | CommandParameter)[];
 	outputSchema?: Record<string, unknown>;
 	/** Execution runtime. Defaults to "node" if omitted. */
 	runtime?: CommandRuntime;

@@ -23,16 +23,18 @@
   },
   "scripts": {
     "build": "tsc && npm run copy:commands",
-    "copy:commands": "node -e \"require('fs').cpSync('src/cli/builtin', 'dist/cli/builtin', {recursive:true, force:true})\"",
+    "copy:commands": "node --input-type=module -e \"import fs from 'node:fs'; fs.cpSync('src/cli/builtin', 'dist/cli/builtin', {recursive:true, force:true})\"",
     "dev": "tsx src/cli/index.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "biome check --error-on-warnings .",
+    "check:fix": "biome check --write --error-on-warnings .",
+    "format": "biome format --write .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:e2e": "vitest run --project e2e",
-    "check": "biome check --write --error-on-warnings .",
-    "format": "biome format --write .",
-    "prepublishOnly": "npm run build && npm run check && npm run test"
+    "prepublishOnly": "npm run build && npm run check && npm run typecheck && npm run test"
   },
   "keywords": [],
   "author": "",
