@@ -49,6 +49,10 @@ tmp/
 
 # Agent artifacts
 .agents/
+.kimi/
+
+# Playwright CLI logs
+.playwright-cli/
 
 # OpenSpec working files
 openspec/

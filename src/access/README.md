@@ -13,4 +13,4 @@ The access layer is responsible for preparing infrastructure that higher-level a
 
 | Module | Public API | Purpose | Status |
 | --- | --- | --- | --- |
-| `src/access/cdp/` | `ensureCDPProxy()` | Ensures a local CDP HTTP bridge is running against the user's Chrome instance. | Implemented |
+| `src/access/playwright-cli/` | N/A (CLI tool) | Provides high-level browser automation via Playwright CLI with CDP attach and session management. | Documented |
