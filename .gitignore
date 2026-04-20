@@ -49,6 +49,8 @@ tmp/
 
 # Agent artifacts
 .agents/
+.claude/
+.codex/
 .kimi/
 
 # Playwright CLI logs
