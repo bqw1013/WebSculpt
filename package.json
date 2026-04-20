@@ -52,6 +52,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@playwright/cli": "^0.1.8",
     "commander": "^14.0.3",
     "ws": "^8.18.3"
   }
