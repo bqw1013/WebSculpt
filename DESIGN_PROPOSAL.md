@@ -1,4 +1,4 @@
-# WebSculpt 三层架构提案
+# WebSculpt 三层架构提案（v2）
 
 ## 1. 为什么要分三层
 
@@ -8,218 +8,166 @@ DESIGN.md 写道：
 
 三层架构正是为了贯彻这一分工：
 
-- **access** — 代码确保工具就绪（基础设施、连接）。AI 直接操作工具。
-- **explore** — 代码提供决策素材并强制记录。AI 自主选择路径。
-- **compile** — 代码从已记录的探索日志中生成确定性资产。
+- **access** — 代码确保工具就绪，并提供统一的环境状态查询接口。AI 直接操作工具。
+- **explore** — 策略文档层。整合 access 层各工具的使用建议，为 AI 提供综合探索策略、工具选择倾向和启发式规则。
+- **compile** — 规范与校验层。定义命令资产的编写规范与质量标准，并通过程序化校验确保 AI 产出的命令符合契约。
 
 ## 2. access — 基础设施就绪层
 
 ### 职责
 
-确保网络访问工具处于运行且可连接状态。**不要**将 agent 的能力封装成新的 API。
+为每个网络访问工具提供操作参考文档，并在未来为上层的命令执行提供统一的环境就绪查询接口。**不要**将 agent 的能力封装成新的 API。
 
 ### access 做什么
 
-- 环境检查与工具启动（例如 CDP Proxy 运行在 localhost:3456）
-- 报告连接状态
-- 提供幂等的基础设施 ensure 入口（例如 `ensureCDPProxy()`）
-- 提供每个工具的操作参考文档（放在各自的子目录中）
+- 为每个工具提供操作参考文档（放在各自的子目录中）
+- 提供统一的环境就绪状态查询接口，供上层的命令执行器判断依赖是否满足
 
 ### access 不做什么
 
 - 不预定义操作 API（如 `browser.click()`）
-- 不做路由决策（"这个任务应该用 CDP"）
+- 不做路由决策（"这个任务应该用哪个工具"）
 - 不编排操作序列
+
+### 统一状态接口（规范）
+
+所有 access 工具子目录应通过 `index.ts` 导出统一的状态查询入口：
+
+```ts
+export interface ToolStatus {
+  ready: boolean;
+  reason?: string;  // 未就绪时的原因说明
+}
+
+export async function getStatus(): Promise<ToolStatus>;
+```
+
+上层的 `command-runner` 在执行依赖特定环境的命令前（如 `playwright-cli` runtime），可通过该接口判断环境是否就绪，并将未就绪的原因转化为结构化错误返回给 AI。
 
 ### 目录结构
 
+当前实际状态：
+
 ```
 src/access/
-  README.md           # 契约总纲：可用工具、类型、状态
-  cdp/
-    README.md         # 连接信息、端点参考、生命周期说明
-    index.ts          # 对外入口：导出 ensureCDPProxy()
-    types.ts          # 结构化结果与 CDP 相关类型
-    chrome.ts         # Chrome 调试端口发现
-    proxy.ts          # 生命周期管理：健康检查、启动、等待 ready
-    server.ts         # HTTP-to-CDP bridge
-  # playwright/       # 预留
-  # jina/             # 预留
+  playwright-cli/
+    README.md            # 操作参考文档
+```
+
+按规范，每个工具子目录未来应补充：
+
+```
+src/access/<工具名>/
+  README.md            # 连接地址与操作参考
+  index.ts             # 对外入口：导出 getStatus() 等状态查询函数
+  ...                  # 工具特定实现文件
 ```
 
 ### 当前落地状态
 
-这部分已经不只是结构设想，`src/access/cdp/` 已经作为第一份真实实现落地。
+`src/access/playwright-cli/README.md` 是目前唯一存在的文件。它提供了 Playwright CLI 的完整操作参考，包括连接步骤、探索策略和命令速查表。
 
-当前实现保持了 access 层应有的克制：它只负责“把基础设施准备好”，不进一步抽象浏览动作本身。对上层来说，稳定契约只有一个程序化入口 `ensureCDPProxy()`，它完成的事情包括：
+程序化的状态查询接口（`index.ts`、`status.ts`）尚未实现，`command-runner` 目前直接调用 `npx playwright-cli run-code` 执行命令，未通过 access 层查询环境就绪状态。
 
-- 从 `~/.websculpt/config.json` 读取 `cdpProxyPort`，默认使用 `3456`
-- 先通过 `GET /health` 判断目标端口上是否已经有健康的 proxy
-- 自动发现 Chrome 的 remote-debugging 端口，优先读取 `DevToolsActivePort`，失败时回退到常见端口扫描
-- 必要时以 detached 进程启动本地 `server.ts`
-- 将长期运行日志写到 `~/.websculpt/logs/cdp-proxy.log`
-- 返回结构化结果 `ok / url / chromePort / reason`，把后续决策留给 explore 或更上层调用者
+### 新增工具的规范
 
-换句话说，access 现在已经把“CDP 可用性”从一套散落在 skill 里的环境假设，收敛成了 WebSculpt 自己管理的一层基础设施能力。
+在 `src/access/<工具名>/` 下创建子目录，必须包含：
 
-### access/README.md 内容示例
-
-```markdown
-## 契约
-
-### access 提供
-- 环境检查与工具启动
-- 工具连接状态报告
-- 各工具的操作参考（子目录 README）
-
-### access 不提供
-- 预定义的操作 API
-- 路由决策
-- 操作编排
-
-## 当前可用基础设施
-
-| 工具       | 类型           | 状态  | 位置     |
-|------------|----------------|-------|----------|
-| CDP Proxy  | 浏览器自动化   | 就绪  | `cdp/`   |
-| SearchWeb  | 搜索           | 原生  | Agent    |
-| FetchURL   | 静态抓取       | 原生  | Agent    |
-
-## 新增基础设施的规范
-
-在 `src/access/<工具名>/` 下创建子目录，包含：
 1. `README.md` — 连接地址与操作参考
-2. 启动 / 连接代码
+2. `index.ts` — 对外入口，导出 `getStatus()` 等状态查询函数
 
-然后在上方表格中注册。
-```
+然后在 `src/access/README.md` 的可用工具表格中注册。
 
-### CDP 示例（cdp/README.md）
-
-```markdown
-## CDP Proxy
-
-### 生命周期
-access 在 explore 启动前确保 Proxy 已就绪；如果已有实例健康可用则直接复用，否则尝试自动拉起。
-
-### 操作参考
-Proxy 就绪后，agent 直接通过 HTTP API 操作：
-
-- `GET /health` — 查看代理状态与 Chrome 连接情况
-- `GET /targets` — 枚举当前页面
-- `GET /new?url=...` — 创建新的后台 tab
-- `POST /eval?target=ID` — 执行 JS
-- `POST /click?target=ID` — 点击元素
-- `GET /screenshot?target=ID&file=...` — 截图
-- `GET /scroll?target=ID&y=3000` — 滚动
-- ...
-
-这里不额外定义 `createTab()` / `browser.click()` 之类的新接口；
-直接使用 HTTP API 本身就是稳定契约。
-```
-
-## 3. explore — 探索执行层
+## 3. explore — 探索策略层
 
 ### 职责
 
-为 AI 组装上下文、定义成功标准，并**强制记录**每一步操作到结构化探索日志中。**不要**将操作序列硬编码。
+为 AI 提供综合探索策略、工具选择倾向和启发式规则，帮助 AI 在面对陌生场景时做出合理的工具选择和操作决策。**不要**将操作序列硬编码为代码。
 
-### 提供给 AI 的决策素材
+### 核心特征
 
-1. **可用工具** — 来自 access 层
-2. **站点经验** — 来自 `sites/` 目录（见第 4 节）
-3. **启发式策略** — 指导原则，非硬规则
-4. **成功标准** — 什么算"完成"
+explore 层不是代码层，不产生机器可消费的结构化日志。它的产出是**AI 的决策依据**：
+
+1. **可用工具清单** — 来自 access 层
+2. **工具选择策略** — 何时用 fetch，何时启用浏览器自动化，何时调用 API
+3. **操作优先级** — 先结构后交互、先轻后重等启发式规则
 
 ### 启发式策略（可被覆盖）
 
-- 先轻后重：优先尝试 fetch，遇反爬或需交互再启用 CDP
+- 先轻后重：优先尝试 fetch，遇反爬或需交互再启用浏览器自动化
 - 一手信息优先：搜索引擎定位来源后，直接访问原始页面核实
 - 先结构后交互：进入页面后先用 `/eval` 探测 DOM，再决定是否需要 GUI 点击
 
 这些是**参考资料**，不是代码强制执行的规则。AI 在具体场景中可覆盖它们。
 
-### 核心产出：探索日志
-
-无论 AI 选择了什么工具、什么顺序，explore 必须产出结构化日志。这是 compile 的唯一输入。
-
 ### 目录结构
 
 ```
 src/explore/
-  README.md          # 策略指南 + 日志格式定义
-  session.ts         # 会话生命周期：初始化上下文、组装素材、结束清理
-  logger.ts          # 标准化日志写入
+  README.md          # 综合探索策略：工具选择倾向、启发式规则、决策优先级
 ```
 
-## 4. sites — 站点经验库
+explore 不产出结构化日志，也不管理会话生命周期。
+
+## 4. compile — 规范与校验层
 
 ### 职责
 
-一个独立的已验证平台经验知识库。被三层共享：
+定义 WebSculpt 命令资产的编写规范，并通过校验器确保 AI 产出的命令在结构、合规性和契约上符合标准。
 
-- **access** 可读取它作为 provider 路由参考
-- **explore** 将它作为 AI 的决策素材
-- **compile** 在生成命令文档时引用它
+### compile 做什么
 
-### 位置
+- 提供面向 AI 的命令编写规范文档（`README.md`）
+- 为 `command create` 提供 L1-L3 校验逻辑（结构、合规、契约）
+- 定义各 runtime 的代码签名和禁止事项
+
+### compile 不做什么
+
+- **不自动生成命令代码** — 代码由 AI 根据探索结果自行编写
+- **不直接操作文件系统落盘** — 落盘由 `command create` 负责
+- **不执行命令测试** — 测试由 AI 自行调用命令完成
+
+### 校验分层
+
+`compile/validator.ts` 将校验分为三层，全部在 `command create` 落盘前执行：
+
+**L1 — 结构校验（Structure）**
+
+- `manifest` 必填字段（`id`、`domain`、`action`）
+- `id` 格式应为 `${domain}-${action}`
+- `runtime` 必须是合法枚举值
+- `parameters` 格式正确，`name` 唯一
+
+**L2 — 合规校验（Compliance）**
+
+- 代码中不得出现临时 snapshot ref（如 `e15`）
+- 代码中不得包含 CDP 连接/启动逻辑
+- 代码中不得出现 `await import(...)` 动态导入
+
+**L3 — 契约校验（Contract）**
+
+- `node` runtime：代码必须是合法 ESM 模块，有 `export default` 且导出函数
+- `playwright-cli` runtime：代码必须包含 `/* PARAMS_INJECT */` 占位符，语法可解析
+- 代码引用的参数应在 `manifest.parameters` 中声明（严格度待确定）
+
+### 目录结构
 
 ```
-WebSculpt/
-  sites/                     # 内置经验（随项目分发）
-    weibo.com.md
-    xiaohongshu.md
-  ...
+src/compile/
+  README.md          # AI 规范文档：各 runtime 契约、强制规则、编写建议、自测流程
+  validator.ts       # L1-L3 校验逻辑，被 command create 调用
+  contract.ts        # 运行时契约常量与类型定义（可选）
 ```
 
-用户本地镜像：
+### 与 command create 的关系
 
-```
-~/.websculpt/
-  sites/                     # 用户积累的站点经验（覆盖 / 扩展内置）
-  commands/
-  logs/
-  config.json
-  log.jsonl
-```
-
-### 查找优先级
-
-用户层（`~/.websculpt/sites/`）> 内置层（`sites/`）
-
-与命令一致：同名文件用户层优先。
-
-### 文件格式
-
-标准 Markdown + YAML frontmatter：
-
-```markdown
----
-domain: example.com
-aliases: [示例]
-updated: 2026-04-17
----
-
-## 平台特征
-架构、反爬行为、登录需求、内容加载方式等。
-
-## 有效模式
-已验证的 URL 模式、操作策略、选择器。
-
-## 已知陷阱
-什么会失败以及原因。
-```
-
-### 为什么不叫 "references/site-patterns"
-
-- "references" 暗示可选参考资料；站点经验是项目的核心运营资产。
-- "patterns" 把范围窄化为正则 / 选择器，但每份文件还包含策略、陷阱和平台特征。
+compile 不暴露独立 CLI。AI 编写完命令草稿后，通过 `command create --from-file draft.json` 提交。`command create` 内部调用 `compile/validator.ts` 进行校验。校验失败返回结构化错误列表，AI 修复后重新提交；校验通过后落盘到 `~/.websculpt/commands/`。
 
 ## 5. commands — 确定性资产
 
 ### 职责
 
-compile 层产出的已固化、机器可执行命令。与 `sites/` 中的概率性知识形成镜像。
+AI 根据 explore 策略和 access 工具探索后编写的确定性命令资产，经 compile 校验后由 `command create` 落盘。与 explore 策略中的概率性知识形成镜像。
 
 ### 位置
 
@@ -239,20 +187,20 @@ WebSculpt/
   commands/                  # 用户自定义命令（覆盖 / 扩展内置）
 ```
 
-### 与 sites 的关系
+### 与 explore 的关系
 
 | 层级     | 内容类型         | 格式           | 消费者 |
 |----------|------------------|----------------|--------|
-| sites    | 概率性经验       | Markdown（自然语言） | AI     |
+| explore  | 概率性策略       | Markdown（自然语言） | AI     |
 | commands | 确定性逻辑       | 代码 + manifest | 机器   |
 
-当站点变更导致命令失效时，自愈闭环为：
+### 自愈闭环
 
 ```
 命令失效
-  -> 带着 sites 上下文进行 explore
-  -> 修复逻辑
-  -> compile 生成新版本命令
+  -> 带着 explore 策略进行重新探索（AI 自主探索）
+  -> AI 修复代码逻辑
+  -> 经 compile 校验后通过 command create 重新落盘
 ```
 
 ## 6. 完整目录规划
@@ -260,11 +208,11 @@ WebSculpt/
 ```
 WebSculpt/
 ├── src/
-│   ├── access/              # 基础设施就绪
-│   ├── explore/             # 探索会话与记录
-│   ├── compile/             # 日志到命令包的生成
+│   ├── access/              # 基础设施就绪与环境状态查询
+│   │   └── playwright-cli/  # Playwright CLI 接入（接口待实现）
+│   ├── explore/             # 探索策略与指南
+│   ├── compile/             # 命令规范与校验
 │   └── cli/                 # CLI 入口与路由
-├── sites/                   # 站点经验库（内置）
 ├── commands/                # 内置扩展命令
 ├── tests/
 ├── openspec/
@@ -275,17 +223,43 @@ WebSculpt/
 
 ```
 ~/.websculpt/
-├── sites/                   # 用户站点经验
 ├── commands/                # 用户扩展命令
 ├── logs/                    # 长期运行的基础设施日志
-│   └── cdp-proxy.log
 ├── config.json
 └── log.jsonl
 ```
 
 ## 7. 待确定问题
 
-- compile 的输出是直接写到 `~/.websculpt/commands/`，还是复用现有的 `command create` API？
-- 探索日志被 compile 消费时的确切 schema 是什么？
-- AI 直接操作工具时，explore 如何检测成功 / 失败？
-- `sites` 文件是否允许 AI 在探索过程中直接写入，还是仅限人工审核后写入？
+### compile 与 command create
+
+- L3 参数一致性检查的范围：
+  - 严格：代码中每个变量都必须在 `manifest.parameters` 中声明
+  - 宽松：只检查 `params.xxx` 形式的访问
+  - 跳过：完全信任 AI
+
+- 校验失败是否允许强制落盘：
+  - `command create` 已有 `--force` 覆盖已存在命令
+  - 是否需要 `--skip-validation` 供调试使用，还是校验为绝对硬门槛？
+
+### access 与命令执行
+
+- `playwright-cli` 环境未就绪时的检测策略：
+  - 预检：执行命令前调用 `getStatus()` 探测（可靠但有额外开销）
+  - 后判：执行失败后根据错误关键词启发式判断（轻量但可能误判）
+  - 透传：不做特殊处理，让原始错误直接返回给 AI
+
+- `playwright-cli` 的 `getStatus()` 具体实现：
+  - 检查 Chrome 远程调试端口是否可连接？
+  - 检查 playwright-cli 是否已有活跃 attach 会话？
+  - 还是检查 `playwright-cli` 二进制是否存在于 PATH？
+
+### 类型与规范
+
+- `CommandManifest.outputSchema` 是否启用？
+  - 启用：要求 AI 编写命令时声明输出 schema，可用于运行时校验
+  - 暂不启用：保留字段，不强制
+
+- L2 合规检查项的扩充：
+  - 是否增加 `eval()` 调用检查？
+  - 是否增加其他代码安全/风格规则？
