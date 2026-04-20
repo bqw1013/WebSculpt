@@ -76,8 +76,21 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 			console.log("No commands available.");
 			return;
 		}
-		for (const cmd of result.commands) {
-			console.log(`${cmd.type} ${cmd.domain}/${cmd.action} (${cmd.id}) — ${cmd.description}`);
+
+		const rows = result.commands.map((cmd) => ({
+			command: `websculpt ${cmd.domain} ${cmd.action}`,
+			source: cmd.type,
+			description: cmd.description,
+		}));
+
+		const commandMaxWidth = Math.max("Command".length, ...rows.map((r) => r.command.length));
+		const sourceMaxWidth = Math.max("Source".length, ...rows.map((r) => r.source.length));
+
+		const pad = (s: string, width: number) => s.padEnd(width + 2);
+
+		console.log(`${pad("Command", commandMaxWidth)}${pad("Source", sourceMaxWidth)}Description`);
+		for (const row of rows) {
+			console.log(`${pad(row.command, commandMaxWidth)}${pad(row.source, sourceMaxWidth)}${row.description}`);
 		}
 		return;
 	}
