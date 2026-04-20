@@ -1,5 +1,5 @@
 /** Supported execution runtimes for a command entry. */
-export type CommandRuntime = "node" | "shell" | "python";
+export type CommandRuntime = "node" | "shell" | "python" | "playwright-cli";
 
 /** Defines a single parameter for an extension command. */
 export interface CommandParameter {

@@ -216,10 +216,12 @@ async function main() {
 					});
 				} catch (err: unknown) {
 					const message = err instanceof Error ? err.message : String(err);
+					const code =
+						err instanceof Error && "code" in err && typeof err.code === "string" ? err.code : "EXECUTION_ERROR";
 					const result = {
 						success: false,
 						command: `${c.manifest.domain}/${c.manifest.action}`,
-						error: { code: "EXECUTION_ERROR", message },
+						error: { code, message },
 						meta: { duration: Date.now() - start },
 					};
 					printJson(result);
