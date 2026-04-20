@@ -51,7 +51,7 @@ export async function getStatus(): Promise<ToolStatus>;
 ```
 src/access/
   playwright-cli/
-    README.md            # 操作参考文档
+    guide.md             # 操作参考文档
 ```
 
 按规范，每个工具子目录未来应补充：
@@ -65,7 +65,7 @@ src/access/<工具名>/
 
 ### 当前落地状态
 
-`src/access/playwright-cli/README.md` 是目前唯一存在的文件。它提供了 Playwright CLI 的完整操作参考，包括连接步骤、探索策略和命令速查表。
+`src/access/playwright-cli/guide.md` 是目前唯一存在的文件。它提供了 Playwright CLI 的完整操作参考，包括连接步骤、探索策略和命令速查表。
 
 程序化的状态查询接口（`index.ts`、`status.ts`）尚未实现，`command-runner` 目前直接调用 `npx playwright-cli run-code` 执行命令，未通过 access 层查询环境就绪状态。
 
@@ -73,10 +73,10 @@ src/access/<工具名>/
 
 在 `src/access/<工具名>/` 下创建子目录，必须包含：
 
-1. `README.md` — 连接地址与操作参考
+1. `guide.md`（或同语义的操作参考文档）— 连接地址与操作参考
 2. `index.ts` — 对外入口，导出 `getStatus()` 等状态查询函数
 
-然后在 `src/access/README.md` 的可用工具表格中注册。
+然后在 `src/access/` 的总览文档（如 `guide.md` 或 `README.md`）的可用工具表格中注册。
 
 ## 3. explore — 探索策略层
 
@@ -213,6 +213,11 @@ WebSculpt/
 │   ├── explore/             # 探索策略与指南
 │   ├── compile/             # 命令规范与校验
 │   └── cli/                 # CLI 入口与路由
+├── skills/                  # Agent skill 交付物
+│   └── websculpt/
+│       ├── SKILL.md
+│       ├── references/
+│       └── assets/
 ├── commands/                # 内置扩展命令
 ├── tests/
 ├── openspec/
