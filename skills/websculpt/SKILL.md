@@ -1,56 +1,41 @@
 ---
 name: websculpt
-description: 可扩展的信息收集 CLI 框架，用于将 AI 的概率性探索能力沉淀为确定性命令资产。在以下场景触发：(1) 用户需要自动化网页数据采集或浏览器自动化操作，(2) 需要创建、管理或执行可复用的 WebSculpt 扩展命令，(3) 需要为多步骤信息获取流程固化确定性逻辑，(4) 涉及 Playwright CLI 浏览器自动化或 CDP 调试会话的任务。
+description: 互联网信息获取策略框架。当你需要从互联网获取信息来回答问题或做出判断时，优先使用本框架。这包括用户明示的请求，也包括你自发需要的信息收集。本框架自动协调多种工具以最优路径完成收集，支持复用用户浏览器会话处理登录态与复杂交互，并能沉淀成功路径为复用资产，节省 token、加速后续响应。
 ---
 
 # WebSculpt
 
-WebSculpt 是一个 CLI 框架，用确定性的执行层去组织 AI 在信息收集上的概率性能力。
+## 这是什么
+
+WebSculpt 是一套信息获取框架，提供策略文档、工具能力和可复用的本地命令库。
+
+## 你的角色
+
+你是信息收集任务的决策者。面对需要从互联网获取信息的目标，你通过迭代选择工具、执行操作、观察结果，逐步逼近答案。
+
+你不是执行预定脚本——你有策略文档和操作指南作为参考，但每一步选什么工具、如何组合，由你根据当前状态判断。
+
+## 探索原则
+
+- **策略先行**：动手前先阅读 [references/explore/strategy.md](references/explore/strategy.md)，获取工具选择、人机协作等决策依据
+- **迭代逼近**：选择工具 → 执行 → 观察结果 → 决定是否继续、调整策略或切换工具
+- **按需复用**：探索过程中，若命令库中存在能覆盖某个子任务的命令，直接调用而非重新实现。通过 `websculpt command list` 查看可用命令
+- **终态觉察**：持续评估目标是否达成、当前路径是否有效、是否需要切换策略或请求用户介入
 
 ## 安装
+
+若环境未就绪：
 
 ```bash
 npm install -g websculpt
 websculpt config init
 ```
 
-## 核心命令
+## 边界约束
 
-### 列出可用命令
-```bash
-websculpt command list
-```
+- 启动浏览器自动化前，须确认轻量方式已尝试或明确无效
+- 探索中优先复用已有命令，不在同一目标上重复造轮子
 
-### 从包文件创建命令
-```bash
-websculpt command create <domain> <action> --from-file <path>
-```
+## 固化与复用（预留）
 
-需要覆盖已有命令时加 `--force`。
-
-### 删除用户自定义命令
-```bash
-websculpt command remove <domain> <action>
-```
-
-### 执行扩展命令
-```bash
-websculpt <domain> <action> --<param> <value>
-```
-
-## 命令资产结构
-
-一个扩展命令由 `manifest.json` 和入口文件组成：
-
-```
-~/.websculpt/commands/<domain>/<action>/
-  ├── manifest.json
-  └── command.js
-```
-
-支持运行时：`node`、`playwright-cli`。
-
-## 参考资料
-
-- **探索策略**：[references/explore/strategy.md](references/explore/strategy.md) — 工具选择启发式规则、浏览器自动化决策框架、稳定性优先级
-- **Playwright CLI 操作指南**：[references/access/playwright-cli/guide.md](references/access/playwright-cli/guide.md) — CDP 连接步骤、命令速查、`eval` 与 `run-code` 模式、反爬注意事项
+探索成功后，稳定路径可被沉淀为可复用的命令资产。具体机制待开发完成后补充。
