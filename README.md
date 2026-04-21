@@ -19,9 +19,9 @@ npx websculpt command list
 
 | 文档 | 适合谁 | 内容 |
 |------|--------|------|
-| `DESIGN.md` | 想了解设计理念与长期方向的人 | 确定性 vs 概率性、AI 的三种角色、Harness 三层能力、当前边界 |
-| `CLI.md` | 想了解命令体系与使用方式的人 | 命令分类、查找优先级、元命令卡片、参数与输出契约 |
-| `KNOWN_ISSUES.md` | 贡献者 / Agent | 当前实现与设计理想之间的已知偏差 |
+| `docs/design/DESIGN.md` | 想了解设计理念与长期方向的人 | 确定性 vs 概率性、AI 的三种角色、Harness 三层能力、当前边界 |
+| `docs/reference/CLI.md` | 想了解命令体系与使用方式的人 | 命令分类、查找优先级、元命令卡片、参数与输出契约 |
+| `docs/project/KNOWN_ISSUES.md` | 贡献者 / Agent | 当前实现与设计理想之间的已知偏差 |
 | `skills/websculpt/` | Agent / AI | Skill 交付物（`SKILL.md` + `references/`），面向 Codex/Claude Code 等 agent |
 | `tests/README.md` | 想写代码或测试的人 | 测试分层与组织原则 |
 
@@ -32,7 +32,7 @@ WebSculpt 将命令分为两类：
 - **元命令（Meta）**：系统自带的管家命令，用于管理配置和命令库。
 - **扩展命令（Extension）**：用户或 AI 创建的业务命令，以 `websculpt <domain> <action>` 的形式调用。
 
-扩展命令的查找优先级为：用户自定义命令 > 内置命令 > 元命令。详细规则见 `CLI.md`。
+扩展命令的查找优先级为：用户自定义命令 > 内置命令 > 元命令。详细规则见 `docs/reference/CLI.md`。
 
 ## 命令速览
 
