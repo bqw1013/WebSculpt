@@ -60,7 +60,7 @@ WebSculpt 将命令分为两类：
 - **当前测试以 CLI e2e 为主**：这和项目目前的 MVP 形态一致，但后续能力下沉后，应逐步补齐 unit / integration 测试。
 - **Web 访问能力（部分实现）**：`playwright-cli` runtime 已支持浏览器自动化，但纯 HTTP 请求工具尚未集成。
 - **命令生成能力（部分实现）**：`command create` 可将打包好的命令资产落盘，但校验仅为极简 manifest 检查，无 L1-L3 分层校验。
-- **无自愈能力**：当固化的命令因目标网站变更而失效时，暂无异常检测与自动修复机制。
+- **无自愈能力**：当沉淀下来的命令因目标网站变更而失效时，暂无异常检测与自动修复机制。
 - **命令参数目前仅支持 `--key <value>` 形式的 options**，不支持 positional arguments。
 - **扩展命令默认以 JSON 格式输出**，便于程序和 AI 消费；**元命令默认以人类可读文本输出**，支持通过全局选项 `--format <human|json>`（`-f` 简写）切换为结构化 JSON。
 - **`config.json` 当前仅作占位**：`config init` 会生成默认的 `config.json`，但业务代码目前尚未读取或消费其中的任何字段。
