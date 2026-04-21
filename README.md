@@ -1,6 +1,6 @@
 # WebSculpt
 
-WebSculpt 是一个面向 AI 时代的可扩展信息搜索命令行工具。它试图用确定性的执行层去组织 AI 在信息收集上的概率性能力。
+WebSculpt 是一个基于 Harness Engineering 理念的信息获取框架，CLI 是其交互形态。它用确定性的执行层去组织 AI 在信息收集上的概率性能力。
 
 ## 项目阶段
 
@@ -19,9 +19,10 @@ npx websculpt command list
 
 | 文档 | 适合谁 | 内容 |
 |------|--------|------|
-| `docs/design/Design.md` | 想了解设计理念与长期方向的人 | 确定性 vs 概率性、AI 的三种角色、Harness 三层能力、当前边界 |
+| `docs/design/Design.md` | 想了解设计理念与长期方向的人 | Harness 工程、确定性 vs 概率性、AI 的三种系统角色、控制流 |
 | `docs/design/Architecture.md` | 想了解系统组织与代码路径的人 | 各层职责、运行时契约、目录规划 |
 | `docs/reference/CLI.md` | 想了解命令体系与使用方式的人 | 命令分类、查找优先级、元命令卡片、参数与输出契约 |
+| `docs/design/CompileDesign.md` | 开发者 / Agent | compile 层设计目标、校验分层、待决事项 |
 | `docs/project/KnownIssues.md` | 贡献者 / Agent | 当前实现与设计理想之间的已知偏差 |
 | `skills/websculpt/` | Agent / AI | Skill 交付物（`SKILL.md` + `references/`），面向 Codex/Claude Code 等 agent |
 | `tests/README.md` | 想写代码或测试的人 | 测试分层与组织原则 |
@@ -44,6 +45,7 @@ WebSculpt 将命令分为两类：
 | `websculpt config init` | ✅ 已实现 | 初始化 `~/.websculpt` 目录 |
 | `websculpt command list` | ✅ 已实现 | 列出所有可用的扩展命令 |
 | `websculpt command show <domain> <action>` | ⚠️ 占位 | 已注册，仅输出 "Not implemented yet" |
+| `websculpt command create <domain> <action> --from-file <path>` | ✅ 已实现 | 将打包好的命令资产落盘到本地命令库 |
 | `websculpt command remove <domain> <action>` | ✅ 已实现 | 删除用户自定义命令，保护内置命令 |
 
 ### 扩展命令
@@ -64,7 +66,7 @@ WebSculpt 将命令分为两类：
 - **`config.json` 当前仅作占位**：`config init` 会生成默认的 `config.json`，但业务代码目前尚未读取或消费其中的任何字段。
 - **`log.jsonl` 的写入范围与生命周期有限**：只有扩展命令执行后会追加日志；元命令不会写入。此外，目前尚无自动清理、轮转或大小限制机制，长期使用文件会持续增长。
 - **Skill 交付机制已建立**：项目同时以传统 npm 包和 agent skill 两种形态交付。`skills/websculpt/` 是 skill 事实来源，通过 `npm run sync-skills` 同步到 `.claude/skills/`、`.codex/skills/`、`.kimi/skills/`、`.agents/skills/` 等目录；`npm run sync-skills -- --clean` 可卸载。
-- **运行时支持不完整**：`command create` 允许声明 `runtime` 为 `shell` 或 `python` 并会生成对应扩展名的入口文件，但 `command-runner` 目前仅实现了 `node` 运行时，执行非 `node` 命令会返回 `Unsupported runtime` 错误。
+- **运行时支持不完整**：`command create` 允许声明 `runtime` 为 `shell` 或 `python` 并会生成对应扩展名的入口文件，但 `command-runner` 目前仅实现了 `node` 和 `playwright-cli` 运行时，执行 `shell` 或 `python` 命令会返回 `Unsupported runtime` 错误。
 
 ## 常用脚本
 
