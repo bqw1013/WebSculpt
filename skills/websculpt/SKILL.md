@@ -52,5 +52,5 @@ websculpt <domain> <action> --<param> <value>
 
 ## 参考资料
 
-- **探索策略**：[references/explore-strategy.md](references/explore-strategy.md) — 工具选择启发式规则、浏览器自动化决策框架、稳定性优先级
-- **Playwright CLI 操作指南**：[references/playwright-cli-guide.md](references/playwright-cli-guide.md) — CDP 连接步骤、命令速查、`eval` 与 `run-code` 模式、反爬注意事项
+- **探索策略**：[references/explore/strategy.md](references/explore/strategy.md) — 工具选择启发式规则、浏览器自动化决策框架、稳定性优先级
+- **Playwright CLI 操作指南**：[references/access/playwright-cli/guide.md](references/access/playwright-cli/guide.md) — CDP 连接步骤、命令速查、`eval` 与 `run-code` 模式、反爬注意事项

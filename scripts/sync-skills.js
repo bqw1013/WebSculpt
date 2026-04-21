@@ -11,14 +11,14 @@ const skillRoot = path.join(root, 'skills', 'websculpt');
 const referencesDir = path.join(skillRoot, 'references');
 const assetsDir = path.join(skillRoot, 'assets');
 
-const sourceMappings = [
+const dirMappings = [
   {
-    from: path.join(root, 'src', 'explore', 'strategy.md'),
-    to: path.join(referencesDir, 'explore-strategy.md'),
+    from: path.join(root, 'src', 'explore'),
+    to: path.join(referencesDir, 'explore'),
   },
   {
-    from: path.join(root, 'src', 'access', 'playwright-cli', 'guide.md'),
-    to: path.join(referencesDir, 'playwright-cli-guide.md'),
+    from: path.join(root, 'src', 'access', 'playwright-cli'),
+    to: path.join(referencesDir, 'access', 'playwright-cli'),
   },
 ];
 
@@ -50,13 +50,13 @@ function syncSkill() {
   rmrf(referencesDir);
   ensureDir(referencesDir);
 
-  // 2. Copy source docs to references/
-  for (const { from, to } of sourceMappings) {
+  // 2. Copy source dirs to references/
+  for (const { from, to } of dirMappings) {
     if (!fs.existsSync(from)) {
       console.warn(`SKIP: ${path.relative(root, from)} not found`);
       continue;
     }
-    copyFile(from, to);
+    fs.cpSync(from, to, { recursive: true, force: true });
     console.log(`COPY: ${path.relative(root, from)} -> ${path.relative(root, to)}`);
   }
 
