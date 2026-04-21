@@ -43,7 +43,9 @@ describe("renderOutput", () => {
 			},
 			"human",
 		);
-		expect(logSpy).toHaveBeenCalledWith("builtin example/hello (example-hello) — Say hello");
+		expect(logSpy).toHaveBeenCalledTimes(2);
+		expect(logSpy).toHaveBeenNthCalledWith(1, "Command                  Source   Description");
+		expect(logSpy).toHaveBeenNthCalledWith(2, "websculpt example hello  builtin  Say hello");
 		logSpy.mockRestore();
 	});
 
