@@ -149,6 +149,49 @@ async function (page) {
 
 ---
 
+## Node Runtime 契约（对照）
+
+`node` runtime 与 `playwright-cli` runtime 的代码结构截然不同，AI 编写时必须区分。
+
+### 模块格式
+
+- 入口文件：`command.js`
+- 标准 ESM 模块，导出异步函数（优先 `export default`，亦支持 `export const command = ...`）
+- 签名：`async (params: Record<string, string>) => unknown`
+
+### 参数传递
+
+- 参数由 runner 直接作为函数参数传入，**无需** `/* PARAMS_INJECT */` 占位符
+- 所有参数值均为字符串，数字需自行 `parseInt` / `parseFloat`
+- runner 已根据 manifest 填充默认值，不要在代码中写 `|| default` fallback
+
+### 返回值
+
+- 直接 `return result`，由 `command-runner.ts` 消费
+- 返回的对象必须是可序列化的纯数据
+
+### 错误处理
+
+- 直接抛出 `Error` 即可
+- 业务错误码同样通过消息文本传递（如 `[NOT_FOUND] ...`），runner 会识别并透传
+
+### 环境
+
+- 完整 Node.js 环境可用（`fs`、`path`、`fetch`、`console` 等）
+- 可读写本地文件系统
+
+### 与 playwright-cli runtime 的核心差异
+
+| 维度 | node | playwright-cli |
+|------|------|----------------|
+| 模块类型 | ESM 模块 | 函数体片段 |
+| 入口签名 | `async (params)` | `async function (page)` |
+| 参数方式 | 函数参数传入 | `/* PARAMS_INJECT */` 占位符替换 |
+| 运行环境 | 完整 Node.js | 隔离上下文（无 Node.js API） |
+| 浏览器 API | 不可用 | 通过 `page` 参数可用 |
+
+---
+
 ## 7. 快速检查清单
 
 在提交 `command.js` 前，确认以下事项：

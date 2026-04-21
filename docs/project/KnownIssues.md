@@ -18,13 +18,7 @@
 
 待定 —— 可能会在扫描器或注册表层增加强制过滤。
 
-## 2. 元命令缺少 `--format` / `-f` 支持
-
-**状态：已修复**
-
-CLI 已添加全局顶层选项 `-f, --format <human|json>`（默认 `human`）。所有元命令处理函数现在返回规范化的结果对象，由 `src/cli/output.ts` 中的 `renderOutput` 统一渲染。扩展命令行为保持不变（始终输出 JSON）。
-
-## 3. User 覆盖 Builtin 命令的实现存在缺陷（同名冲突导致启动崩溃）
+## 2. User 覆盖 Builtin 命令的实现存在缺陷（同名冲突导致启动崩溃）
 
 **描述**
 
@@ -38,13 +32,7 @@ CLI.md 声明 "User 与 Builtin 的冲突以 User 为准"，但 `src/cli/index.t
 
 在注册前对 user 和 builtin 命令进行去重，确保同一 domain/action 只注册优先级更高的 user 命令。
 
-## 4. 部分元命令的输出格式与设计文档不一致
-
-**状态：已修复**
-
-通过 `renderOutput` 统一输出层后，`handleCommandCreate`、`handleCommandRemove`、`handleCommandList`、`handleCommandShow` 和 `handleConfigInit` 均不再直接调用 `printJson` 或 `console.log`。默认 `human` 模式下输出简洁的文本提示，`json` 模式下输出结构化 JSON，风格已统一。
-
-## 5. 日志写入在 `~/.websculpt` 未初始化时会抛出未捕获异常
+## 3. 日志写入在 `~/.websculpt` 未初始化时会抛出未捕获异常
 
 **描述**
 
@@ -58,7 +46,7 @@ CLI.md 声明 "User 与 Builtin 的冲突以 User 为准"，但 `src/cli/index.t
 
 在 `appendLog` 中自动创建父目录（`mkdir(..., { recursive: true })`），或在命令执行前做更完善的环境校验与容错提示。
 
-## 6. `command show` 的功能定位尚未明确
+## 4. `command show` 的功能定位尚未明确
 
 **描述**
 
@@ -66,7 +54,7 @@ CLI.md 声明 "User 与 Builtin 的冲突以 User 为准"，但 `src/cli/index.t
 
 - 与 `command list` 的差异化不足。`list` 已提供命令目录级信息（domain、action、description、source），若 `show` 仅展示 `manifest.json` 原文，则只是"单个 vs 全部"的区别，价值有限。
 - 与扩展命令自身 `--help` 的互补性未定。扩展命令的 `--help` 由命令自己实现，面向调用者；`show` 作为元命令，若也面向"怎么用"，则存在重叠。
-- 更深层的矛盾在于：`show` 是固化资产的"观测面"，但 DESIGN.md 中"探索 → 固化 → 自愈"的闭环尚未真正跑通。固化流程到底沉淀什么文件（manifest、README、context、源码？）、参数与 schema 的声明规范、context.md 的编写标准——这些未定，导致 `show` 不知道该展示什么、展示多深。
+- 更深层的矛盾在于：`show` 是固化资产的"观测面"，但 Design.md 中"探索 → 固化 → 自愈"的闭环尚未真正跑通。固化流程到底沉淀什么文件（manifest、README、context、源码？）、参数与 schema 的声明规范、context.md 的编写标准——这些未定，导致 `show` 不知道该展示什么、展示多深。
 
 **影响**
 

@@ -2,13 +2,13 @@
 
 ## 1. 为什么要分三层
 
-DESIGN.md 写道：
+Design.md 写道：
 
 > 代码负责边界、约束、状态、执行与审计。AI 负责理解、归纳、补全、判断与翻译。
 
 三层架构正是为了贯彻这一分工：
 
-- **access** — 代码确保工具就绪，并提供统一的环境状态查询接口。AI 直接操作工具。
+- **access** — 确保工具就绪，并通过文档约束限定 AI 的行为边界。AI 在受控范围内操作工具。
 - **explore** — 策略文档层。整合 access 层各工具的使用建议，为 AI 提供综合探索策略、工具选择倾向和启发式规则。
 - **compile** — 规范与校验层。定义命令资产的编写规范与质量标准，并通过程序化校验确保 AI 产出的命令符合契约。
 
@@ -16,22 +16,22 @@ DESIGN.md 写道：
 
 ### 职责
 
-为每个网络访问工具提供操作参考文档，并在未来为上层的命令执行提供统一的环境就绪查询接口。**不要**将 agent 的能力封装成新的 API。
+为每个网络访问工具提供操作参考文档，通过文档约束限定 AI 可使用的命令范围、操作规范和风险提示。代码层封装是可选增强，但文档约束本身就是 Harness 的有效形式，不应被预设为过渡态。
 
 ### access 做什么
 
-- 为每个工具提供操作参考文档（放在各自的子目录中）
-- 提供统一的环境就绪状态查询接口，供上层的命令执行器判断依赖是否满足
+- 为每个工具提供操作参考文档（如 `guide.md`），明确连接方式、可用命令、风险提示
+- （可选）提供统一的环境就绪状态查询接口，供上层的命令执行器判断依赖是否满足
 
 ### access 不做什么
 
-- 不预定义操作 API（如 `browser.click()`）
+- 不预定义操作 API（如 `browser.click()`）——除非场景需要代码层约束
 - 不做路由决策（"这个任务应该用哪个工具"）
 - 不编排操作序列
 
-### 统一状态接口（规范）
+### 统一状态接口（可选设计方向）
 
-所有 access 工具子目录应通过 `index.ts` 导出统一的状态查询入口：
+未来若需要程序化状态查询，access 工具子目录可通过 `index.ts` 导出统一入口：
 
 ```ts
 export interface ToolStatus {
@@ -42,7 +42,7 @@ export interface ToolStatus {
 export async function getStatus(): Promise<ToolStatus>;
 ```
 
-上层的 `command-runner` 在执行依赖特定环境的命令前（如 `playwright-cli` runtime），可通过该接口判断环境是否就绪，并将未就绪的原因转化为结构化错误返回给 AI。
+上层的 `command-runner` 在执行依赖特定环境的命令前（如 `playwright-cli` runtime），可通过该接口判断环境是否就绪，并将未就绪的原因转化为结构化错误返回给 AI。当前尚未实现，runner 直接执行命令并通过错误关键词启发式识别环境问题。
 
 ### 目录结构
 
@@ -54,12 +54,12 @@ src/access/
     guide.md             # 操作参考文档
 ```
 
-按规范，每个工具子目录未来应补充：
+每个工具子目录的最低要求：
 
 ```
 src/access/<工具名>/
-  README.md            # 连接地址与操作参考
-  index.ts             # 对外入口：导出 getStatus() 等状态查询函数
+  guide.md             # 操作参考文档：连接地址、可用命令、风险提示
+  index.ts             # （可选）对外入口：导出 getStatus() 等状态查询函数
   ...                  # 工具特定实现文件
 ```
 
@@ -67,14 +67,14 @@ src/access/<工具名>/
 
 `src/access/playwright-cli/guide.md` 是目前唯一存在的文件。它提供了 Playwright CLI 的完整操作参考，包括连接步骤、探索策略和命令速查表。
 
-程序化的状态查询接口（`index.ts`、`status.ts`）尚未实现，`command-runner` 目前直接调用 `npx playwright-cli run-code` 执行命令，未通过 access 层查询环境就绪状态。
+程序化的状态查询接口尚未实现，`command-runner` 目前直接调用 `npx playwright-cli run-code` 执行命令，未通过 access 层查询环境就绪状态。
 
 ### 新增工具的规范
 
-在 `src/access/<工具名>/` 下创建子目录，必须包含：
+在 `src/access/<工具名>/` 下创建子目录，至少包含：
 
-1. `guide.md`（或同语义的操作参考文档）— 连接地址与操作参考
-2. `index.ts` — 对外入口，导出 `getStatus()` 等状态查询函数
+1. `guide.md`（或同语义的操作参考文档）— 连接地址、可用命令、操作规范与风险提示
+2. （可选）`index.ts` — 对外入口，导出 `getStatus()` 等状态查询函数
 
 然后在 `src/access/` 的总览文档（如 `guide.md` 或 `README.md`）的可用工具表格中注册。
 
@@ -173,7 +173,7 @@ AI 根据 explore 策略和 access 工具探索后编写的确定性命令资产
 
 ```
 WebSculpt/
-  commands/                  # 内置命令（随项目分发）
+  src/cli/builtin/           # 内置命令（随项目分发）
     example/
       hello/
         manifest.json
@@ -208,17 +208,17 @@ WebSculpt/
 ```
 WebSculpt/
 ├── src/
-│   ├── access/              # 基础设施就绪与环境状态查询
-│   │   └── playwright-cli/  # Playwright CLI 接入（接口待实现）
+│   ├── access/              # 基础设施就绪与文档约束
+│   │   └── playwright-cli/  # Playwright CLI 接入（文档约束）
 │   ├── explore/             # 探索策略与指南
-│   ├── compile/             # 命令规范与校验
+│   ├── compile/             # 命令规范与校验（设计中，尚未实现）
 │   └── cli/                 # CLI 入口与路由
+│       └── builtin/         # 内置扩展命令
 ├── skills/                  # Agent skill 交付物
 │   └── websculpt/
 │       ├── SKILL.md
 │       ├── references/
 │       └── assets/
-├── commands/                # 内置扩展命令
 ├── tests/
 ├── openspec/
 └── dist/
