@@ -1,8 +1,8 @@
 import { execFile } from "child_process";
-import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
+import { readFile } from "fs/promises";
 import { createRequire } from "module";
-import { tmpdir } from "os";
-import { dirname, join, resolve } from "path";
+
+import { dirname, resolve } from "path";
 import { pathToFileURL } from "url";
 import { promisify } from "util";
 import type { CommandManifest } from "../../types/index.js";
@@ -104,10 +104,10 @@ async function resolvePlaywrightCliEntrypoint(): Promise<string> {
 
 /**
  * Spawns playwright-cli to execute a browser-automation command.
- * A temporary wrapper file is created because playwright-cli's run-code
- * execution context does not expose Node.js globals such as `process.env`.
  * Params are injected by replacing the `PARAMS_INJECT` placeholder
  * inside the command file with a `const params = {...};` declaration.
+ * The wrapped code is passed directly as the run-code positional argument
+ * to avoid playwright-cli's sandbox file-access restrictions on temporary files.
  * The JSON result surfaced under "### Result" in stdout is parsed and returned.
  */
 async function runPlaywrightCliCommand(commandPath: string, params: Record<string, string>): Promise<unknown> {
@@ -125,19 +125,15 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 	const paramsLine = `const params = ${JSON.stringify(params)};`;
 	const wrappedCode = originalCode.replace("/* PARAMS_INJECT */", paramsLine);
 
-	const tmpDir = await mkdtemp(join(tmpdir(), "websculpt-"));
-	const tmpFile = join(tmpDir, "command.js");
-	await writeFile(tmpFile, wrappedCode, "utf-8");
-
 	try {
 		const playwrightCliEntrypoint = await resolvePlaywrightCliEntrypoint();
-		const { stdout } = await execFileAsync(
-			process.execPath,
-			[playwrightCliEntrypoint, "run-code", "--filename", tmpFile],
-			{
-				timeout: 60000,
-			},
-		);
+		// NOTE: Passing the code directly as a positional argument relies on
+		// execFileAsync (array-based args), which bypasses shell interpretation.
+		// Windows command-line length limit is ~32,767 chars; current commands
+		// are typically well under 5,000 chars, leaving a large safety margin.
+		const { stdout } = await execFileAsync(process.execPath, [playwrightCliEntrypoint, "run-code", wrappedCode], {
+			timeout: 60000,
+		});
 
 		// playwright-cli surfaces command-level errors under "### Error" with exit code 0
 		const errorMatch = stdout.match(/### Error\nError:\s*([\s\S]*?)(?=\n### |$)/);
@@ -226,8 +222,6 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 		const fallbackError = new Error(execErr.message);
 		(fallbackError as Error & { code: string }).code = "COMMAND_EXECUTION_ERROR";
 		throw fallbackError;
-	} finally {
-		await rm(tmpDir, { recursive: true }).catch(() => {});
 	}
 }
 
