@@ -162,7 +162,7 @@ interface CommandPackage {
 代码静态分析，不执行代码：
 
 - **禁止临时 snapshot ref**：代码中不得出现 `e1`、`e15` 等形式的临时引用（正则 `e\d+\b`）
-- **禁止 CDP 连接逻辑**：代码中不得出现 `chrome-remote-interface`、`launch`、`connect` 等关键词（针对 playwright-cli runtime，attach 应由 access 层外部处理）
+- **禁止创建或连接浏览器实例**：所有 runtime 的命令代码中均不得出现 `launch`、`connect`、`connectOverCDP`、`newBrowser` 等用于创建或连接浏览器实例的关键词。playwright-cli runtime 的命令代码中 additionally 不得出现 `chrome-remote-interface`。浏览器实例的生命周期必须由用户在 access 层外部手动管理。
 - **禁止 inline dynamic import**：代码中不得出现 `await import(...)` 模式
 - （待讨论）是否禁止 `eval()` 调用
 

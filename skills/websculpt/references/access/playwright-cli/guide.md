@@ -69,7 +69,7 @@ Playwright CLI 支持三种元素定位手段：
 
 ## 2. CDP 连接
 
-Playwright CLI **仅通过 CDP attach** 到用户已启用远程调试的 Chrome 或 Edge 实例，不创建新浏览器。复用用户现有浏览器的登录态和 Cookie。
+Playwright CLI **只能通过 CDP attach 到用户已手动开启远程调试的现有浏览器实例**。这是 WebSculpt 中唯一被允许的浏览器连接方式。AI 不得使用 launch、connect 或任何等效机制创建新浏览器实例或连接到其他浏览器进程。
 
 ### 连接步骤
 
