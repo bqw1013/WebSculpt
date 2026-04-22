@@ -75,8 +75,8 @@ function isCdpAttachError(text: string): boolean {
 }
 
 /**
- * Resolve the locally installed playwright-cli entrypoint.
- * WebSculpt treats playwright-cli as a project dependency instead of a global tool.
+ * Resolve the playwright-cli entrypoint.
+ * playwright-cli is expected to be installed as a global tool (peer dependency).
  */
 async function resolvePlaywrightCliEntrypoint(): Promise<string> {
 	let packageJsonPath: string;
@@ -94,7 +94,7 @@ async function resolvePlaywrightCliEntrypoint(): Promise<string> {
 	const binRelativePath = typeof binField === "string" ? binField : binField?.["playwright-cli"];
 
 	if (!binRelativePath) {
-		const error = new Error("Could not resolve the local playwright-cli entrypoint.");
+		const error = new Error("Could not resolve the playwright-cli entrypoint.");
 		(error as Error & { code: string }).code = "RUNTIME_NOT_FOUND";
 		throw error;
 	}
@@ -191,7 +191,7 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 
 		// Infrastructure: local playwright-cli entrypoint not found
 		if (execErr.code === "ENOENT") {
-			const error = new Error('playwright-cli not found in project dependencies. Run "npm install".');
+			const error = new Error('playwright-cli not found. Run "npm install -g @playwright/cli".');
 			(error as Error & { code: string }).code = "RUNTIME_NOT_FOUND";
 			throw error;
 		}
