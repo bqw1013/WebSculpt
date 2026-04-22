@@ -41,12 +41,33 @@ export interface ConfigInitResult {
 	message: string;
 }
 
+/** Result shape for a successful skill install. */
+export interface SkillInstallResult {
+	success: true;
+	results: Array<{ agent: string; status: "installed" | "skipped" | "replaced" }>;
+}
+
+/** Result shape for a successful skill uninstall. */
+export interface SkillUninstallResult {
+	success: true;
+	results: Array<{ agent: string; status: "removed" | "not_found" }>;
+}
+
+/** Result shape for a successful skill status. */
+export interface SkillStatusResult {
+	success: true;
+	lines: string[];
+}
+
 /** Union of all meta command result shapes. */
 export type MetaCommandResult =
 	| CommandCreateResult
 	| CommandRemoveResult
 	| CommandListResult
 	| ConfigInitResult
+	| SkillInstallResult
+	| SkillUninstallResult
+	| SkillStatusResult
 	| MetaCommandError;
 
 /** Prints a value as pretty-printed JSON to stdout. */
@@ -91,6 +112,26 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		console.log(`${pad("Command", commandMaxWidth)}${pad("Source", sourceMaxWidth)}Description`);
 		for (const row of rows) {
 			console.log(`${pad(row.command, commandMaxWidth)}${pad(row.source, sourceMaxWidth)}${row.description}`);
+		}
+		return;
+	}
+
+	if ("lines" in result && Array.isArray(result.lines)) {
+		for (const line of result.lines) {
+			console.log(line);
+		}
+		return;
+	}
+
+	if (
+		"results" in result &&
+		Array.isArray(result.results) &&
+		result.results.length > 0 &&
+		"agent" in result.results[0] &&
+		"status" in result.results[0]
+	) {
+		for (const r of result.results) {
+			console.log(`${r.agent}: ${r.status}`);
 		}
 		return;
 	}

@@ -6,6 +6,8 @@ import { runCommand } from "./engine/command-runner.js";
 import { listAllCommands, type ResolvedCommand } from "./engine/registry.js";
 import { handleCommandCreate, handleCommandList, handleCommandRemove, handleCommandShow } from "./meta/command.js";
 import { handleConfigInit } from "./meta/config.js";
+import { handleSkillInstall, handleSkillStatus, handleSkillUninstall } from "./meta/skill.js";
+import type { SkillUninstallResult } from "./output.js";
 import { printJson, renderOutput } from "./output.js";
 
 declare module "commander" {
@@ -36,7 +38,7 @@ class WebSculptHelp extends Help {
 		}
 
 		const visibleCommands = helper.visibleCommands(cmd);
-		const metaNames = new Set(["command", "config"]);
+		const metaNames = new Set(["command", "config", "skill"]);
 		const meta = visibleCommands.filter((c) => metaNames.has(c.name()));
 		const domains = visibleCommands.filter((c) => !metaNames.has(c.name()) && !c.name().startsWith("help"));
 		const builtinDomains = domains.filter((c) => c._domainSource === "builtin");
@@ -71,7 +73,7 @@ class WebSculptHelp extends Help {
 
 		if (cmd.name() === "websculpt") {
 			out += "Notes:\n";
-			out += "  Meta commands manage the system (config, command registry).\n";
+			out += "  Meta commands manage the system (config, command registry, skill).\n";
 			out += "  Extension commands are user or AI-created business commands.\n";
 			out += "  Output defaults: meta commands → human text, extension commands → JSON.\n";
 			out += "  Command resolution: user > builtin > meta\n";
@@ -129,6 +131,36 @@ async function main() {
 		.description("Initialize ~/.websculpt with config.json and log.jsonl")
 		.action(async () => {
 			renderOutput(await handleConfigInit(), program.opts().format);
+		});
+
+	const skill = program.command("skill").description("Manage the WebSculpt skill");
+	skill
+		.command("install")
+		.description("Install the WebSculpt skill to agent directories")
+		.option("-g, --global", "Install to global agent directories")
+		.option("-a, --agents <agents>", "Target specific agents (claude,codex,agents,all)")
+		.option("--from <path>", "Explicit skill source path")
+		.option("--force", "Replace existing installation")
+		.action(async (options: { global?: boolean; agents?: string; from?: string; force?: boolean }) => {
+			renderOutput(handleSkillInstall(options), program.opts().format);
+		});
+	skill
+		.command("uninstall")
+		.description("Uninstall the WebSculpt skill from agent directories")
+		.option("-g, --global", "Uninstall from global agent directories")
+		.option("-a, --agents <agents>", "Target specific agents")
+		.action(async (options: { global?: boolean; agents?: string }) => {
+			const result = handleSkillUninstall(options);
+			renderOutput(result, program.opts().format);
+			if (result.success && (result as SkillUninstallResult).results.every((r) => r.status === "not_found")) {
+				process.exitCode = 1;
+			}
+		});
+	skill
+		.command("status")
+		.description("Show skill installation status")
+		.action(async () => {
+			renderOutput(handleSkillStatus(), program.opts().format);
 		});
 
 	program
