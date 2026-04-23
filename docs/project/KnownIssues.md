@@ -46,15 +46,15 @@ CLI.md 声明 "User 与 Builtin 的冲突以 User 为准"，但 `src/cli/index.t
 
 在 `appendLog` 中自动创建父目录（`mkdir(..., { recursive: true })`），或在命令执行前做更完善的环境校验与容错提示。
 
-## 4. `command show` 的功能定位尚未明确
+## 4. `command show` 的功能定位已确定，待实现
 
 **描述**
 
-`command show <domain> <action>` 目前为占位实现（返回 `NOT_IMPLEMENTED`）。其根本问题在于功能边界不清晰：
+`command show <domain> <action>` 目前为占位实现（返回 `NOT_IMPLEMENTED`）。经过讨论，其功能边界已明确：
 
-- 与 `command list` 的差异化不足。`list` 已提供命令目录级信息（domain、action、description、source），若 `show` 仅展示 `manifest.json` 原文，则只是"单个 vs 全部"的区别，价值有限。
-- 与扩展命令自身 `--help` 的互补性未定。扩展命令的 `--help` 由命令自己实现，面向调用者；`show` 作为元命令，若也面向"怎么用"，则存在重叠。
-- 更深层的矛盾在于：`show` 是沉淀资产的"观测面"，但 Design.md 中"探索 → 沉淀 → 自愈"的闭环尚未真正跑通。沉淀流程到底产出什么文件（manifest、README、context、源码？）、参数与 schema 的声明规范、context.md 的编写标准——这些未定，导致 `show` 不知道该展示什么、展示多深。
+- 与 `command list` 的差异化：`list` 是批量目录，回答"有哪些命令"；`show` 是单条契约卡片，回答"这个命令在系统中的完整档案是什么"。
+- 与扩展命令自身 `--help` 的互补性：`--help`（如未来实现）面向人类调用者，回答"怎么用"；`show` 面向 AI 和框架，回答"契约签名、来源、维护资产是否完整"。
+- `show` 是沉淀资产的"观测面"，服务于"探索 → 沉淀 → 自愈"闭环：AI 调用前确认参数契约，修复时判断 context.md 是否存在。
 
 **影响**
 
@@ -62,4 +62,64 @@ CLI.md 声明 "User 与 Builtin 的冲突以 User 为准"，但 `src/cli/index.t
 
 **计划修复方案**
 
-暂不实现，保持占位状态。待通过真实场景跑通至少一次"探索 → 沉淀"闭环后，根据实际信息缺口（AI 调用前需要什么、修复时需要哪些上下文）再确定 `show` 的输出结构和字段取舍。届时可能的方向：作为命令资产的"契约卡片"，聚合 manifest 签名、来源路径、关联文件存在性等框架级元信息，而非命令自己实现的 `--help`。
+`show` 定位为**命令资产的契约卡片**，聚合框架级元信息而非命令自己实现的 `--help`。
+
+输出结构（JSON 模式）：
+
+```json
+{
+  "success": true,
+  "command": {
+    "id": "zhihu-articles",
+    "domain": "zhihu",
+    "action": "articles",
+    "description": "获取知乎用户最新文章",
+    "runtime": "playwright-cli",
+    "source": "builtin",
+    "path": "<absolute-path-to-command-dir>",
+    "entryFile": "command.js",
+    "parameters": [
+      { "name": "author", "required": true, "description": "作者用户名" },
+      { "name": "limit", "required": false, "default": "10", "description": "最大返回数" }
+    ],
+    "assets": {
+      "manifest": true,
+      "readme": true,
+      "context": false,
+      "entryFile": true
+    }
+  }
+}
+```
+
+关键字段设计意图：
+
+| 字段 | 意图 |
+|------|------|
+| `source` + `path` | 区分 builtin/user，修复时直接定位物理文件 |
+| `runtime` + `entryFile` | 调用前确认执行环境（node vs playwright-cli） |
+| `parameters` 完整对象 | 比 `list` 更详细的契约信息，含 default/required |
+| `assets` 存在性 | 暴露维护资产完整性。`context: false` 意味着"坏了没上下文可参考" |
+
+human 模式输出示例：
+
+```
+id:          zhihu-articles
+domain:      zhihu
+action:      articles
+runtime:     playwright-cli
+source:      builtin
+path:        src/cli/builtin/zhihu/articles
+entry:       command.js
+
+parameters:
+  author   required  -           作者用户名
+  limit    optional  10          最大返回数
+
+assets:
+  manifest  yes
+  readme    yes
+  context   no
+```
+
+实现时直接替换 `src/cli/meta/command.ts` 中的 `handleCommandShow` 占位逻辑。

@@ -94,9 +94,9 @@ AI 将命令写入任意 staging 目录：
 
 ```typescript
 interface CommandManifest {
-  id: string;                    // 建议格式: ${domain}-${action}
-  domain: string;
-  action: string;
+  id?: string;                   // 系统维护字段，格式 ${domain}-${action}；由 command create 自动注入
+  domain?: string;               // 系统维护字段，由 command create 自动注入
+  action?: string;               // 系统维护字段，由 command create 自动注入
   runtime?: CommandRuntime;      // "node" | "shell" | "python" | "playwright-cli"，省略时默认为 "node"
   parameters?: Array<{
     name: string;
@@ -107,6 +107,8 @@ interface CommandManifest {
   // outputSchema 已于 2026-04-23 从类型中移除，当前无 schema 校验
 }
 ```
+
+`id` / `domain` / `action` 由 `command create` 根据 CLI 参数强制注入，AI 在草稿阶段无需填写；若 manifest 中已存在且不一致，以 CLI 参数为准。
 
 **`command create` 接口**：
 
@@ -178,19 +180,25 @@ websculpt command create <domain> <action> --from-dir <path> [--force]
 
 不设 `--from-file`。沉淀工作流中命令资产始终为多文件目录形态。
 
-`handleCommandCreate` 已提取至 `src/cli/meta/create.ts`，支持从 staging 目录读取 `manifest.json`、entry file、`README.md` 和 `context.md`，校验 domain/action 一致性、保留域保护和文件完整性后落盘。
+`handleCommandCreate` 已提取至 `src/cli/meta/create.ts`，支持从 staging 目录读取 `manifest.json`、entry file、`README.md` 和 `context.md`，校验保留域保护和文件完整性后落盘。
+
+**注入规则**：落盘前，系统以 CLI 参数 `<domain>` 和 `<action>` 为权威，强制覆盖 manifest 中的 `domain`、`action` 字段，并注入 `id = "${domain}-${action}"`。AI 在草稿阶段无需填写这三个字段；若 manifest 中已存在且不一致，以 CLI 参数为准。
 
 ### 4.7 `validate` 独立预检命令
 
 除 `create` 内置强制校验外，提供独立命令用于预检：
 
 ```bash
-websculpt command validate --from-dir <path>
+websculpt command validate --from-dir <path> [domain] [action]
 ```
 
 - 与 `create` 共享 `command-validation.ts` 的校验逻辑
 - 只校验，不落盘
 - 返回结构化校验结果，供 AI 调试
+
+**行为区分**：
+- **不带 `[domain] [action]`**：校验 manifest 内部自洽性 + L2 合规 + L3 契约。`id`/`domain`/`action` 缺失时发 `warning`（因为 `create` 会注入）。
+- **带 `[domain] [action]`**：额外校验注入后的完整状态（含 `id`/`domain`/`action` 一致性），模拟 `create` 的落盘预览。
 
 ### 4.8 `context` 统一为 Markdown 字符串（已实现）
 
@@ -222,13 +230,15 @@ websculpt command validate --from-dir <path>
 纯 JSON/schema 层面，无需解析代码：
 
 - `manifest` 必须是对象
-- `id`、`domain`、`action` 必须是非空字符串
-- `id` 格式应为 `${domain}-${action}`（或至少与 domain/action 一致）
+- `id`、`domain`、`action` 如存在，必须是非空字符串
+- 若 `id`、`domain`、`action` 同时存在于 manifest，则 `id` 必须等于 `${domain}-${action}`
 - `runtime` 必须是 `CommandRuntime` 合法枚举值（`node`、`shell`、`python`、`playwright-cli`）
 - `parameters` 如存在必须是**对象数组**，每个元素为 `{ name, description?, required?, default? }`
 - 不再支持字符串 shorthand（如 `"title"`）
 - 每个参数必须有 `name`，且 `name` 在数组内唯一
 - 参数的 `default` 类型必须是 `string | number | boolean` 之一
+
+> **注**：`command create` 会以 CLI 参数为权威，强制覆盖/注入 `id`/`domain`/`action`。因此 `validate` 不带 `[domain] [action]` 时，这三个字段缺失不视为 error，仅发 warning。
 
 ### 5.2 L2 — 合规校验（Compliance）
 
@@ -359,10 +369,10 @@ websculpt command validate --from-dir <path>
 `create` 是命令库的唯一合法入口，不是文件搬运工。
 
 核心职责：
-1. **基础校验**（已实现）：保留域保护、domain/action 与 manifest 一致性、entry file 存在性
+1. **基础校验**（已实现）：保留域保护、entry file 存在性
 2. **L1-L3 分层校验**（尚未实现）：结构校验、合规校验、契约校验，失败阻止落盘
 3. **保留域保护**（已实现）：禁止 `command`、`config` 等保留域
-4. **ID 规范化**（部分实现）：校验 domain/action 与 CLI 参数一致
+4. **身份注入**（已实现）：以 CLI 参数为权威，强制覆盖/注入 manifest 的 `id`/`domain`/`action`
 5. **冲突仲裁**（已实现）：同名命令无 `--force` 时拒绝覆盖
 6. **环境初始化**（已实现）：自动创建 `~/.websculpt/commands/` 目录树
 7. **运行时适配**（已实现）：根据 `runtime` 确定入口文件名（`node` → `command.js`，`shell` → `command.sh`，`python` → `command.py`）
