@@ -16,7 +16,9 @@ Guidelines:
 
 - `tests/e2e/config-init.test.ts`: verifies `config init` bootstraps a fresh `~/.websculpt` home with the default config and an empty command directory.
 - `tests/e2e/example-hello.test.ts`: verifies `example hello` returns the expected JSON payload and appends an execution record to `log.jsonl`.
-- `tests/e2e/command-lifecycle.test.ts`: verifies `command list` shows built-ins and created user commands, `command create` registers valid commands from a directory and rejects reserved domains and invalid manifests (returning structured `VALIDATION_ERROR`), includes asset completeness warnings on success, created user commands execute through the source CLI, `command validate` performs preflight validation with and without domain/action arguments, and `command remove` deletes user commands while protecting built-ins.
+- `tests/e2e/command-create.test.ts`: verifies `command create` registers valid commands from a directory, rejects reserved domains (`command`, `config`), rejects missing or malformed source files (`FILE_NOT_FOUND`, `PARSE_ERROR`, `INVALID_PACKAGE`), fails with `ALREADY_EXISTS` when a command exists without `--force`, overwrites an existing command with `--force`, succeeds without warnings for fully documented packages, and injects missing identity fields (`id`, `domain`, `action`, `runtime`) into the installed manifest.
+- `tests/e2e/command-validate.test.ts`: verifies `command validate` preflight mode returns success or warnings (`MISSING_IDENTITY_FIELDS`, `MISSING_README`, `MISSING_CONTEXT`) for valid packages, injection-simulation mode treats missing identity fields as warnings while rejecting mismatches (`ID_MISMATCH`) and reserved domains (`RESERVED_DOMAIN`), and aggregates layered validation errors (L1-L3) into a single `VALIDATION_ERROR` response.
+- `tests/e2e/command-registry.test.ts`: verifies `command list` shows built-in and user commands, created user commands execute through the source CLI with passed or defaulted parameters, `command remove` deletes user commands while protecting built-ins.
 
 Maintenance:
 
