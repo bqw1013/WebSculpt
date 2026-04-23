@@ -144,6 +144,9 @@ export async function handleCommandCreate(
 		// Write manifest.json with normalized runtime
 		const normalizedManifest: CommandManifest = {
 			...manifest,
+			id: `${domain}-${action}`,
+			domain,
+			action,
 			runtime: normalizedRuntime,
 		};
 		await writeFile(join(commandDir, "manifest.json"), JSON.stringify(normalizedManifest, null, 2));
