@@ -1,3 +1,5 @@
+import type { ValidationDetail } from "../types/index.js";
+
 /** Output format for meta command results. */
 export type OutputFormat = "human" | "json";
 
@@ -15,6 +17,23 @@ export interface CommandCreateResult {
 	success: true;
 	command: string;
 	path: string;
+	warnings?: ValidationDetail[];
+}
+
+/** Result shape for a validation error. */
+export interface ValidationErrorResult {
+	success: false;
+	error: {
+		code: "VALIDATION_ERROR";
+		message: string;
+		details: ValidationDetail[];
+	};
+}
+
+/** Result shape for a successful command validation. */
+export interface CommandValidateResult {
+	success: true;
+	warnings?: ValidationDetail[];
 }
 
 /** Result shape for a successful command removal. */
@@ -68,6 +87,8 @@ export type MetaCommandResult =
 	| SkillInstallResult
 	| SkillUninstallResult
 	| SkillStatusResult
+	| CommandValidateResult
+	| ValidationErrorResult
 	| MetaCommandError;
 
 /** Prints a value as pretty-printed JSON to stdout. */
@@ -84,6 +105,11 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 
 	if (!result.success) {
 		console.log(`${result.error.code}: ${result.error.message}`);
+		if ("details" in result.error && Array.isArray(result.error.details)) {
+			for (const detail of result.error.details) {
+				console.log(`  [${detail.level.toUpperCase()}] ${detail.code}: ${detail.message}`);
+			}
+		}
 		return;
 	}
 
@@ -138,6 +164,18 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 
 	if ("message" in result) {
 		console.log(result.message);
+		return;
+	}
+
+	if ("warnings" in result && !("path" in result)) {
+		if (result.warnings && result.warnings.length > 0) {
+			console.log("Validation passed with warnings:");
+			for (const w of result.warnings) {
+				console.log(`  [WARNING] ${w.code}: ${w.message}`);
+			}
+		} else {
+			console.log("Validation passed");
+		}
 		return;
 	}
 

@@ -20,6 +20,13 @@ export interface CommandManifest {
 	runtime?: CommandRuntime;
 }
 
+/** A single validation detail emitted by the layered validation system. */
+export interface ValidationDetail {
+	code: string;
+	message: string;
+	level: "error" | "warning";
+}
+
 /** Standard shape returned after a command execution. */
 export interface CommandResult {
 	success: boolean;

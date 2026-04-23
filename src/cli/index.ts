@@ -8,6 +8,7 @@ import { handleCommandList, handleCommandRemove, handleCommandShow } from "./met
 import { handleConfigInit } from "./meta/config.js";
 import { handleCommandCreate } from "./meta/create.js";
 import { handleSkillInstall, handleSkillStatus, handleSkillUninstall } from "./meta/skill.js";
+import { handleCommandValidate } from "./meta/validate.js";
 import type { SkillUninstallResult } from "./output.js";
 import { printJson, renderOutput } from "./output.js";
 
@@ -115,6 +116,14 @@ async function main() {
 		.option("--force", "Overwrite an existing command")
 		.action(async (domain: string, action: string, options: { fromDir: string; force?: boolean }) => {
 			renderOutput(await handleCommandCreate(domain, action, options), program.opts().format);
+		});
+	cmd.command("validate")
+		.description("Validate a command directory without installing")
+		.requiredOption("--from-dir <path>", "Path to the command source directory")
+		.argument("[domain]", "Optional domain to simulate injection")
+		.argument("[action]", "Optional action to simulate injection")
+		.action(async (domain: string | undefined, action: string | undefined, options: { fromDir: string }) => {
+			renderOutput(await handleCommandValidate(options.fromDir, domain, action), program.opts().format);
 		});
 	cmd.command("show <domain> <action>")
 		.description("Show command details")

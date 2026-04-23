@@ -3,6 +3,7 @@ import { join } from "path";
 import { USER_COMMANDS_DIR } from "../../infra/paths.js";
 import type { CommandManifest } from "../../types/index.js";
 import type { MetaCommandResult } from "../output.js";
+import { validateCommandPackage } from "./command-validation.js";
 
 const RESERVED_DOMAINS = new Set(["command", "config"]);
 
@@ -17,33 +18,11 @@ function resolveEntryFile(runtime: string | undefined): string {
 	}
 }
 
-function validateManifestFromFile(manifest: unknown, expectedDomain: string, expectedAction: string): string | null {
-	if (!manifest || typeof manifest !== "object") {
-		return "Manifest must be an object";
-	}
-	const m = manifest as Record<string, unknown>;
-	if (typeof m.id !== "string" || m.id.trim().length === 0) {
-		return "Manifest must have a non-empty 'id' string";
-	}
-	if (m.domain !== expectedDomain) {
-		return `Manifest domain "${m.domain}" does not match CLI argument "${expectedDomain}"`;
-	}
-	if (m.action !== expectedAction) {
-		return `Manifest action "${m.action}" does not match CLI argument "${expectedAction}"`;
-	}
-	if (m.parameters !== undefined && !Array.isArray(m.parameters)) {
-		return "Manifest 'parameters' must be an array of objects if provided";
-	}
-	if (m.runtime !== undefined && typeof m.runtime !== "string") {
-		return "Manifest 'runtime' must be a string if provided";
-	}
-	return null;
-}
-
 /**
  * Creates a new user-defined command from a source directory.
- * Reads manifest.json, entry file, README.md and context.md from the source directory
- * and installs them into ~/.websculpt/commands/<domain>/<action>/.
+ * Reads command assets from the source directory, validates them through the
+ * shared L1-L3 validation layer, and installs them into
+ * ~/.websculpt/commands/<domain>/<action>/.
  */
 export async function handleCommandCreate(
 	domain: string,
@@ -84,25 +63,58 @@ export async function handleCommandCreate(
 			};
 		}
 
-		const validationError = validateManifestFromFile(manifest, domain, action);
-		if (validationError) {
-			return {
-				success: false,
-				error: { code: "INVALID_MANIFEST", message: validationError },
-			};
-		}
-
 		// Determine entry file and verify it exists
 		const normalizedRuntime = manifest.runtime || "node";
 		const entryFile = resolveEntryFile(normalizedRuntime);
+		let code: string;
 		try {
-			await access(join(sourceDir, entryFile));
+			code = await readFile(join(sourceDir, entryFile), "utf-8");
 		} catch {
 			return {
 				success: false,
 				error: {
 					code: "INVALID_PACKAGE",
 					message: `Entry file "${entryFile}" not found in source directory`,
+				},
+			};
+		}
+
+		// Check auxiliary file presence
+		let hasReadme = false;
+		let hasContext = false;
+		try {
+			await access(join(sourceDir, "README.md"));
+			hasReadme = true;
+		} catch {
+			// README.md not present
+		}
+		try {
+			await access(join(sourceDir, "context.md"));
+			hasContext = true;
+		} catch {
+			// context.md not present
+		}
+
+		// Run shared validation layer
+		const details = validateCommandPackage({
+			manifest,
+			code,
+			hasReadme,
+			hasContext,
+			expectedDomain: domain,
+			expectedAction: action,
+		});
+
+		const errors = details.filter((d) => d.level === "error");
+		const warnings = details.filter((d) => d.level === "warning");
+
+		if (errors.length > 0) {
+			return {
+				success: false,
+				error: {
+					code: "VALIDATION_ERROR",
+					message: `Validation failed with ${errors.length} error(s)`,
+					details: errors,
 				},
 			};
 		}
@@ -140,27 +152,27 @@ export async function handleCommandCreate(
 		await copyFile(join(sourceDir, entryFile), join(commandDir, entryFile));
 
 		// Copy README.md if present
-		try {
-			await access(join(sourceDir, "README.md"));
+		if (hasReadme) {
 			await copyFile(join(sourceDir, "README.md"), join(commandDir, "README.md"));
-		} catch {
-			// README.md not present, skip
 		}
 
-		// Copy context.md if present (store as plain string, no JSON wrapping)
-		try {
-			await access(join(sourceDir, "context.md"));
+		// Copy context.md if present
+		if (hasContext) {
 			const contextContent = await readFile(join(sourceDir, "context.md"), "utf-8");
 			await writeFile(join(commandDir, "context.md"), contextContent);
-		} catch {
-			// context.md not present, skip
 		}
 
-		return {
+		const result: MetaCommandResult = {
 			success: true,
 			command: `${domain}/${action}`,
 			path: commandDir,
 		};
+
+		if (warnings.length > 0) {
+			(result as unknown as Record<string, unknown>).warnings = warnings;
+		}
+
+		return result;
 	} catch (err: unknown) {
 		const message = err instanceof Error ? err.message : String(err);
 		return {

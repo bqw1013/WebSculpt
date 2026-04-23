@@ -219,6 +219,75 @@ describe("source CLI: command management", () => {
 				}),
 			);
 		});
+
+		it("returns VALIDATION_ERROR for an invalid manifest", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const invalidPackage: CommandPackageBody = {
+				code: "export default async function() { return { ok: true }; }",
+				manifest: {
+					action: "bad",
+					description: "Bad manifest",
+					domain: "bad-domain",
+					id: "bad-domain-wrong-id",
+					parameters: [],
+					runtime: "invalid-runtime",
+				},
+			};
+			const commandDirPath = await writeCommandDir(homeDir, "invalid-command-dir", invalidPackage);
+			const result = await runSourceCli(
+				["command", "create", "bad-domain", "bad", "--from-dir", commandDirPath, "--format", "json"],
+				homeDir,
+			);
+			const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(false);
+			expect(payload.error).toEqual(
+				expect.objectContaining({
+					code: "VALIDATION_ERROR",
+				}),
+			);
+			expect(payload.error?.details).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ code: "INVALID_RUNTIME", level: "error" }),
+					expect.objectContaining({ code: "ID_MISMATCH", level: "error" }),
+				]),
+			);
+		});
+
+		it("returns warnings for missing assets on successful creation", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const packageBody: CommandPackageBody = {
+				code: "export default async function() { return { ok: true }; }",
+				manifest: {
+					action: "minimal",
+					description: "Minimal command",
+					domain: "test",
+					id: "test-minimal",
+					parameters: [],
+					runtime: "node",
+				},
+			};
+			const commandDirPath = await writeCommandDir(homeDir, "minimal-command-dir", packageBody);
+			const result = await runSourceCli(
+				["command", "create", "test", "minimal", "--from-dir", commandDirPath, "--format", "json"],
+				homeDir,
+			);
+			const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.warnings).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ code: "MISSING_README", level: "warning" }),
+					expect.objectContaining({ code: "MISSING_CONTEXT", level: "warning" }),
+				]),
+			);
+		});
 	});
 
 	describe("user command execution", () => {
@@ -254,6 +323,72 @@ describe("source CLI: command management", () => {
 				saved: true,
 				title: "Draft",
 			});
+		});
+	});
+
+	describe("command validate", () => {
+		it("returns success for a valid command directory", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const commandDirPath = await writeCommandDir(homeDir, "validate-ok-dir", notesSavePackage);
+			const result = await runSourceCli(
+				["command", "validate", "--from-dir", commandDirPath, "--format", "json"],
+				homeDir,
+			);
+			const payload = parseJsonOutput<{ success: boolean; warnings?: Array<{ code: string; level: string }> }>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+		});
+
+		it("returns VALIDATION_ERROR for a reserved domain when domain is provided", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const commandDirPath = await writeCommandDir(homeDir, "validate-reserved-dir", reservedSyncPackage);
+			const result = await runSourceCli(
+				["command", "validate", "--from-dir", commandDirPath, "command", "sync", "--format", "json"],
+				homeDir,
+			);
+			const payload = parseJsonOutput<{ success: boolean; error?: { code: string } }>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(false);
+			expect(payload.error?.code).toBe("RESERVED_DOMAIN");
+		});
+
+		it("returns structured errors for validation failures", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const invalidPackage: CommandPackageBody = {
+				code: "export default async function() { return e1; }",
+				manifest: {
+					action: "bad",
+					description: "Bad command",
+					domain: "bad-domain",
+					id: "bad-domain-wrong-id",
+					parameters: [],
+					runtime: "node",
+				},
+			};
+			const commandDirPath = await writeCommandDir(homeDir, "validate-bad-dir", invalidPackage);
+			const result = await runSourceCli(
+				["command", "validate", "--from-dir", commandDirPath, "--format", "json"],
+				homeDir,
+			);
+			const payload = parseJsonOutput<{ success: boolean; error?: { code: string; details?: Array<{ code: string; level: string }> } }>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(false);
+			expect(payload.error?.code).toBe("VALIDATION_ERROR");
+			expect(payload.error?.details).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ code: "ID_MISMATCH", level: "error" }),
+					expect.objectContaining({ code: "TEMP_REF_FOUND", level: "error" }),
+				]),
+			);
 		});
 	});
 

@@ -1,0 +1,267 @@
+import type { ValidationDetail } from "../../types/index.js";
+
+const VALID_RUNTIMES = new Set<string>(["node", "shell", "python", "playwright-cli"]);
+
+const TEMP_REF_REGEX = /\be\d+\b/g;
+const BROWSER_KEYWORDS = ["launch", "connect", "connectOverCDP", "newBrowser"];
+const INLINE_IMPORT_REGEX = /await\s+import\s*\(/;
+const EXPORT_DEFAULT_REGEX = /export\s+default/;
+const PARAMS_INJECT_MARKER = "/* PARAMS_INJECT */";
+const PARAM_ACCESS_REGEX = /params\.([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+
+function addError(details: ValidationDetail[], code: string, message: string): void {
+	details.push({ code, message, level: "error" });
+}
+
+function addWarning(details: ValidationDetail[], code: string, message: string): void {
+	details.push({ code, message, level: "warning" });
+}
+
+function checkJsSyntax(code: string, runtime: string): ValidationDetail | null {
+	if (runtime !== "node" && runtime !== "playwright-cli") {
+		return null;
+	}
+	const trial = runtime === "node" ? `return (${code.replace(/^export\s+default\s+/s, "")})` : code;
+	try {
+		// eslint-disable-next-line no-new-func
+		new Function(trial);
+		return null;
+	} catch (err) {
+		if (err instanceof SyntaxError) {
+			return {
+				code: "INVALID_JS_SYNTAX",
+				message: `Invalid JavaScript syntax: ${err.message}`,
+				level: "error",
+			};
+		}
+		return null;
+	}
+}
+
+function validateL1Structure(
+	manifest: Record<string, unknown>,
+	details: ValidationDetail[],
+	expectedDomain: string | undefined,
+	expectedAction: string | undefined,
+): void {
+	const runtime = manifest.runtime ?? "node";
+	if (typeof runtime !== "string" || !VALID_RUNTIMES.has(runtime)) {
+		addError(details, "INVALID_RUNTIME", `Runtime must be one of: ${[...VALID_RUNTIMES].join(", ")}`);
+	}
+
+	const id = manifest.id;
+	const domain = manifest.domain;
+	const action = manifest.action;
+
+	if (expectedDomain !== undefined && expectedAction !== undefined) {
+		// Full injection simulation mode: missing fields are warnings, mismatches are errors.
+		if (id === undefined || id === null || id === "") {
+			addWarning(details, "MISSING_IDENTITY_FIELDS", "Manifest is missing 'id' (will be injected on create)");
+		} else if (typeof id !== "string" || id !== `${expectedDomain}-${expectedAction}`) {
+			addError(details, "ID_MISMATCH", `Manifest id "${id}" does not match "${expectedDomain}-${expectedAction}"`);
+		}
+
+		if (domain === undefined || domain === null || domain === "") {
+			addWarning(details, "MISSING_IDENTITY_FIELDS", "Manifest is missing 'domain' (will be injected on create)");
+		} else if (typeof domain !== "string" || domain !== expectedDomain) {
+			addError(details, "ID_MISMATCH", `Manifest domain "${domain}" does not match expected "${expectedDomain}"`);
+		}
+
+		if (action === undefined || action === null || action === "") {
+			addWarning(details, "MISSING_IDENTITY_FIELDS", "Manifest is missing 'action' (will be injected on create)");
+		} else if (typeof action !== "string" || action !== expectedAction) {
+			addError(details, "ID_MISMATCH", `Manifest action "${action}" does not match expected "${expectedAction}"`);
+		}
+	} else {
+		// Preflight mode without domain/action: missing fields are a single warning.
+		const missing: string[] = [];
+		if (id === undefined || id === null || (typeof id === "string" && id.trim().length === 0)) {
+			missing.push("id");
+		}
+		if (domain === undefined || domain === null || (typeof domain === "string" && domain.trim().length === 0)) {
+			missing.push("domain");
+		}
+		if (action === undefined || action === null || (typeof action === "string" && action.trim().length === 0)) {
+			missing.push("action");
+		}
+
+		if (missing.length > 0) {
+			addWarning(details, "MISSING_IDENTITY_FIELDS", `Manifest is missing identity field(s): ${missing.join(", ")}`);
+		}
+
+		// When all identity fields are present, validate consistency.
+		if (missing.length === 0 && typeof id === "string" && typeof domain === "string" && typeof action === "string") {
+			if (id !== `${domain}-${action}`) {
+				addError(details, "ID_MISMATCH", `Manifest id "${id}" does not match "${domain}-${action}"`);
+			}
+		}
+	}
+
+	// Parameter validation
+	const parameters = manifest.parameters;
+	if (parameters !== undefined) {
+		if (!Array.isArray(parameters)) {
+			addError(details, "INVALID_PARAMETERS", "Manifest 'parameters' must be an array");
+		} else {
+			const seenNames = new Set<string>();
+			for (let i = 0; i < parameters.length; i++) {
+				const param = parameters[i];
+				if (param === null || typeof param !== "object") {
+					addError(details, "INVALID_PARAMETERS", `Parameter at index ${i} must be an object`);
+					continue;
+				}
+				const p = param as Record<string, unknown>;
+				if (typeof p.name !== "string" || p.name.trim().length === 0) {
+					addError(details, "MISSING_PARAM_NAME", `Parameter at index ${i} is missing a valid 'name'`);
+				} else {
+					if (seenNames.has(p.name)) {
+						addError(details, "DUPLICATE_PARAM_NAME", `Duplicate parameter name: "${p.name}"`);
+					}
+					seenNames.add(p.name);
+				}
+
+				if (p.default !== undefined) {
+					const t = typeof p.default;
+					if (t !== "string" && t !== "number" && t !== "boolean") {
+						addError(
+							details,
+							"INVALID_PARAM_DEFAULT",
+							`Parameter "${p.name ?? `"index ${i}`}" default must be a string, number, or boolean`,
+						);
+					}
+				}
+			}
+		}
+	}
+}
+
+function validateL2Compliance(code: string, details: ValidationDetail[]): void {
+	if (TEMP_REF_REGEX.test(code)) {
+		addError(details, "TEMP_REF_FOUND", "Command code contains temporary snapshot references (e.g., e1, e15)");
+	}
+	for (const keyword of BROWSER_KEYWORDS) {
+		// Simple word-boundary check to avoid false positives in substrings.
+		const regex = new RegExp(`\\b${keyword}\\b`);
+		if (regex.test(code)) {
+			addError(
+				details,
+				"BROWSER_CONNECTION_FORBIDDEN",
+				`Command code contains forbidden browser connection keyword: "${keyword}"`,
+			);
+		}
+	}
+	if (INLINE_IMPORT_REGEX.test(code)) {
+		addError(details, "INLINE_IMPORT_FORBIDDEN", "Command code contains inline dynamic import (`await import(...)`)");
+	}
+}
+
+function validateL3Contract(manifest: Record<string, unknown>, code: string, details: ValidationDetail[]): void {
+	const runtime = (manifest.runtime ?? "node") as string;
+
+	// Syntax check for JS-based runtimes.
+	const syntaxError = checkJsSyntax(code, runtime);
+	if (syntaxError) {
+		details.push(syntaxError);
+	}
+
+	if (runtime === "node") {
+		if (!EXPORT_DEFAULT_REGEX.test(code)) {
+			addError(details, "MISSING_EXPORT_DEFAULT", "Node runtime command must contain `export default`");
+		}
+	}
+
+	if (runtime === "playwright-cli") {
+		if (!code.includes(PARAMS_INJECT_MARKER)) {
+			addError(
+				details,
+				"MISSING_PARAMS_INJECT",
+				`Playwright-cli runtime command must contain "${PARAMS_INJECT_MARKER}"`,
+			);
+		}
+		if (/\bexport\b/.test(code) || /\bimport\b/.test(code)) {
+			addError(
+				details,
+				"MODULE_SYNTAX_IN_FUNCTION_BODY",
+				"Playwright-cli runtime command must not contain module keywords (`export` or `import`)",
+			);
+		}
+	}
+
+	// Parameter consistency check (warning level).
+	const parameters = manifest.parameters;
+	const declaredNames = new Set<string>();
+	if (Array.isArray(parameters)) {
+		for (const param of parameters) {
+			if (param && typeof param === "object" && typeof (param as Record<string, unknown>).name === "string") {
+				declaredNames.add((param as Record<string, unknown>).name as string);
+			}
+		}
+	}
+	const paramMatches = code.matchAll(PARAM_ACCESS_REGEX);
+	const usedNames = new Set<string>();
+	for (const match of paramMatches) {
+		usedNames.add(match[1]);
+	}
+	for (const name of usedNames) {
+		if (!declaredNames.has(name)) {
+			addWarning(
+				details,
+				"UNDECLARED_PARAM",
+				`Code accesses params.${name} but it is not declared in manifest.parameters`,
+			);
+		}
+	}
+}
+
+function validateAssets(hasReadme: boolean, hasContext: boolean, details: ValidationDetail[]): void {
+	if (!hasReadme) {
+		addWarning(details, "MISSING_README", "README.md is missing from the command package");
+	}
+	if (!hasContext) {
+		addWarning(details, "MISSING_CONTEXT", "context.md is missing from the command package");
+	}
+}
+
+export interface ValidateCommandPackageInput {
+	/** Raw parsed manifest (may be any JSON value). */
+	manifest: unknown;
+	/** Command source code as a string. */
+	code: string;
+	/** Whether README.md exists in the source directory. */
+	hasReadme: boolean;
+	/** Whether context.md exists in the source directory. */
+	hasContext: boolean;
+	/** Expected domain when validating for create/install. */
+	expectedDomain?: string;
+	/** Expected action when validating for create/install. */
+	expectedAction?: string;
+}
+
+/**
+ * Performs layered validation on a command package.
+ *
+ * L1: Structure validation (manifest shape, types, consistency).
+ * L2: Compliance validation (prohibited code patterns).
+ * L3: Contract validation (runtime-specific code requirements).
+ * Assets: Completeness warnings for README.md and context.md.
+ *
+ * Returns a flat array of validation details. Callers determine success/failure
+ * by checking for any "error"-level detail.
+ */
+export function validateCommandPackage(input: ValidateCommandPackageInput): ValidationDetail[] {
+	const details: ValidationDetail[] = [];
+
+	if (input.manifest === null || typeof input.manifest !== "object") {
+		addError(details, "INVALID_MANIFEST", "Manifest must be a non-null object");
+		return details;
+	}
+
+	const manifest = input.manifest as Record<string, unknown>;
+
+	validateL1Structure(manifest, details, input.expectedDomain, input.expectedAction);
+	validateL2Compliance(input.code, details);
+	validateL3Contract(manifest, input.code, details);
+	validateAssets(input.hasReadme, input.hasContext, details);
+
+	return details;
+}
