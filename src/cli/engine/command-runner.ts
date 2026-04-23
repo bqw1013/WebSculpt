@@ -13,10 +13,10 @@ const require = createRequire(import.meta.url);
 function buildParams(manifest: CommandManifest, args: Record<string, string>): Record<string, string> {
 	const params: Record<string, string> = {};
 	for (const param of manifest.parameters || []) {
-		const key = typeof param === "string" ? param : param.name;
+		const key = param.name;
 		if (args[key] !== undefined) {
 			params[key] = args[key];
-		} else if (typeof param === "object" && param.default !== undefined) {
+		} else if (param.default !== undefined) {
 			params[key] = String(param.default);
 		}
 	}

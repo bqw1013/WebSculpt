@@ -4,8 +4,9 @@ import { Command, Help } from "commander";
 import { appendLog } from "../infra/store.js";
 import { runCommand } from "./engine/command-runner.js";
 import { listAllCommands, type ResolvedCommand } from "./engine/registry.js";
-import { handleCommandCreate, handleCommandList, handleCommandRemove, handleCommandShow } from "./meta/command.js";
+import { handleCommandList, handleCommandRemove, handleCommandShow } from "./meta/command.js";
 import { handleConfigInit } from "./meta/config.js";
+import { handleCommandCreate } from "./meta/create.js";
 import { handleSkillInstall, handleSkillStatus, handleSkillUninstall } from "./meta/skill.js";
 import type { SkillUninstallResult } from "./output.js";
 import { printJson, renderOutput } from "./output.js";
@@ -106,13 +107,13 @@ async function main() {
 			renderOutput(await handleCommandList(), program.opts().format);
 		});
 	cmd.command("create <domain> <action>")
-		.description("Create a user command from a package file")
+		.description("Create a user command from a directory")
 		.requiredOption(
-			"--from-file <path>",
-			"Path to the command package JSON. Must contain 'manifest' and 'code'; may also contain 'readme' and 'context'.",
+			"--from-dir <path>",
+			"Path to the command source directory. Must contain manifest.json and the runtime-specific entry file.",
 		)
 		.option("--force", "Overwrite an existing command")
-		.action(async (domain: string, action: string, options: { fromFile: string; force?: boolean }) => {
+		.action(async (domain: string, action: string, options: { fromDir: string; force?: boolean }) => {
 			renderOutput(await handleCommandCreate(domain, action, options), program.opts().format);
 		});
 	cmd.command("show <domain> <action>")
@@ -208,17 +209,15 @@ async function main() {
 				.command(c.manifest.action)
 				.description(c.manifest.description || `${c.manifest.domain} ${c.manifest.action}`);
 			for (const param of c.manifest.parameters || []) {
-				const name = typeof param === "string" ? param : param.name;
-				const description = typeof param === "string" ? undefined : param.description;
+				const name = param.name;
+				const description = param.description;
 				const flags = `--${name} <value>`;
 				const actionOption = actionCmd.createOption(flags, description);
-				if (typeof param !== "string") {
-					if (param.required) {
-						actionOption.makeOptionMandatory();
-					}
-					if (param.default !== undefined) {
-						actionOption.default(String(param.default));
-					}
+				if (param.required) {
+					actionOption.makeOptionMandatory();
+				}
+				if (param.default !== undefined) {
+					actionOption.default(String(param.default));
 				}
 				actionCmd.addOption(actionOption);
 			}
@@ -226,7 +225,7 @@ async function main() {
 				const start = Date.now();
 				const args: Record<string, string> = {};
 				for (const param of c.manifest.parameters || []) {
-					const name = typeof param === "string" ? param : param.name;
+					const name = param.name;
 					if (options[name] !== undefined) {
 						args[name] = options[name];
 					}

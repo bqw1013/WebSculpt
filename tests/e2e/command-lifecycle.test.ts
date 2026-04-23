@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import type { CliRunResult } from "./helpers/cli";
@@ -10,13 +10,20 @@ import {
 	websculptPath,
 } from "./helpers/cli";
 
+interface CommandParameter {
+	name: string;
+	description?: string;
+	required?: boolean;
+	default?: string | number | boolean;
+}
+
 interface CommandManifest {
 	action: string;
 	description: string;
 	domain: string;
 	id: string;
-	parameters: string[];
-	runtime: "node";
+	parameters?: CommandParameter[];
+	runtime?: "node";
 }
 
 interface CommandPackageBody {
@@ -55,7 +62,7 @@ const notesSavePackage: CommandPackageBody = {
 		description: "Save a note",
 		domain: "notes",
 		id: "notes-save",
-		parameters: ["title"],
+		parameters: [{ name: "title", description: "Note title" }],
 		runtime: "node",
 	},
 };
@@ -84,30 +91,32 @@ const reservedSyncPackage: CommandPackageBody = {
 	},
 };
 
-async function writeCommandPackage(
+async function writeCommandDir(
 	homeDir: string,
-	fileName: string,
+	dirName: string,
 	packageBody: CommandPackageBody,
 ): Promise<string> {
-	const commandPackagePath = join(homeDir, fileName);
-	await writeFile(commandPackagePath, JSON.stringify(packageBody, null, 2), "utf8");
-	return commandPackagePath;
+	const commandDirPath = join(homeDir, dirName);
+	await mkdir(commandDirPath, { recursive: true });
+	await writeFile(join(commandDirPath, "manifest.json"), JSON.stringify(packageBody.manifest, null, 2), "utf8");
+	await writeFile(join(commandDirPath, "command.js"), packageBody.code, "utf8");
+	return commandDirPath;
 }
 
 async function registerUserCommand(
 	homeDir: string,
-	fileName: string,
+	dirName: string,
 	packageBody: CommandPackageBody,
 ): Promise<RegisteredUserCommand> {
-	const commandPackagePath = await writeCommandPackage(homeDir, fileName, packageBody);
+	const commandDirPath = await writeCommandDir(homeDir, dirName, packageBody);
 	const createResult = await runSourceCli(
 		[
 			"command",
 			"create",
 			packageBody.manifest.domain,
 			packageBody.manifest.action,
-			"--from-file",
-			commandPackagePath,
+			"--from-dir",
+			commandDirPath,
 			"--format",
 			"json",
 		],
@@ -191,13 +200,13 @@ describe("source CLI: command management", () => {
 			const homeDir = await createIsolatedHome();
 			tempDirs.push(homeDir);
 
-			const commandPackagePath = await writeCommandPackage(
+			const commandDirPath = await writeCommandDir(
 				homeDir,
-				"reserved-command-package.json",
+				"reserved-command-dir",
 				reservedSyncPackage,
 			);
 			const result = await runSourceCli(
-				["command", "create", "command", "sync", "--from-file", commandPackagePath, "--format", "json"],
+				["command", "create", "command", "sync", "--from-dir", commandDirPath, "--format", "json"],
 				homeDir,
 			);
 			const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
