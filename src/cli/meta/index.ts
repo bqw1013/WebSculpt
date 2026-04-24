@@ -30,9 +30,9 @@ export {
 export function registerMetaCommands(program: Command): void {
 	const format = (): "human" | "json" => program.opts().format;
 
-	const cmd = program.command("command").description("Manage commands");
+	const cmd = program.command("command").description("Manage extension command registry");
 	cmd.command("list")
-		.description("List all commands")
+		.description("List all extension commands")
 		.action(async () => {
 			renderOutput(await handleCommandList(), format());
 		});
@@ -55,7 +55,7 @@ export function registerMetaCommands(program: Command): void {
 			renderOutput(await handleCommandValidate(options.fromDir, domain, action), format());
 		});
 	cmd.command("show <domain> <action>")
-		.description("Show command details")
+		.description("Show extension command details")
 		.action(async (domain: string, action: string) => {
 			renderOutput(await handleCommandShow(domain, action), format());
 		});
@@ -80,14 +80,14 @@ export function registerMetaCommands(program: Command): void {
 			},
 		);
 
-	const cfg = program.command("config").description("Manage configuration");
+	const cfg = program.command("config").description("Initialize and manage CLI configuration");
 	cfg.command("init")
 		.description("Initialize ~/.websculpt with config.json and log.jsonl")
 		.action(async () => {
 			renderOutput(await handleConfigInit(), format());
 		});
 
-	const skill = program.command("skill").description("Manage the WebSculpt skill");
+	const skill = program.command("skill").description("Install strategy docs to AI agent directories");
 	skill
 		.command("install")
 		.description("Install the WebSculpt skill to agent directories")

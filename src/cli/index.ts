@@ -11,8 +11,8 @@ async function main() {
 	program
 		.name("websculpt")
 		.description(
-			"WebSculpt CLI - AI command cache layer\n\n" +
-				"Meta commands manage the system. Extension commands are user or AI-created business commands.",
+			"WebSculpt — AI harness for gathering web information. " +
+				"Extension commands are reusable data-collection workflows; meta commands manage the system.",
 		)
 		.version("0.0.1");
 	program.configureHelp({

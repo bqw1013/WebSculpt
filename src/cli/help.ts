@@ -47,6 +47,7 @@ export class WebSculptHelp extends Help {
 
 		if (builtinDomains.length > 0) {
 			out += "Built-in Domains:\n";
+			out += "  Default commands shipped with the project\n";
 			for (const c of builtinDomains) {
 				const term = helper.subcommandTerm(c);
 				out += `  ${this.formatItem(term, term.length + 2, helper.subcommandDescription(c), helper)}\n`;
@@ -56,6 +57,7 @@ export class WebSculptHelp extends Help {
 
 		if (userDomains.length > 0) {
 			out += "User Domains:\n";
+			out += "  Custom commands created by you or AI; override built-in\n";
 			for (const c of userDomains) {
 				const term = helper.subcommandTerm(c);
 				out += `  ${this.formatItem(term, term.length + 2, helper.subcommandDescription(c), helper)}\n`;
@@ -64,11 +66,13 @@ export class WebSculptHelp extends Help {
 		}
 
 		if (cmd.name() === "websculpt") {
-			out += "Notes:\n";
-			out += "  Meta commands manage the system (config, command registry, skill).\n";
-			out += "  Extension commands are user or AI-created business commands.\n";
-			out += "  Output defaults: meta commands -> human text, extension commands -> JSON.\n";
-			out += "  Command resolution: user > builtin > meta\n";
+			out += "Command types:\n";
+			out += "  Meta      Manage the CLI system (registry, config, agent skill docs)\n";
+			out += "  Builtin   Default commands shipped with the project\n";
+			out += "  User      Custom commands created by you or AI; override builtin\n";
+			out += "\n";
+			out += "Resolution: user > builtin > meta\n";
+			out += "Output:     meta -> human text, extension -> JSON\n";
 			out += "\n";
 		}
 
