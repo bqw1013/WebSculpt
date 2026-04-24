@@ -26,6 +26,7 @@ describe("draft output passes validateCommandPackage L1-L3", () => {
 		if (!result.success) return;
 
 		const manifest = JSON.parse(await readDraftFile(result.draftPath, "manifest.json"));
+		manifest.description = "A test command description";
 		const code = await readDraftFile(result.draftPath, "command.js");
 
 		const details = validateCommandPackage({
@@ -49,6 +50,7 @@ describe("draft output passes validateCommandPackage L1-L3", () => {
 		if (!result.success) return;
 
 		const manifest = JSON.parse(await readDraftFile(result.draftPath, "manifest.json"));
+		manifest.description = "A test command description";
 		const code = await readDraftFile(result.draftPath, "command.js");
 
 		const details = validateCommandPackage({
@@ -72,6 +74,7 @@ describe("draft output passes validateCommandPackage L1-L3", () => {
 		if (!result.success) return;
 
 		const manifest = JSON.parse(await readDraftFile(result.draftPath, "manifest.json"));
+		manifest.description = "A test command description";
 		const code = await readDraftFile(result.draftPath, "command.sh");
 
 		const details = validateCommandPackage({
@@ -95,6 +98,7 @@ describe("draft output passes validateCommandPackage L1-L3", () => {
 		if (!result.success) return;
 
 		const manifest = JSON.parse(await readDraftFile(result.draftPath, "manifest.json"));
+		manifest.description = "A test command description";
 		const code = await readDraftFile(result.draftPath, "command.py");
 
 		const details = validateCommandPackage({
@@ -119,6 +123,7 @@ describe("draft output passes validateCommandPackage L1-L3", () => {
 		if (!result.success) return;
 
 		const manifest = JSON.parse(await readDraftFile(result.draftPath, "manifest.json"));
+		manifest.description = "A test command description";
 		const code = await readDraftFile(result.draftPath, "command.js");
 
 		const details = validateCommandPackage({

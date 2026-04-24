@@ -13,7 +13,7 @@ export async function handleCommandList(): Promise<MetaCommandResult> {
 			action: c.manifest.action,
 			type: c.source,
 			id: c.manifest.id,
-			description: c.manifest.description || "-",
+			description: c.manifest.description,
 		})),
 	};
 }

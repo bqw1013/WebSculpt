@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, rm, writeFile } from "fs/promises";
+import { access, mkdir, rm, writeFile } from "fs/promises";
 import { join, resolve } from "path";
 import type { CommandParameter, CommandRuntime, ValidationDetail } from "../../types/index.js";
 import type { MetaCommandResult } from "../output.js";
@@ -261,6 +261,7 @@ export async function handleCommandDraft(
 		// Generate manifest (without identity fields)
 		const manifest: Record<string, unknown> = {
 			runtime,
+			description: "",
 			parameters: parameters.length > 0 ? parameters : [],
 		};
 
@@ -270,7 +271,7 @@ export async function handleCommandDraft(
 		const readme = generateReadmeTemplate(domain, action, runtime);
 		const context = generateContextTemplate(domain, action);
 
-		await writeFile(join(draftDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
+		await writeFile(join(draftDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 		await writeFile(join(draftDir, entryFile), commandCode);
 		await writeFile(join(draftDir, "README.md"), readme);
 		await writeFile(join(draftDir, "context.md"), context);

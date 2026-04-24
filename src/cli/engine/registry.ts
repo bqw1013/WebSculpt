@@ -94,7 +94,7 @@ export async function findCommandByHost(host: string): Promise<ResolvedCommand |
 			return (
 				c.manifest.domain.toLowerCase().includes(h) ||
 				c.manifest.id.toLowerCase().includes(h) ||
-				(c.manifest.description || "").toLowerCase().includes(h)
+				c.manifest.description.toLowerCase().includes(h)
 			);
 		}) || null
 	);

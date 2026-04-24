@@ -1,4 +1,4 @@
-import { access, readFile, rm } from "node:fs/promises";
+import { access, readFile, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -140,6 +140,12 @@ describe("command draft", () => {
 		}>(draftResult.stdout);
 		expect(draftResult.exitCode).toBe(0);
 		expect(draftPayload.success).toBe(true);
+
+		// Fill description before create, since draft generates an empty placeholder.
+		const manifestPath = join(draftPayload.draftPath, "manifest.json");
+		const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
+		manifest.description = "A test command description";
+		await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
 
 		const createResult = await runSourceCli(
 			[

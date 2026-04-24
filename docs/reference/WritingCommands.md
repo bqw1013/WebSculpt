@@ -202,6 +202,7 @@ async function (page) {
 - [ ] 错误消息中包含了预期的业务错误码（如 `[NOT_FOUND] ...`）
 - [ ] 返回值为可序列化的纯数据对象
 - [ ] 没有使用 `process`、`require`、文件读写等 Node.js API
+- [ ] `manifest.json` 中包含非空的 `description` 字段
 
 ---
 

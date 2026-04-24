@@ -14,7 +14,7 @@ export interface CommandManifest {
 	id: string;
 	domain: string;
 	action: string;
-	description?: string;
+	description: string;
 	parameters?: CommandParameter[];
 	/** Execution runtime. Defaults to "node" if omitted. */
 	runtime?: CommandRuntime;

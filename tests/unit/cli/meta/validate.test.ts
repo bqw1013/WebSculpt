@@ -24,6 +24,7 @@ describe("handleCommandValidate", () => {
 			id: "my-domain-my-action",
 			domain: "my-domain",
 			action: "my-action",
+			description: "Test command",
 			runtime: "node",
 		});
 		await writeCode(dir, "export default async function(params) { return {}; }");
@@ -37,7 +38,7 @@ describe("handleCommandValidate", () => {
 
 	it("returns warnings for missing identity fields when no domain/action given", async () => {
 		const dir = await createTempDir();
-		await writeManifest(dir, { runtime: "node" });
+		await writeManifest(dir, { runtime: "node", description: "Test command" });
 		await writeCode(dir, "export default async function(params) { return {}; }");
 		await writeFile(join(dir, "README.md"), "# Test", "utf-8");
 		await writeFile(join(dir, "context.md"), "Context", "utf-8");

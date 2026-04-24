@@ -7,6 +7,7 @@ function makeInput(overrides: Record<string, unknown> = {}) {
 			id: "test-domain-test-action",
 			domain: "test-domain",
 			action: "test-action",
+			description: "Test description",
 			runtime: "node",
 			parameters: [],
 			...overrides.manifest,
@@ -90,6 +91,27 @@ describe("validateCommandPackage", () => {
 			);
 			expect(details).toContainEqual(
 				expect.objectContaining({ code: "MISSING_IDENTITY_FIELDS", level: "warning" }),
+			);
+		});
+
+		it("errors on missing description", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { description: undefined } }));
+			expect(details).toContainEqual(
+				expect.objectContaining({ code: "MISSING_DESCRIPTION", level: "error" }),
+			);
+		});
+
+		it("errors on empty description", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { description: "" } }));
+			expect(details).toContainEqual(
+				expect.objectContaining({ code: "MISSING_DESCRIPTION", level: "error" }),
+			);
+		});
+
+		it("errors on whitespace-only description", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { description: "   " } }));
+			expect(details).toContainEqual(
+				expect.objectContaining({ code: "MISSING_DESCRIPTION", level: "error" }),
 			);
 		});
 

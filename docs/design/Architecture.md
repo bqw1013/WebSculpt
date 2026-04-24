@@ -188,7 +188,8 @@ CLI 不只是命令的发现、执行与管理入口，更是 Agent 将过去任
 
 一个扩展命令（无论是 Builtin 还是 User）由两部分组成：
 
-- `manifest.json`：描述命令的元数据（id、domain、action、参数列表、runtime 等）
+- `manifest.json`：描述命令的元数据（id、domain、action、description、参数列表、runtime 等）
+  - `description` 为必填字段，不能为空字符串或仅含空白字符
 - `command.js`：命令的实际执行逻辑，默认导出一个异步函数
 
 目录结构：

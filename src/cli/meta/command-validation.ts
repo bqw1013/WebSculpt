@@ -97,6 +97,11 @@ function validateL1Structure(
 		}
 	}
 
+	// Description validation
+	if (typeof manifest.description !== "string" || manifest.description.trim().length === 0) {
+		addError(details, "MISSING_DESCRIPTION", "Manifest 'description' must be a non-empty string");
+	}
+
 	// Parameter validation
 	const parameters = manifest.parameters;
 	if (parameters !== undefined) {

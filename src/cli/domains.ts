@@ -40,9 +40,7 @@ export async function registerDomainCommands(program: Command): Promise<void> {
 		}
 
 		for (const c of actionMap.values()) {
-			const actionCmd = domainCmd
-				.command(c.manifest.action)
-				.description(c.manifest.description || `${c.manifest.domain} ${c.manifest.action}`);
+			const actionCmd = domainCmd.command(c.manifest.action).description(c.manifest.description);
 			for (const param of c.manifest.parameters || []) {
 				const name = param.name;
 				const description = param.description;
