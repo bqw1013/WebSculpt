@@ -179,7 +179,12 @@ TODO: add any additional context, design notes, or implementation guidance here.
 `;
 }
 
-function generateNextSteps(domain: string, action: string, draftPath: string, runtime: string): DraftResult["nextSteps"] {
+function generateNextSteps(
+	domain: string,
+	action: string,
+	draftPath: string,
+	runtime: string,
+): DraftResult["nextSteps"] {
 	const steps: DraftResult["nextSteps"] = [
 		{ action: "Edit the command entry file to implement your logic", file: resolveEntryFile(runtime) },
 		{ action: "Update manifest.json with description and any additional metadata", file: "manifest.json" },
@@ -227,9 +232,7 @@ export async function handleCommandDraft(
 				? (options.runtime as CommandRuntime)
 				: "node";
 
-		const draftDir = options.to
-			? resolve(options.to)
-			: resolve(".websculpt-drafts", `${domain}-${action}`);
+		const draftDir = options.to ? resolve(options.to) : resolve(".websculpt-drafts", `${domain}-${action}`);
 
 		// Check if directory already exists
 		try {

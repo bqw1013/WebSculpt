@@ -4,8 +4,8 @@ import { renderOutput } from "../output.js";
 import { handleCommandList, handleCommandRemove, handleCommandShow } from "./command.js";
 import { handleConfigInit } from "./config.js";
 import { handleCommandCreate } from "./create.js";
-import { handleSkillInstall, handleSkillStatus, handleSkillUninstall } from "./skill.js";
 import { handleCommandDraft } from "./draft.js";
+import { handleSkillInstall, handleSkillStatus, handleSkillUninstall } from "./skill.js";
 import { handleCommandValidate } from "./validate.js";
 
 function collectOption(value: string, previous: string[]): string[] {
@@ -70,9 +70,15 @@ export function registerMetaCommands(program: Command): void {
 		.option("--to <path>", "Custom output directory")
 		.option("--param <spec>", "Declare a parameter (repeatable)", collectOption, [])
 		.option("--force", "Overwrite existing draft directory")
-		.action(async (domain: string, action: string, options: { runtime?: string; to?: string; param: string[]; force?: boolean }) => {
-			renderOutput(await handleCommandDraft(domain, action, options), format());
-		});
+		.action(
+			async (
+				domain: string,
+				action: string,
+				options: { runtime?: string; to?: string; param: string[]; force?: boolean },
+			) => {
+				renderOutput(await handleCommandDraft(domain, action, options), format());
+			},
+		);
 
 	const cfg = program.command("config").description("Manage configuration");
 	cfg.command("init")
