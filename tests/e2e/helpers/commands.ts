@@ -45,6 +45,17 @@ export interface CommandRemoveResult {
 	success: boolean;
 }
 
+export interface RegistryIndex {
+	formatVersion: number;
+	appVersion: string;
+	generatedAt: string;
+	commands: Array<{
+		manifest: CommandManifest;
+		source: "user" | "builtin";
+		runtime: string;
+	}>;
+}
+
 export interface RegisteredUserCommand {
 	createPayload: CommandCreateResult;
 	createResult: CliRunResult;

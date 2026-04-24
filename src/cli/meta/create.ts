@@ -2,7 +2,7 @@ import { access, copyFile, mkdir, readFile, rm, writeFile } from "fs/promises";
 import { join } from "path";
 import { USER_COMMANDS_DIR } from "../../infra/paths.js";
 import type { CommandManifest } from "../../types/index.js";
-import { RESERVED_DOMAINS } from "../engine/registry.js";
+import { RESERVED_DOMAINS, rebuildIndex } from "../engine/registry.js";
 import type { MetaCommandResult } from "../output.js";
 import { validateCommandPackage } from "./command-validation.js";
 
@@ -172,6 +172,12 @@ export async function handleCommandCreate(
 
 		if (warnings.length > 0) {
 			(result as unknown as Record<string, unknown>).warnings = warnings;
+		}
+
+		try {
+			await rebuildIndex();
+		} catch {
+			// Silent failure: next startup will rebuild the index.
 		}
 
 		return result;

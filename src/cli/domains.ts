@@ -15,8 +15,8 @@ declare module "commander" {
  * program, maps manifest parameters to CLI options, and wires action execution
  * through the executor.
  */
-export async function registerDomainCommands(program: Command): Promise<void> {
-	const commands = await listAllCommands();
+export function registerDomainCommands(program: Command): void {
+	const commands = listAllCommands();
 	const domainMap = new Map<string, ResolvedCommand[]>();
 	for (const c of commands) {
 		const list = domainMap.get(c.manifest.domain) ?? [];

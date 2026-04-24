@@ -1,6 +1,7 @@
-import { access, readdir, readFile } from "fs/promises";
-import { join } from "path";
-import { USER_COMMANDS_DIR } from "../../infra/paths.js";
+import { access, readdir, readFile, writeFile } from "fs/promises";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { USER_COMMANDS_DIR, WEBSCULPT_DIR } from "../../infra/paths.js";
 import type { CommandManifest } from "../../types/index.js";
 import { getBuiltinCommandsDir } from "./paths.js";
 
@@ -17,6 +18,23 @@ export interface ResolvedCommand {
 	runtime: string;
 }
 
+/** Shape of the persistent registry index file. */
+export interface RegistryIndex {
+	formatVersion: number;
+	appVersion: string;
+	generatedAt: string;
+	commands: Array<{
+		manifest: CommandManifest;
+		source: "user" | "builtin";
+		runtime: string;
+	}>;
+}
+
+/** Path to the persistent registry index file. */
+export const INDEX_PATH = join(WEBSCULPT_DIR, "registry-index.json");
+
+let cachedCommands: ResolvedCommand[] | null = null;
+
 function resolveEntryFile(runtime: string | undefined): string {
 	switch (runtime) {
 		case "shell":
@@ -26,6 +44,14 @@ function resolveEntryFile(runtime: string | undefined): string {
 		default:
 			return "command.js";
 	}
+}
+
+async function getAppVersion(): Promise<string> {
+	const __filename = fileURLToPath(import.meta.url);
+	const projectRoot = dirname(dirname(dirname(dirname(__filename))));
+	const pkgRaw = await readFile(join(projectRoot, "package.json"), "utf-8");
+	const pkg = JSON.parse(pkgRaw) as { version: string };
+	return pkg.version;
 }
 
 async function scanCommands(baseDir: string, source: "user" | "builtin"): Promise<ResolvedCommand[]> {
@@ -61,39 +87,128 @@ async function scanCommands(baseDir: string, source: "user" | "builtin"): Promis
 	return results;
 }
 
-/**
- * Finds a single command by domain and action.
- * User commands are scanned first so they can override built-ins.
- */
-export async function findCommand(domain: string, action: string): Promise<ResolvedCommand | null> {
-	const userCommands = await scanCommands(USER_COMMANDS_DIR, "user");
-	const userHit = userCommands.find((c) => c.manifest.domain === domain && c.manifest.action === action);
-	if (userHit) return userHit;
-
-	const builtinDir = getBuiltinCommandsDir();
-	const builtinCommands = await scanCommands(builtinDir, "builtin");
-	const builtinHit = builtinCommands.find((c) => c.manifest.domain === domain && c.manifest.action === action);
-	if (builtinHit) return builtinHit;
-
-	return null;
-}
-
-/** Returns all available commands, with user commands ordered before built-ins. */
-export async function listAllCommands(): Promise<ResolvedCommand[]> {
+/** Scans both user and builtin directories and returns resolved commands. */
+export async function scanAllCommands(): Promise<ResolvedCommand[]> {
 	const userCommands = await scanCommands(USER_COMMANDS_DIR, "user");
 	const builtinDir = getBuiltinCommandsDir();
 	const builtinCommands = await scanCommands(builtinDir, "builtin");
 	return [...userCommands, ...builtinCommands];
 }
 
+/** Derives a ResolvedCommand from an index entry by computing commandPath at runtime. */
+export function toResolvedCommand(entry: {
+	manifest: CommandManifest;
+	source: "user" | "builtin";
+	runtime: string;
+}): ResolvedCommand {
+	const baseDir = entry.source === "user" ? USER_COMMANDS_DIR : getBuiltinCommandsDir();
+	const actionPath = join(baseDir, entry.manifest.domain, entry.manifest.action);
+	const entryFile = resolveEntryFile(entry.runtime);
+	const commandPath = join(actionPath, entryFile);
+	return {
+		manifest: entry.manifest,
+		commandPath,
+		source: entry.source,
+		runtime: entry.runtime,
+	};
+}
+
+/** Reads and validates the index file, returning null on any error. */
+export async function readIndex(): Promise<RegistryIndex | null> {
+	try {
+		const raw = await readFile(INDEX_PATH, "utf-8");
+		const parsed = JSON.parse(raw) as unknown;
+		if (
+			typeof parsed === "object" &&
+			parsed !== null &&
+			"formatVersion" in parsed &&
+			"appVersion" in parsed &&
+			"generatedAt" in parsed &&
+			"commands" in parsed &&
+			Array.isArray((parsed as RegistryIndex).commands)
+		) {
+			return parsed as RegistryIndex;
+		}
+		return null;
+	} catch {
+		return null;
+	}
+}
+
+/** Scans all commands, serializes to RegistryIndex, and writes to INDEX_PATH. */
+export async function rebuildIndex(): Promise<void> {
+	const commands = await scanAllCommands();
+	const appVersion = await getAppVersion();
+	const index: RegistryIndex = {
+		formatVersion: 1,
+		appVersion,
+		generatedAt: new Date().toISOString(),
+		commands: commands.map((c) => ({
+			manifest: c.manifest,
+			source: c.source,
+			runtime: c.runtime,
+		})),
+	};
+	await writeFile(INDEX_PATH, JSON.stringify(index, null, 2), "utf-8");
+}
+
 /**
- * Attempts to find a command that matches a given host string.
+ * Loads the registry from the index (or rebuilds if missing/corrupted/stale)
+ * and populates the in-memory cache.
+ */
+export async function loadRegistry(): Promise<void> {
+	const appVersion = await getAppVersion();
+	const index = await readIndex();
+	if (index && index.appVersion === appVersion) {
+		cachedCommands = index.commands.map(toResolvedCommand);
+	} else {
+		const commands = await scanAllCommands();
+		cachedCommands = commands;
+		await rebuildIndex();
+	}
+}
+
+/** Clears the in-memory registry cache. */
+export function clearRegistryCache(): void {
+	cachedCommands = null;
+}
+
+/** Returns all available commands from the in-memory cache. */
+export function listAllCommands(): ResolvedCommand[] {
+	if (!cachedCommands) {
+		throw new Error("Registry not loaded. Call loadRegistry() first.");
+	}
+	return [...cachedCommands];
+}
+
+/**
+ * Finds a single command by domain and action from the in-memory cache.
+ * User commands take precedence over built-ins.
+ */
+export function findCommand(domain: string, action: string): ResolvedCommand | null {
+	if (!cachedCommands) {
+		throw new Error("Registry not loaded. Call loadRegistry() first.");
+	}
+	const userHit = cachedCommands.find(
+		(c) => c.manifest.domain === domain && c.manifest.action === action && c.source === "user",
+	);
+	if (userHit) return userHit;
+	const builtinHit = cachedCommands.find(
+		(c) => c.manifest.domain === domain && c.manifest.action === action && c.source === "builtin",
+	);
+	return builtinHit || null;
+}
+
+/**
+ * Attempts to find a command that matches a given host string from the in-memory cache.
  * Uses a naive substring heuristic.
  */
-export async function findCommandByHost(host: string): Promise<ResolvedCommand | null> {
-	const all = await listAllCommands();
+export function findCommandByHost(host: string): ResolvedCommand | null {
+	if (!cachedCommands) {
+		throw new Error("Registry not loaded. Call loadRegistry() first.");
+	}
 	return (
-		all.find((c) => {
+		cachedCommands.find((c) => {
 			const h = host.toLowerCase();
 			return (
 				c.manifest.domain.toLowerCase().includes(h) ||

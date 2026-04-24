@@ -184,6 +184,10 @@ CLI 不只是命令的发现、执行与管理入口，更是 Agent 将过去任
 
 关键规则：Meta 命令的保留词不会被 User 或 Builtin 覆盖；User 与 Builtin 的冲突以 User 为准。
 
+**Registry Index**
+
+CLI 启动时从 `~/.websculpt/registry-index.json` 加载命令清单，而非每次扫描目录树。Index 在首次启动、版本升级、`command create` 或 `command remove` 后自动重建；损坏或版本不匹配的 index 会被静默重建。所有运行时查询（`listAllCommands`、`findCommand`、`findCommandByHost`）均从内存缓存中同步读取。
+
 ### 5.3 命令资产格式
 
 一个扩展命令（无论是 Builtin 还是 User）由两部分组成：
@@ -296,7 +300,8 @@ WebSculpt/
 ~/.websculpt/
 ├── commands/                # User-defined extension commands
 ├── config.json              # User configuration
-└── log.jsonl                # Execution log
+├── log.jsonl                # Execution log
+└── registry-index.json      # Persistent registry index (cached command manifests)
 ```
 
 ### 7.3 关键代码路径

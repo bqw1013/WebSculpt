@@ -1,11 +1,11 @@
 import { readdir, rm, rmdir } from "fs/promises";
 import { dirname } from "path";
-import { findCommand, listAllCommands } from "../engine/registry.js";
+import { findCommand, listAllCommands, rebuildIndex } from "../engine/registry.js";
 import type { MetaCommandResult } from "../output.js";
 
 /** Lists all registered commands and returns them as a normalized result. */
-export async function handleCommandList(): Promise<MetaCommandResult> {
-	const commands = await listAllCommands();
+export function handleCommandList(): MetaCommandResult {
+	const commands = listAllCommands();
 	return {
 		success: true,
 		commands: commands.map((c) => ({
@@ -32,7 +32,7 @@ export async function handleCommandShow(_domain: string, _action: string): Promi
 /** Removes a user-defined command and returns a normalized result. */
 export async function handleCommandRemove(domain: string, action: string): Promise<MetaCommandResult> {
 	try {
-		const resolved = await findCommand(domain, action);
+		const resolved = findCommand(domain, action);
 		if (!resolved) {
 			return {
 				success: false,
@@ -67,6 +67,8 @@ export async function handleCommandRemove(domain: string, action: string): Promi
 		} catch {
 			// Swallow cleanup errors; the command itself was successfully removed.
 		}
+
+		await rebuildIndex();
 
 		return {
 			success: true,

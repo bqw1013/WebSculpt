@@ -5,9 +5,11 @@ import {
 	notesDeletePackage,
 	notesSavePackage,
 	registerUserCommand,
+	RegistryIndex,
 	writeCommandDir,
 } from "./helpers/commands";
-import { createIsolatedHome, parseJsonOutput, removeTempDir, runSourceCli } from "./helpers/cli";
+import { createIsolatedHome, parseJsonOutput, readJsonFile, removeTempDir, runSourceCli, websculptPath } from "./helpers/cli";
+import { writeFile } from "node:fs/promises";
 
 describe("command registry", () => {
 	const tempDirs: string[] = [];
@@ -210,6 +212,103 @@ describe("command registry", () => {
 					code: "CANNOT_REMOVE_BUILTIN",
 				}),
 			);
+		});
+	});
+
+	describe("registry index", () => {
+		it("generates the index on first CLI invocation", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const result = await runSourceCli(["command", "list"], homeDir);
+			expect(result.exitCode).toBe(0);
+
+			const index = await readJsonFile<RegistryIndex>(websculptPath(homeDir, "registry-index.json"));
+			expect(index.formatVersion).toBe(1);
+			expect(index.appVersion).toMatch(/^\d+\.\d+\.\d+/);
+			expect(index.generatedAt).toBeTruthy();
+			expect(index.commands.length).toBeGreaterThan(0);
+			expect(index.commands.some((c) => c.source === "builtin")).toBe(true);
+		});
+
+		it("reuses an existing valid index on subsequent invocations", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			await runSourceCli(["command", "list"], homeDir);
+			const firstIndex = await readJsonFile<RegistryIndex>(websculptPath(homeDir, "registry-index.json"));
+
+			await runSourceCli(["command", "list"], homeDir);
+			const secondIndex = await readJsonFile<RegistryIndex>(websculptPath(homeDir, "registry-index.json"));
+
+			expect(secondIndex.generatedAt).toBe(firstIndex.generatedAt);
+			expect(secondIndex.commands.length).toBe(firstIndex.commands.length);
+		});
+
+		it("rebuilds the index after command create", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			await runSourceCli(["command", "list"], homeDir);
+			const beforeIndex = await readJsonFile<RegistryIndex>(websculptPath(homeDir, "registry-index.json"));
+
+			const { createResult } = await registerUserCommand(homeDir, "note-save-package", notesSavePackage);
+			expect(createResult.exitCode).toBe(0);
+
+			const afterIndex = await readJsonFile<RegistryIndex>(websculptPath(homeDir, "registry-index.json"));
+			expect(afterIndex.generatedAt).not.toBe(beforeIndex.generatedAt);
+			expect(afterIndex.commands.some((c) => c.manifest.domain === "notes" && c.manifest.action === "save")).toBe(true);
+		});
+
+		it("rebuilds the index after command remove", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const { createResult } = await registerUserCommand(homeDir, "note-delete-package", notesDeletePackage);
+			expect(createResult.exitCode).toBe(0);
+
+			await runSourceCli(["command", "list"], homeDir);
+			const beforeIndex = await readJsonFile<RegistryIndex>(websculptPath(homeDir, "registry-index.json"));
+			expect(beforeIndex.commands.some((c) => c.manifest.domain === "notes" && c.manifest.action === "delete")).toBe(true);
+
+			await runSourceCli(["command", "remove", "notes", "delete"], homeDir);
+			const afterIndex = await readJsonFile<RegistryIndex>(websculptPath(homeDir, "registry-index.json"));
+			expect(afterIndex.generatedAt).not.toBe(beforeIndex.generatedAt);
+			expect(afterIndex.commands.some((c) => c.manifest.domain === "notes" && c.manifest.action === "delete")).toBe(false);
+		});
+
+		it("recovers a corrupted index by full rescan", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			await runSourceCli(["command", "list"], homeDir);
+			const indexPath = websculptPath(homeDir, "registry-index.json");
+			await writeFile(indexPath, "not-json-at-all", "utf8");
+
+			const result = await runSourceCli(["command", "list"], homeDir);
+			expect(result.exitCode).toBe(0);
+
+			const index = await readJsonFile<RegistryIndex>(indexPath);
+			expect(index.formatVersion).toBe(1);
+			expect(index.commands.length).toBeGreaterThan(0);
+		});
+
+		it("rebuilds the index when appVersion is stale", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			await runSourceCli(["command", "list"], homeDir);
+			const indexPath = websculptPath(homeDir, "registry-index.json");
+			const beforeIndex = await readJsonFile<RegistryIndex>(indexPath);
+			beforeIndex.appVersion = "0.0.0-stale";
+			await writeFile(indexPath, JSON.stringify(beforeIndex), "utf8");
+
+			const result = await runSourceCli(["command", "list"], homeDir);
+			expect(result.exitCode).toBe(0);
+
+			const afterIndex = await readJsonFile<RegistryIndex>(indexPath);
+			expect(afterIndex.appVersion).not.toBe("0.0.0-stale");
+			expect(afterIndex.generatedAt).not.toBe(beforeIndex.generatedAt);
 		});
 	});
 });
