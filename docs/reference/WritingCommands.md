@@ -104,6 +104,11 @@ throw error;
 - **可用**：标准 JavaScript 内置对象（`JSON`、`Math`、`Date`、`RegExp` 等）和 Playwright API（通过 `page` 参数）。
 - **不要**尝试读写本地文件系统。
 
+**运行前依赖**
+
+- `playwright-cli` 命令需要浏览器环境（CDP 连接）。如果用户未开启远程调试，`command-runner.ts` 会返回 `PLAYWRIGHT_CLI_ATTACH_REQUIRED` 结构化错误。
+- 用户完成设置后，再次调用命令即可继续测试，无需重新创建命令。
+
 ---
 
 ## 6. 完整示例
@@ -192,7 +197,48 @@ async function (page) {
 
 ---
 
-## 7. 快速检查清单
+## 7. 命令资产文档规范
+
+命令包除 `manifest.json` 和 `command.js` 外，还应包含以下两份文档。
+
+### `README.md`
+
+**读者**：命令调用者（消费侧）
+
+**回答的问题**："这个命令怎么用？"
+
+**必须包含**：
+- 一句话用途
+- 参数表（name、required、default、description）
+- 返回值结构说明
+- 至少一个 `websculpt <domain> <action>` 调用示例
+- 常见业务错误码
+
+**绝不包含**：DOM 选择器、API 端点、反爬策略、失效预测。
+
+### `context.md`
+
+**读者**：命令修复者（维护侧）
+
+**回答的问题**："这个命令为什么这样实现？坏了怎么修？"
+
+**建议章节**：
+- `## 沉淀背景`：何时、为何沉淀
+- `## 页面结构/数据源特征`：关键 URL、选择器、交互序列
+- `## 环境依赖`：登录态、浏览器配置、反爬策略
+- `## 失效信号`：页面变化时的表现（如选择器返回 null、抛出 `DRIFT_DETECTED`）
+- `## 修复线索`：备用方案、替代入口
+
+**绝不包含**：参数用法说明、通用建议。
+
+### 职责红线
+
+- `README.md` 中绝不出现 CSS 选择器或 DOM 路径
+- `context.md` 中绝不出现参数用法或调用示例
+
+---
+
+## 8. 快速检查清单
 
 在提交 `command.js` 前，确认以下事项：
 
@@ -202,11 +248,11 @@ async function (page) {
 - [ ] 错误消息中包含了预期的业务错误码（如 `[NOT_FOUND] ...`）
 - [ ] 返回值为可序列化的纯数据对象
 - [ ] 没有使用 `process`、`require`、文件读写等 Node.js API
-- [ ] `manifest.json` 中包含非空的 `description` 字段
+- [ ] `manifest.json` 中包含非空的 `description` 字段（必填，不能为空字符串或仅含空白字符）
 
 ---
 
-## 8. Runner 侧错误码（供参考）
+## 9. Runner 侧错误码（供参考）
 
 以下错误码由 runner 自动生成，**不需要**在 `command.js` 中抛出：
 

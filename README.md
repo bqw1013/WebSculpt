@@ -22,7 +22,6 @@ npx websculpt command list
 | `docs/design/Design.md` | 想了解设计理念与长期方向的人 | Harness 工程、确定性 vs 概率性、AI 的三种系统角色、控制流 |
 | `docs/design/Architecture.md` | 想了解系统组织与代码路径的人 | 各层职责、运行时契约、目录规划 |
 | `docs/reference/CLI.md` | 想了解命令体系与使用方式的人 | 命令分类、查找优先级、元命令卡片、参数与输出契约 |
-| `docs/design/CompileDesign.md` | 开发者 / Agent | compile 层设计目标、校验分层、待决事项 |
 | `docs/project/KnownIssues.md` | 贡献者 / Agent | 当前实现与设计理想之间的已知偏差 |
 | `skills/websculpt/` | Agent / AI | Skill 交付物（`SKILL.md` + `references/`），面向 Codex/Claude Code 等 agent |
 | `tests/README.md` | 想写代码或测试的人 | 测试分层与组织原则 |

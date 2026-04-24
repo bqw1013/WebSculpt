@@ -80,3 +80,35 @@ assets:
 
 实现时直接替换 `src/cli/meta/command.ts` 中的 `handleCommandShow` 占位逻辑。
 
+---
+
+## 2. `command create` 缺少审计记录
+
+**描述**
+
+当前 `command create` 成功落盘或覆盖命令时，没有留下审计记录。命令库的变更历史（谁/何时创建了哪个命令、是否覆盖）完全不可追溯。
+
+**影响**
+
+中低。不阻塞功能使用，但在命令库规模扩大或多人协作时，无法排查变更来源。
+
+**计划修复方案**
+
+在 `handleCommandCreate` 落盘成功后，向 `~/.websculpt/log.jsonl` 或独立的审计文件中追加创建/覆盖事件记录，包含时间戳、domain、action、来源路径、是否为覆盖操作。
+
+---
+
+## 3. `outputSchema` 字段已移除，待重新设计
+
+**描述**
+
+`outputSchema` 字段已于 2026-04-23 从 `CommandManifest` 中移除。当前没有任何代码消费输出 schema 校验，命令返回值结构由 AI 自行保证。
+
+**影响**
+
+低。不影响当前功能；但缺少 schema 校验意味着 AI 无法通过机器校验确认命令输出结构是否符合预期契约。
+
+**计划修复方案**
+
+待讨论。如有 schema 校验需求，需重新设计 `outputSchema` 字段的结构（是否采用 JSON Schema、是否仅作文档、是否参与 L1 校验），并集成到 `command-validation.ts` 中。
+
