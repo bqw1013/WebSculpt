@@ -1,9 +1,9 @@
 import { access, mkdir, rm, writeFile } from "fs/promises";
 import { join, resolve } from "path";
 import type { CommandParameter, CommandRuntime, ValidationDetail } from "../../types/index.js";
+import { RESERVED_DOMAINS } from "../engine/registry.js";
 import type { MetaCommandResult } from "../output.js";
 
-const RESERVED_DOMAINS = new Set(["command", "config"]);
 const VALID_RUNTIMES: CommandRuntime[] = ["node", "playwright-cli", "shell", "python"];
 
 export interface DraftOptions {

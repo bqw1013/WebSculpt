@@ -4,6 +4,9 @@ import { USER_COMMANDS_DIR } from "../../infra/paths.js";
 import type { CommandManifest } from "../../types/index.js";
 import { getBuiltinCommandsDir } from "./paths.js";
 
+/** Domains reserved for meta commands; user-defined commands in these domains are ignored. */
+export const RESERVED_DOMAINS = new Set(["command", "config"]);
+
 /** A command that has been resolved to an on-disk module and its origin. */
 export interface ResolvedCommand {
 	manifest: CommandManifest;
@@ -31,6 +34,7 @@ async function scanCommands(baseDir: string, source: "user" | "builtin"): Promis
 		const domainDirs = await readdir(baseDir, { withFileTypes: true });
 		for (const domainDir of domainDirs) {
 			if (!domainDir.isDirectory()) continue;
+			if (RESERVED_DOMAINS.has(domainDir.name)) continue;
 			const domainPath = join(baseDir, domainDir.name);
 			const actionDirs = await readdir(domainPath, { withFileTypes: true });
 			for (const actionDir of actionDirs) {
