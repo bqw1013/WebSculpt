@@ -158,6 +158,13 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 
 	if ("path" in result) {
 		console.log(`Created command ${result.command} at ${result.path}`);
+		if (result.warnings && result.warnings.length > 0) {
+			console.log("");
+			console.log("Warnings:");
+			for (const w of result.warnings) {
+				console.log(`  [WARNING] ${w.code}: ${w.message}`);
+			}
+		}
 		return;
 	}
 

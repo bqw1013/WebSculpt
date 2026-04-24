@@ -112,3 +112,5 @@ assets:
 
 待讨论。如有 schema 校验需求，需重新设计 `outputSchema` 字段的结构（是否采用 JSON Schema、是否仅作文档、是否参与 L1 校验），并集成到 `command-validation.ts` 中。
 
+
+

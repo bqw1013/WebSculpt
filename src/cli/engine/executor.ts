@@ -50,7 +50,8 @@ export async function executeCommand(
 		return result;
 	} catch (err: unknown) {
 		const message = err instanceof Error ? err.message : String(err);
-		const code = err instanceof Error && "code" in err && typeof err.code === "string" ? err.code : "EXECUTION_ERROR";
+		const code =
+			err instanceof Error && "code" in err && typeof err.code === "string" ? err.code : "COMMAND_EXECUTION_ERROR";
 		const result: ExecutionFailure = {
 			success: false,
 			command,

@@ -3,7 +3,7 @@ import type { ValidationDetail } from "../../types/index.js";
 const VALID_RUNTIMES = new Set<string>(["node", "shell", "python", "playwright-cli"]);
 
 const TEMP_REF_REGEX = /\be\d+\b/g;
-const BROWSER_KEYWORDS = ["launch", "connect", "connectOverCDP", "newBrowser"];
+const BROWSER_KEYWORDS = ["launch", "connect", "connectOverCDP", "newBrowser", "chrome-remote-interface"];
 const INLINE_IMPORT_REGEX = /await\s+import\s*\(/;
 const EXPORT_DEFAULT_REGEX = /export\s+default/;
 const PARAMS_INJECT_MARKER = "/* PARAMS_INJECT */";

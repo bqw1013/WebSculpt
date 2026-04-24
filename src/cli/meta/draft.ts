@@ -78,17 +78,13 @@ function resolveEntryFile(runtime: string): string {
 
 function generateNodeTemplate(params: ParsedParam[]): string {
 	const paramLines = params.map((p) => {
-		if (p.default !== undefined) {
-			if (typeof p.default === "number") {
-				return `\tconst ${p.name} = parseInt(params.${p.name}, 10);`;
-			}
-			return `\tconst ${p.name} = params.${p.name} ?? ${JSON.stringify(p.default)};`;
+		if (p.default !== undefined && typeof p.default === "number") {
+			return `\tconst ${p.name} = parseInt(params.${p.name}, 10);`;
 		}
 		return `\tconst ${p.name} = params.${p.name};`;
 	});
 
 	return `export default async function(params) {
-	/* PARAMS_INJECT */
 ${paramLines.join("\n")}
 	// TODO: implement command logic
 	return { ok: true };
@@ -98,11 +94,8 @@ ${paramLines.join("\n")}
 
 function generatePlaywrightCliTemplate(params: ParsedParam[]): string {
 	const paramLines = params.map((p) => {
-		if (p.default !== undefined) {
-			if (typeof p.default === "number") {
-				return `\tconst ${p.name} = parseInt(params.${p.name}, 10);`;
-			}
-			return `\tconst ${p.name} = params.${p.name} ?? ${JSON.stringify(p.default)};`;
+		if (p.default !== undefined && typeof p.default === "number") {
+			return `\tconst ${p.name} = parseInt(params.${p.name}, 10);`;
 		}
 		return `\tconst ${p.name} = params.${p.name};`;
 	});
