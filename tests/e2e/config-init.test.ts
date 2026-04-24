@@ -2,7 +2,7 @@ import { readdir } from "node:fs/promises";
 import { afterEach, describe, expect, it } from "vitest";
 import { createIsolatedHome, readJsonFile, removeTempDir, runSourceCli, websculptPath } from "./helpers/cli";
 
-describe("source CLI: config init", () => {
+describe("source CLI: config init and lazy initialization", () => {
 	const tempDirs: string[] = [];
 
 	afterEach(async () => {
@@ -18,6 +18,26 @@ describe("source CLI: config init", () => {
 		expect(result.exitCode).toBe(0);
 		expect(result.stderr).toBe("");
 		expect(result.stdout).toContain("WebSculpt initialized.");
+
+		const config = await readJsonFile<{ version: string }>(websculptPath(homeDir, "config.json"));
+		const commandEntries = await readdir(websculptPath(homeDir, "commands"));
+
+		expect(config).toEqual(
+			expect.objectContaining({
+				version: "1",
+			}),
+		);
+		expect(commandEntries).toEqual([]);
+	});
+
+	it("lazily initializes the home on the first CLI invocation", async () => {
+		const homeDir = await createIsolatedHome();
+		tempDirs.push(homeDir);
+
+		const result = await runSourceCli(["command", "list"], homeDir);
+
+		expect(result.exitCode).toBe(0);
+		expect(result.stderr).toBe("");
 
 		const config = await readJsonFile<{ version: string }>(websculptPath(homeDir, "config.json"));
 		const commandEntries = await readdir(websculptPath(homeDir, "commands"));

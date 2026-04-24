@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { initStore } from "../infra/store.js";
 import { registerDomainCommands } from "./domains.js";
 import { registerHelpCommand, WebSculptHelp } from "./help.js";
 import { registerMetaCommands } from "./meta/index.js";
@@ -22,6 +23,7 @@ async function main() {
 
 	registerMetaCommands(program);
 	registerHelpCommand(program);
+	await initStore();
 	await registerDomainCommands(program);
 
 	program.parse(process.argv);
