@@ -21,7 +21,10 @@ function checkJsSyntax(code: string, runtime: string): ValidationDetail | null {
 	if (runtime !== "node" && runtime !== "playwright-cli") {
 		return null;
 	}
-	const trial = runtime === "node" ? `return (${code.replace(/^export\s+default\s+/s, "")})` : code;
+	const trial =
+		runtime === "node"
+			? `return (${code.replace(/^export\s+default\s+/s, "")})`
+			: `return (${code})`;
 	try {
 		// eslint-disable-next-line no-new-func
 		new Function(trial);

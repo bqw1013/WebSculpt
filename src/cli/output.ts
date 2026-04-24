@@ -42,6 +42,20 @@ export interface CommandRemoveResult {
 	command: string;
 }
 
+/** Result shape for a successful command draft. */
+export interface CommandDraftResult {
+	success: true;
+	draftPath: string;
+	files: string[];
+	runtime: string;
+	nextSteps: Array<{
+		action: string;
+		file?: string;
+		command?: string;
+	}>;
+	warnings?: ValidationDetail[];
+}
+
 /** Result shape for a successful command list. */
 export interface CommandListResult {
 	success: true;
@@ -89,6 +103,7 @@ export type MetaCommandResult =
 	| SkillStatusResult
 	| CommandValidateResult
 	| ValidationErrorResult
+	| CommandDraftResult
 	| MetaCommandError;
 
 /** Prints a value as pretty-printed JSON to stdout. */
@@ -108,6 +123,34 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		if ("details" in result.error && Array.isArray(result.error.details)) {
 			for (const detail of result.error.details) {
 				console.log(`  [${detail.level.toUpperCase()}] ${detail.code}: ${detail.message}`);
+			}
+		}
+		return;
+	}
+
+	if ("draftPath" in result) {
+		console.log(`Draft created at ${result.draftPath}`);
+		console.log("");
+		console.log("Files:");
+		for (const file of result.files) {
+			console.log(`  ${file}`);
+		}
+		if (result.warnings && result.warnings.length > 0) {
+			console.log("");
+			console.log("Warnings:");
+			for (const w of result.warnings) {
+				console.log(`  [WARNING] ${w.code}: ${w.message}`);
+			}
+		}
+		console.log("");
+		console.log("Next steps:");
+		for (const step of result.nextSteps) {
+			if (step.file) {
+				console.log(`  - ${step.action} (${step.file})`);
+			} else if (step.command) {
+				console.log(`  - ${step.action}: ${step.command}`);
+			} else {
+				console.log(`  - ${step.action}`);
 			}
 		}
 		return;

@@ -53,6 +53,38 @@ describe("command registry", () => {
 			expect(listResult.stdout).toContain("notes");
 			expect(listResult.stdout).toContain("save");
 		});
+
+		it("allows a user command to override a built-in without crashing command list", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const overridePackage = {
+				code: 'export default async function() { return { source: "user" }; }\n',
+				manifest: {
+					action: "hello",
+					description: "User override of example hello",
+					domain: "example",
+					id: "example-hello",
+					parameters: [],
+					runtime: "node",
+				},
+			};
+			const commandDirPath = await writeCommandDir(homeDir, "override-example-hello", overridePackage);
+			const createResult = await runSourceCli(
+				["command", "create", "example", "hello", "--from-dir", commandDirPath, "--force", "--format", "json"],
+				homeDir,
+			);
+			const createPayload = parseJsonOutput<CommandCreateResult>(createResult.stdout);
+
+			expect(createResult.exitCode).toBe(0);
+			expect(createPayload.success).toBe(true);
+
+			const listResult = await runSourceCli(["command", "list"], homeDir);
+
+			expect(listResult.exitCode).toBe(0);
+			expect(listResult.stdout).toContain("example");
+			expect(listResult.stdout).toContain("hello");
+		});
 	});
 
 	describe("user command execution", () => {

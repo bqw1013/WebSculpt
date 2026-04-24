@@ -31,7 +31,15 @@ export async function registerDomainCommands(program: Command): Promise<void> {
 		// Attach metadata for the custom help formatter to categorize domains correctly.
 		domainCmd._domainSource = source;
 
+		// Deduplicate by action; user commands take precedence over built-ins.
+		const actionMap = new Map<string, ResolvedCommand>();
 		for (const c of domainCommands) {
+			if (!actionMap.has(c.manifest.action) || c.source === "user") {
+				actionMap.set(c.manifest.action, c);
+			}
+		}
+
+		for (const c of actionMap.values()) {
 			const actionCmd = domainCmd
 				.command(c.manifest.action)
 				.description(c.manifest.description || `${c.manifest.domain} ${c.manifest.action}`);

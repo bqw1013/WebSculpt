@@ -5,7 +5,12 @@ import { handleCommandList, handleCommandRemove, handleCommandShow } from "./com
 import { handleConfigInit } from "./config.js";
 import { handleCommandCreate } from "./create.js";
 import { handleSkillInstall, handleSkillStatus, handleSkillUninstall } from "./skill.js";
+import { handleCommandDraft } from "./draft.js";
 import { handleCommandValidate } from "./validate.js";
+
+function collectOption(value: string, previous: string[]): string[] {
+	return previous.concat([value]);
+}
 
 // Re-export all meta handlers so callers can import from the facade.
 export {
@@ -18,6 +23,7 @@ export {
 	handleSkillStatus,
 	handleSkillUninstall,
 	handleCommandValidate,
+	handleCommandDraft,
 };
 
 /** Registers all meta commands (command, config, skill) on the given program. */
@@ -57,6 +63,15 @@ export function registerMetaCommands(program: Command): void {
 		.description("Remove a user command")
 		.action(async (domain: string, action: string) => {
 			renderOutput(await handleCommandRemove(domain, action), format());
+		});
+	cmd.command("draft <domain> <action>")
+		.description("Generate a command skeleton directory")
+		.option("--runtime <runtime>", "Runtime: node, playwright-cli, shell, python (default: node)")
+		.option("--to <path>", "Custom output directory")
+		.option("--param <spec>", "Declare a parameter (repeatable)", collectOption, [])
+		.option("--force", "Overwrite existing draft directory")
+		.action(async (domain: string, action: string, options: { runtime?: string; to?: string; param: string[]; force?: boolean }) => {
+			renderOutput(await handleCommandDraft(domain, action, options), format());
 		});
 
 	const cfg = program.command("config").description("Manage configuration");
