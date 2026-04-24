@@ -22,7 +22,7 @@
 
 **描述**
 
-CLI.md 声明 "User 与 Builtin 的冲突以 User 为准"，但 `src/cli/index.ts` 在启动时会将 `listAllCommands()` 返回的所有命令（user 在前、builtin 在后）直接注册到同一个 domain 下。当用户自定义命令与 builtin 命令同名时，Commander.js 会检测到重复子命令并直接抛错，导致 CLI 启动即崩溃，根本无法完成覆盖。
+CLI.md 声明 "User 与 Builtin 的冲突以 User 为准"，但 `src/cli/domains.ts` 在启动时会将 `listAllCommands()` 返回的所有命令（user 在前、builtin 在后）直接注册到同一个 domain 下。当用户自定义命令与 builtin 命令同名时，Commander.js 会检测到重复子命令并直接抛错，导致 CLI 启动即崩溃，根本无法完成覆盖。
 
 **影响**
 
@@ -123,3 +123,32 @@ assets:
 ```
 
 实现时直接替换 `src/cli/meta/command.ts` 中的 `handleCommandShow` 占位逻辑。
+
+## 5. `src/cli/index.ts` 职责过重（已解决）
+
+**描述**
+
+`src/cli/index.ts` 曾同时承载自定义 Help 格式化、元命令注册、扩展命令动态挂载与参数绑定、错误处理与日志追加，单文件达 285 行。
+
+**状态**
+
+已修复（2026-04-24）。各职责已提取至独立模块：
+- `WebSculptHelp` 和 `help` 路由命令 → `src/cli/help.ts`
+- 元命令注册 → `src/cli/meta/index.ts`（门面）
+- 扩展命令动态挂载 → `src/cli/domains.ts`
+- 执行编排（计时、错误处理、日志追加） → `src/cli/engine/executor.ts`
+- `src/cli/index.ts` 缩减为纯装配层（~25 行）。
+
+## 6. `registry.ts` 在单次 CLI 生命周期内重复扫描磁盘
+
+**描述**
+
+`findCommand()` 和 `listAllCommands()` 各自调用 `scanCommands()`，而 `findCommand()` 为了按优先级查找，甚至会先后扫描 user 目录和 builtin 目录两次。这意味着启动时如果同时需要 `listAllCommands`（注册所有 domain）和后续的命令查找，磁盘 I/O 会被重复执行。命令数量少时无感，但随着用户命令库增长，启动延迟会线性增加。
+
+**影响**
+
+低-中。当前命令量极小，性能影响可忽略；但这是结构性浪费。
+
+**计划修复方案**
+
+在 `main()` 启动时扫描一次全部命令，将结果缓存在内存中供同一次 CLI 生命周期复用。Registry 层提供基于缓存的查询接口，而非每次都重新扫描文件系统。

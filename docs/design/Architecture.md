@@ -263,15 +263,23 @@ WebSculpt/
 │   ├── explore/             # Exploration strategy documents
 │   ├── compile/             # Command specification and validation (planned)
 │   ├── cli/                 # CLI entry point and routing
-│   │   ├── index.ts         # CLI entry
-│   │   ├── engine/          # Registry and command runner
+│   │   ├── index.ts         # CLI assembly entry
+│   │   ├── help.ts          # Custom help formatter and help routing
+│   │   ├── domains.ts       # Dynamic domain command registration
+│   │   ├── output.ts        # Result rendering utilities
+│   │   ├── engine/          # Registry, runner, and execution orchestration
 │   │   │   ├── registry.ts
-│   │   │   └── command-runner.ts
-│   │   ├── meta/            # Meta command handlers
-│   │   │   └── command.ts
+│   │   │   ├── command-runner.ts
+│   │   │   └── executor.ts
+│   │   ├── meta/            # Meta command handlers and facade
+│   │   │   ├── index.ts     # Registration facade
+│   │   │   ├── command.ts
+│   │   │   ├── config.ts
+│   │   │   ├── create.ts
+│   │   │   ├── skill.ts
+│   │   │   └── validate.ts
 │   │   └── builtin/         # Built-in extension commands
 │   │       ├── example/hello/
-│   │       ├── zhihu/articles/
 │   │       └── zhihu/author-posts/
 │   ├── types/               # Shared TypeScript types
 │   └── infra/               # Infrastructure utilities
@@ -295,9 +303,13 @@ WebSculpt/
 | 用途 | 路径 |
 |------|------|
 | CLI 入口 | `src/cli/index.ts` |
+| 帮助格式化与路由 | `src/cli/help.ts` |
+| 动态域命令注册 | `src/cli/domains.ts` |
 | 命令注册与查找 | `src/cli/engine/registry.ts` |
 | 命令执行器 | `src/cli/engine/command-runner.ts` |
-| 命令创建 | `src/cli/meta/command.ts` |
+| 执行编排（计时、日志、错误处理） | `src/cli/engine/executor.ts` |
+| 元命令门面 | `src/cli/meta/index.ts` |
+| 命令创建 | `src/cli/meta/create.ts` |
 | 公共类型 | `src/types/index.ts` |
 | Playwright CLI 操作参考 | `src/access/playwright-cli/guide.md` |
 | 运行时契约文档 | `docs/reference/WritingCommands.md` |
