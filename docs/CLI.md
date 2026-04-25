@@ -1,6 +1,6 @@
 # WebSculpt CLI 命令参考
 
-本文档是 WebSculpt CLI 的参考手册，覆盖所有 Meta 命令的用法、参数、输出契约及已知限制。扩展命令的编写规范见 [`WritingCommands.md`](./WritingCommands.md)。
+本文档是 WebSculpt CLI 的参考手册，覆盖所有 Meta 命令的用法、参数、输出契约及已知限制。扩展命令的编写规范见 [`WritingCommands.md`](WritingCommands.md)。
 
 WebSculpt CLI 是命令的发现、执行与管理入口。它面向人类用户和 AI Agent 提供同一套界面，核心能力分为两类：
 
