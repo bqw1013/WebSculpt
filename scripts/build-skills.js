@@ -18,6 +18,10 @@ const dirMappings = [
 		from: path.join(root, "src", "access", "playwright-cli"),
 		to: path.join(referencesDir, "access", "playwright-cli"),
 	},
+	{
+		from: path.join(root, "src", "compile"),
+		to: path.join(referencesDir, "compile"),
+	},
 ];
 
 function ensureDir(dir) {

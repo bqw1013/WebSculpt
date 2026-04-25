@@ -1,7 +1,3 @@
-> **迁移说明**：本文档已迁移至 `src/compile/contract.md`，后续更新以该文件为准。此处保留原版以避免外部链接断裂。
-
----
-
 # command.js 编写契约（playwright-cli 运行时）
 
 > 本文件定义了 `websculpt` CLI 中 `playwright-cli` 运行时命令的编写规范。
