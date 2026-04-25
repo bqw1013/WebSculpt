@@ -1,18 +1,99 @@
-# command.js 编写契约（playwright-cli 运行时）
+# 命令资产编写契约
 
-> 本文件定义了 `websculpt` CLI 中 `playwright-cli` 运行时命令的编写规范。
-> 遵循以下契约的 `command.js` 可被 `command-runner.ts` 正确加载、执行和错误处理，**无需阅读 runner 源码**。
+> 本文档定义了 WebSculpt 扩展命令的编写规范，覆盖 manifest 格式、运行时契约、资产文档标准和沉淀工作流。
+> 遵循以下契约的命令可被 `command-runner.ts` 正确加载、执行和错误处理，**无需阅读 runner 源码**。
 
 ---
 
-## 1. 函数签名
+## 1. 从 draft 到 create 的完整流程
+
+沉淀命令时，按以下流程执行：
+
+1. **生成骨架**
+   ```bash
+   websculpt command draft <domain> <action> --runtime <rt>
+   ```
+   生成包含 4 个文件的目录：
+   - `manifest.json` — 元数据声明（此时不含 `id`/`domain`/`action`）
+   - 入口文件 — 执行逻辑（默认 `command.js`）
+   - `README.md` — 面向调用者的使用说明
+   - `context.md` — 面向修复者的维护上下文
+
+2. **填充内容**
+   基于探索结果完善整个命令包：
+   - 入口文件：编写业务逻辑
+   - `manifest.json`：调整参数声明、描述等（`id`/`domain`/`action` 不需要填，create 会强制注入）
+   - `README.md`：按本文档第 6 节规范填写
+   - `context.md`：按本文档第 6 节规范填写
+
+3. **预检合规**
+   ```bash
+   websculpt command validate --from-dir <path>
+   ```
+   执行 L1-L3 分层校验，失败阻止落盘：
+   - **L1 结构**：manifest 字段、类型、一致性
+   - **L2 合规**：禁止代码模式（静态分析）
+   - **L3 契约**：代码结构与 manifest 的一致性
+
+4. **安装落盘**
+   ```bash
+   websculpt command create <domain> <action> --from-dir <path>
+   ```
+   - 以 CLI 参数为权威，强制注入 `id`/`domain`/`action`
+   - L1-L3 校验失败一律阻止落盘，即使使用 `--force` 也不例外
+
+---
+
+## 2. 如何选择 runtime
+
+| 场景 | 推荐 runtime | 说明 |
+|------|-------------|------|
+| 需要浏览器 API（DOM 操作、页面导航、截图） | `playwright-cli` | 在隔离上下文中执行，无 Node.js API |
+| 纯 Node.js 逻辑（HTTP 请求、文件处理、数据清洗） | `node` | 完整 Node.js 环境，可使用 `fs`、`fetch` 等 |
+| `shell` / `python` | 不可用 | 预留类型，暂无法实际执行 |
+
+一个命令只能声明一种 runtime，不可混合使用。
+
+---
+
+## 3. Manifest 规范
+
+`manifest.json` 是命令的元数据声明，由 `command draft` 生成骨架，`command create` 强制注入身份字段。
+
+### 字段说明
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `id` | `string` | 系统注入 | 格式为 `{domain}-{action}`，draft 阶段可缺失，create 时强制注入 |
+| `domain` | `string` | 系统注入 | 命令所属领域，create 时以 CLI 参数强制覆盖 |
+| `action` | `string` | 系统注入 | 命令操作名，create 时以 CLI 参数强制覆盖 |
+| `description` | `string` | 是 | 命令用途，**不能为空字符串或仅含空白字符** |
+| `runtime` | `string` | 是 | `node` 或 `playwright-cli` |
+| `parameters` | `array` | 否 | 参数列表，元素为 `{ name, required?, default?, description? }` |
+| `entryFile` | `string` | 否 | 入口文件名，默认 `command.js` |
+
+### 保留域
+
+以下 domain 为系统保留，扩展命令不可使用：
+
+- `command`
+- `config`
+- `skill`
+
+使用保留域会触发 `RESERVED_DOMAIN` 错误。
+
+---
+
+## 4. playwright-cli 运行时契约
+
+### 4.1 函数签名
 
 文件必须导出一个**异步函数**，接收唯一参数 `page`（Playwright `Page` 实例）：
 
 ```js
 async function (page) {
   /* PARAMS_INJECT */
-  // ... 你的逻辑
+  // ... your logic
 }
 ```
 
@@ -20,29 +101,25 @@ async function (page) {
 - **不要**在函数体外写可执行代码。
 - 函数体内部可以声明辅助函数，但入口必须是这个匿名异步函数。
 
----
+### 4.2 参数注入
 
-## 2. 参数注入
-
-### 2.1 占位符
+#### 占位符
 
 Runner 会在执行前将文件中的 `/* PARAMS_INJECT */` 替换为一行参数声明：
 
 ```js
-const params = {"limit":"3","author":"白强伟"};
+const params = {"limit":"3","author":"baiqiangwei"};
 ```
 
 因此你的代码中**必须保留**该占位符，并通过 `params.key` 读取参数。
 
-### 2.2 类型与默认值
+#### 类型与默认值
 
 - **所有参数值都是字符串**。即使 manifest 中声明了 `"default": 3`，注入的也是 `"3"`。
 - 如果参数是数字，你需要自行转换：`parseInt(params.limit, 10)` 或 `parseFloat(params.ratio)`。
 - **不要在代码中写默认值 fallback**（如 `params.limit || 3`）。如果 manifest 中声明了 `default`，runner 会自动为缺失参数填充默认值。这样做还能避免 `--limit 0` 被误判为 falsy 而覆盖的 bug。
 
----
-
-## 3. 返回值
+### 4.3 返回值
 
 命令结果通过 `return` 返回。Runner 会从 stdout 中捕获 `### Result\n` 之后的 JSON 并解析后返回给调用方。
 
@@ -54,11 +131,9 @@ return { articles: [{ title: "...", url: "..." }] };
 - **不要**返回函数、循环引用、`undefined` 值或 class 实例。
 - 如果需要返回数组，建议包装在对象中：`return { items: [...] }`。
 
----
+### 4.4 错误处理
 
-## 4. 错误处理
-
-### 4.1 基本方式
+#### 基本方式
 
 业务错误请直接抛出 `Error`：
 
@@ -66,7 +141,7 @@ return { articles: [{ title: "...", url: "..." }] };
 throw new Error("Something went wrong");
 ```
 
-### 4.2 错误码传递（关键）
+#### 错误码传递（关键）
 
 `playwright-cli` 的执行环境**不会保留** `Error.code` 属性。Runner 只能通过**错误消息文本中的关键字**来识别业务错误码。
 
@@ -75,12 +150,12 @@ throw new Error("Something went wrong");
 推荐格式：
 
 ```js
-const error = new Error("[AUTH_REQUIRED] 需要登录知乎");
-error.code = "AUTH_REQUIRED"; // 可选，作为代码内文档
+const error = new Error("[AUTH_REQUIRED] Login required");
+error.code = "AUTH_REQUIRED"; // Optional, as inline documentation
 throw error;
 ```
 
-### 4.3 已知错误码
+#### 已知错误码
 
 以下错误码会被 runner 识别并原样透传：
 
@@ -94,9 +169,7 @@ throw error;
 
 如果消息中不包含上述关键字，runner 会将错误归类为 `COMMAND_EXECUTION_ERROR`。
 
----
-
-## 5. 环境限制
+### 4.5 环境限制
 
 `playwright-cli` 在**隔离上下文**中执行你的代码：
 
@@ -109,9 +182,7 @@ throw error;
 - `playwright-cli` 命令需要浏览器环境（CDP 连接）。如果用户未开启远程调试，`command-runner.ts` 会返回 `PLAYWRIGHT_CLI_ATTACH_REQUIRED` 结构化错误。
 - 用户完成设置后，再次调用命令即可继续测试，无需重新创建命令。
 
----
-
-## 6. 完整示例
+### 4.6 完整示例
 
 ```js
 async function (page) {
@@ -119,14 +190,14 @@ async function (page) {
   const author = params.author;
   const limit = parseInt(params.limit, 10);
 
-  // 参数校验
+  // Validate parameters
   if (!author) {
     const error = new Error('[MISSING_PARAM] Parameter "author" is required.');
     error.code = "MISSING_PARAM";
     throw error;
   }
 
-  // 导航与数据抓取
+  // Navigate and extract data
   await page.goto(
     "https://example.com/search?q=" + encodeURIComponent(author),
     { waitUntil: "networkidle" }
@@ -140,52 +211,50 @@ async function (page) {
     }));
   });
 
-  // 业务错误：结果为空
+  // Business error: empty result
   if (data.length === 0) {
-    const error = new Error("[EMPTY_RESULT] 未找到相关内容");
+    const error = new Error("[EMPTY_RESULT] No relevant content found");
     error.code = "EMPTY_RESULT";
     throw error;
   }
 
-  // 成功返回
+  // Return success result
   return { items: data.slice(0, limit) };
 }
 ```
 
 ---
 
-## Node Runtime 契约（对照）
+## 5. Node 运行时契约
 
-`node` runtime 与 `playwright-cli` runtime 的代码结构截然不同，AI 编写时必须区分。
-
-### 模块格式
+### 5.1 模块格式
 
 - 入口文件：`command.js`
 - 标准 ESM 模块，导出异步函数（优先 `export default`，亦支持 `export const command = ...`）
 - 签名：`async (params: Record<string, string>) => unknown`
 
-### 参数传递
+### 5.2 参数传递
 
 - 参数由 runner 直接作为函数参数传入，**无需** `/* PARAMS_INJECT */` 占位符
 - 所有参数值均为字符串，数字需自行 `parseInt` / `parseFloat`
 - runner 已根据 manifest 填充默认值，不要在代码中写 `|| default` fallback
 
-### 返回值
+### 5.3 返回值
 
 - 直接 `return result`，由 `command-runner.ts` 消费
 - 返回的对象必须是可序列化的纯数据
 
-### 错误处理
+### 5.4 错误处理
 
 - 直接抛出 `Error` 即可
 - 业务错误码同样通过消息文本传递（如 `[NOT_FOUND] ...`），runner 会识别并透传
 
-### 环境
+### 5.5 环境
 
 - 完整 Node.js 环境可用（`fs`、`path`、`fetch`、`console` 等）
 - 可读写本地文件系统
 
-### 与 playwright-cli runtime 的核心差异
+### 5.6 与 playwright-cli runtime 的核心差异
 
 | 维度 | node | playwright-cli |
 |------|------|----------------|
@@ -197,9 +266,9 @@ async function (page) {
 
 ---
 
-## 7. 命令资产文档规范
+## 6. 命令资产文档规范
 
-命令包除 `manifest.json` 和 `command.js` 外，还应包含以下两份文档。
+命令包除 `manifest.json` 和入口文件外，还应包含以下两份文档。
 
 ### `README.md`
 
@@ -238,9 +307,17 @@ async function (page) {
 
 ---
 
-## 8. 快速检查清单
+## 7. 快速检查清单
 
-在提交 `command.js` 前，确认以下事项：
+### 公共项（所有 runtime）
+
+- [ ] `manifest.json` 中包含非空的 `description` 字段（必填，不能为空字符串或仅含空白字符）
+- [ ] `README.md` 包含一句话用途、参数表、返回值说明、调用示例、常见错误码
+- [ ] `context.md` 包含沉淀背景、页面结构/数据源特征、环境依赖、失效信号、修复线索
+- [ ] `README.md` 中绝不出现 CSS 选择器或 DOM 路径
+- [ ] `context.md` 中绝不出现参数用法或调用示例
+
+### playwright-cli 专用
 
 - [ ] 函数签名为 `async function (page)`，且包含 `/* PARAMS_INJECT */`
 - [ ] 没有 `|| default` 形式的参数 fallback
@@ -248,13 +325,21 @@ async function (page) {
 - [ ] 错误消息中包含了预期的业务错误码（如 `[NOT_FOUND] ...`）
 - [ ] 返回值为可序列化的纯数据对象
 - [ ] 没有使用 `process`、`require`、文件读写等 Node.js API
-- [ ] `manifest.json` 中包含非空的 `description` 字段（必填，不能为空字符串或仅含空白字符）
+
+### Node 专用
+
+- [ ] 入口文件导出异步函数（`export default` 或 `export const command`）
+- [ ] 签名为 `async (params: Record<string, string>) => unknown`
+- [ ] 没有 `|| default` 形式的参数 fallback
+- [ ] 数值参数通过 `parseInt` / `parseFloat` 转换
+- [ ] 错误消息中包含了预期的业务错误码（如 `[NOT_FOUND] ...`）
+- [ ] 返回值为可序列化的纯数据对象
 
 ---
 
-## 9. Runner 侧错误码（供参考）
+## 8. Runner 侧错误码（供参考）
 
-以下错误码由 runner 自动生成，**不需要**在 `command.js` 中抛出：
+以下错误码由 runner 自动生成，**不需要**在命令文件中抛出：
 
 | 错误码 | 含义 |
 |--------|------|

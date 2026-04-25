@@ -36,6 +36,36 @@ websculpt config init
 - 启动浏览器自动化前，须确认轻量方式已尝试或明确无效
 - 探索中优先复用已有命令，不在同一目标上重复造轮子
 
-## 沉淀与复用（预留）
+## 沉淀
 
-探索成功后，稳定路径可被沉淀为可复用的命令资产。具体机制待开发完成后补充。
+探索中遇到可以被复用的数据获取路径时，考虑将其沉淀为命令资产。
+
+### 什么时候沉淀
+
+优先沉淀那些你会再次使用的路径，而不是一次性脚本。判断标准：
+
+- 换一组参数（比如换一个关键词、换一个用户 ID）是否仍然成立
+- 实现是否依赖当前会话的临时状态（比如一次性验证码、临时 token）
+
+粒度的判断权在你。一个只负责"获取文章列表"的小命令，往往比一个包含登录、搜索、清洗的完整脚本更有复用价值。
+
+### 怎么沉淀
+
+动手写之前，先读 [references/compile/contract.md](references/compile/contract.md)。里面规定了不同 runtime 的函数签名、参数怎么注入、错误怎么处理，以及 README 和 context 文档该怎么写。
+
+然后按这个流程走：
+
+```bash
+# 生成骨架
+websculpt command draft <domain> <action> --runtime <rt>
+
+# 基于探索结果填充业务逻辑，并完善配套文档
+
+# 预检是否合规
+websculpt command validate --from-dir <path>
+
+# 安装到命令库
+websculpt command create <domain> <action> --from-dir <path>
+```
+
+命名上，domain 是目标服务或站点（如 `zhihu`、`github`），action 是操作（如 `fetch-posts`、`search-repos`）。
