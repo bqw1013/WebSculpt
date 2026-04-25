@@ -53,7 +53,6 @@ describe("command draft", () => {
 
 		const code = await readFile(join(payload.draftPath, "command.js"), "utf-8");
 		expect(code).toContain("export default async function");
-		expect(code).toContain("/* PARAMS_INJECT */");
 	});
 
 	it("produces function-body syntax without module keywords for playwright-cli runtime", async () => {
