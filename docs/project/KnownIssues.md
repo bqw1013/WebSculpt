@@ -112,21 +112,5 @@ assets:
 
 待讨论。如有 schema 校验需求，需重新设计 `outputSchema` 字段的结构（是否采用 JSON Schema、是否仅作文档、是否参与 L1 校验），并集成到 `command-validation.ts` 中。
 
----
-
-## 4. `findCommandByHost` 为死代码
-
-**描述**
-
-`src/cli/engine/registry.ts` 中导出了 `findCommandByHost`，但整个 CLI 没有任何调用点。该函数设计用于通过 host/关键词模糊匹配命令，但当前未集成到任何命令或工作流中。
-
-**影响**
-
-低。不影响功能，但增加了无意义的维护面。
-
-**计划修复方案**
-
-评估该功能是否必要。如不需要，直接删除；如需要，将其集成到 `command list` 的搜索过滤能力或某个新命令中。
-
 
 

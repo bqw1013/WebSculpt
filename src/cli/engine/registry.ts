@@ -198,23 +198,3 @@ export function findCommand(domain: string, action: string): ResolvedCommand | n
 	);
 	return builtinHit || null;
 }
-
-/**
- * Attempts to find a command that matches a given host string from the in-memory cache.
- * Uses a naive substring heuristic.
- */
-export function findCommandByHost(host: string): ResolvedCommand | null {
-	if (!cachedCommands) {
-		throw new Error("Registry not loaded. Call loadRegistry() first.");
-	}
-	return (
-		cachedCommands.find((c) => {
-			const h = host.toLowerCase();
-			return (
-				c.manifest.domain.toLowerCase().includes(h) ||
-				c.manifest.id.toLowerCase().includes(h) ||
-				c.manifest.description.toLowerCase().includes(h)
-			);
-		}) || null
-	);
-}
