@@ -6,7 +6,8 @@
   "parameters": [
     {
       "name": "name",
-      "description": "Name of the person to greet"
+      "description": "Name of the person to greet",
+      "default": "stranger"
     }
   ],
   "runtime": "node"

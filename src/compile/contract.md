@@ -13,18 +13,10 @@
    ```bash
    websculpt command draft <domain> <action> --runtime <rt>
    ```
-   生成包含 4 个文件的目录：
-   - `manifest.json` — 元数据声明（此时不含 `id`/`domain`/`action`）
-   - 入口文件 — 执行逻辑（默认 `command.js`）
-   - `README.md` — 面向调用者的使用说明
-   - `context.md` — 面向修复者的维护上下文
+   `draft` 生成包含 4 个文件的目录：`manifest.json`（元数据，此时不含身份字段）、入口文件（默认 `command.js`）、`README.md`、`context.md`。具体参数请通过 `websculpt command draft --help` 查看。
 
 2. **填充内容**
-   基于探索结果完善整个命令包：
-   - 入口文件：编写业务逻辑
-   - `manifest.json`：调整参数声明、描述等（`id`/`domain`/`action` 不需要填，create 会强制注入）
-   - `README.md`：按本文档第 6 节规范填写
-   - `context.md`：按本文档第 6 节规范填写
+   基于探索结果完善命令包：入口文件编写业务逻辑；`manifest.json` 调整参数和描述；`README.md` 和 `context.md` 按第 6 节规范填写。`id`/`domain`/`action` 无需填写。
 
 3. **预检合规**
    ```bash
@@ -39,8 +31,9 @@
    ```bash
    websculpt command create <domain> <action> --from-dir <path>
    ```
-   - 以 CLI 参数为权威，强制注入 `id`/`domain`/`action`
-   - L1-L3 校验失败一律阻止落盘，即使使用 `--force` 也不例外
+   `create` 以 CLI 参数为权威强制注入 `id`/`domain`/`action`。L1-L3 校验失败一律阻止落盘，即使使用 `--force` 也不例外。
+
+> 身份字段（`id`/`domain`/`action`）在 draft 和填充阶段均无需关心，`create` 会强制覆盖。
 
 ---
 
@@ -50,9 +43,10 @@
 |------|-------------|------|
 | 需要浏览器 API（DOM 操作、页面导航、截图） | `playwright-cli` | 在隔离上下文中执行，无 Node.js API |
 | 纯 Node.js 逻辑（HTTP 请求、文件处理、数据清洗） | `node` | 完整 Node.js 环境，可使用 `fs`、`fetch` 等 |
-| `shell` / `python` | 不可用 | 预留类型，暂无法实际执行 |
 
 一个命令只能声明一种 runtime，不可混合使用。
+
+> 沉淀命令必须是 `node` 或 `playwright-cli` runtime。探索中若发现其他语言（如 Python、Shell）路径更优，评估重写为 Node.js 的等价实现；若重写成本过高或不可行，该路径不进入命令库，作为一次性探索成果处理。
 
 ---
 
@@ -88,7 +82,7 @@
 
 ### 4.1 函数签名
 
-文件必须导出一个**异步函数**，接收唯一参数 `page`（Playwright `Page` 实例）：
+代码在 playwright-cli `run-code` 提供的上下文中执行，可直接访问 `page` 对象（Playwright `Page` 实例）。按以下形式编写：
 
 ```js
 async function (page) {
@@ -97,9 +91,8 @@ async function (page) {
 }
 ```
 
-- **不要**修改函数签名。
 - **不要**在函数体外写可执行代码。
-- 函数体内部可以声明辅助函数，但入口必须是这个匿名异步函数。
+- 函数体内部可以声明辅助函数。
 
 ### 4.2 参数注入
 
@@ -108,7 +101,7 @@ async function (page) {
 Runner 会在执行前将文件中的 `/* PARAMS_INJECT */` 替换为一行参数声明：
 
 ```js
-const params = {"limit":"3","author":"baiqiangwei"};
+const params = {"limit":"3","author":"BQW"};
 ```
 
 因此你的代码中**必须保留**该占位符，并通过 `params.key` 读取参数。
@@ -117,7 +110,8 @@ const params = {"limit":"3","author":"baiqiangwei"};
 
 - **所有参数值都是字符串**。即使 manifest 中声明了 `"default": 3`，注入的也是 `"3"`。
 - 如果参数是数字，你需要自行转换：`parseInt(params.limit, 10)` 或 `parseFloat(params.ratio)`。
-- **不要在代码中写默认值 fallback**（如 `params.limit || 3`）。如果 manifest 中声明了 `default`，runner 会自动为缺失参数填充默认值。这样做还能避免 `--limit 0` 被误判为 falsy 而覆盖的 bug。
+- **已声明 `default` 的参数**：runner 会自动为缺失参数填充默认值，代码中不要写 fallback（如 `params.limit || 3`），避免 `--limit 0` 被误判为 falsy 而覆盖。
+- **未声明 `default` 的参数**：代码自行处理缺失逻辑，不受此限制。
 
 ### 4.3 返回值
 
@@ -237,7 +231,7 @@ async function (page) {
 
 - 参数由 runner 直接作为函数参数传入，**无需** `/* PARAMS_INJECT */` 占位符
 - 所有参数值均为字符串，数字需自行 `parseInt` / `parseFloat`
-- runner 已根据 manifest 填充默认值，不要在代码中写 `|| default` fallback
+- runner 已根据 manifest 填充默认值。已声明 `default` 的参数不要在代码中写 fallback（如 `params.limit || 3`），未声明 `default` 的参数自行处理缺失逻辑
 
 ### 5.3 返回值
 
@@ -309,31 +303,32 @@ async function (page) {
 
 ## 7. 快速检查清单
 
-### 公共项（所有 runtime）
+### L1 结构（manifest 与资产完整性）
 
-- [ ] `manifest.json` 中包含非空的 `description` 字段（必填，不能为空字符串或仅含空白字符）
+- [ ] `manifest.json` 包含非空的 `description` 字段（不能为空字符串或仅含空白字符）
 - [ ] `README.md` 包含一句话用途、参数表、返回值说明、调用示例、常见错误码
 - [ ] `context.md` 包含沉淀背景、页面结构/数据源特征、环境依赖、失效信号、修复线索
+
+### L2 合规（禁止模式与文档红线）
+
 - [ ] `README.md` 中绝不出现 CSS 选择器或 DOM 路径
 - [ ] `context.md` 中绝不出现参数用法或调用示例
+- [ ] 代码中没有 `|| default` 形式的参数 fallback
+- [ ] **playwright-cli**：没有使用 `process`、`require`、文件读写等 Node.js API
 
-### playwright-cli 专用
+### L3 契约（代码结构与运行时一致性）
 
-- [ ] 函数签名为 `async function (page)`，且包含 `/* PARAMS_INJECT */`
-- [ ] 没有 `|| default` 形式的参数 fallback
+所有 runtime：
 - [ ] 数值参数通过 `parseInt` / `parseFloat` 转换
 - [ ] 错误消息中包含了预期的业务错误码（如 `[NOT_FOUND] ...`）
 - [ ] 返回值为可序列化的纯数据对象
-- [ ] 没有使用 `process`、`require`、文件读写等 Node.js API
 
-### Node 专用
+**playwright-cli** 专用：
+- [ ] 函数签名为 `async function (page)`，且包含 `/* PARAMS_INJECT */`
 
+**Node** 专用：
 - [ ] 入口文件导出异步函数（`export default` 或 `export const command`）
 - [ ] 签名为 `async (params: Record<string, string>) => unknown`
-- [ ] 没有 `|| default` 形式的参数 fallback
-- [ ] 数值参数通过 `parseInt` / `parseFloat` 转换
-- [ ] 错误消息中包含了预期的业务错误码（如 `[NOT_FOUND] ...`）
-- [ ] 返回值为可序列化的纯数据对象
 
 ---
 
