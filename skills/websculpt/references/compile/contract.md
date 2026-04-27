@@ -62,7 +62,7 @@
 | `domain` | `string` | 系统注入 | 命令所属领域，create 时以 CLI 参数强制覆盖 |
 | `action` | `string` | 系统注入 | 命令操作名，create 时以 CLI 参数强制覆盖 |
 | `description` | `string` | 是 | 命令用途，**不能为空字符串或仅含空白字符** |
-| `runtime` | `string` | 是 | `node` 或 `playwright-cli` |
+| `runtime` | `string` | 是 | `node` 或 `playwright-cli`。`shell`、`python` 为 CLI 预留类型，但沉淀到命令库时必须重写为 `node` 或 `playwright-cli` 的等价实现 |
 | `parameters` | `array` | 否 | 参数列表，元素为 `{ name, required?, default?, description? }` |
 | `entryFile` | `string` | 否 | 入口文件名，默认 `command.js` |
 
@@ -144,10 +144,10 @@ throw new Error("Something went wrong");
 推荐格式：
 
 ```js
-const error = new Error("[AUTH_REQUIRED] Login required");
-error.code = "AUTH_REQUIRED"; // Optional, as inline documentation
-throw error;
+throw new Error("[AUTH_REQUIRED] Login required");
 ```
+
+> `playwright-cli` 的执行环境不会保留 `Error.code` 属性，即使你在代码中设置了 `error.code`，runner 也无法读取。请确保错误码出现在消息文本中即可。
 
 #### 已知错误码
 
@@ -186,9 +186,7 @@ async function (page) {
 
   // Validate parameters
   if (!author) {
-    const error = new Error('[MISSING_PARAM] Parameter "author" is required.');
-    error.code = "MISSING_PARAM";
-    throw error;
+    throw new Error('[MISSING_PARAM] Parameter "author" is required.');
   }
 
   // Navigate and extract data
@@ -207,9 +205,7 @@ async function (page) {
 
   // Business error: empty result
   if (data.length === 0) {
-    const error = new Error("[EMPTY_RESULT] No relevant content found");
-    error.code = "EMPTY_RESULT";
-    throw error;
+    throw new Error("[EMPTY_RESULT] No relevant content found");
   }
 
   // Return success result
@@ -224,8 +220,8 @@ async function (page) {
 ### 5.1 模块格式
 
 - 入口文件：`command.js`
-- 标准 ESM 模块，导出异步函数（优先 `export default`，亦支持 `export const command = ...`）
-- 签名：`async (params: Record<string, string>) => unknown`
+- 标准 ESM 模块，必须导出默认的异步函数
+- 签名：`export default async (params: Record<string, string>) => unknown`
 
 ### 5.2 参数传递
 
@@ -241,14 +237,59 @@ async function (page) {
 ### 5.4 错误处理
 
 - 直接抛出 `Error` 即可
-- 业务错误码同样通过消息文本传递（如 `[NOT_FOUND] ...`），runner 会识别并透传
+- 业务错误码通过 `error.code` 属性传递，runner 会读取并透传。建议在错误消息中同时包含错误码以便阅读：
+
+  ```js
+  const error = new Error("[NOT_FOUND] User not found");
+  error.code = "NOT_FOUND";
+  throw error;
+  ```
 
 ### 5.5 环境
 
 - 完整 Node.js 环境可用（`fs`、`path`、`fetch`、`console` 等）
 - 可读写本地文件系统
 
-### 5.6 与 playwright-cli runtime 的核心差异
+### 5.6 完整示例
+
+```js
+export default async function (params) {
+  const author = params.author;
+  const limit = parseInt(params.limit, 10);
+
+  // Validate parameters
+  if (!author) {
+    const error = new Error('[MISSING_PARAM] Parameter "author" is required.');
+    error.code = "MISSING_PARAM";
+    throw error;
+  }
+
+  // Fetch data
+  const response = await fetch(
+    "https://api.example.com/search?q=" + encodeURIComponent(author)
+  );
+
+  if (response.status === 404) {
+    const error = new Error("[NOT_FOUND] No user found");
+    error.code = "NOT_FOUND";
+    throw error;
+  }
+
+  const data = await response.json();
+
+  // Business error: empty result
+  if (!data.items || data.items.length === 0) {
+    const error = new Error("[EMPTY_RESULT] No relevant content found");
+    error.code = "EMPTY_RESULT";
+    throw error;
+  }
+
+  // Return success result
+  return { items: data.items.slice(0, limit) };
+}
+```
+
+### 5.7 与 playwright-cli runtime 的核心差异
 
 | 维度 | node | playwright-cli |
 |------|------|----------------|
@@ -257,6 +298,7 @@ async function (page) {
 | 参数方式 | 函数参数传入 | `/* PARAMS_INJECT */` 占位符替换 |
 | 运行环境 | 完整 Node.js | 隔离上下文（无 Node.js API） |
 | 浏览器 API | 不可用 | 通过 `page` 参数可用 |
+| 错误码传递 | `error.code` 属性 | 消息文本中的关键字 |
 
 ---
 
@@ -327,7 +369,7 @@ async function (page) {
 - [ ] 函数签名为 `async function (page)`，且包含 `/* PARAMS_INJECT */`
 
 **Node** 专用：
-- [ ] 入口文件导出异步函数（`export default` 或 `export const command`）
+- [ ] 入口文件通过 `export default` 导出异步函数
 - [ ] 签名为 `async (params: Record<string, string>) => unknown`
 
 ---
@@ -336,12 +378,12 @@ async function (page) {
 
 以下错误码由 runner 自动生成，**不需要**在命令文件中抛出：
 
-| 错误码 | 含义 |
-|--------|------|
-| `MISSING_PARAMS_INJECT` | 命令文件缺少 `/* PARAMS_INJECT */` 占位符 |
-| `MISSING_RESULT_MARKER` | 命令输出缺少 `### Result` 标记 |
-| `MALFORMED_RESULT_JSON` | `### Result` 后的内容不是合法 JSON |
-| `RUNTIME_NOT_FOUND` | `playwright-cli` 未安装 |
-| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | 浏览器 CDP 会话未 attach |
-| `TIMEOUT` | 命令执行超时 |
-| `COMMAND_EXECUTION_ERROR` | 未分类的命令执行错误 |
+| 错误码 | 含义 | 适用 runtime |
+|--------|------|-------------|
+| `MISSING_PARAMS_INJECT` | 命令文件缺少 `/* PARAMS_INJECT */` 占位符 | playwright-cli |
+| `MISSING_RESULT_MARKER` | 命令输出缺少 `### Result` 标记 | playwright-cli |
+| `MALFORMED_RESULT_JSON` | `### Result` 后的内容不是合法 JSON | playwright-cli |
+| `RUNTIME_NOT_FOUND` | `playwright-cli` 未安装 | playwright-cli |
+| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | 浏览器 CDP 会话未 attach | playwright-cli |
+| `TIMEOUT` | 命令执行超时 | 所有 |
+| `COMMAND_EXECUTION_ERROR` | 未分类的命令执行错误 | 所有 |
