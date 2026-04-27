@@ -154,13 +154,27 @@ describe("validateCommandPackage", () => {
 	});
 
 	describe("L3 contract validation", () => {
-		it("errors on node runtime missing export default", () => {
+		it("errors on node runtime missing valid export", () => {
 			const details = validateCommandPackage(
 				makeInput({ code: "async function(params) { return {}; }" }),
 			);
 			expect(details).toContainEqual(
 				expect.objectContaining({ code: "MISSING_EXPORT_DEFAULT", level: "error" }),
 			);
+		});
+
+		it("passes for node runtime with export const command", () => {
+			const details = validateCommandPackage(
+				makeInput({ code: "export const command = async function(params) { return {}; };" }),
+			);
+			expect(details.filter((d) => d.level === "error")).toHaveLength(0);
+		});
+
+		it("passes for node runtime with export function command", () => {
+			const details = validateCommandPackage(
+				makeInput({ code: "export async function command(params) { return {}; }" }),
+			);
+			expect(details.filter((d) => d.level === "error")).toHaveLength(0);
 		});
 
 		it("errors on invalid JS syntax", () => {

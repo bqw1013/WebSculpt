@@ -6,6 +6,7 @@ const TEMP_REF_REGEX = /\be\d+\b/g;
 const BROWSER_KEYWORDS = ["launch", "connect", "connectOverCDP", "newBrowser", "chrome-remote-interface"];
 const INLINE_IMPORT_REGEX = /await\s+import\s*\(/;
 const EXPORT_DEFAULT_REGEX = /export\s+default/;
+const EXPORT_COMMAND_REGEX = /export\s+(?:(?:const|let|var)\s+command|(?:async\s+)?function\s+command)\b/;
 const PARAMS_INJECT_MARKER = "/* PARAMS_INJECT */";
 const PARAM_ACCESS_REGEX = /params\.([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
 
@@ -21,7 +22,21 @@ function checkJsSyntax(code: string, runtime: string): ValidationDetail | null {
 	if (runtime !== "node" && runtime !== "playwright-cli") {
 		return null;
 	}
-	const trial = runtime === "node" ? `return (${code.replace(/^export\s+default\s+/s, "")})` : `return (${code})`;
+	let trial: string;
+	if (runtime === "node") {
+		if (/^export\s+default\s+/s.test(code)) {
+			trial = `return (${code.replace(/^export\s+default\s+/s, "")})`;
+		} else if (/^export\s+(?:const|let|var)\s+command\s*=\s*/s.test(code)) {
+			const expr = code.replace(/^export\s+(?:const|let|var)\s+command\s*=\s*/s, "").replace(/;\s*$/s, "");
+			trial = `return (${expr})`;
+		} else if (/^export\s+(?:async\s+)?function\s+command\s*\(/s.test(code)) {
+			trial = `return (${code.replace(/^export\s+/s, "")})`;
+		} else {
+			trial = `return (${code})`;
+		}
+	} else {
+		trial = `return (${code})`;
+	}
 	try {
 		// eslint-disable-next-line no-new-func
 		new Function(trial);
@@ -170,8 +185,12 @@ function validateL3Contract(manifest: Record<string, unknown>, code: string, det
 	}
 
 	if (runtime === "node") {
-		if (!EXPORT_DEFAULT_REGEX.test(code)) {
-			addError(details, "MISSING_EXPORT_DEFAULT", "Node runtime command must contain `export default`");
+		if (!EXPORT_DEFAULT_REGEX.test(code) && !EXPORT_COMMAND_REGEX.test(code)) {
+			addError(
+				details,
+				"MISSING_EXPORT_DEFAULT",
+				"Node runtime command must contain `export default` or `export const command` / `export function command`",
+			);
 		}
 	}
 
