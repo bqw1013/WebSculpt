@@ -70,6 +70,7 @@ function isCdpAttachError(text: string): boolean {
 		/remote debugging/i,
 		/Session.*closed/i,
 		/Session.*not found/i,
+		/not open/i,
 	];
 	return patterns.some((p) => p.test(text));
 }
