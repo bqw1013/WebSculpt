@@ -82,10 +82,10 @@ Playwright CLI **只能通过 CDP attach 到用户已手动开启远程调试的
 
    ```bash
    # 附加到 Chrome
-   playwright-cli attach --cdp=chrome
+   playwright-cli attach --cdp=chrome --session=default
    
    # 附加到 Microsoft Edge
-   playwright-cli attach --cdp=msedge
+   playwright-cli attach --cdp=msedge --session=default
    ```
 
    连接成功后，CLI 返回当前页面 snapshot。

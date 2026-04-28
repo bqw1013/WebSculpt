@@ -205,7 +205,7 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 		if (isCdpAttachError(diagnosticText)) {
 			const error = new Error(
 				"Browser remote debugging is not enabled or no playwright-cli attach has been performed. " +
-					"Enable remote debugging and run 'playwright-cli attach --cdp=chrome'.",
+					"Enable remote debugging and run 'playwright-cli attach --cdp=chrome --session=default'.",
 			);
 			(error as Error & { code: string }).code = "PLAYWRIGHT_CLI_ATTACH_REQUIRED";
 			throw error;
