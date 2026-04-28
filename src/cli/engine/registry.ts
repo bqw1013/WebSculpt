@@ -168,8 +168,7 @@ export async function loadRegistry(): Promise<void> {
 			`${c.manifest.domain}/${c.manifest.action}`;
 		const scannedKeys = new Set(builtinScanned.map(toKey));
 		const indexKeys = new Set(builtinInIndex.map(toKey));
-		const builtinChanged =
-			scannedKeys.size !== indexKeys.size || [...scannedKeys].some((k) => !indexKeys.has(k));
+		const builtinChanged = scannedKeys.size !== indexKeys.size || [...scannedKeys].some((k) => !indexKeys.has(k));
 		if (!builtinChanged) {
 			cachedCommands = index.commands.map(toResolvedCommand);
 			return;
