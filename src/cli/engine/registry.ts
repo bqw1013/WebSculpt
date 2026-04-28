@@ -1,3 +1,4 @@
+import { existsSync } from "fs";
 import { access, readdir, readFile, writeFile } from "fs/promises";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -178,23 +179,39 @@ export function listAllCommands(): ResolvedCommand[] {
 	if (!cachedCommands) {
 		throw new Error("Registry not loaded. Call loadRegistry() first.");
 	}
-	return [...cachedCommands];
+	const stale: ResolvedCommand[] = [];
+	const valid = cachedCommands.filter((c) => {
+		if (existsSync(c.commandPath)) return true;
+		stale.push(c);
+		return false;
+	});
+	if (stale.length > 0) {
+		cachedCommands = valid;
+		rebuildIndex().catch(() => {});
+	}
+	return [...valid];
 }
 
 /**
  * Finds a single command by domain and action from the in-memory cache.
  * User commands take precedence over built-ins.
+ * Stale entries missing on disk are evicted lazily.
  */
 export function findCommand(domain: string, action: string): ResolvedCommand | null {
 	if (!cachedCommands) {
 		throw new Error("Registry not loaded. Call loadRegistry() first.");
 	}
-	const userHit = cachedCommands.find(
-		(c) => c.manifest.domain === domain && c.manifest.action === action && c.source === "user",
-	);
-	if (userHit) return userHit;
-	const builtinHit = cachedCommands.find(
-		(c) => c.manifest.domain === domain && c.manifest.action === action && c.source === "builtin",
-	);
-	return builtinHit || null;
+	const candidates = [
+		cachedCommands.find((c) => c.manifest.domain === domain && c.manifest.action === action && c.source === "user"),
+		cachedCommands.find(
+			(c) => c.manifest.domain === domain && c.manifest.action === action && c.source === "builtin",
+		),
+	];
+	for (const candidate of candidates) {
+		if (!candidate) continue;
+		if (existsSync(candidate.commandPath)) return candidate;
+		cachedCommands = cachedCommands.filter((c) => c !== candidate);
+		rebuildIndex().catch(() => {});
+	}
+	return null;
 }

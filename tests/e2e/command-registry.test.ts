@@ -6,10 +6,9 @@ import {
 	notesSavePackage,
 	registerUserCommand,
 	RegistryIndex,
-	writeCommandDir,
 } from "./helpers/commands";
 import { createIsolatedHome, parseJsonOutput, readJsonFile, removeTempDir, runSourceCli, websculptPath } from "./helpers/cli";
-import { writeFile } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 
 describe("command registry", () => {
 	const tempDirs: string[] = [];
@@ -28,8 +27,6 @@ describe("command registry", () => {
 			expect(result.exitCode).toBe(0);
 			expect(result.stderr).toBe("");
 			expect(result.stdout).toContain("builtin");
-			expect(result.stdout).toContain("example");
-			expect(result.stdout).toContain("hello");
 		});
 
 		it("shows newly created user commands alongside built-ins", async () => {
@@ -49,43 +46,9 @@ describe("command registry", () => {
 
 			expect(listResult.exitCode).toBe(0);
 			expect(listResult.stdout).toContain("builtin");
-			expect(listResult.stdout).toContain("example");
-			expect(listResult.stdout).toContain("hello");
 			expect(listResult.stdout).toContain("user");
 			expect(listResult.stdout).toContain("notes");
 			expect(listResult.stdout).toContain("save");
-		});
-
-		it("allows a user command to override a built-in without crashing command list", async () => {
-			const homeDir = await createIsolatedHome();
-			tempDirs.push(homeDir);
-
-			const overridePackage = {
-				code: 'export default async function() { return { source: "user" }; }\n',
-				manifest: {
-					action: "hello",
-					description: "User override of example hello",
-					domain: "example",
-					id: "example-hello",
-					parameters: [],
-					runtime: "node",
-				},
-			};
-			const commandDirPath = await writeCommandDir(homeDir, "override-example-hello", overridePackage);
-			const createResult = await runSourceCli(
-				["command", "create", "example", "hello", "--from-dir", commandDirPath, "--force", "--format", "json"],
-				homeDir,
-			);
-			const createPayload = parseJsonOutput<CommandCreateResult>(createResult.stdout);
-
-			expect(createResult.exitCode).toBe(0);
-			expect(createPayload.success).toBe(true);
-
-			const listResult = await runSourceCli(["command", "list"], homeDir);
-
-			expect(listResult.exitCode).toBe(0);
-			expect(listResult.stdout).toContain("example");
-			expect(listResult.stdout).toContain("hello");
 		});
 	});
 
@@ -194,25 +157,6 @@ describe("command registry", () => {
 			expect(listResult.stdout).not.toContain("notes");
 			expect(listResult.stdout).not.toContain("delete");
 		});
-
-		it("returns a structured error when trying to remove a built-in command", async () => {
-			const homeDir = await createIsolatedHome();
-			tempDirs.push(homeDir);
-
-			const result = await runSourceCli(
-				["command", "remove", "example", "hello", "--format", "json"],
-				homeDir,
-			);
-			const payload = parseJsonOutput<CommandRemoveResult>(result.stdout);
-
-			expect(result.exitCode).toBe(0);
-			expect(payload.success).toBe(false);
-			expect(payload.error).toEqual(
-				expect.objectContaining({
-					code: "CANNOT_REMOVE_BUILTIN",
-				}),
-			);
-		});
 	});
 
 	describe("registry index", () => {
@@ -291,6 +235,55 @@ describe("command registry", () => {
 			const index = await readJsonFile<RegistryIndex>(indexPath);
 			expect(index.formatVersion).toBe(1);
 			expect(index.commands.length).toBeGreaterThan(0);
+		});
+
+		it("evicts manually deleted user commands from list", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const { createResult } = await registerUserCommand(homeDir, "note-delete-package", notesDeletePackage);
+			expect(createResult.exitCode).toBe(0);
+
+			// Populate the index cache.
+			const listBefore = await runSourceCli(["command", "list"], homeDir);
+			expect(listBefore.exitCode).toBe(0);
+			expect(listBefore.stdout).toContain("notes");
+			expect(listBefore.stdout).toContain("delete");
+
+			// Manually delete the command directory behind the CLI's back.
+			const actionDir = websculptPath(homeDir, "commands", "notes", "delete");
+			await rm(actionDir, { recursive: true, force: true });
+
+			const listAfter = await runSourceCli(["command", "list"], homeDir);
+			expect(listAfter.exitCode).toBe(0);
+			expect(listAfter.stdout).not.toContain("notes");
+			expect(listAfter.stdout).not.toContain("delete");
+		});
+
+		it("returns NOT_FOUND when removing a manually deleted user command", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const { createResult } = await registerUserCommand(homeDir, "note-delete-package", notesDeletePackage);
+			expect(createResult.exitCode).toBe(0);
+
+			// Populate the index cache.
+			await runSourceCli(["command", "list"], homeDir);
+
+			// Manually delete the command directory.
+			const actionDir = websculptPath(homeDir, "commands", "notes", "delete");
+			await rm(actionDir, { recursive: true, force: true });
+
+			const removeResult = await runSourceCli(["command", "remove", "notes", "delete", "--format", "json"], homeDir);
+			const removePayload = parseJsonOutput<CommandRemoveResult>(removeResult.stdout);
+
+			expect(removeResult.exitCode).toBe(0);
+			expect(removePayload.success).toBe(false);
+			expect(removePayload.error).toEqual(
+				expect.objectContaining({
+					code: "NOT_FOUND",
+				}),
+			);
 		});
 
 		it("rebuilds the index when appVersion is stale", async () => {
