@@ -161,7 +161,22 @@ export async function loadRegistry(): Promise<void> {
 	const appVersion = await getAppVersion();
 	const index = await readIndex();
 	if (index && index.appVersion === appVersion) {
-		cachedCommands = index.commands.map(toResolvedCommand);
+		const builtinDir = getBuiltinCommandsDir();
+		const builtinScanned = await scanCommands(builtinDir, "builtin");
+		const builtinInIndex = index.commands.filter((c) => c.source === "builtin");
+		const toKey = (c: { manifest: { domain: string; action: string } }) =>
+			`${c.manifest.domain}/${c.manifest.action}`;
+		const scannedKeys = new Set(builtinScanned.map(toKey));
+		const indexKeys = new Set(builtinInIndex.map(toKey));
+		const builtinChanged =
+			scannedKeys.size !== indexKeys.size || [...scannedKeys].some((k) => !indexKeys.has(k));
+		if (!builtinChanged) {
+			cachedCommands = index.commands.map(toResolvedCommand);
+			return;
+		}
+		const commands = await scanAllCommands();
+		cachedCommands = commands;
+		await rebuildIndex();
 	} else {
 		const commands = await scanAllCommands();
 		cachedCommands = commands;

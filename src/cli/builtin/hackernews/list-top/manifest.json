@@ -1,0 +1,21 @@
+{
+  "runtime": "node",
+  "description": "Fetch Hacker News top/best/new stories",
+  "parameters": [
+    {
+      "name": "type",
+      "required": false,
+      "default": "top",
+      "description": "Story list type: top (trending), best (best), new (newest)"
+    },
+    {
+      "name": "limit",
+      "required": false,
+      "default": "10",
+      "description": "Number of stories to return, range 1-30"
+    }
+  ],
+  "id": "hackernews-list-top",
+  "domain": "hackernews",
+  "action": "list-top"
+}

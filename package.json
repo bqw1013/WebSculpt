@@ -25,7 +25,7 @@
   "scripts": {
     "build": "tsc && npm run copy:commands && npm run build:skills",
     "build:skills": "node scripts/build-skills.js",
-    "copy:commands": "node --input-type=module -e \"import fs from 'node:fs'; fs.cpSync('src/cli/builtin', 'dist/cli/builtin', {recursive:true, force:true})\"",
+    "copy:commands": "node --input-type=module -e \"import fs from 'node:fs'; fs.rmSync('dist/cli/builtin', {recursive:true, force:true}); fs.cpSync('src/cli/builtin', 'dist/cli/builtin', {recursive:true, force:true})\"",
     "dev": "tsx src/cli/index.ts",
     "typecheck": "tsc --noEmit",
     "check": "biome check --error-on-warnings .",

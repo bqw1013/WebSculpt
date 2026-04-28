@@ -1,0 +1,27 @@
+{
+  "runtime": "playwright-cli",
+  "description": "Fetch trending repositories from GitHub Trending page",
+  "parameters": [
+    {
+      "name": "language",
+      "required": false,
+      "default": "",
+      "description": "Programming language filter (e.g. python, typescript, go, rust). Empty means all languages."
+    },
+    {
+      "name": "since",
+      "required": false,
+      "default": "daily",
+      "description": "Time range: daily, weekly, or monthly"
+    },
+    {
+      "name": "limit",
+      "required": false,
+      "default": "10",
+      "description": "Maximum number of repositories to return"
+    }
+  ],
+  "id": "github-list-trending",
+  "domain": "github",
+  "action": "list-trending"
+}
