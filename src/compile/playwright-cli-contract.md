@@ -147,7 +147,7 @@ throw new Error("Something went wrong");
 
 `playwright-cli` 的执行环境**不会保留** `Error.code` 属性。Runner 只能通过**错误消息文本中的关键字**来识别业务错误码。
 
-因此，如果你希望 runner 返回特定的错误码（如 `AUTH_REQUIRED`、`NOT_FOUND`、`EMPTY_RESULT`、`MISSING_PARAM`、`DRIFT_DETECTED`），**必须在消息文本中包含该错误码**。
+因此，如果你希望 runner 返回特定的业务错误码，**必须在消息文本中包含该错误码**。
 
 推荐格式：
 
@@ -157,19 +157,7 @@ throw new Error("[AUTH_REQUIRED] 需要登录");
 
 > `playwright-cli` 的执行环境不会保留 `Error.code` 属性，即使你在代码中设置了 `error.code`，runner 也无法读取。请确保错误码出现在消息文本中即可。
 
-### 已知错误码
-
-以下错误码会被 runner 识别并原样透传：
-
-| 错误码 | 典型场景 |
-|--------|----------|
-| `AUTH_REQUIRED` | 需要登录才能访问 |
-| `NOT_FOUND` | 目标资源不存在 |
-| `EMPTY_RESULT` | 存在但结果为空 |
-| `MISSING_PARAM` | 缺少必填参数 |
-| `DRIFT_DETECTED` | 页面结构发生变化 |
-
-如果消息中不包含上述关键字，runner 会将错误归类为 `COMMAND_EXECUTION_ERROR`。
+如果消息中不包含已知业务错误码关键字，runner 会将错误归类为 `COMMAND_EXECUTION_ERROR`。业务错误码的完整语义定义见 [`./contract.md`](./contract.md) 第 6 节。
 
 ---
 
@@ -191,6 +179,16 @@ return { debug: { url: page.url(), title: await page.title() }, items: [] };
 
 - `playwright-cli` 命令需要浏览器环境（CDP 连接）。如果用户未开启远程调试，`command-runner.ts` 会返回 `PLAYWRIGHT_CLI_ATTACH_REQUIRED` 结构化错误。
 - 用户完成设置后，再次调用命令即可继续测试，无需重新创建命令。
+
+### PowerShell 手动测试陷阱
+
+如果你在 PowerShell 中直接手动调用 `playwright-cli run-code "<code>"` 测试命令，代码字符串中的空格、花括号、分号可能被 PowerShell 拆分为多个 token，导致 `SyntaxError` 或 `too many arguments`。这是 **shell 传参问题，不是命令本身的问题**。
+
+websculpt runner 使用 `execFile` 数组传参，不受 shell 拆分影响。因此：
+
+- 手动测试时，优先用 `eval` 验证选择器是否 work
+- 完整的 runner 链路测试交给 websculpt 自身
+- 不要因为在 PowerShell 手动测试失败而修改命令代码
 
 ---
 
@@ -302,15 +300,13 @@ await page.waitForSelector("article.Box-row", { timeout: 15000 });
 
 ---
 
-## 9. 检查清单（playwright-cli 专用）
+## 9. 运行时专用检查清单
+
+通用检查项见 [`./contract.md`](./contract.md) 第 7 节。
 
 - [ ] 函数签名为 `async function (page)`，且包含 `/* PARAMS_INJECT */`
 - [ ] `/* PARAMS_INJECT */` 位于函数体内部，不在函数体外
-- [ ] 没有 `|| default` 形式的参数 fallback
-- [ ] 数值参数通过 `parseInt` / `parseFloat` 转换
 - [ ] 布尔参数通过 `=== "true"` 判断
-- [ ] 错误消息中包含了预期的业务错误码（如 `[NOT_FOUND] ...`）
-- [ ] 返回值为可序列化的纯数据对象
 - [ ] 没有使用 `process`、`require`、文件读写等 Node.js API
 
 ---
@@ -325,4 +321,4 @@ await page.waitForSelector("article.Box-row", { timeout: 15000 });
 | `MISSING_RESULT_MARKER` | 命令输出缺少 `### Result` 标记 |
 | `MALFORMED_RESULT_JSON` | `### Result` 后的内容不是合法 JSON |
 | `RUNTIME_NOT_FOUND` | `playwright-cli` 未安装 |
-| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | 浏览器 CDP 会话未 attach |
+| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | 浏览器 CDP 会话未 attach。确认远程调试已开启；若确认已开启但仍报错，可能是后台进程残留，尝试 `playwright-cli kill-all` 和 `playwright-cli close-all` 后重新 attach |

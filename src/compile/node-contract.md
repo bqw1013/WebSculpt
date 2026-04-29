@@ -94,12 +94,10 @@ export default async function (params) {
 
 ---
 
-## 7. 检查清单（Node 专用）
+## 7. 运行时专用检查清单
+
+通用检查项见 [`./contract.md`](./contract.md) 第 7 节。
 
 - [ ] 入口文件通过 `export default` 导出异步函数
 - [ ] 签名为 `async (params: Record<string, string>) => unknown`
 - [ ] 代码中不存在 `/* PARAMS_INJECT */` 占位符
-- [ ] 没有 `|| default` 形式的参数 fallback
-- [ ] 数值参数通过 `parseInt` / `parseFloat` 转换
-- [ ] 错误消息中包含了预期的业务错误码
-- [ ] 返回值为可序列化的纯数据对象
