@@ -37,8 +37,8 @@ function rmrf(dir) {
 function buildSkills() {
 	console.log("=== Building skill artifact ===\n");
 
-	// 1. Clean and recreate references/
-	rmrf(referencesDir);
+	// 1. Ensure references/ exists; do NOT remove the root directory itself
+	// because it may be locked by a shell cwd or file watcher on Windows.
 	ensureDir(referencesDir);
 
 	// 2. Copy source dirs to references/
@@ -47,6 +47,24 @@ function buildSkills() {
 			console.warn(`SKIP: ${path.relative(root, from)} not found`);
 			continue;
 		}
+
+		// Try to clean the target for a fresh copy. If locked (EBUSY on Windows),
+		// skip removal and let cpSync overwrite files in place.
+		if (fs.existsSync(to)) {
+			try {
+				rmrf(to);
+				console.log(`CLEAN: ${path.relative(root, to)}`);
+			} catch (err) {
+				if (err.code === "EBUSY") {
+					console.warn(
+						`WARN: ${path.relative(root, to)} is busy (shell cwd or file lock); will overwrite in place`,
+					);
+				} else {
+					throw err;
+				}
+			}
+		}
+
 		fs.cpSync(from, to, { recursive: true, force: true });
 		console.log(`COPY: ${path.relative(root, from)} -> ${path.relative(root, to)}`);
 	}
