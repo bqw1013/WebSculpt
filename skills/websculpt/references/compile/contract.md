@@ -1,7 +1,10 @@
 # 命令资产编写契约
 
-> 本文档定义了 WebSculpt 扩展命令的编写规范，涵盖 manifest 格式、runtime 选择、资产文档标准以及沉淀工作流。
-> 各运行时的具体实现细节，请参见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md) 和 [`./node-contract.md`](./node-contract.md)。
+> 本文档定义了 WebSculpt 扩展命令的通用编写规范，涵盖 manifest 格式、runtime 选择、资产文档标准以及沉淀工作流。
+>
+> **如果你已确定运行时，直接阅读对应契约：**
+> - `node` → [`./node-contract.md`](./node-contract.md)
+> - `playwright-cli` → [`./playwright-cli-contract.md`](./playwright-cli-contract.md)
 
 ---
 
@@ -48,6 +51,8 @@
 
 > 沉淀命令必须是 `node` 或 `playwright-cli` runtime。探索中若发现其他语言（如 Python、Shell）路径更优，评估重写为 Node.js 的等价实现；若重写成本过高或不可行，该路径不进入命令库，作为一次性探索成果处理。
 
+**选定 runtime 后，必须阅读对应的运行时契约文档。** `node` 运行时见 [`./node-contract.md`](./node-contract.md)；`playwright-cli` 运行时见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md)。本文档后续章节（manifest 规范、文档标准、错误码）为两种运行时的通用约束，仍需阅读。
+
 ---
 
 ## 3. Manifest 规范
@@ -89,7 +94,7 @@
 | 浏览器 API | 不可用 | 通过 `page` 参数可用 |
 | 错误码传递 | `error.code` 属性 | 消息文本中的关键字 |
 
-各运行时的详细实现规则，请参见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md) 和 [`./node-contract.md`](./node-contract.md)。
+以下仅为快速对比。实现细节必须遵循你已选定的运行时契约文档。
 
 ---
 
@@ -171,10 +176,10 @@
 - [ ] 错误消息中包含了预期的业务错误码（如 `[NOT_FOUND] ...`）
 - [ ] 返回值为可序列化的纯数据对象
 
-`playwright-cli` 专用（详见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md)）：
+`playwright-cli` 专用：见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md)
 - [ ] 函数签名为 `async function (page)`，且包含 `/* PARAMS_INJECT */`
 
-`node` 专用（详见 [`./node-contract.md`](./node-contract.md)）：
+`node` 专用：见 [`./node-contract.md`](./node-contract.md)
 - [ ] 入口文件通过 `export default` 导出异步函数
 - [ ] 签名为 `async (params: Record<string, string>) => unknown`
 
@@ -189,4 +194,4 @@
 | `TIMEOUT` | 命令执行超时 | 所有 |
 | `COMMAND_EXECUTION_ERROR` | 未分类的命令执行错误 | 所有 |
 
-运行时专用的 runner 错误码，请参见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md) 和 [`./node-contract.md`](./node-contract.md)。
+运行时专用的 runner 错误码，见对应运行时契约文档。

@@ -13,7 +13,7 @@ async function (page) {
     ? `https://github.com/trending/${encodeURIComponent(language)}?since=${since}`
     : `https://github.com/trending?since=${since}`;
 
-  await page.goto(baseUrl, { waitUntil: "networkidle" });
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForSelector("article.Box-row", { timeout: 15000 });
 
   const repos = await page.evaluate(() => {

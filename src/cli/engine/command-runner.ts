@@ -137,7 +137,7 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 		});
 
 		// playwright-cli surfaces command-level errors under "### Error" with exit code 0
-		const errorMatch = stdout.match(/### Error\nError:\s*([\s\S]*?)(?=\n### |$)/);
+		const errorMatch = stdout.match(/### Error\n([\s\S]*?)(?=\n### |$)/);
 		if (errorMatch) {
 			const errorMessage = errorMatch[1].trim();
 			const businessCode = extractBusinessErrorCode(errorMessage);
