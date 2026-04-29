@@ -100,8 +100,8 @@ function generatePlaywrightCliTemplate(params: ParsedParam[]): string {
 		return `\tconst ${p.name} = params.${p.name};`;
 	});
 
-	return `/* PARAMS_INJECT */
-async function (page) {
+	return `async function (page) {
+\t/* PARAMS_INJECT */
 ${paramLines.join("\n")}
 	// TODO: implement command logic using page
 	return { ok: true };
