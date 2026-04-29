@@ -202,20 +202,27 @@ async function (page) {
   /* PARAMS_INJECT */
   const limit = parseInt(params.limit, 10);
 
-  await page.goto("https://example.com", { waitUntil: "networkidle" });
-  await page.waitForSelector(".item", { timeout: 15000 });
+  // The injected page is shared across concurrent executions.
+  // Always create an isolated page and close it in finally.
+  page = await page.context().newPage();
+  try {
+    await page.goto("https://example.com", { waitUntil: "networkidle" });
+    await page.waitForSelector(".item", { timeout: 15000 });
 
-  const items = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll(".item")).map((el) => ({
-      title: el.querySelector("h2")?.textContent?.trim() || "",
-    }));
-  });
+    const items = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll(".item")).map((el) => ({
+        title: el.querySelector("h2")?.textContent?.trim() || "",
+      }));
+    });
 
-  if (items.length === 0) {
-    throw new Error("[EMPTY_RESULT] No items found");
+    if (items.length === 0) {
+      throw new Error("[EMPTY_RESULT] No items found");
+    }
+
+    return { items: items.slice(0, limit) };
+  } finally {
+    await page.close();
   }
-
-  return { items: items.slice(0, limit) };
 }
 ```
 
@@ -245,32 +252,39 @@ async function (page) {
   const author = params.author;
   const limit = parseInt(params.limit, 10);
 
-  // Validate parameters
-  if (!author) {
-    throw new Error('[MISSING_PARAM] Parameter "author" is required.');
+  // The injected page is shared across concurrent executions.
+  // Always create an isolated page and close it in finally.
+  page = await page.context().newPage();
+  try {
+    // Validate parameters
+    if (!author) {
+      throw new Error('[MISSING_PARAM] Parameter "author" is required.');
+    }
+
+    // Navigate and extract data
+    await page.goto(
+      "https://example.com/search?q=" + encodeURIComponent(author),
+      { waitUntil: "networkidle" }
+    );
+
+    const data = await page.evaluate(() => {
+      const nodes = document.querySelectorAll(".result-item");
+      return Array.from(nodes).map((n) => ({
+        title: n.querySelector(".title")?.innerText?.trim(),
+        url: n.querySelector("a")?.href,
+      }));
+    });
+
+    // Business error: empty result
+    if (data.length === 0) {
+      throw new Error("[EMPTY_RESULT] No relevant content found");
+    }
+
+    // Return success result
+    return { items: data.slice(0, limit) };
+  } finally {
+    await page.close();
   }
-
-  // Navigate and extract data
-  await page.goto(
-    "https://example.com/search?q=" + encodeURIComponent(author),
-    { waitUntil: "networkidle" }
-  );
-
-  const data = await page.evaluate(() => {
-    const nodes = document.querySelectorAll(".result-item");
-    return Array.from(nodes).map((n) => ({
-      title: n.querySelector(".title")?.innerText?.trim(),
-      url: n.querySelector("a")?.href,
-    }));
-  });
-
-  // Business error: empty result
-  if (data.length === 0) {
-    throw new Error("[EMPTY_RESULT] No relevant content found");
-  }
-
-  // Return success result
-  return { items: data.slice(0, limit) };
 }
 ```
 
@@ -297,6 +311,28 @@ await page.waitForSelector("article.Box-row", { timeout: 15000 });
 ### 选择器稳定性
 
 优先使用框架级组件类（如 GitHub Primer 的 `Box-row`）或语义属性（`data-testid`、aria-label），避免使用动态生成的类名。记录备选定位策略到 `context.md`，便于失效后修复。
+
+### Tab Isolation
+
+`playwright-cli` daemon 在所有并发执行之间共享同一个注入的 `page` 对象。直接在共享 `page` 上操作会导致导航竞争、DOM 污染和跨命令数据串扰。
+
+**所有 `playwright-cli` 命令必须**在函数开头创建隔离页面，并在 `finally` 中关闭：
+
+```js
+async function (page) {
+  /* PARAMS_INJECT */
+  page = await page.context().newPage();
+  try {
+    // ... command logic ...
+  } finally {
+    await page.close();
+  }
+}
+```
+
+- 通过**重新赋值 `page`**（而非引入 `isolatedPage` 等新变量）来降低后续编辑时误操作原始共享页的风险。
+- `finally` 块是强制性的；遗漏 `page.close()` 会导致孤儿标签页在 daemon 中累积，造成内存泄漏并污染 `tab-list`。
+- 不要关闭原始的注入 `page`，否则会破坏 daemon 的当前标签页状态。
 
 ---
 

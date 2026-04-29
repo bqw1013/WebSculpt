@@ -95,16 +95,24 @@ ${paramLines.join("\n")}
 function generatePlaywrightCliTemplate(params: ParsedParam[]): string {
 	const paramLines = params.map((p) => {
 		if (p.default !== undefined && typeof p.default === "number") {
-			return `\tconst ${p.name} = parseInt(params.${p.name}, 10);`;
+			return `\t\tconst ${p.name} = parseInt(params.${p.name}, 10);`;
 		}
-		return `\tconst ${p.name} = params.${p.name};`;
+		return `\t\tconst ${p.name} = params.${p.name};`;
 	});
 
 	return `async function (page) {
 \t/* PARAMS_INJECT */
+\t// CRITICAL: The injected \`page\` is shared across concurrent executions.
+\t// Operating directly on it causes navigation races and data contamination.
+\t// Always create an isolated page and close it in \`finally\`.
+\tpage = await page.context().newPage();
+\ttry {
 ${paramLines.join("\n")}
-	// TODO: implement command logic using page
-	return { ok: true };
+\t\t// TODO: implement command logic using page
+\t\treturn { ok: true };
+\t} finally {
+\t\tawait page.close();
+\t}
 }
 `;
 }
