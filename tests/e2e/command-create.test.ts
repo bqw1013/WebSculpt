@@ -211,8 +211,16 @@ describe("command create", () => {
 			},
 		};
 		const commandDirPath = await writeCommandDir(homeDir, "complete-package", packageBody);
-		await writeFile(join(commandDirPath, "README.md"), "# Complete Command\n", "utf8");
-		await writeFile(join(commandDirPath, "context.md"), "Context here.\n", "utf8");
+		await writeFile(
+			join(commandDirPath, "README.md"),
+			"# Complete Command\n\n## Description\n\n## Parameters\n\n## Return Value\n\n## Usage\n\n## Common Error Codes\n",
+			"utf8",
+		);
+		await writeFile(
+			join(commandDirPath, "context.md"),
+			"## Precipitation Background\n\n## Page Structure\n\n## Environment Dependencies\n\n## Failure Signals\n\n## Repair Clues\n",
+			"utf8",
+		);
 
 		const result = await runSourceCli(
 			["command", "create", "test", "complete", "--from-dir", commandDirPath, "--format", "json"],

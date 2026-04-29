@@ -13,6 +13,9 @@ export const CONFIG_FILE = join(WEBSCULPT_DIR, "config.json");
 /** Path to the append-only execution log file. */
 export const LOG_FILE = join(WEBSCULPT_DIR, "log.jsonl");
 
+/** Path to the append-only audit log file. */
+export const AUDIT_FILE = join(WEBSCULPT_DIR, "audit.jsonl");
+
 /** Directory for long-lived runtime logs managed by WebSculpt. */
 export const LOGS_DIR = join(WEBSCULPT_DIR, "logs");
 

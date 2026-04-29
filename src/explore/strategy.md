@@ -144,3 +144,7 @@ websculpt <domain> <action> --help
 - **用户行为模拟是反爬友好的基底**：交互操作有自动等待和真实事件流。但沉淀后如果批量调用，仍然可能被识别。探索时要验证单链路的可行性，也要估计批量调用的风险。
 
 - **有些站点只有浏览器层才有内容**：静态方式完全无效，只能走浏览器自动化。探索时就要确认"必须用浏览器"这个事实，沉淀命令直接声明 `playwright-cli` runtime，不浪费代码在 fallback 上。
+
+### 沉淀提案卡
+
+探索结束后进入沉淀前，必须向用户提交沉淀提案卡（Precipitation Proposal Card）。卡片格式与必填字段见 `../skills/websculpt/SKILL.md` 的"沉淀提案卡"章节。未获用户明确确认前，不得执行 `command draft` 或 `command create`。

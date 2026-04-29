@@ -108,12 +108,12 @@
 
 **回答的问题**："这个命令怎么用？"
 
-**必须包含**：
-- 一句话用途
-- 参数表（name、required、default、description）
-- 返回值结构说明
-- 至少一个 `websculpt <domain> <action>` 调用示例
-- 常见业务错误码
+**必须包含以下章节**：
+- `## Description`：一句话用途
+- `## Parameters`：参数表（name、required、default、description）
+- `## Return Value`：返回值结构说明
+- `## Usage`：至少一个 `websculpt <domain> <action>` 调用示例
+- `## Common Error Codes`：常见业务错误码
 
 **绝不包含**：DOM 选择器、API 端点、反爬策略、失效预测。
 
@@ -123,12 +123,12 @@
 
 **回答的问题**："这个命令为什么这样实现？坏了怎么修？"
 
-**建议章节**：
-- `## 沉淀背景`：何时、为何沉淀
-- `## 页面结构/数据源特征`：关键 URL、选择器、交互序列
-- `## 环境依赖`：登录态、浏览器配置、反爬策略
-- `## 失效信号`：页面变化时的表现（如选择器返回 null、抛出 `DRIFT_DETECTED`）
-- `## 修复线索`：备用方案、替代入口
+**必须包含以下章节**：
+- `## Precipitation Background`：何时、为何沉淀
+- `## Page Structure`：关键 URL、选择器、交互序列
+- `## Environment Dependencies`：登录态、浏览器配置、反爬策略
+- `## Failure Signals`：页面变化时的表现（如选择器返回 null、抛出 `DRIFT_DETECTED`）
+- `## Repair Clues`：备用方案、替代入口
 
 **绝不包含**：参数用法说明、通用建议。
 
@@ -160,8 +160,8 @@
 ### L1 结构（manifest 与资产完整性）
 
 - [ ] `manifest.json` 包含非空的 `description` 字段（不能为空字符串或仅含空白字符）
-- [ ] `README.md` 包含一句话用途、参数表、返回值说明、调用示例、常见错误码
-- [ ] `context.md` 包含沉淀背景、页面结构/数据源特征、环境依赖、失效信号、修复线索
+- [ ] `README.md` 包含 `## Description`、`## Parameters`、`## Return Value`、`## Usage`、`## Common Error Codes` 章节
+- [ ] `context.md` 包含 `## Precipitation Background`、`## Page Structure`、`## Environment Dependencies`、`## Failure Signals`、`## Repair Clues` 章节
 
 ### L2 合规（禁止模式与文档红线）
 

@@ -1,3 +1,4 @@
+import { access } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { handleCommandDraft, parseParamSpec } from "../../../../src/cli/meta/draft.js";
 
@@ -58,5 +59,17 @@ describe("handleCommandDraft", () => {
 		if (!result.success) {
 			expect(result.error.code).toBe("RESERVED_DOMAIN");
 		}
+	});
+
+	it("generates structured README.md and context.md templates", async () => {
+		const result = await handleCommandDraft("test-domain", "test-action", { force: true });
+		expect(result.success).toBe(true);
+		if (!result.success) return;
+
+		const readmePath = `${result.draftPath}/README.md`;
+		const contextPath = `${result.draftPath}/context.md`;
+
+		await expect(access(readmePath)).resolves.toBeUndefined();
+		await expect(access(contextPath)).resolves.toBeUndefined();
 	});
 });

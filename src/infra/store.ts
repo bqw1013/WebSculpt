@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
-import { CONFIG_FILE, LOG_FILE, USER_COMMANDS_DIR, WEBSCULPT_DIR } from "./paths.js";
+import { AUDIT_FILE, CONFIG_FILE, LOG_FILE, USER_COMMANDS_DIR, WEBSCULPT_DIR } from "./paths.js";
 
 export interface Config {
 	version?: string;
@@ -12,6 +12,14 @@ export interface LogEntry {
 	domain: string;
 	action: string;
 	result: unknown;
+}
+
+export interface AuditEntry {
+	timestamp: string;
+	event: "install" | "overwrite";
+	domain: string;
+	action: string;
+	sourcePath: string;
 }
 
 /** Initializes the WebSculpt filesystem layout. Creates directories and a default config if missing. */
@@ -45,4 +53,10 @@ export async function writeConfig(config: Config): Promise<void> {
 export async function appendLog(entry: LogEntry): Promise<void> {
 	const line = `${JSON.stringify(entry)}\n`;
 	await writeFile(LOG_FILE, line, { flag: "a" });
+}
+
+/** Appends a single audit entry as a JSON line to the audit file. */
+export async function appendAuditLog(entry: AuditEntry): Promise<void> {
+	const line = `${JSON.stringify(entry)}\n`;
+	await writeFile(AUDIT_FILE, line, { flag: "a" });
 }

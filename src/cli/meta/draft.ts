@@ -157,18 +157,44 @@ TODO: describe what this command does.
 
 TODO: list parameters and their meanings.
 
+## Return Value
+
+TODO: describe the return value structure.
+
 ## Usage
 
 \`\`\`
 websculpt ${domain} ${action}
 \`\`\`
+
+## Common Error Codes
+
+TODO: list common business error codes (e.g., AUTH_REQUIRED, NOT_FOUND, EMPTY_RESULT).
 `;
 }
 
 function generateContextTemplate(_domain: string, _action: string): string {
 	return `# Context
 
-TODO: add any additional context, design notes, or implementation guidance here.
+## Precipitation Background
+
+TODO: when and why this command was precipitated.
+
+## Page Structure
+
+TODO: key URLs, selectors, or interaction sequences.
+
+## Environment Dependencies
+
+TODO: login state, browser config, anti-crawl strategy.
+
+## Failure Signals
+
+TODO: how the page behaves when it changes (e.g., selector returns null, throws DRIFT_DETECTED).
+
+## Repair Clues
+
+TODO: backup plans, alternative entry points.
 `;
 }
 

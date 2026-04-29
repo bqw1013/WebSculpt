@@ -246,6 +246,40 @@ function validateAssets(hasReadme: boolean, hasContext: boolean, details: Valida
 	}
 }
 
+const EXPECTED_README_SECTIONS = ["## Description", "## Parameters", "## Usage"];
+const EXPECTED_CONTEXT_SECTIONS = [
+	"## Precipitation Background",
+	"## Page Structure",
+	"## Environment Dependencies",
+	"## Failure Signals",
+];
+
+function validateDocumentContent(
+	readmeContent: string | undefined,
+	contextContent: string | undefined,
+	details: ValidationDetail[],
+): void {
+	if (readmeContent !== undefined) {
+		for (const section of EXPECTED_README_SECTIONS) {
+			if (!readmeContent.includes(section)) {
+				addWarning(details, "MISSING_README_SECTION", `README.md is missing expected section: ${section.slice(3)}`);
+			}
+		}
+	}
+
+	if (contextContent !== undefined) {
+		for (const section of EXPECTED_CONTEXT_SECTIONS) {
+			if (!contextContent.includes(section)) {
+				addWarning(
+					details,
+					"MISSING_CONTEXT_SECTION",
+					`context.md is missing expected section: ${section.slice(3)}`,
+				);
+			}
+		}
+	}
+}
+
 export interface ValidateCommandPackageInput {
 	/** Raw parsed manifest (may be any JSON value). */
 	manifest: unknown;
@@ -255,6 +289,10 @@ export interface ValidateCommandPackageInput {
 	hasReadme: boolean;
 	/** Whether context.md exists in the source directory. */
 	hasContext: boolean;
+	/** Content of README.md for content-quality checks. */
+	readmeContent?: string;
+	/** Content of context.md for content-quality checks. */
+	contextContent?: string;
 	/** Expected domain when validating for create/install. */
 	expectedDomain?: string;
 	/** Expected action when validating for create/install. */
@@ -286,6 +324,7 @@ export function validateCommandPackage(input: ValidateCommandPackageInput): Vali
 	validateL2Compliance(input.code, details);
 	validateL3Contract(manifest, input.code, details);
 	validateAssets(input.hasReadme, input.hasContext, details);
+	validateDocumentContent(input.readmeContent, input.contextContent, details);
 
 	return details;
 }

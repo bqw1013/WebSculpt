@@ -28,8 +28,8 @@ describe("handleCommandValidate", () => {
 			runtime: "node",
 		});
 		await writeCode(dir, "export default async function(params) { return {}; }");
-		await writeFile(join(dir, "README.md"), "# Test", "utf-8");
-		await writeFile(join(dir, "context.md"), "Context", "utf-8");
+		await writeFile(join(dir, "README.md"), "# Test\n\n## Description\n\n## Parameters\n\n## Usage\n", "utf-8");
+		await writeFile(join(dir, "context.md"), "## Precipitation Background\n\n## Page Structure\n\n## Environment Dependencies\n\n## Failure Signals\n", "utf-8");
 
 		const result = await handleCommandValidate(dir);
 

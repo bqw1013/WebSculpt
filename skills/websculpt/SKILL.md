@@ -60,7 +60,37 @@ websculpt config init
 - 对每一个计划沉淀的子任务，确定 domain 和 action 命名
   - `domain`：目标服务或站点（如 `github`、`reddit`）
   - `action`：操作行为（如 `list`、`search-posts`）
-- **逐条向用户报告沉淀计划**，例如："本次探索中验证的 [fetch GitHub user repositories] 计划沉淀为 `github list-repos` 命令"
+
+**禁止静默跳过沉淀**。即使用户没有主动要求，只要本次探索产出了可复用的子任务，你就必须主动提出沉淀计划。未获用户明确拒绝前，不得假设"用户不需要"。
+
+### 沉淀提案卡（Precipitation Proposal Card）
+
+在向用户报告沉淀计划时，你必须提交一份结构化的沉淀提案卡，并**获得用户明确确认**后方可进入 `draft -> create` 流程。没有用户确认，不得执行任何沉淀操作。
+
+提案卡必须包含以下字段：
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `domain` / `action` | 是 | 命令名称建议 |
+| `description` | 是 | 一句话描述命令用途 |
+| `ioExamples` | 是 | 至少一组输入参数示例与预期输出 |
+| `valueAssessment` | 是 | 为什么值得沉淀（通用性、复用频率、节省时间） |
+| `stabilityAssessment` | 是 | 目标站点/接口的结构稳定性判断 |
+| `antiCrawlAssessment` | 是 | 反爬风险与当前规避策略 |
+| `expectedFailures` | 是 | 已知可能失效的条件和预期表现 |
+
+示例：
+
+```
+[沉淀提案] github/list-repos
+
+- 用途：获取指定 GitHub 用户的公开仓库列表
+- I/O 示例：输入 { username: "octocat" }，输出 { repos: [...], count: 8 }
+- 价值评估：高。换用户名即可复用，是常见信息获取子任务。
+- 稳定性评估：高。GitHub API v3 长期稳定，REST 端点格式变化极少。
+- 反爬评估：低。使用官方 API，有 rate limit，需处理 403/429。
+- 预期失效：用户不存在时返回空列表；API 限流时返回 403。
+```
 
 ### 沉淀约束
 
@@ -70,7 +100,7 @@ websculpt config init
 
 ### 执行沉淀
 
-用户确认沉淀计划后，按以下流程执行。第一步必须是阅读契约文档，未阅读前不得生成骨架或编写任何命令代码。
+用户确认沉淀提案后，按以下流程执行。第一步必须是阅读契约文档，未阅读前不得生成骨架或编写任何命令代码。
 
 1. **阅读契约文档**
    必须完整阅读 [references/compile/contract.md](references/compile/contract.md)。
@@ -85,8 +115,8 @@ websculpt config init
    基于本次探索的已验证结果，编辑并完善以下内容：
    - 入口文件：编写业务逻辑
    - `manifest.json`：调整参数、描述等元数据
-   - `README.md`：面向调用者的使用说明
-   - `context.md`：面向维护者的修复线索
+   - `README.md`：面向调用者的使用说明（必须包含 Description、Parameters、Return Value、Usage、Common Error Codes 章节）
+   - `context.md`：面向维护者的修复线索（必须包含 Precipitation Background、Page Structure、Environment Dependencies、Failure Signals、Repair Clues 章节）
 
 4. **预检合规**
    ```bash

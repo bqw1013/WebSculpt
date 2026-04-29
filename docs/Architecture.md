@@ -145,8 +145,6 @@ CLI 不只是命令的发现、执行与管理入口，更是 Agent 将过去任
 
 ### 5.3 自愈闭环与沉淀触发
 
-> **状态：设计中。** 以下流程和规范已确定，但 `precipitation` 配置消费、自动异常检测与触发等机制尚未在代码中实现。
-
 命令失效时，系统不自动修复，而是触发 AI 主导的自愈流程：
 
 ```
@@ -158,50 +156,36 @@ CLI 不只是命令的发现、执行与管理入口，更是 Agent 将过去任
 
 **沉淀触发机制**
 
-沉淀指将探索结果转化为可复用命令资产的过程。通过 `config.json` 可配置沉淀行为：
+沉淀指将探索结果转化为可复用命令资产的过程。当前采用强制提案模式：
 
-```json
-{
-  "precipitation": {
-    "mode": "auto"
-  }
-}
-```
-
-- `mode` 可选值为 `"auto"`（AI 自行判断是否沉淀）或 `"proposal"`（AI 生成提案，由人类确认后执行）。
-
-**模式 A（auto）的 AI 判断标准**
-
-AI 自行判断"本次探索是否值得沉淀"，判断理由记录到命令的 `context.md` 或 `manifest.description` 中。判断特征包括：
-
-- 任务是否被重复执行过（而非一次性需求）
-- 逻辑是否依赖瞬态环境
-- 是否经过泛化验证（换参数能正常工作）
-- 目标结构稳定性
-
-**模式 B（proposal）的交互流程**
+**提案交互流程**
 
 ```
-AI 提出沉淀提案 -> 人类 agent 确认/修改/拒绝
+AI 提出沉淀提案卡 -> 人类 agent 确认/修改/拒绝
   -> AI 调用 command draft 生成骨架 -> 编辑业务逻辑
-  -> （可选）command validate 预检
+  -> command validate 预检
   -> 调用 command create 落盘
 ```
 
 **提案格式规范**
 
-AI 提案应包含以下字段：
+AI 提案必须包含以下字段：
 
 | 字段 | 说明 |
 |------|------|
 | `domain` / `action` | 命令名称建议 |
-| `reason` | 为什么值得沉淀 |
-| `expectedUseCases` | 预期调用场景 |
-| `knownRisks` | 可能失效的条件 |
+| `description` | 一句话描述命令用途 |
+| `ioExamples` | 至少一组输入参数示例与预期输出 |
+| `valueAssessment` | 为什么值得沉淀 |
+| `stabilityAssessment` | 目标站点/接口的结构稳定性判断 |
+| `antiCrawlAssessment` | 反爬风险与当前规避策略 |
+| `expectedFailures` | 已知可能失效的条件和预期表现 |
+
+用户明确确认前，AI 不得执行 `draft` 或 `create`。
 
 **沉淀产物的完整性**
 
-沉淀时除 `manifest.json` 和 `command.js` 外，`README.md` 应提供面向调用者的参数说明与示例，`context.md` 应记录目标网站的结构特征、爬取逻辑依赖的环境条件、可能的失效信号。
+沉淀时除 `manifest.json` 和 `command.js` 外，`README.md` 必须包含 Description、Parameters、Return Value、Usage、Common Error Codes 章节；`context.md` 必须包含 Precipitation Background、Page Structure、Environment Dependencies、Failure Signals、Repair Clues 章节。
 
 当前代码已实现基础的执行异常识别（如 `PLAYWRIGHT_CLI_ATTACH_REQUIRED`），但**自愈闭环的自动检测与触发机制**（定时巡检、版本比对、自动降级）尚未实现，当前依赖人工发现命令失效或 AI 在执行时主动识别异常后发起修复。
 

@@ -84,17 +84,9 @@ assets:
 
 ## 2. `command create` 缺少审计记录
 
-**描述**
+**状态：已修复**
 
-当前 `command create` 成功落盘或覆盖命令时，没有留下审计记录。命令库的变更历史（谁/何时创建了哪个命令、是否覆盖）完全不可追溯。
-
-**影响**
-
-中低。不阻塞功能使用，但在命令库规模扩大或多人协作时，无法排查变更来源。
-
-**计划修复方案**
-
-在 `handleCommandCreate` 落盘成功后，向 `~/.websculpt/log.jsonl` 或独立的审计文件中追加创建/覆盖事件记录，包含时间戳、domain、action、来源路径、是否为覆盖操作。
+`command create` 成功落盘或覆盖命令后，会向 `~/.websculpt/audit.jsonl` 追加审计记录，包含时间戳、event 类型（install/overwrite）、domain、action、来源路径。
 
 ---
 

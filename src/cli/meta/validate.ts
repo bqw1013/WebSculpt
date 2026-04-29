@@ -1,4 +1,4 @@
-import { access, readFile } from "fs/promises";
+import { readFile } from "fs/promises";
 import { join } from "path";
 import { RESERVED_DOMAINS } from "../engine/registry.js";
 import type { MetaCommandResult } from "../output.js";
@@ -85,14 +85,16 @@ export async function handleCommandValidate(
 	// Check auxiliary file presence
 	let hasReadme = false;
 	let hasContext = false;
+	let readmeContent: string | undefined;
+	let contextContent: string | undefined;
 	try {
-		await access(join(fromDir, "README.md"));
+		readmeContent = await readFile(join(fromDir, "README.md"), "utf-8");
 		hasReadme = true;
 	} catch {
 		// README.md not present
 	}
 	try {
-		await access(join(fromDir, "context.md"));
+		contextContent = await readFile(join(fromDir, "context.md"), "utf-8");
 		hasContext = true;
 	} catch {
 		// context.md not present
@@ -103,6 +105,8 @@ export async function handleCommandValidate(
 		code,
 		hasReadme,
 		hasContext,
+		readmeContent,
+		contextContent,
 		expectedDomain: domain,
 		expectedAction: action,
 	});

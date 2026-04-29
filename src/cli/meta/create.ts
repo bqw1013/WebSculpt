@@ -1,6 +1,7 @@
 import { access, copyFile, mkdir, readFile, rm, writeFile } from "fs/promises";
 import { join } from "path";
 import { USER_COMMANDS_DIR } from "../../infra/paths.js";
+import { appendAuditLog } from "../../infra/store.js";
 import type { CommandManifest } from "../../types/index.js";
 import { RESERVED_DOMAINS, rebuildIndex } from "../engine/registry.js";
 import type { MetaCommandResult } from "../output.js";
@@ -81,14 +82,16 @@ export async function handleCommandCreate(
 		// Check auxiliary file presence
 		let hasReadme = false;
 		let hasContext = false;
+		let readmeContent: string | undefined;
+		let contextContent: string | undefined;
 		try {
-			await access(join(sourceDir, "README.md"));
+			readmeContent = await readFile(join(sourceDir, "README.md"), "utf-8");
 			hasReadme = true;
 		} catch {
 			// README.md not present
 		}
 		try {
-			await access(join(sourceDir, "context.md"));
+			contextContent = await readFile(join(sourceDir, "context.md"), "utf-8");
 			hasContext = true;
 		} catch {
 			// context.md not present
@@ -100,6 +103,8 @@ export async function handleCommandCreate(
 			code,
 			hasReadme,
 			hasContext,
+			readmeContent,
+			contextContent,
 			expectedDomain: domain,
 			expectedAction: action,
 		});
@@ -121,6 +126,7 @@ export async function handleCommandCreate(
 		const commandDir = join(USER_COMMANDS_DIR, domain, action);
 
 		// Check if command already exists
+		let isOverwrite = false;
 		try {
 			await access(commandDir);
 			if (!options.force) {
@@ -132,6 +138,7 @@ export async function handleCommandCreate(
 					},
 				};
 			}
+			isOverwrite = true;
 			// Remove existing directory for overwrite
 			await rm(commandDir, { recursive: true, force: true });
 		} catch {
@@ -172,6 +179,18 @@ export async function handleCommandCreate(
 
 		if (warnings.length > 0) {
 			(result as unknown as Record<string, unknown>).warnings = warnings;
+		}
+
+		try {
+			await appendAuditLog({
+				timestamp: new Date().toISOString(),
+				event: isOverwrite ? "overwrite" : "install",
+				domain,
+				action,
+				sourcePath: sourceDir,
+			});
+		} catch {
+			// Silent failure: audit log is best-effort.
 		}
 
 		try {

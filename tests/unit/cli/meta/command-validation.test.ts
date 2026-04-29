@@ -15,6 +15,8 @@ function makeInput(overrides: Record<string, unknown> = {}) {
 		code: overrides.code ?? "export default async function(params) { return {}; }",
 		hasReadme: overrides.hasReadme ?? true,
 		hasContext: overrides.hasContext ?? true,
+		readmeContent: overrides.readmeContent ?? "## Description\n## Parameters\n## Usage",
+		contextContent: overrides.contextContent ?? "## Precipitation Background\n## Page Structure\n## Environment Dependencies\n## Failure Signals",
 		expectedDomain: overrides.expectedDomain ?? "test-domain",
 		expectedAction: overrides.expectedAction ?? "test-action",
 	};
@@ -234,6 +236,22 @@ describe("validateCommandPackage", () => {
 			const details = validateCommandPackage(makeInput({ hasContext: false }));
 			expect(details).toContainEqual(
 				expect.objectContaining({ code: "MISSING_CONTEXT", level: "warning" }),
+			);
+		});
+	});
+
+	describe("document content validation", () => {
+		it("warns on missing README sections", () => {
+			const details = validateCommandPackage(makeInput({ readmeContent: "# Title only" }));
+			expect(details).toContainEqual(
+				expect.objectContaining({ code: "MISSING_README_SECTION", level: "warning" }),
+			);
+		});
+
+		it("warns on missing context sections", () => {
+			const details = validateCommandPackage(makeInput({ contextContent: "# Title only" }));
+			expect(details).toContainEqual(
+				expect.objectContaining({ code: "MISSING_CONTEXT_SECTION", level: "warning" }),
 			);
 		});
 	});
