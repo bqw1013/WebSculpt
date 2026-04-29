@@ -97,13 +97,13 @@ src/explore/
 
 compile 层定义命令资产的编写规范。
 
-与 access、explore 一样，它的核心产出是**面向 AI 的规范文档**，而非可执行代码。`src/compile/` 目前为 reserved 目录。
+与 access、explore 一样，它的核心产出是**面向 AI 的规范文档**，而非可执行代码。
 
-运行时契约与编写规范见 [`WritingCommands.md`](../reference/WritingCommands.md)；L1-L3 校验由 `src/cli/meta/command-validation.ts` 实现。
+运行时契约与编写规范见 [`src/compile/contract.md`](../src/compile/contract.md)；L1-L3 校验由 `src/cli/meta/command-validation.ts` 实现。
 
 ### 4.2 关键设计决策
 
-- **不暴露独立 CLI**：不设 `websculpt compile` 命令。`src/compile/` 为命令规范文档的预留目录。
+- **不暴露独立 CLI**：不设 `websculpt compile` 命令。
 
 - **"结构强制、逻辑自由"**：
   - **结构强制**：manifest 格式、导出签名、参数声明方式、禁止事项等由系统硬性约束
@@ -122,8 +122,6 @@ compile 层定义命令资产的编写规范。
 | L1 结构 | manifest 字段、类型、一致性 | `src/cli/meta/command-validation.ts` |
 | L2 合规 | 禁止代码模式（静态分析） | `src/cli/meta/command-validation.ts` |
 | L3 契约 | 代码结构与 manifest 的一致性 | `src/cli/meta/command-validation.ts` |
-
-详细校验规则、返回格式与运行时契约见 [`WritingCommands.md`](../reference/WritingCommands.md)。
 
 **设计决策：校验为硬门槛**
 
@@ -223,8 +221,6 @@ AI 提案应包含以下字段：
 
 WebSculpt 当前支持 `node` 与 `playwright-cli` 两种运行时。`node` 运行时在完整 Node.js 环境中通过 ESM 导入执行；`playwright-cli` 运行时在隔离浏览器上下文中通过代码注入执行。`shell` 与 `python` 为预留类型。
 
-具体编写规范见 [`WritingCommands.md`](../reference/WritingCommands.md)。
-
 ---
 
 ## 7. 目录规划
@@ -236,7 +232,7 @@ WebSculpt/
 ├── src/
 │   ├── access/          # 工具指南与行为约束（文档层）
 │   ├── explore/         # 探索策略文档（文档层）
-│   ├── compile/         # 命令规范文档（文档层，reserved）
+│   ├── compile/         # 命令规范文档（文档层）
 │   ├── cli/             # 入口、引擎、Meta 命令、内置命令、校验器
 │   ├── types/           # 跨层共享 TypeScript 类型定义
 │   └── infra/           # 基础设施工具：用户目录路径、配置与日志读写
