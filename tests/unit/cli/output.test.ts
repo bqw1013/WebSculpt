@@ -77,4 +77,29 @@ describe("renderOutput", () => {
 		);
 		logSpy.mockRestore();
 	});
+
+	it("prints a human-readable contract card for command show", () => {
+		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+		renderOutput(
+			{
+				success: true,
+				command: {
+					id: "example-hello",
+					domain: "example",
+					action: "hello",
+					description: "Say hello",
+					runtime: "node",
+					source: "builtin",
+					path: "/tmp/example/hello",
+					entryFile: "command.js",
+					parameters: [],
+					prerequisites: [],
+					assets: { manifest: true, readme: true, context: true, entryFile: true },
+				},
+			},
+			"human",
+		);
+		expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("example-hello"));
+		logSpy.mockRestore();
+	});
 });

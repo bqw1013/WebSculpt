@@ -18,6 +18,8 @@ export interface CommandManifest {
 	parameters?: CommandParameter[];
 	/** Execution runtime. Defaults to "node" if omitted. */
 	runtime?: CommandRuntime;
+	/** Optional command-specific prerequisites (e.g., "Requires user login"). */
+	prerequisites?: string[];
 }
 
 /** A single validation detail emitted by the layered validation system. */

@@ -1,4 +1,4 @@
-import type { ValidationDetail } from "../types/index.js";
+import type { CommandParameter, ValidationDetail } from "../types/index.js";
 
 /** Output format for meta command results. */
 export type OutputFormat = "human" | "json";
@@ -68,6 +68,29 @@ export interface CommandListResult {
 	}>;
 }
 
+/** Result shape for a successful command show. */
+export interface CommandShowResult {
+	success: true;
+	command: {
+		id: string;
+		domain: string;
+		action: string;
+		description: string;
+		runtime: string;
+		source: string;
+		path: string;
+		entryFile: string;
+		parameters: CommandParameter[];
+		prerequisites: string[];
+		assets: {
+			manifest: boolean;
+			readme: boolean;
+			context: boolean;
+			entryFile: boolean;
+		};
+	};
+}
+
 /** Result shape for a successful config init. */
 export interface ConfigInitResult {
 	success: true;
@@ -104,6 +127,7 @@ export type MetaCommandResult =
 	| CommandValidateResult
 	| ValidationErrorResult
 	| CommandDraftResult
+	| CommandShowResult
 	| MetaCommandError;
 
 /** Prints a value as pretty-printed JSON to stdout. */
@@ -225,6 +249,47 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 			}
 		} else {
 			console.log("Validation passed");
+		}
+		return;
+	}
+
+	if ("command" in result && typeof result.command === "object") {
+		const cmd = result.command;
+		const labelWidth = 12;
+		const pad = (s: string) => s.padEnd(labelWidth);
+		console.log(`${pad("id:")}${cmd.id}`);
+		console.log(`${pad("domain:")}${cmd.domain}`);
+		console.log(`${pad("action:")}${cmd.action}`);
+		console.log(`${pad("description:")}${cmd.description}`);
+		console.log(`${pad("runtime:")}${cmd.runtime}`);
+		console.log(`${pad("source:")}${cmd.source}`);
+		console.log(`${pad("path:")}${cmd.path}`);
+		console.log(`${pad("entryFile:")}${cmd.entryFile}`);
+		console.log("");
+		if (cmd.parameters.length > 0) {
+			console.log("parameters:");
+			const nameWidth = Math.max(10, ...cmd.parameters.map((p) => p.name.length));
+			const reqWidth = Math.max(8, ...cmd.parameters.map((p) => (p.required ? "required" : "optional").length));
+			for (const p of cmd.parameters) {
+				const req = p.required ? "required" : "optional";
+				const def = p.default !== undefined ? String(p.default) : "-";
+				console.log(
+					`  ${p.name.padEnd(nameWidth)} ${req.padEnd(reqWidth)} ${def.padEnd(10)} ${p.description ?? ""}`,
+				);
+			}
+			console.log("");
+		}
+		if (cmd.prerequisites.length > 0) {
+			console.log("prerequisites:");
+			for (const p of cmd.prerequisites) {
+				console.log(`  ${p}`);
+			}
+			console.log("");
+		}
+		console.log("assets:");
+		const assetWidth = Math.max(10, ...Object.keys(cmd.assets).map((k) => k.length));
+		for (const [key, value] of Object.entries(cmd.assets)) {
+			console.log(`  ${key.padEnd(assetWidth)} ${value ? "yes" : "no"}`);
 		}
 		return;
 	}

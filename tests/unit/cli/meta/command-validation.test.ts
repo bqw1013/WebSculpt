@@ -117,6 +117,27 @@ describe("validateCommandPackage", () => {
 			);
 		});
 
+		it("passes for valid prerequisites array", () => {
+			const details = validateCommandPackage(
+				makeInput({ manifest: { prerequisites: ["Requires user login"] } }),
+			);
+			expect(details.filter((d) => d.level === "error" && d.code === "INVALID_PREREQUISITES")).toHaveLength(0);
+		});
+
+		it("errors on non-array prerequisites", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { prerequisites: "not-an-array" } }));
+			expect(details).toContainEqual(
+				expect.objectContaining({ code: "INVALID_PREREQUISITES", level: "error" }),
+			);
+		});
+
+		it("errors on prerequisites array with non-string element", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { prerequisites: ["valid", 123] } }));
+			expect(details).toContainEqual(
+				expect.objectContaining({ code: "INVALID_PREREQUISITES", level: "error" }),
+			);
+		});
+
 		it("warns on missing identity fields in injection simulation mode", () => {
 			const details = validateCommandPackage(
 				makeInput({ manifest: { id: undefined, domain: undefined, action: undefined } }),

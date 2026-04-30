@@ -1,7 +1,8 @@
-import { readdir, rm, rmdir } from "fs/promises";
-import { dirname } from "path";
+import { access, readdir, rm, rmdir } from "fs/promises";
+import { basename, dirname, join } from "path";
 import { findCommand, listAllCommands, rebuildIndex } from "../engine/registry.js";
-import type { MetaCommandResult } from "../output.js";
+import { RUNTIME_SYSTEM_PREREQUISITES } from "../engine/runtime-meta.js";
+import type { CommandShowResult, MetaCommandResult } from "../output.js";
 
 /** Lists all registered commands and returns them as a normalized result. */
 export function handleCommandList(): MetaCommandResult {
@@ -18,15 +19,61 @@ export function handleCommandList(): MetaCommandResult {
 	};
 }
 
-/** Displays details for a specific command. (Not implemented) */
-export async function handleCommandShow(_domain: string, _action: string): Promise<MetaCommandResult> {
-	return {
-		success: false,
-		error: {
-			code: "NOT_IMPLEMENTED",
-			message: "Command details are not implemented yet.",
+/** Displays details for a specific command. */
+export async function handleCommandShow(domain: string, action: string): Promise<MetaCommandResult> {
+	const resolved = findCommand(domain, action);
+	if (!resolved) {
+		return {
+			success: false,
+			error: {
+				code: "NOT_FOUND",
+				message: `Command "${domain}/${action}" does not exist.`,
+			},
+		};
+	}
+
+	const dir = dirname(resolved.commandPath);
+	const entryFile = basename(resolved.commandPath);
+
+	async function fileExists(name: string): Promise<boolean> {
+		try {
+			await access(join(dir, name));
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	const assets = {
+		manifest: await fileExists("manifest.json"),
+		readme: await fileExists("README.md"),
+		context: await fileExists("context.md"),
+		entryFile: await fileExists(entryFile),
+	};
+
+	const systemPrereqs =
+		RUNTIME_SYSTEM_PREREQUISITES[resolved.runtime as import("../../types/index.js").CommandRuntime] ?? [];
+	const manifestPrereqs = resolved.manifest.prerequisites ?? [];
+	const prerequisites = [...systemPrereqs, ...manifestPrereqs];
+
+	const result: CommandShowResult = {
+		success: true,
+		command: {
+			id: resolved.manifest.id,
+			domain: resolved.manifest.domain,
+			action: resolved.manifest.action,
+			description: resolved.manifest.description,
+			runtime: resolved.runtime,
+			source: resolved.source,
+			path: dir,
+			entryFile,
+			parameters: resolved.manifest.parameters ?? [],
+			prerequisites,
+			assets,
 		},
 	};
+
+	return result;
 }
 
 /** Removes a user-defined command and returns a normalized result. */

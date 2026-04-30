@@ -117,6 +117,25 @@ function validateL1Structure(
 		addError(details, "MISSING_DESCRIPTION", "Manifest 'description' must be a non-empty string");
 	}
 
+	// Prerequisites validation
+	const prerequisites = manifest.prerequisites;
+	if (prerequisites !== undefined) {
+		if (!Array.isArray(prerequisites)) {
+			addError(details, "INVALID_PREREQUISITES", "Manifest 'prerequisites' must be an array of strings");
+		} else {
+			for (let i = 0; i < prerequisites.length; i++) {
+				if (typeof prerequisites[i] !== "string") {
+					addError(
+						details,
+						"INVALID_PREREQUISITES",
+						`Manifest 'prerequisites' must be an array of strings; element at index ${i} is not a string`,
+					);
+					break;
+				}
+			}
+		}
+	}
+
 	// Parameter validation
 	const parameters = manifest.parameters;
 	if (parameters !== undefined) {

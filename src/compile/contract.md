@@ -69,6 +69,7 @@
 | `description` | `string` | 是 | 命令用途，**不能为空字符串或仅含空白字符** |
 | `runtime` | `string` | 是 | `node` 或 `playwright-cli`。`shell`、`python` 为 CLI 预留类型，但沉淀到命令库时必须重写为 `node` 或 `playwright-cli` 的等价实现 |
 | `parameters` | `array` | 否 | 参数列表，元素为 `{ name, required?, default?, description? }` |
+| `prerequisites` | `string[]` | 否 | 命令特定的前置条件说明（如 `"Requires user login"`） |
 | `entryFile` | `string` | 否 | 入口文件名，默认 `command.js` |
 
 ### 保留域

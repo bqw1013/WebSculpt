@@ -1,6 +1,8 @@
 import type { Command } from "commander";
+import type { CommandRuntime } from "../types/index.js";
 import { executeCommand } from "./engine/executor.js";
 import { listAllCommands, type ResolvedCommand } from "./engine/registry.js";
+import { RUNTIME_SYSTEM_PREREQUISITES } from "./engine/runtime-meta.js";
 import { printJson } from "./output.js";
 
 // Extend Commander's Command type to attach domain-source metadata for custom help formatting.
@@ -65,6 +67,20 @@ export function registerDomainCommands(program: Command): void {
 				const result = await executeCommand(c, args);
 				printJson(result);
 			});
+
+			const systemPrereqs = RUNTIME_SYSTEM_PREREQUISITES[c.runtime as CommandRuntime];
+			const manifestPrereqs = c.manifest.prerequisites;
+			const allPrereqs: string[] = [];
+			if (systemPrereqs && systemPrereqs.length > 0) {
+				allPrereqs.push(...systemPrereqs);
+			}
+			if (manifestPrereqs && manifestPrereqs.length > 0) {
+				allPrereqs.push(...manifestPrereqs);
+			}
+			if (allPrereqs.length > 0) {
+				const text = allPrereqs.map((p) => `  ${p}`).join("\n");
+				actionCmd.addHelpText("after", `\nPrerequisites:\n${text}`);
+			}
 		}
 	}
 }
