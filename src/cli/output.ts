@@ -89,6 +89,7 @@ export interface CommandShowResult {
 			entryFile: boolean;
 		};
 	};
+	readmeContent?: string;
 }
 
 /** Result shape for a successful config init. */
@@ -290,6 +291,11 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		const assetWidth = Math.max(10, ...Object.keys(cmd.assets).map((k) => k.length));
 		for (const [key, value] of Object.entries(cmd.assets)) {
 			console.log(`  ${key.padEnd(assetWidth)} ${value ? "yes" : "no"}`);
+		}
+		if ("readmeContent" in result && result.readmeContent) {
+			console.log("");
+			console.log("--- README ---");
+			console.log(result.readmeContent);
 		}
 		return;
 	}

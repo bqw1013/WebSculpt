@@ -10,10 +10,11 @@ vi.mock("fs/promises", async (importOriginal) => {
 	return {
 		...actual,
 		access: vi.fn(),
+		readFile: vi.fn(),
 	};
 });
 
-import { access } from "fs/promises";
+import { access, readFile } from "fs/promises";
 import { findCommand } from "../../../../src/cli/engine/registry.js";
 
 describe("handleCommandShow", () => {
@@ -78,5 +79,53 @@ describe("handleCommandShow", () => {
 		expect(result.success).toBe(true);
 		if (!result.success) return;
 		expect(result.command.prerequisites).toContain("Requires `playwright-cli attach --cdp=chrome|msedge --session=default`");
+	});
+
+	it("returns readmeContent when includeReadme is true and README.md exists", async () => {
+		vi.mocked(findCommand).mockReturnValue({
+			manifest: {
+				id: "example-hello",
+				domain: "example",
+				action: "hello",
+				description: "Say hello",
+				runtime: "node",
+			},
+			commandPath: "/tmp/commands/example/hello/command.js",
+			source: "builtin",
+			runtime: "node",
+		});
+		vi.mocked(access).mockImplementation(async (path) => {
+			if (String(path).endsWith("README.md")) {
+				return undefined;
+			}
+			throw new Error("ENOENT");
+		});
+		vi.mocked(readFile).mockResolvedValue("# Hello\nUsage info");
+
+		const result = await handleCommandShow("example", "hello", true);
+		expect(result.success).toBe(true);
+		if (!result.success) return;
+		expect(result.readmeContent).toBe("# Hello\nUsage info");
+	});
+
+	it("omits readmeContent when includeReadme is true but README.md is missing", async () => {
+		vi.mocked(findCommand).mockReturnValue({
+			manifest: {
+				id: "example-hello",
+				domain: "example",
+				action: "hello",
+				description: "Say hello",
+				runtime: "node",
+			},
+			commandPath: "/tmp/commands/example/hello/command.js",
+			source: "builtin",
+			runtime: "node",
+		});
+		vi.mocked(access).mockRejectedValue(new Error("ENOENT"));
+
+		const result = await handleCommandShow("example", "hello", true);
+		expect(result.success).toBe(true);
+		if (!result.success) return;
+		expect(result.readmeContent).toBeUndefined();
 	});
 });

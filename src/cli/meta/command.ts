@@ -1,4 +1,4 @@
-import { access, readdir, rm, rmdir } from "fs/promises";
+import { access, readdir, readFile, rm, rmdir } from "fs/promises";
 import { basename, dirname, join } from "path";
 import { findCommand, listAllCommands, rebuildIndex } from "../engine/registry.js";
 import { RUNTIME_SYSTEM_PREREQUISITES } from "../engine/runtime-meta.js";
@@ -20,7 +20,11 @@ export function handleCommandList(): MetaCommandResult {
 }
 
 /** Displays details for a specific command. */
-export async function handleCommandShow(domain: string, action: string): Promise<MetaCommandResult> {
+export async function handleCommandShow(
+	domain: string,
+	action: string,
+	includeReadme = false,
+): Promise<MetaCommandResult> {
 	const resolved = findCommand(domain, action);
 	if (!resolved) {
 		return {
@@ -72,6 +76,15 @@ export async function handleCommandShow(domain: string, action: string): Promise
 			assets,
 		},
 	};
+
+	if (includeReadme && assets.readme) {
+		try {
+			const content = await readFile(join(dir, "README.md"), "utf8");
+			result.readmeContent = content;
+		} catch {
+			// Silently ignore missing README even if asset flag was true (race condition).
+		}
+	}
 
 	return result;
 }

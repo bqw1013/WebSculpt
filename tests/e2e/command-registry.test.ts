@@ -8,6 +8,7 @@ import {
 	RegistryIndex,
 } from "./helpers/commands";
 import { createIsolatedHome, parseJsonOutput, readJsonFile, removeTempDir, runSourceCli, websculptPath } from "./helpers/cli";
+import { join } from "node:path";
 import { rm, writeFile } from "node:fs/promises";
 
 describe("command registry", () => {
@@ -15,6 +16,66 @@ describe("command registry", () => {
 
 	afterEach(async () => {
 		await Promise.all(tempDirs.splice(0).map(async (dirPath) => await removeTempDir(dirPath)));
+	});
+
+	describe("command show", () => {
+		it("returns contract card with readmeContent in json mode when --include-readme is used", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const { createPayload } = await registerUserCommand(homeDir, "show-readme-package", notesSavePackage);
+			expect(createPayload.success).toBe(true);
+
+			const commandDir = websculptPath(homeDir, "commands", "notes", "save");
+			await writeFile(join(commandDir, "README.md"), "# Notes Save\nSave a note.", "utf8");
+
+			const result = await runSourceCli(
+				["command", "show", "notes", "save", "--format", "json", "--include-readme"],
+				homeDir,
+			);
+			const payload = parseJsonOutput<{ success: boolean; command: unknown; readmeContent?: string }>(result.stdout);
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.readmeContent).toBe("# Notes Save\nSave a note.");
+		});
+
+		it("returns contract card without readmeContent when README is missing", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const { createPayload } = await registerUserCommand(homeDir, "show-no-readme-package", notesDeletePackage);
+			expect(createPayload.success).toBe(true);
+
+			const result = await runSourceCli(
+				["command", "show", "notes", "delete", "--format", "json", "--include-readme"],
+				homeDir,
+			);
+			const payload = parseJsonOutput<{ success: boolean; command: unknown; readmeContent?: string }>(result.stdout);
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.readmeContent).toBeUndefined();
+		});
+
+		it("appends README content in human mode when --include-readme is used", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const { createPayload } = await registerUserCommand(homeDir, "show-human-readme-package", notesSavePackage);
+			expect(createPayload.success).toBe(true);
+
+			const commandDir = websculptPath(homeDir, "commands", "notes", "save");
+			await writeFile(join(commandDir, "README.md"), "# Human README\nUsage: --title <text>", "utf8");
+
+			const result = await runSourceCli(
+				["command", "show", "notes", "save", "--include-readme"],
+				homeDir,
+			);
+			expect(result.exitCode).toBe(0);
+			expect(result.stdout).toContain("notes");
+			expect(result.stdout).toContain("--- README ---");
+			expect(result.stdout).toContain("# Human README");
+			expect(result.stdout).toContain("Usage: --title <text>");
+		});
 	});
 
 	describe("command list", () => {

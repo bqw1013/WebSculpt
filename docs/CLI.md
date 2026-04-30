@@ -183,8 +183,12 @@ websculpt command validate --from-dir <path> [domain] [action]
 查看某个扩展命令的完整契约卡片，包含元数据、参数、运行时前置条件和资产完整性。
 
 ```bash
-websculpt command show <domain> <action>
+websculpt command show <domain> <action> [options]
 ```
+
+| 选项 | 说明 |
+|------|------|
+| `--include-readme` | 将命令目录下的 `README.md` 原文追加到输出中 |
 
 **输出字段**
 
@@ -199,12 +203,15 @@ websculpt command show <domain> <action>
 | `parameters` | 完整参数契约（含 `required`、`default`、`description`） |
 | `prerequisites` | 合并后的前置条件（系统级 + 命令级） |
 | `assets` | 资产存在性（`manifest`、`readme`、`context`、`entryFile`） |
+| `readmeContent` | 仅当使用 `--include-readme` 且 `README.md` 存在时返回，原文字符串 |
 
 **关键行为**
 
 - 命令不存在时报错 `NOT_FOUND`
 - `prerequisites` 自动合并运行时系统前置条件（如 `playwright-cli` 的 CDP 会话要求）与 `manifest.prerequisites`
 - 支持 `--format json` 输出结构化 JSON
+- `--include-readme` 为 opt-in：默认不读取 `README.md`，避免不必要的 I/O 和 payload 膨胀
+- 若 `--include-readme` 请求但 `README.md` 缺失，标准契约输出保持不变；JSON 模式下 `readmeContent` 字段不出现，human 模式下不追加 README 区块
 
 ---
 

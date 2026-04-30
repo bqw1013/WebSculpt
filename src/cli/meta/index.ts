@@ -56,8 +56,9 @@ export function registerMetaCommands(program: Command): void {
 		});
 	cmd.command("show <domain> <action>")
 		.description("Show extension command details")
-		.action(async (domain: string, action: string) => {
-			renderOutput(await handleCommandShow(domain, action), format());
+		.option("--include-readme", "Include README.md content in the output")
+		.action(async (domain: string, action: string, options: { includeReadme?: boolean }) => {
+			renderOutput(await handleCommandShow(domain, action, options.includeReadme), format());
 		});
 	cmd.command("remove <domain> <action>")
 		.description("Remove a user command")

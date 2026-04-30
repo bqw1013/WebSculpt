@@ -102,4 +102,32 @@ describe("renderOutput", () => {
 		expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("example-hello"));
 		logSpy.mockRestore();
 	});
+
+	it("appends README content after the contract card in human mode when readmeContent is present", () => {
+		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+		renderOutput(
+			{
+				success: true,
+				command: {
+					id: "example-hello",
+					domain: "example",
+					action: "hello",
+					description: "Say hello",
+					runtime: "node",
+					source: "builtin",
+					path: "/tmp/example/hello",
+					entryFile: "command.js",
+					parameters: [],
+					prerequisites: [],
+					assets: { manifest: true, readme: true, context: true, entryFile: true },
+				},
+				readmeContent: "# Usage\nRun with --name",
+			},
+			"human",
+		);
+		expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("example-hello"));
+		expect(logSpy).toHaveBeenCalledWith("--- README ---");
+		expect(logSpy).toHaveBeenCalledWith("# Usage\nRun with --name");
+		logSpy.mockRestore();
+	});
 });
