@@ -1,0 +1,14 @@
+{
+  "runtime": "playwright-cli",
+  "description": "Fetch detailed profile information of a Zhihu user, including name, bio, education, follower count, voteup count, and content statistics.",
+  "parameters": [
+    {
+      "name": "user",
+      "required": true,
+      "description": "Zhihu user ID (e.g., 'example-zhihu-user') or full profile URL"
+    }
+  ],
+  "id": "zhihu-get-user-profile",
+  "domain": "zhihu",
+  "action": "get-user-profile"
+}

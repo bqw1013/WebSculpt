@@ -28,7 +28,7 @@ async function (page) {
 Runner 会在执行前将文件中的 `/* PARAMS_INJECT */` 替换为一行参数声明：
 
 ```js
-const params = {"limit":"3","author":"BQW"};
+const params = {"limit":"3","author":"demo-author"};
 ```
 
 因此你的代码中**必须保留**该占位符，并通过 `params.key` 读取参数。

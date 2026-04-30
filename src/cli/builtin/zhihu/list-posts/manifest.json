@@ -1,0 +1,20 @@
+{
+  "runtime": "playwright-cli",
+  "description": "Fetch the latest articles from a Zhihu user's posts page",
+  "parameters": [
+    {
+      "name": "user",
+      "required": true,
+      "description": "Zhihu user ID (e.g., 'example-zhihu-user') or full profile URL"
+    },
+    {
+      "name": "limit",
+      "required": false,
+      "default": "10",
+      "description": "Maximum number of articles to return"
+    }
+  ],
+  "id": "zhihu-list-posts",
+  "domain": "zhihu",
+  "action": "list-posts"
+}
