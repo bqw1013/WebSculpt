@@ -342,7 +342,7 @@ async function (page) {
 
 ## 9. 运行时专用检查清单
 
-通用检查项见 [`./contract.md`](./contract.md) 第 7 节。
+通用检查项见 [`./contract.md`](./contract.md) 第 5 节。
 
 - [ ] 函数签名为 `async function (page)`，且包含 `/* PARAMS_INJECT */`
 - [ ] `/* PARAMS_INJECT */` 位于函数体内部，不在函数体外

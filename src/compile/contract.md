@@ -52,7 +52,7 @@
 
 > 沉淀命令必须是 `node` 或 `playwright-cli` runtime。探索中若发现其他语言（如 Python、Shell）路径更优，评估重写为 Node.js 的等价实现；若重写成本过高或不可行，该路径不进入命令库，作为一次性探索成果处理。
 
-**选定 runtime 后，必须阅读对应的运行时契约文档。** `node` 运行时见 [`./node-contract.md`](./node-contract.md)；`playwright-cli` 运行时见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md)。本文档后续章节（manifest 规范、文档标准、错误码）为两种运行时的通用约束，仍需阅读。
+**选定 runtime 后，必须阅读对应的运行时契约文档。** `node` 运行时见 [`./node-contract.md`](./node-contract.md)；`playwright-cli` 运行时见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md)。本文档后续章节（命令资产规范、错误码）为两种运行时的通用约束，仍需阅读。
 
 ---
 
@@ -69,7 +69,7 @@ websculpt command draft <domain> <action> --runtime <rt>
 默认输出到 `.websculpt-drafts/<domain>-<action>/`（可用 `--to <path>` 覆盖），生成 `manifest.json`（元数据，此时不含身份字段）、入口文件（默认 `command.js`）、`README.md` 和 `context.md`。具体参数请通过 `websculpt command draft --help` 查看。
 
 ### 编写命令
-基于探索中已验证的结果，按本文档及对应运行时契约编写业务逻辑并完善文档：入口文件按运行时规范实现业务逻辑；`manifest.json` 调整参数、描述等元数据；`README.md` 和 `context.md` 按第 4 节规范填写。`id`/`domain`/`action` 在 draft 和编写阶段均无需关心，`create` 会强制注入。
+基于探索中已验证的结果，按本文档及对应运行时契约编写业务逻辑并完善文档：入口文件按运行时规范实现业务逻辑；`manifest.json` 调整参数、描述等元数据；`README.md` 和 `context.md` 按第 3 节规范填写。`id`/`domain`/`action` 在 draft 和编写阶段均无需关心，`create` 会强制注入。
 
 ### 预检合规
 ```bash
@@ -88,11 +88,13 @@ websculpt command create <domain> <action> --from-dir <path>
 
 ---
 
-## 3. Manifest 规范
+## 3. 命令资产规范
+
+一个完整的命令包由以下文件组成。沉淀到命令库时，所有文件必须齐备；draft 阶段以 `manifest.json` 和入口文件为最小可运行集合。
+
+### 3.1 manifest.json
 
 `manifest.json` 是命令的元数据声明，由 `command draft` 生成骨架，`command create` 强制注入身份字段。
-
-### 字段说明
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -105,72 +107,33 @@ websculpt command create <domain> <action> --from-dir <path>
 | `prerequisites` | `string[]` | 否 | 命令特定的前置条件说明（如 `"Requires user login"`） |
 | `entryFile` | `string` | 否 | 入口文件名，默认 `command.js` |
 
-### 保留域
+**保留域**：`command`、`config`、`skill` 为系统保留，使用会触发 `RESERVED_DOMAIN` 错误。
 
-以下 domain 为系统保留，扩展命令不可使用：
+### 3.2 入口文件
 
-- `command`
-- `config`
-- `skill`
+详见对应运行时契约文档：
+- `node` → [`./node-contract.md`](./node-contract.md)
+- `playwright-cli` → [`./playwright-cli-contract.md`](./playwright-cli-contract.md)
 
-使用保留域会触发 `RESERVED_DOMAIN` 错误。
+### 3.3 README.md
 
----
+面向命令调用者，回答"这个命令怎么用"。
 
-## 4. 命令资产文档规范
+`command draft` 已预生成标准章节骨架，请在此基础上填充内容，**请勿删除或重命名章节标题**。
 
-命令包除 `manifest.json` 和入口文件外，还应包含以下两份文档。
+**禁止包含**：DOM 选择器、API 端点、反爬策略、失效预测。
 
-### `README.md`
+### 3.4 context.md
 
-**读者**：命令调用者（消费侧）
+面向命令修复者，回答"这个命令为什么这样实现、坏了怎么修"。
 
-**回答的问题**："这个命令怎么用？"
+`command draft` 已预生成标准章节骨架，请在此基础上填充内容，**请勿删除或重命名章节标题**。
 
-**必须包含以下章节**：
-- `## Description`：一句话用途
-- `## Parameters`：参数表（name、required、default、description）
-- `## Return Value`：返回值结构说明
-- `## Usage`：至少一个 `websculpt <domain> <action>` 调用示例
-- `## Common Error Codes`：常见业务错误码
-
-**绝不包含**：DOM 选择器、API 端点、反爬策略、失效预测。
-
-### `context.md`
-
-**读者**：命令修复者（维护侧）
-
-**回答的问题**："这个命令为什么这样实现？坏了怎么修？"
-
-**必须包含以下章节**：
-- `## Precipitation Background`：何时、为何沉淀
-- `## Page Structure`：关键 URL、选择器、交互序列
-- `## Environment Dependencies`：登录态、浏览器配置、反爬策略
-- `## Failure Signals`：页面变化时的表现（如选择器返回 null、抛出 `DRIFT_DETECTED`）
-- `## Repair Clues`：备用方案、替代入口
-
-**绝不包含**：参数用法说明、通用建议。
-
-### 探索阶段素材收集
-
-编写 `context.md` 所需的素材应在探索过程中积累，而非沉淀时凭空编造。探索完成后回顾并整理以下信息：
-
-| 素材项 | 说明 |
-|--------|------|
-| 工具序列 | 完成该子任务使用的工具链 |
-| 关键 URL / API | 实际访问的端点或页面地址 |
-| 数据提取方式 | 选择器、正则、API 响应路径等 |
-| 反爬措施及规避 | 等待策略、请求节奏、会话复用方式 |
-| 验证通过的参数 | 在探索中确认有效的参数组合 |
-
-### 职责红线
-
-- `README.md` 中绝不出现 CSS 选择器或 DOM 路径
-- `context.md` 中绝不出现参数用法或调用示例
+**禁止包含**：参数用法说明、调用示例、通用建议。
 
 ---
 
-## 5. 业务错误码参考
+## 4. 业务错误码参考
 
 以下业务错误码对**两种运行时**均适用。传递机制不同（详见各运行时专用文档），但语义一致。
 
@@ -186,13 +149,16 @@ websculpt command create <domain> <action> --from-dir <path>
 
 ---
 
-## 6. 快速检查清单
+## 5. 快速检查清单
 
-### L1 结构（manifest 与资产完整性）
+### L1 结构（manifest 校验）
 
 - [ ] `manifest.json` 包含非空的 `description` 字段（不能为空字符串或仅含空白字符）
-- [ ] `README.md` 包含 `## Description`、`## Parameters`、`## Return Value`、`## Usage`、`## Common Error Codes` 章节
-- [ ] `context.md` 包含 `## Precipitation Background`、`## Page Structure`、`## Environment Dependencies`、`## Failure Signals`、`## Repair Clues` 章节
+
+### 资产质量（缺失时 warning）
+
+- [ ] 若 `README.md` 存在，包含 `## Description`、`## Parameters`、`## Return Value`、`## Usage`、`## Common Error Codes` 章节
+- [ ] 若 `context.md` 存在，包含 `## Precipitation Background`、`## Page Structure`、`## Environment Dependencies`、`## Failure Signals`、`## Repair Clues` 章节
 
 ### L2 合规（禁止模式与文档红线）
 
@@ -216,7 +182,7 @@ websculpt command create <domain> <action> --from-dir <path>
 
 ---
 
-## 7. 通用 Runner 错误码参考
+## 6. 通用 Runner 错误码参考
 
 以下错误码由 runner 自动生成，**不需要**在命令文件中抛出：
 

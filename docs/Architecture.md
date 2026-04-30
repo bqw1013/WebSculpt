@@ -185,7 +185,7 @@ AI 提案必须包含以下字段：
 
 **沉淀产物的完整性**
 
-沉淀时除 `manifest.json` 和 `command.js` 外，`README.md` 必须包含 Description、Parameters、Return Value、Usage、Common Error Codes 章节；`context.md` 必须包含 Precipitation Background、Page Structure、Environment Dependencies、Failure Signals、Repair Clues 章节。
+沉淀时除 `manifest.json` 和 `command.js` 外，`README.md` 与 `context.md` 为可选资产。若存在，`README.md` 应包含 Description、Parameters、Return Value、Usage、Common Error Codes 章节；`context.md` 应包含 Precipitation Background、Page Structure、Environment Dependencies、Failure Signals、Repair Clues 章节。校验器对缺失或章节不完整的情况发出 warning，不阻止落盘。
 
 当前代码已实现基础的执行异常识别（如 `PLAYWRIGHT_CLI_ATTACH_REQUIRED`），但**自愈闭环的自动检测与触发机制**（定时巡检、版本比对、自动降级）尚未实现，当前依赖人工发现命令失效或 AI 在执行时主动识别异常后发起修复。
 

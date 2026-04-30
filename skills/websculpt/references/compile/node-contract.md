@@ -96,7 +96,7 @@ export default async function (params) {
 
 ## 7. 运行时专用检查清单
 
-通用检查项见 [`./contract.md`](./contract.md) 第 7 节。
+通用检查项见 [`./contract.md`](./contract.md) 第 5 节。
 
 - [ ] 入口文件通过 `export default` 导出异步函数
 - [ ] 签名为 `async (params: Record<string, string>) => unknown`
