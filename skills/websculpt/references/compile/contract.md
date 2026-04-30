@@ -8,50 +8,83 @@
 
 ---
 
-## 1. 从 draft 到 create 的完整流程
+## 1. 如何选择 runtime
 
-沉淀命令时，按以下流程执行：
+### 决策矩阵
 
-1. **生成骨架**
-   ```bash
-   websculpt command draft <domain> <action> --runtime <rt>
-   ```
-   `draft` 生成包含 4 个文件的目录：`manifest.json`（元数据，此时不含身份字段）、入口文件（默认 `command.js`）、`README.md` 和 `context.md`。具体参数请通过 `websculpt command draft --help` 查看。
+| 你的需求 | 推荐 runtime | 关键限制 |
+|---------|-------------|---------|
+| 需要浏览器 API（DOM 操作、页面导航、截图、复用登录态） | `playwright-cli` | 无 Node.js API（`fs`、`path`、`require` 不可用）；`console.log` 不可见；必须通过 `page` 操作浏览器 |
+| 纯 Node.js 逻辑（HTTP 请求、文件读写、数据清洗、调用子进程） | `node` | 无浏览器 API；无法访问已打开的浏览器页面 |
+| 同时需要 HTTP 请求和浏览器操作 | 拆分为两个命令（`node` 处理 HTTP + `playwright-cli` 处理浏览器），或由调用方串联 | 一个命令只能声明一种 runtime，不可混合 |
 
-2. **填充内容**
-   基于探索结果完善命令包：入口文件编写业务逻辑；`manifest.json` 调整参数和描述；`README.md` 和 `context.md` 按第 5 节规范填写。`id`/`domain`/`action` 无需填写。
+### 反向排除
 
-3. **预检合规**
-   ```bash
-   websculpt command validate --from-dir <path>
-   ```
-   执行 L1-L3 分层校验，失败阻止落盘：
-   - **L1 结构**：manifest 字段、类型、一致性
-   - **L2 合规**：禁止代码模式（静态分析）
-   - **L3 契约**：代码结构与 manifest 的一致性
+以下情况会直接导致某个 runtime 不可用：
 
-4. **安装落盘**
-   ```bash
-   websculpt command create <domain> <action> --from-dir <path>
-   ```
-   `create` 以 CLI 参数为权威强制注入 `id`/`domain`/`action`。L1-L3 校验失败一律阻止落盘，即使使用 `--force` 也不例外。
+- **需要读写本地文件** → 不能用 `playwright-cli`（隔离上下文，无 `fs`/`path`）。
+- **需要 `console.log` 调试输出** → 优先 `node`；`playwright-cli` 中调试信息只能通过 `return` 带出。
+- **需要操作已打开的浏览器标签页（截图、点击、提取 DOM）** → 不能用 `node`；必须用 `playwright-cli`。
+- **需要调用 `require` 或 `import` 外部模块** → 不能用 `playwright-cli`。
 
-> 身份字段（`id`/`domain`/`action`）在 draft 和填充阶段均无需关心，`create` 会强制覆盖。
+### 命令不可混合时的处理策略
 
----
+一个命令只能声明一种 runtime。如果业务逻辑同时需要浏览器和文件系统：
 
-## 2. 如何选择 runtime
+1. **优先拆分**：把浏览器操作沉淀为 `playwright-cli` 命令，把数据处理沉淀为 `node` 命令，由调用方串联。
+2. **次选妥协**：若拆分成本过高，在 `playwright-cli` 命令中用 `page.evaluate(() => fetch(...))` 发起请求（受浏览器 CORS 和 Cookie 策略约束），或把文件操作移到命令外部由调用方处理。
 
-| 场景 | 推荐 runtime | 说明 |
-|------|-------------|------|
-| 需要浏览器 API（DOM 操作、页面导航、截图） | `playwright-cli` | 在隔离上下文中执行，无 Node.js API |
-| 纯 Node.js 逻辑（HTTP 请求、文件处理、数据清洗） | `node` | 完整 Node.js 环境，可使用 `fs`、`fetch` 等 |
+### 运行时差异速查
 
-一个命令只能声明一种 runtime，不可混合使用。
+| 维度 | `node` | `playwright-cli` |
+|------|--------|------------------|
+| 入口文件要求 | 标准 ESM 模块，通过 `export default` 导出异步函数 | 函数体片段；整个文件内容被 `()` 包裹后在 VM 中执行 |
+| 入口签名 | `export default async (params) => {...}` | `async function (page) { /* PARAMS_INJECT */ ... }` |
+| 参数方式 | Runner 直接作为函数参数传入 | Runner 将 `/* PARAMS_INJECT */` 替换为 `const params = {...}` |
+| 运行环境 | 完整 Node.js（`fs`、`fetch`、`console` 可用） | 隔离上下文（无 Node.js API，`console.log` 不可见） |
+| 浏览器 API | 不可用 | 通过 `page` 参数可用 |
+| 返回值传递 | Runner 消费函数返回值 | Runner 从 stdout 解析 `### Result\n` 后的 JSON |
+| 调试方式 | `console.log` 输出到 stderr/stdout | `console.log` 不可见，调试数据通过 `return` 带出 |
+| 页面隔离 | 不适用 | 必须创建隔离页面并在 `finally` 中关闭 |
+| 错误码传递 | `error.code = "NOT_FOUND"` | 消息文本中包含 `[NOT_FOUND] ...` |
+
+以下仅为快速对比。实现细节必须遵循你已选定的运行时契约文档。
 
 > 沉淀命令必须是 `node` 或 `playwright-cli` runtime。探索中若发现其他语言（如 Python、Shell）路径更优，评估重写为 Node.js 的等价实现；若重写成本过高或不可行，该路径不进入命令库，作为一次性探索成果处理。
 
 **选定 runtime 后，必须阅读对应的运行时契约文档。** `node` 运行时见 [`./node-contract.md`](./node-contract.md)；`playwright-cli` 运行时见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md)。本文档后续章节（manifest 规范、文档标准、错误码）为两种运行时的通用约束，仍需阅读。
+
+---
+
+## 2. 沉淀执行流程
+
+> 对本文档涉及的任何 CLI 命令有疑问，优先执行 `websculpt <command> --help` 获取实时帮助。
+
+用户确认沉淀提案后，按以下流程执行：
+
+### 生成骨架
+```bash
+websculpt command draft <domain> <action> --runtime <rt>
+```
+默认输出到 `.websculpt-drafts/<domain>-<action>/`（可用 `--to <path>` 覆盖），生成 `manifest.json`（元数据，此时不含身份字段）、入口文件（默认 `command.js`）、`README.md` 和 `context.md`。具体参数请通过 `websculpt command draft --help` 查看。
+
+### 编写命令
+基于探索中已验证的结果，按本文档及对应运行时契约编写业务逻辑并完善文档：入口文件按运行时规范实现业务逻辑；`manifest.json` 调整参数、描述等元数据；`README.md` 和 `context.md` 按第 4 节规范填写。`id`/`domain`/`action` 在 draft 和编写阶段均无需关心，`create` 会强制注入。
+
+### 预检合规
+```bash
+websculpt command validate --from-dir <path>
+```
+执行 L1-L3 分层校验（L1 结构：manifest 字段、类型、一致性；L2 合规：禁止代码模式（静态分析）；L3 契约：代码结构与 manifest 的一致性），失败阻止落盘。若未通过，返回**编写命令**修改后重新校验，直到通过。
+
+### 安装落盘
+```bash
+websculpt command create <domain> <action> --from-dir <path>
+```
+`create` 以 CLI 参数为权威强制注入 `id`/`domain`/`action`。L1-L3 校验失败一律阻止落盘，即使使用 `--force` 也不例外。
+
+### 测试验证
+安装落盘后必须执行命令验证：先执行**正确性测试**（使用探索时已验证的参数执行，确认输出与预期一致），再执行**泛化性测试**（换用不同的参数组合执行，确认命令不依赖硬编码的特定值）。若任一测试未通过，返回**编写命令**修复后重新执行 validate → create → 测试。
 
 ---
 
@@ -84,22 +117,7 @@
 
 ---
 
-## 4. 运行时差异速查
-
-| 维度 | `node` | `playwright-cli` |
-|------|--------|------------------|
-| 模块类型 | ESM 模块 | 函数体片段 |
-| 入口签名 | `async (params)` | `async function (page)` |
-| 参数方式 | 函数参数传入 | `/* PARAMS_INJECT */` 占位符替换 |
-| 运行环境 | 完整 Node.js | 隔离上下文（无 Node.js API） |
-| 浏览器 API | 不可用 | 通过 `page` 参数可用 |
-| 错误码传递 | `error.code` 属性 | 消息文本中的关键字 |
-
-以下仅为快速对比。实现细节必须遵循你已选定的运行时契约文档。
-
----
-
-## 5. 命令资产文档规范
+## 4. 命令资产文档规范
 
 命令包除 `manifest.json` 和入口文件外，还应包含以下两份文档。
 
@@ -133,6 +151,18 @@
 
 **绝不包含**：参数用法说明、通用建议。
 
+### 探索阶段素材收集
+
+编写 `context.md` 所需的素材应在探索过程中积累，而非沉淀时凭空编造。探索完成后回顾并整理以下信息：
+
+| 素材项 | 说明 |
+|--------|------|
+| 工具序列 | 完成该子任务使用的工具链 |
+| 关键 URL / API | 实际访问的端点或页面地址 |
+| 数据提取方式 | 选择器、正则、API 响应路径等 |
+| 反爬措施及规避 | 等待策略、请求节奏、会话复用方式 |
+| 验证通过的参数 | 在探索中确认有效的参数组合 |
+
 ### 职责红线
 
 - `README.md` 中绝不出现 CSS 选择器或 DOM 路径
@@ -140,7 +170,7 @@
 
 ---
 
-## 6. 业务错误码参考
+## 5. 业务错误码参考
 
 以下业务错误码对**两种运行时**均适用。传递机制不同（详见各运行时专用文档），但语义一致。
 
@@ -156,7 +186,7 @@
 
 ---
 
-## 7. 快速检查清单
+## 6. 快速检查清单
 
 ### L1 结构（manifest 与资产完整性）
 
@@ -186,7 +216,7 @@
 
 ---
 
-## 8. 通用 Runner 错误码参考
+## 7. 通用 Runner 错误码参考
 
 以下错误码由 runner 自动生成，**不需要**在命令文件中抛出：
 

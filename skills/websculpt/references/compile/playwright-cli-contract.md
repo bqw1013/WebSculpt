@@ -312,6 +312,10 @@ await page.waitForSelector("article.Box-row", { timeout: 15000 });
 
 优先使用框架级组件类（如 GitHub Primer 的 `Box-row`）或语义属性（`data-testid`、aria-label），避免使用动态生成的类名。记录备选定位策略到 `context.md`，便于失效后修复。
 
+### 控制探测节奏
+
+高频 DOM 操作或快速翻页容易触发风控。探索阶段就要测试"什么节奏下站点会拒绝响应"，把这个节奏作为沉淀命令的默认参数。`waitForSelector` 的轮询等待比固定 `sleep` 更反爬友好，但批量调用时仍需注意请求间隔。
+
 ### Tab Isolation
 
 `playwright-cli` daemon 在所有并发执行之间共享同一个注入的 `page` 对象。直接在共享 `page` 上操作会导致导航竞争、DOM 污染和跨命令数据串扰。
