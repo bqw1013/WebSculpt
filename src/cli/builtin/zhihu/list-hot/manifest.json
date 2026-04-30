@@ -1,12 +1,12 @@
 {
   "runtime": "playwright-cli",
-  "description": "获取知乎热榜当前前 N 条内容，包括排名、标题、热度值和链接",
+  "description": "Fetch current top N entries from Zhihu Hot List, including rank, title, heat value, and link",
   "parameters": [
     {
       "name": "limit",
       "required": false,
       "default": "50",
-      "description": "返回的热榜条目数量上限，默认 50"
+      "description": "Maximum number of hot list entries to return, default 50"
     }
   ],
   "id": "zhihu-list-hot",

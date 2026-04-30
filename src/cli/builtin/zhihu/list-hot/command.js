@@ -38,7 +38,7 @@ async function (page) {
     });
 
     if (data.length === 0) {
-      throw new Error("[EMPTY_RESULT] 未能从知乎热榜提取到任何条目");
+      throw new Error("[EMPTY_RESULT] No entries could be extracted from Zhihu Hot List");
     }
 
     return {

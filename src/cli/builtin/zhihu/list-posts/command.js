@@ -17,10 +17,10 @@ async function (page) {
 
     const postsUrl = 'https://www.zhihu.com/people/' + encodeURIComponent(userId) + '/posts';
 
-    // 使用 domcontentloaded 替代 networkidle，避免知乎后台埋点/心跳请求导致无限等待
+    // Use domcontentloaded instead of networkidle to avoid infinite waiting caused by Zhihu background tracking/heartbeat requests
     await page.goto(postsUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-    // 等待潜在客户端重定向
+    // Wait for potential client-side redirect
     await page.waitForTimeout(2000);
 
     const currentUrl = page.url();
@@ -44,7 +44,7 @@ async function (page) {
       throw new Error('[NOT_FOUND] User "' + userId + '" does not exist or profile is unavailable.');
     }
 
-    // 主选择器 + 备选选择器，兼容页面改版
+    // Primary selector + fallback selector for page layout changes
     const selectorCandidates = [
       '.Profile-main .ContentItem.ArticleItem',
       '.Profile-main .List-item'
@@ -70,7 +70,7 @@ async function (page) {
           break;
         }
       } catch (e) {
-        // 继续尝试下一个选择器
+        // Continue to try the next selector
       }
     }
 
