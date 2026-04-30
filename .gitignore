@@ -39,6 +39,7 @@ coverage/
 .cache/
 tmp/
 .tmp/
+.websculpt-drafts/
 
 # Process / seed files
 *.pid
