@@ -1,0 +1,14 @@
+{
+  "runtime": "playwright-cli",
+  "description": "Fetch the full content and metadata of a single Zhihu column article (zhuanlan.zhihu.com)",
+  "parameters": [
+    {
+      "name": "url",
+      "required": true,
+      "description": "Full URL of the Zhihu column article, e.g. https://zhuanlan.zhihu.com/p/123456789"
+    }
+  ],
+  "id": "zhihu-get-post",
+  "domain": "zhihu",
+  "action": "get-post"
+}

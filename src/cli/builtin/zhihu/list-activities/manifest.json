@@ -1,0 +1,20 @@
+{
+  "runtime": "playwright-cli",
+  "description": "Fetch the latest activities (pins, answers, articles) from a Zhihu user's activities page",
+  "parameters": [
+    {
+      "name": "user",
+      "required": true,
+      "description": "Zhihu user ID (e.g., 'yu-you-56-63') or full profile URL"
+    },
+    {
+      "name": "limit",
+      "required": false,
+      "default": "10",
+      "description": "Maximum number of activities to return"
+    }
+  ],
+  "id": "zhihu-list-activities",
+  "domain": "zhihu",
+  "action": "list-activities"
+}
