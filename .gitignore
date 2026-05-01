@@ -59,3 +59,7 @@ tmp/
 
 # OpenSpec working files
 openspec/
+
+# Skill build artifacts
+skills/websculpt/references/
+skills/websculpt/version.json
