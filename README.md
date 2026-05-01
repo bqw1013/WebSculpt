@@ -4,7 +4,7 @@ WebSculpt 是一个基于 Harness Engineering 理念的信息获取框架，CLI 
 
 ## 项目阶段
 
-当前处于非常早期的 **MVP 阶段（v0.0.1）**。CLI 骨架和命令扩展机制已完成，核心扩展能力（Web 访问、命令自动生成、异常自愈）尚未实现。
+当前处于 **MVP 阶段（v0.0.1）**。CLI 骨架、命令扩展机制与 Web 访问能力已完成，**异常自愈**尚未实现。
 
 ## 快速开始
 
@@ -59,7 +59,7 @@ WebSculpt 将命令分为两类：
 
 - **CLI 模块已收拢**：近期完成了一次重构，将原本分散在 `src/core`、`src/runner` 中的代码全部合并到 `src/cli/` 下，使其成为独立的入口适配器。
 - **当前测试以 CLI e2e 为主**：这和项目目前的 MVP 形态一致，但后续能力下沉后，应逐步补齐 unit / integration 测试。
-- **Web 访问能力（部分实现）**：`playwright-cli` runtime 已支持浏览器自动化，但纯 HTTP 请求工具尚未集成。
+- **Web 访问能力**：`playwright-cli` runtime 支持浏览器自动化；HTTP 请求可通过 `node` 或 `shell` runtime 自行实现。
 - **命令生成能力（部分实现）**：`command create` 可将打包好的命令资产落盘，但校验仅为极简 manifest 检查，无 L1-L3 分层校验。
 - **无自愈能力**：当沉淀下来的命令因目标网站变更而失效时，暂无异常检测与自动修复机制。
 - **命令参数目前仅支持 `--key <value>` 形式的 options**，不支持 positional arguments。
