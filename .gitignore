@@ -63,3 +63,6 @@ openspec/
 # Skill build artifacts
 skills/websculpt/references/
 skills/websculpt/version.json
+
+docs/Design.md
+docs/Roadmap.md
