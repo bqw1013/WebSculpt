@@ -58,20 +58,14 @@ describe("renderOutput", () => {
 
 	it("prints an error in human mode as CODE: message", () => {
 		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-		renderOutput(
-			{ success: false, error: { code: "RESERVED_DOMAIN", message: "Domain is reserved" } },
-			"human",
-		);
+		renderOutput({ success: false, error: { code: "RESERVED_DOMAIN", message: "Domain is reserved" } }, "human");
 		expect(logSpy).toHaveBeenCalledWith("RESERVED_DOMAIN: Domain is reserved");
 		logSpy.mockRestore();
 	});
 
 	it("prints an error as JSON in json mode", () => {
 		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-		renderOutput(
-			{ success: false, error: { code: "NOT_FOUND", message: "Missing" } },
-			"json",
-		);
+		renderOutput({ success: false, error: { code: "NOT_FOUND", message: "Missing" } }, "json");
 		expect(logSpy).toHaveBeenCalledWith(
 			JSON.stringify({ success: false, error: { code: "NOT_FOUND", message: "Missing" } }, null, 2),
 		);

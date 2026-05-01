@@ -1,13 +1,7 @@
-import { access, readFile, rm, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import {
-	createIsolatedHome,
-	parseJsonOutput,
-	readJsonFile,
-	removeTempDir,
-	runSourceCli,
-} from "./helpers/cli";
+import { createIsolatedHome, parseJsonOutput, readJsonFile, removeTempDir, runSourceCli } from "./helpers/cli";
 
 async function cleanupDrafts(): Promise<void> {
 	try {
@@ -29,10 +23,7 @@ describe("command draft", () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
-		const result = await runSourceCli(
-			["command", "draft", "example", "hello", "--format", "json"],
-			homeDir,
-		);
+		const result = await runSourceCli(["command", "draft", "example", "hello", "--format", "json"], homeDir);
 		const payload = parseJsonOutput<{
 			success: boolean;
 			draftPath: string;
@@ -144,19 +135,10 @@ describe("command draft", () => {
 		const manifestPath = join(draftPayload.draftPath, "manifest.json");
 		const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
 		manifest.description = "A test command description";
-		await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+		await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 		const createResult = await runSourceCli(
-			[
-				"command",
-				"create",
-				"test",
-				"cmd",
-				"--from-dir",
-				draftPayload.draftPath,
-				"--format",
-				"json",
-			],
+			["command", "create", "test", "cmd", "--from-dir", draftPayload.draftPath, "--format", "json"],
 			homeDir,
 		);
 		const createPayload = parseJsonOutput<{
@@ -174,13 +156,10 @@ describe("command draft", () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
-		const draftDir = resolve(homeDir, ".websculpt-drafts", "example-hello");
+		const _draftDir = resolve(homeDir, ".websculpt-drafts", "example-hello");
 
 		// First draft
-		const firstResult = await runSourceCli(
-			["command", "draft", "example", "hello", "--format", "json"],
-			homeDir,
-		);
+		const firstResult = await runSourceCli(["command", "draft", "example", "hello", "--format", "json"], homeDir);
 		const firstPayload = parseJsonOutput<{
 			success: boolean;
 			draftPath: string;
@@ -189,10 +168,7 @@ describe("command draft", () => {
 		expect(firstPayload.success).toBe(true);
 
 		// Second draft without --force should fail
-		const secondResult = await runSourceCli(
-			["command", "draft", "example", "hello", "--format", "json"],
-			homeDir,
-		);
+		const secondResult = await runSourceCli(["command", "draft", "example", "hello", "--format", "json"], homeDir);
 		const secondPayload = parseJsonOutput<{
 			success: boolean;
 			error?: { code: string };
@@ -219,10 +195,7 @@ describe("command draft", () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
-		const result = await runSourceCli(
-			["command", "draft", "nextstep", "test", "--format", "json"],
-			homeDir,
-		);
+		const result = await runSourceCli(["command", "draft", "nextstep", "test", "--format", "json"], homeDir);
 		const payload = parseJsonOutput<{
 			success: boolean;
 			nextSteps: Array<{ action: string; file?: string; command?: string }>;

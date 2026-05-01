@@ -4,7 +4,12 @@ import { describe, expect, it } from "vitest";
 import { handleCommandValidate } from "../../../../src/cli/meta/validate.js";
 
 async function createTempDir(): Promise<string> {
-	const dir = join(process.cwd(), "tests", ".tmp", `validate-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+	const dir = join(
+		process.cwd(),
+		"tests",
+		".tmp",
+		`validate-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+	);
 	await mkdir(dir, { recursive: true });
 	return dir;
 }
@@ -29,7 +34,11 @@ describe("handleCommandValidate", () => {
 		});
 		await writeCode(dir, "export default async function(params) { return {}; }");
 		await writeFile(join(dir, "README.md"), "# Test\n\n## Description\n\n## Parameters\n\n## Usage\n", "utf-8");
-		await writeFile(join(dir, "context.md"), "## Precipitation Background\n\n## Page Structure\n\n## Environment Dependencies\n\n## Failure Signals\n", "utf-8");
+		await writeFile(
+			join(dir, "context.md"),
+			"## Precipitation Background\n\n## Page Structure\n\n## Environment Dependencies\n\n## Failure Signals\n",
+			"utf-8",
+		);
 
 		const result = await handleCommandValidate(dir);
 
@@ -48,9 +57,7 @@ describe("handleCommandValidate", () => {
 		expect(result.success).toBe(true);
 		if (result.success && "warnings" in result) {
 			expect(result.warnings).toEqual(
-				expect.arrayContaining([
-					expect.objectContaining({ code: "MISSING_IDENTITY_FIELDS" }),
-				]),
+				expect.arrayContaining([expect.objectContaining({ code: "MISSING_IDENTITY_FIELDS" })]),
 			);
 		}
 	});
@@ -71,9 +78,7 @@ describe("handleCommandValidate", () => {
 		if (!result.success && "error" in result) {
 			expect(result.error.code).toBe("VALIDATION_ERROR");
 			expect(result.error.details).toEqual(
-				expect.arrayContaining([
-					expect.objectContaining({ code: "INVALID_RUNTIME" }),
-				]),
+				expect.arrayContaining([expect.objectContaining({ code: "INVALID_RUNTIME" })]),
 			);
 		}
 	});
@@ -122,9 +127,7 @@ describe("handleCommandValidate", () => {
 		if (!result.success && "error" in result) {
 			expect(result.error.code).toBe("VALIDATION_ERROR");
 			expect(result.error.details).toEqual(
-				expect.arrayContaining([
-					expect.objectContaining({ code: "ID_MISMATCH" }),
-				]),
+				expect.arrayContaining([expect.objectContaining({ code: "ID_MISMATCH" })]),
 			);
 		}
 	});

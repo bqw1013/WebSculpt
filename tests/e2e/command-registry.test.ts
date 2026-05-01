@@ -1,15 +1,21 @@
+import { rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
-	CommandCreateResult,
-	CommandRemoveResult,
+	createIsolatedHome,
+	parseJsonOutput,
+	readJsonFile,
+	removeTempDir,
+	runSourceCli,
+	websculptPath,
+} from "./helpers/cli";
+import {
+	type CommandRemoveResult,
 	notesDeletePackage,
 	notesSavePackage,
+	type RegistryIndex,
 	registerUserCommand,
-	RegistryIndex,
 } from "./helpers/commands";
-import { createIsolatedHome, parseJsonOutput, readJsonFile, removeTempDir, runSourceCli, websculptPath } from "./helpers/cli";
-import { join } from "node:path";
-import { rm, writeFile } from "node:fs/promises";
 
 describe("command registry", () => {
 	const tempDirs: string[] = [];
@@ -66,10 +72,7 @@ describe("command registry", () => {
 			const commandDir = websculptPath(homeDir, "commands", "notes", "save");
 			await writeFile(join(commandDir, "README.md"), "# Human README\nUsage: --title <text>", "utf8");
 
-			const result = await runSourceCli(
-				["command", "show", "notes", "save", "--include-readme"],
-				homeDir,
-			);
+			const result = await runSourceCli(["command", "show", "notes", "save", "--include-readme"], homeDir);
 			expect(result.exitCode).toBe(0);
 			expect(result.stdout).toContain("notes");
 			expect(result.stdout).toContain("--- README ---");
@@ -152,7 +155,7 @@ describe("command registry", () => {
 			tempDirs.push(homeDir);
 
 			const packageWithDefault = {
-				code: 'export default async function(params) { return { value: params.mode }; }\n',
+				code: "export default async function(params) { return { value: params.mode }; }\n",
 				manifest: {
 					action: "defaulttest",
 					description: "Test default parameter",
@@ -198,10 +201,7 @@ describe("command registry", () => {
 			expect(createResult.exitCode).toBe(0);
 			expect(createPayload.success).toBe(true);
 
-			const removeResult = await runSourceCli(
-				["command", "remove", "notes", "delete", "--format", "json"],
-				homeDir,
-			);
+			const removeResult = await runSourceCli(["command", "remove", "notes", "delete", "--format", "json"], homeDir);
 			const removePayload = parseJsonOutput<CommandRemoveResult>(removeResult.stdout);
 
 			expect(removeResult.exitCode).toBe(0);
@@ -262,7 +262,9 @@ describe("command registry", () => {
 
 			const afterIndex = await readJsonFile<RegistryIndex>(websculptPath(homeDir, "registry-index.json"));
 			expect(afterIndex.generatedAt).not.toBe(beforeIndex.generatedAt);
-			expect(afterIndex.commands.some((c) => c.manifest.domain === "notes" && c.manifest.action === "save")).toBe(true);
+			expect(afterIndex.commands.some((c) => c.manifest.domain === "notes" && c.manifest.action === "save")).toBe(
+				true,
+			);
 		});
 
 		it("rebuilds the index after command remove", async () => {
@@ -274,12 +276,16 @@ describe("command registry", () => {
 
 			await runSourceCli(["command", "list"], homeDir);
 			const beforeIndex = await readJsonFile<RegistryIndex>(websculptPath(homeDir, "registry-index.json"));
-			expect(beforeIndex.commands.some((c) => c.manifest.domain === "notes" && c.manifest.action === "delete")).toBe(true);
+			expect(beforeIndex.commands.some((c) => c.manifest.domain === "notes" && c.manifest.action === "delete")).toBe(
+				true,
+			);
 
 			await runSourceCli(["command", "remove", "notes", "delete"], homeDir);
 			const afterIndex = await readJsonFile<RegistryIndex>(websculptPath(homeDir, "registry-index.json"));
 			expect(afterIndex.generatedAt).not.toBe(beforeIndex.generatedAt);
-			expect(afterIndex.commands.some((c) => c.manifest.domain === "notes" && c.manifest.action === "delete")).toBe(false);
+			expect(afterIndex.commands.some((c) => c.manifest.domain === "notes" && c.manifest.action === "delete")).toBe(
+				false,
+			);
 		});
 
 		it("recovers a corrupted index by full rescan", async () => {

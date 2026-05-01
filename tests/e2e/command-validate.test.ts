@@ -1,8 +1,6 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { notesSavePackage, reservedSyncPackage, writeCommandDir } from "./helpers/commands";
 import { createIsolatedHome, parseJsonOutput, removeTempDir, runSourceCli } from "./helpers/cli";
+import { notesSavePackage, reservedSyncPackage, writeCommandDir } from "./helpers/commands";
 
 describe("command validate", () => {
 	const tempDirs: string[] = [];
@@ -40,7 +38,11 @@ describe("command validate", () => {
 				runtime: "node",
 			},
 		};
-		const commandDirPath = await writeCommandDir(homeDir, "partial-dir", partialManifest as unknown as Parameters<typeof writeCommandDir>[2]);
+		const commandDirPath = await writeCommandDir(
+			homeDir,
+			"partial-dir",
+			partialManifest as unknown as Parameters<typeof writeCommandDir>[2],
+		);
 		const result = await runSourceCli(
 			["command", "validate", "--from-dir", commandDirPath, "--format", "json"],
 			homeDir,
@@ -52,9 +54,7 @@ describe("command validate", () => {
 		expect(result.exitCode).toBe(0);
 		expect(payload.success).toBe(true);
 		expect(payload.warnings).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({ code: "MISSING_IDENTITY_FIELDS", level: "warning" }),
-			]),
+			expect.arrayContaining([expect.objectContaining({ code: "MISSING_IDENTITY_FIELDS", level: "warning" })]),
 		);
 	});
 
@@ -93,7 +93,11 @@ describe("command validate", () => {
 				runtime: "node",
 			},
 		};
-		const commandDirPath = await writeCommandDir(homeDir, "partial-sim-dir", partialManifest as unknown as Parameters<typeof writeCommandDir>[2]);
+		const commandDirPath = await writeCommandDir(
+			homeDir,
+			"partial-sim-dir",
+			partialManifest as unknown as Parameters<typeof writeCommandDir>[2],
+		);
 		const result = await runSourceCli(
 			["command", "validate", "--from-dir", commandDirPath, "testdomain", "testaction", "--format", "json"],
 			homeDir,
@@ -105,9 +109,7 @@ describe("command validate", () => {
 		expect(result.exitCode).toBe(0);
 		expect(payload.success).toBe(true);
 		expect(payload.warnings).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({ code: "MISSING_IDENTITY_FIELDS", level: "warning" }),
-			]),
+			expect.arrayContaining([expect.objectContaining({ code: "MISSING_IDENTITY_FIELDS", level: "warning" })]),
 		);
 	});
 

@@ -74,7 +74,7 @@ export const notesSavePackage: CommandPackageBody = {
 };
 
 export const notesDeletePackage: CommandPackageBody = {
-	code: 'export default async function() { return { deleted: true }; }\n',
+	code: "export default async function() { return { deleted: true }; }\n",
 	manifest: {
 		action: "delete",
 		description: "Delete a note",
@@ -86,7 +86,7 @@ export const notesDeletePackage: CommandPackageBody = {
 };
 
 export const reservedSyncPackage: CommandPackageBody = {
-	code: 'export default async function() { return { ok: true }; }\n',
+	code: "export default async function() { return { ok: true }; }\n",
 	manifest: {
 		action: "sync",
 		description: "Should not be created",

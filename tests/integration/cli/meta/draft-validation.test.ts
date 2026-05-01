@@ -1,8 +1,8 @@
 import { readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { handleCommandDraft } from "../../../../src/cli/meta/draft.js";
 import { validateCommandPackage } from "../../../../src/cli/meta/command-validation.js";
+import { handleCommandDraft } from "../../../../src/cli/meta/draft.js";
 
 async function readDraftFile(dir: string, fileName: string): Promise<string> {
 	return await readFile(join(dir, fileName), "utf-8");

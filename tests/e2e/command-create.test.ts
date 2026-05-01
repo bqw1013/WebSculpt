@@ -2,13 +2,6 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
-	CommandCreateResult,
-	notesSavePackage,
-	registerUserCommand,
-	reservedSyncPackage,
-	writeCommandDir,
-} from "./helpers/commands";
-import {
 	createIsolatedHome,
 	parseJsonOutput,
 	readJsonFile,
@@ -16,6 +9,7 @@ import {
 	runSourceCli,
 	websculptPath,
 } from "./helpers/cli";
+import { type CommandCreateResult, notesSavePackage, registerUserCommand, writeCommandDir } from "./helpers/commands";
 
 describe("command create", () => {
 	const tempDirs: string[] = [];
@@ -28,11 +22,7 @@ describe("command create", () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
-		const { createPayload, createResult } = await registerUserCommand(
-			homeDir,
-			"note-save-package",
-			notesSavePackage,
-		);
+		const { createPayload, createResult } = await registerUserCommand(homeDir, "note-save-package", notesSavePackage);
 
 		expect(createResult.exitCode).toBe(0);
 		expect(createPayload).toEqual(
@@ -59,17 +49,7 @@ describe("command create", () => {
 
 		const commandDirPath = await writeCommandDir(homeDir, "note-save-package-v2", notesSavePackage);
 		const overwriteResult = await runSourceCli(
-			[
-				"command",
-				"create",
-				"notes",
-				"save",
-				"--from-dir",
-				commandDirPath,
-				"--force",
-				"--format",
-				"json",
-			],
+			["command", "create", "notes", "save", "--from-dir", commandDirPath, "--force", "--format", "json"],
 			homeDir,
 		);
 		const overwritePayload = parseJsonOutput<CommandCreateResult>(overwriteResult.stdout);
@@ -83,26 +63,13 @@ describe("command create", () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
-		const { createResult: firstResult } = await registerUserCommand(
-			homeDir,
-			"note-save-package",
-			notesSavePackage,
-		);
+		const { createResult: firstResult } = await registerUserCommand(homeDir, "note-save-package", notesSavePackage);
 
 		expect(firstResult.exitCode).toBe(0);
 
 		const commandDirPath = await writeCommandDir(homeDir, "note-save-package-v2", notesSavePackage);
 		const result = await runSourceCli(
-			[
-				"command",
-				"create",
-				"notes",
-				"save",
-				"--from-dir",
-				commandDirPath,
-				"--format",
-				"json",
-			],
+			["command", "create", "notes", "save", "--from-dir", commandDirPath, "--format", "json"],
 			homeDir,
 		);
 		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
@@ -244,7 +211,11 @@ describe("command create", () => {
 				parameters: [],
 			},
 		};
-		const commandDirPath = await writeCommandDir(homeDir, "minimal-package", minimalPackage as unknown as Parameters<typeof writeCommandDir>[2]);
+		const commandDirPath = await writeCommandDir(
+			homeDir,
+			"minimal-package",
+			minimalPackage as unknown as Parameters<typeof writeCommandDir>[2],
+		);
 		const result = await runSourceCli(
 			["command", "create", "minimal", "cmd", "--from-dir", commandDirPath, "--format", "json"],
 			homeDir,

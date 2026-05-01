@@ -16,7 +16,9 @@ function makeInput(overrides: Record<string, unknown> = {}) {
 		hasReadme: overrides.hasReadme ?? true,
 		hasContext: overrides.hasContext ?? true,
 		readmeContent: overrides.readmeContent ?? "## Description\n## Parameters\n## Usage",
-		contextContent: overrides.contextContent ?? "## Precipitation Background\n## Page Structure\n## Environment Dependencies\n## Failure Signals",
+		contextContent:
+			overrides.contextContent ??
+			"## Precipitation Background\n## Page Structure\n## Environment Dependencies\n## Failure Signals",
 		expectedDomain: overrides.expectedDomain ?? "test-domain",
 		expectedAction: overrides.expectedAction ?? "test-action",
 	};
@@ -31,9 +33,7 @@ describe("validateCommandPackage", () => {
 
 		it("errors on invalid runtime", () => {
 			const details = validateCommandPackage(makeInput({ manifest: { runtime: "invalid-runtime" } }));
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "INVALID_RUNTIME", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_RUNTIME", level: "error" }));
 		});
 
 		it("errors on duplicate parameter names", () => {
@@ -47,9 +47,7 @@ describe("validateCommandPackage", () => {
 					},
 				}),
 			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "DUPLICATE_PARAM_NAME", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "DUPLICATE_PARAM_NAME", level: "error" }));
 		});
 
 		it("errors on missing parameter name", () => {
@@ -60,9 +58,7 @@ describe("validateCommandPackage", () => {
 					},
 				}),
 			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_PARAM_NAME", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_PARAM_NAME", level: "error" }));
 		});
 
 		it("errors on invalid parameter default type", () => {
@@ -73,69 +69,53 @@ describe("validateCommandPackage", () => {
 					},
 				}),
 			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "INVALID_PARAM_DEFAULT", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_PARAM_DEFAULT", level: "error" }));
 		});
 
 		it("errors on id-domain-action mismatch", () => {
-			const details = validateCommandPackage(
-				makeInput({ manifest: { id: "wrong-id" } }),
-			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "ID_MISMATCH", level: "error" }),
-			);
+			const details = validateCommandPackage(makeInput({ manifest: { id: "wrong-id" } }));
+			expect(details).toContainEqual(expect.objectContaining({ code: "ID_MISMATCH", level: "error" }));
 		});
 
 		it("warns on missing identity fields when no domain/action expected", () => {
 			const details = validateCommandPackage(
-				makeInput({ manifest: { id: undefined, domain: undefined, action: undefined }, expectedDomain: undefined, expectedAction: undefined }),
+				makeInput({
+					manifest: { id: undefined, domain: undefined, action: undefined },
+					expectedDomain: undefined,
+					expectedAction: undefined,
+				}),
 			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_IDENTITY_FIELDS", level: "warning" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_IDENTITY_FIELDS", level: "warning" }));
 		});
 
 		it("errors on missing description", () => {
 			const details = validateCommandPackage(makeInput({ manifest: { description: undefined } }));
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_DESCRIPTION", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_DESCRIPTION", level: "error" }));
 		});
 
 		it("errors on empty description", () => {
 			const details = validateCommandPackage(makeInput({ manifest: { description: "" } }));
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_DESCRIPTION", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_DESCRIPTION", level: "error" }));
 		});
 
 		it("errors on whitespace-only description", () => {
 			const details = validateCommandPackage(makeInput({ manifest: { description: "   " } }));
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_DESCRIPTION", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_DESCRIPTION", level: "error" }));
 		});
 
 		it("passes for valid prerequisites array", () => {
-			const details = validateCommandPackage(
-				makeInput({ manifest: { prerequisites: ["Requires user login"] } }),
-			);
+			const details = validateCommandPackage(makeInput({ manifest: { prerequisites: ["Requires user login"] } }));
 			expect(details.filter((d) => d.level === "error" && d.code === "INVALID_PREREQUISITES")).toHaveLength(0);
 		});
 
 		it("errors on non-array prerequisites", () => {
 			const details = validateCommandPackage(makeInput({ manifest: { prerequisites: "not-an-array" } }));
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "INVALID_PREREQUISITES", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_PREREQUISITES", level: "error" }));
 		});
 
 		it("errors on prerequisites array with non-string element", () => {
 			const details = validateCommandPackage(makeInput({ manifest: { prerequisites: ["valid", 123] } }));
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "INVALID_PREREQUISITES", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_PREREQUISITES", level: "error" }));
 		});
 
 		it("warns on missing identity fields in injection simulation mode", () => {
@@ -149,12 +129,8 @@ describe("validateCommandPackage", () => {
 
 	describe("L2 compliance validation", () => {
 		it("errors on temporary snapshot reference", () => {
-			const details = validateCommandPackage(
-				makeInput({ code: "export default async function() { return e12; }" }),
-			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "TEMP_REF_FOUND", level: "error" }),
-			);
+			const details = validateCommandPackage(makeInput({ code: "export default async function() { return e12; }" }));
+			expect(details).toContainEqual(expect.objectContaining({ code: "TEMP_REF_FOUND", level: "error" }));
 		});
 
 		it("errors on browser connection keywords", () => {
@@ -170,20 +146,14 @@ describe("validateCommandPackage", () => {
 			const details = validateCommandPackage(
 				makeInput({ code: "export default async function() { const m = await import('foo'); }" }),
 			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "INLINE_IMPORT_FORBIDDEN", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "INLINE_IMPORT_FORBIDDEN", level: "error" }));
 		});
 	});
 
 	describe("L3 contract validation", () => {
 		it("errors on node runtime missing valid export", () => {
-			const details = validateCommandPackage(
-				makeInput({ code: "async function(params) { return {}; }" }),
-			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_EXPORT_DEFAULT", level: "error" }),
-			);
+			const details = validateCommandPackage(makeInput({ code: "async function(params) { return {}; }" }));
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_EXPORT_DEFAULT", level: "error" }));
 		});
 
 		it("passes for node runtime with export const command", () => {
@@ -204,9 +174,7 @@ describe("validateCommandPackage", () => {
 			const details = validateCommandPackage(
 				makeInput({ code: "export default async function(params) { return { broken: }" }),
 			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "INVALID_JS_SYNTAX", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_JS_SYNTAX", level: "error" }));
 		});
 
 		it("errors on playwright-cli runtime missing PARAMS_INJECT", () => {
@@ -216,9 +184,7 @@ describe("validateCommandPackage", () => {
 					code: "async (page) => { return {}; }",
 				}),
 			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_PARAMS_INJECT", level: "error" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_PARAMS_INJECT", level: "error" }));
 		});
 
 		it("errors on playwright-cli runtime containing module syntax", () => {
@@ -239,41 +205,31 @@ describe("validateCommandPackage", () => {
 					code: "export default async function(params) { return { x: params.undeclared }; }",
 				}),
 			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "UNDECLARED_PARAM", level: "warning" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "UNDECLARED_PARAM", level: "warning" }));
 		});
 	});
 
 	describe("asset completeness checks", () => {
 		it("warns on missing README", () => {
 			const details = validateCommandPackage(makeInput({ hasReadme: false }));
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_README", level: "warning" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_README", level: "warning" }));
 		});
 
 		it("warns on missing context", () => {
 			const details = validateCommandPackage(makeInput({ hasContext: false }));
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_CONTEXT", level: "warning" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_CONTEXT", level: "warning" }));
 		});
 	});
 
 	describe("document content validation", () => {
 		it("warns on missing README sections", () => {
 			const details = validateCommandPackage(makeInput({ readmeContent: "# Title only" }));
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_README_SECTION", level: "warning" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_README_SECTION", level: "warning" }));
 		});
 
 		it("warns on missing context sections", () => {
 			const details = validateCommandPackage(makeInput({ contextContent: "# Title only" }));
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MISSING_CONTEXT_SECTION", level: "warning" }),
-			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_CONTEXT_SECTION", level: "warning" }));
 		});
 	});
 });
