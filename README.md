@@ -6,59 +6,59 @@
 [![npm downloads](https://img.shields.io/npm/dm/websculpt)](https://www.npmjs.com/package/websculpt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript)](https://www.typescriptlang.org/)
 
-[English](README.md) · [中文](README_zh.md)
+[English](README_en.md) · [中文](README.md)
 
-> **Tired of reinventing the wheel every time an Agent needs to gather information?**
+> **Agent 每次查资料都在重复造轮子？**
 >
-> Searching through page structure, anti-bot measures, and DOM selectors fills up the context window with exploration noise, leaving no room for the actual analysis. The successful path disappears when the conversation ends, and you start all over again next time.
+> 找一次网页结构、反爬策略、DOM 选择器，上下文窗口被探索过程占满，真正该做的分析却放不下。成功路径随对话结束而消失，下次再来一遍。
 
-**WebSculpt is a harness for information retrieval.** Its core principle is "explore once, reuse forever": AI-discovered information retrieval paths are distilled into locally reusable `domain/action` commands; subsequent tasks invoke them directly, freeing up context space. The accumulated command library evolves with use, making the Agent smarter over time.
+**WebSculpt 是面向信息获取的 Harness。** 它把"一次探索，永久复用"作为核心：AI 跑通的信息获取路径，沉淀为本地可复用的 `domain/action` 命令；后续直接调用，释放上下文空间。沉淀下来的命令库随使用不断进化，Agent 越用越聪明。
 
 ```mermaid
 flowchart LR
-    subgraph Explore["Explore Once"]
-        A[AI Explores<br/>the Web]
+    subgraph Explore["一次探索"]
+        A[AI 探索网页]
     end
-    subgraph Reuse["Reuse Forever"]
-        B[Direct Call<br/>domain/action]
+    subgraph Reuse["永久复用"]
+        B[直接调用<br/>domain/action]
     end
-    A -->|"distill"| C[Command Library]
+    A -->|"沉淀"| C[命令库]
     C --> B
     B --> C
 ```
 
 ---
 
-## Table of Contents
+## 目录
 
-- [What Problem Does This Solve](#what-problem-does-this-solve)
-- [Usage](#usage)
-- [Good Fit For](#good-fit-for)
-- [Core Concepts](#core-concepts)
-- [What Does a Distilled Command Look Like](#what-does-a-distilled-command-look-like)
-- [Documentation Map](#documentation-map)
-- [Known Limitations](#known-limitations)
-- [Usage Statement](#usage-statement)
+- [这解决了什么问题](#这解决了什么问题)
+- [用法](#用法)
+- [适合做什么](#适合做什么)
+- [核心概念](#核心概念)
+- [沉淀下来的命令长什么样](#沉淀下来的命令长什么样)
+- [文档地图](#文档地图)
+- [已知限制](#已知限制)
+- [使用声明](#使用声明)
 - [License](#license)
 
 ---
 
-## What Problem Does This Solve
+## 这解决了什么问题
 
-| | Without WebSculpt | With WebSculpt |
-|---|---|---|
-| Structured data extraction from a site | Agent analyzes DOM on the fly → trial and error → consumes massive context | Check local command library → direct invocation → JSON returned in seconds |
-| Pages requiring login state | Re-explore login flow and page structure every time | Reuse distilled session strategies and interaction paths |
-| Check again next week | Explore from scratch | Command executes directly, results are stable and predictable |
-| Across sessions | Previous success is lost | Command library accumulates, Agent capabilities grow over time |
+| | 不用 WebSculpt | 用 WebSculpt |
+|--|--|--|
+| 获取一个站点的结构化数据 | Agent 现场分析 DOM → 试错 → 占用大量上下文 | 检查本地命令库 → 直接调用 → 秒级返回 JSON |
+| 需要登录态的页面 | 每次重新摸索登录流程和页面结构 | 复用已沉淀的会话策略与交互路径 |
+| 下周再查一次 | 从头探索一遍 | 命令直接执行，结果稳定可预期 |
+| 跨会话 | 上次成功经验丢失 | 命令库持续累积，Agent 能力随时间增长 |
 
 ---
 
-## Usage
+## 用法
 
-WebSculpt consists of a CLI and an Agent Skill. You state the requirement; the Agent handles execution.
+WebSculpt 由 CLI 和 Agent Skill 两部分组成。你负责提需求，Agent 负责执行。
 
-### 1. Install
+### 1. 安装
 
 ```bash
 npm install -g websculpt
@@ -66,75 +66,75 @@ websculpt config init
 websculpt skill install
 ```
 
-### 2. State Your Requirements
+### 2. 提需求
 
-Whenever you have an information retrieval need, simply tell the Agent. For example:
+之后有信息获取类需求时，直接告诉 Agent 即可。例如：
 
-> "Summarize this week's hot discussions from these tech communities"
-> "Compile the latest product updates into a table"
+> "汇总这几个技术社区本周的热门讨论"
+> "把目标产品的最新更新变动整理成表格"
 
-The Agent will automatically check whether a distilled command is available in the library; if not, it will explore on its own and evaluate whether to distill the result. You do not need to care about the specific CLI usage.
-
----
-
-## Good Fit For
-
-- **Multi-source information aggregation**: Continuously extract structured data from frequently visited sites to feed analysis, reporting, or monitoring
-- **Stateful page retrieval**: Reuse browser login state and interaction paths to access non-public or dynamically rendered data
-- **Personal / team command library**: Accumulate a private set of fast paths to your data sources; the Agent gets faster with use
-
-> WebSculpt focuses on "how to reliably obtain data". Analysis, judgment, and decision-making after data retrieval are left to the Agent based on its own capabilities.
+Agent 会自动检查命令库中是否有已沉淀的命令可用，没有则自行探索并评估是否沉淀。你不需要关心 CLI 的具体用法。
 
 ---
 
-## Core Concepts
+## 适合做什么
 
-| Concept | Description |
-|---------|-------------|
-| **Command Library** | Locally reusable information retrieval commands for the Agent, named in `domain/action` format (e.g. `github/list-trending`). Divided into Builtin (project built-in) and User (Agent distilled). |
-| **Skill** | A set of conventions the Agent automatically follows after installation, including tool selection strategy, exploration workflow, and distillation contract. |
-| **Runtime** | `node` (HTTP requests, data cleansing) or `playwright-cli` (browser automation, reusable login state). A command can declare only one runtime. |
+- **多源信息聚合**：从常访问的站点持续提取结构化数据，为分析、报告或监控提供素材
+- **带状态的页面获取**：复用浏览器登录态与交互路径，获取非公开或动态渲染的数据
+- **个人/团队命令库**：随着使用沉淀出一套私有数据源的快路径，Agent 越用越快
+
+> WebSculpt 聚焦于"如何稳定拿到数据"。拿到数据之后的分析、判断与决策，由 Agent 基于自身能力完成。
 
 ---
 
-## What Does a Distilled Command Look Like
+## 核心概念
 
-A successful exploration is distilled into a parameterizable command package stored in the local command library:
+| 概念 | 说明 |
+|------|------|
+| **命令库** | Agent 本地可复用的信息获取命令，按 `domain/action` 命名（如 `github/list-trending`）。分为 Builtin（项目内置）和 User（Agent 沉淀）。 |
+| **Skill** | 安装后 Agent 自动遵循的规范集合，包含工具选择策略、探索流程、沉淀契约。 |
+| **运行时** | `node`（HTTP 请求、数据清洗）或 `playwright-cli`（浏览器自动化、复用登录态）。一个命令只能声明一种运行时。 |
+
+---
+
+## 沉淀下来的命令长什么样
+
+一次成功探索会被沉淀为一个可参数化的命令包，存于本地命令库：
 
 ```
 ~/.websculpt/commands/<domain>/<action>/
-  ├── manifest.json      # Command metadata: purpose, parameters, runtime
-  ├── command.js         # Execution logic: selectors, cleansing, error handling
-  ├── README.md          # Instructions for callers
-  └── context.md         # Background and failure signals for maintainers
+  ├── manifest.json      # 命令元数据：用途、参数、运行时
+  ├── command.js         # 执行逻辑：选择器、清洗、异常处理
+  ├── README.md          # 面向调用者的说明
+  └── context.md         # 面向修复者的沉淀背景与失效信号
 ```
 
-It is essentially the Agent's experience of "how I scraped data from this web page" turned into a maintainable, version-controllable, reusable local asset.
+它本质上是 Agent 把"我怎么把这个网页上的数据抠下来"的经验，写成了一份可维护、可版本控制、可复用的本地资产。
 
-> Since commands run locally and may reuse your browser session via `playwright-cli`, it is recommended to periodically review the logic in your command library to avoid unintended page operations.
-
----
-
-## Documentation Map
-
-| Document | Content | For Whom |
-|----------|---------|----------|
-| [`docs/CLI.md`](docs/CLI.md) | Usage, parameters, and output contracts for all Meta commands | When consulting the manual |
-| [`docs/Architecture.md`](docs/Architecture.md) | Four-layer system architecture and code organization | Developers, contributors |
-| `skills/websculpt/` | Complete Agent Skill deliverables (strategy, contract, operating guide) | **Agents with the Skill installed** |
-
-> **Early version note**: WebSculpt is in active development. Builtin commands are provided as examples only; the core design goal is to help you distill your own command library through daily information retrieval tasks. Commands may break when target site structures change; please set expectations accordingly.
+> 由于命令在本地运行，并可能通过 `playwright-cli` 复用你的浏览器会话，建议定期审查命令库中的逻辑，避免非预期的页面操作。
 
 ---
 
-## Known Limitations
+## 文档地图
 
-- The `shell` and `python` runtimes already support the full command package lifecycle (`draft`, `validate`, `create`), but the CLI execution engine has not yet been wired in.
-- The full interaction flow and auto-trigger mechanism for the self-healing loop (automatic repair proposals after command failure) are not yet implemented.
+| 文档 | 内容 | 适合谁 |
+|------|------|--------|
+| [`docs/CLI.md`](docs/CLI.md) | 所有 Meta 命令的用法、参数和输出契约 | 查手册时 |
+| [`docs/Architecture.md`](docs/Architecture.md) | 系统四层架构、代码组织方式 | 开发者、贡献者 |
+| `skills/websculpt/` | Agent Skill 完整交付物（策略、契约、操作指南） | **已安装 Skill 的 Agent** |
 
-## Usage Statement
+> **早期版本提示**：WebSculpt 处于活跃开发阶段，Builtin 命令仅作示例参考，核心设计目标是帮助你在日常信息获取任务中沉淀属于自己的命令库。命令可能因目标站点结构变化而失效，请合理预期。
 
-When using WebSculpt, please comply with the target website's robots.txt and Terms of Service. Use it only on publicly accessible data you are permitted to access; unauthorized data collection is prohibited.
+---
+
+## 已知限制
+
+- `shell` 与 `python` 运行时已完成命令包生命周期支持（`draft`、`validate`、`create`），但 CLI 执行引擎尚未接入。
+- 自愈闭环（命令失效后的自动修复提案）的完整交互流程与自动触发机制尚未实现。
+
+## 使用声明
+
+使用 WebSculpt 请遵守目标网站的 robots.txt 及服务条款，仅对允许访问的公开数据使用，禁止用于未经授权的数据采集。
 
 ## License
 
