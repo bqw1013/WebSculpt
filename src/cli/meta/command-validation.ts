@@ -7,6 +7,7 @@ const BROWSER_KEYWORDS = ["launch", "connect", "connectOverCDP", "newBrowser", "
 const INLINE_IMPORT_REGEX = /await\s+import\s*\(/;
 const EXPORT_DEFAULT_REGEX = /export\s+default/;
 const EXPORT_COMMAND_REGEX = /export\s+(?:(?:const|let|var)\s+command|(?:async\s+)?function\s+command)\b/;
+const PARAMS_INJECT_MARKER = "/* PARAMS_INJECT */";
 const PARAM_ACCESS_REGEX = /params\.([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
 
 function addError(details: ValidationDetail[], code: string, message: string): void {
@@ -22,13 +23,17 @@ function checkJsSyntax(code: string, runtime: string): ValidationDetail | null {
 		return null;
 	}
 	let trial: string;
-	if (/^export\s+default\s+/s.test(code)) {
-		trial = `return (${code.replace(/^export\s+default\s+/s, "")})`;
-	} else if (/^export\s+(?:const|let|var)\s+command\s*=\s*/s.test(code)) {
-		const expr = code.replace(/^export\s+(?:const|let|var)\s+command\s*=\s*/s, "").replace(/;\s*$/s, "");
-		trial = `return (${expr})`;
-	} else if (/^export\s+(?:async\s+)?function\s+command\s*\(/s.test(code)) {
-		trial = `return (${code.replace(/^export\s+/s, "")})`;
+	if (runtime === "node") {
+		if (/^export\s+default\s+/s.test(code)) {
+			trial = `return (${code.replace(/^export\s+default\s+/s, "")})`;
+		} else if (/^export\s+(?:const|let|var)\s+command\s*=\s*/s.test(code)) {
+			const expr = code.replace(/^export\s+(?:const|let|var)\s+command\s*=\s*/s, "").replace(/;\s*$/s, "");
+			trial = `return (${expr})`;
+		} else if (/^export\s+(?:async\s+)?function\s+command\s*\(/s.test(code)) {
+			trial = `return (${code.replace(/^export\s+/s, "")})`;
+		} else {
+			trial = `return (${code})`;
+		}
 	} else {
 		trial = `return (${code})`;
 	}
@@ -169,17 +174,11 @@ function validateL1Structure(
 	}
 }
 
-function validateL2Compliance(code: string, runtime: string, details: ValidationDetail[]): void {
+function validateL2Compliance(code: string, details: ValidationDetail[]): void {
 	if (TEMP_REF_REGEX.test(code)) {
 		addError(details, "TEMP_REF_FOUND", "Command code contains temporary snapshot references (e.g., e1, e15)");
 	}
 	for (const keyword of BROWSER_KEYWORDS) {
-		// Allow connectOverCDP in playwright-cli runtime only if it appears in runner docs,
-		// but command code should never create its own browser connection.
-		// The runner now owns the CDP connection, so we narrow the check for playwright-cli.
-		if (runtime === "playwright-cli" && keyword === "connectOverCDP") {
-			continue;
-		}
 		// Simple word-boundary check to avoid false positives in substrings.
 		const regex = new RegExp(`\\b${keyword}\\b`);
 		if (regex.test(code)) {
@@ -210,6 +209,23 @@ function validateL3Contract(manifest: Record<string, unknown>, code: string, det
 				details,
 				"MISSING_EXPORT_DEFAULT",
 				"Node runtime command must contain `export default` or `export const command` / `export function command`",
+			);
+		}
+	}
+
+	if (runtime === "playwright-cli") {
+		if (!code.includes(PARAMS_INJECT_MARKER)) {
+			addError(
+				details,
+				"MISSING_PARAMS_INJECT",
+				`Playwright-cli runtime command must contain "${PARAMS_INJECT_MARKER}"`,
+			);
+		}
+		if (/\bexport\b/.test(code) || /\bimport\b/.test(code)) {
+			addError(
+				details,
+				"MODULE_SYNTAX_IN_FUNCTION_BODY",
+				"Playwright-cli runtime command must not contain module keywords (`export` or `import`)",
 			);
 		}
 	}
@@ -324,7 +340,7 @@ export function validateCommandPackage(input: ValidateCommandPackageInput): Vali
 	const manifest = input.manifest as Record<string, unknown>;
 
 	validateL1Structure(manifest, details, input.expectedDomain, input.expectedAction);
-	validateL2Compliance(input.code, (manifest.runtime ?? "node") as string, details);
+	validateL2Compliance(input.code, details);
 	validateL3Contract(manifest, input.code, details);
 	validateAssets(input.hasReadme, input.hasContext, details);
 	validateDocumentContent(input.readmeContent, input.contextContent, details);

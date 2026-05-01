@@ -166,28 +166,6 @@ describe("validateCommandPackage", () => {
 			);
 		});
 
-		it("allows connectOverCDP in playwright-cli runtime", () => {
-			const details = validateCommandPackage(
-				makeInput({
-					manifest: { runtime: "playwright-cli" },
-					code: "export default async function(page, params) { await page.goto('about:blank'); }",
-				}),
-			);
-			const browserErrors = details.filter(
-				(d) => d.code === "BROWSER_CONNECTION_FORBIDDEN" && d.message.includes("connectOverCDP"),
-			);
-			expect(browserErrors).toHaveLength(0);
-		});
-
-		it("forbids connectOverCDP in node runtime", () => {
-			const details = validateCommandPackage(
-				makeInput({ code: "export default async function() { await connectOverCDP(); }" }),
-			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "BROWSER_CONNECTION_FORBIDDEN", level: "error" }),
-			);
-		});
-
 		it("errors on inline dynamic import", () => {
 			const details = validateCommandPackage(
 				makeInput({ code: "export default async function() { const m = await import('foo'); }" }),
@@ -231,24 +209,28 @@ describe("validateCommandPackage", () => {
 			);
 		});
 
-		it("passes for playwright-cli runtime with export default", () => {
+		it("errors on playwright-cli runtime missing PARAMS_INJECT", () => {
 			const details = validateCommandPackage(
 				makeInput({
 					manifest: { runtime: "playwright-cli" },
-					code: "export default async function(page, params) { return {}; }",
+					code: "async (page) => { return {}; }",
 				}),
 			);
-			expect(details.filter((d) => d.level === "error")).toHaveLength(0);
+			expect(details).toContainEqual(
+				expect.objectContaining({ code: "MISSING_PARAMS_INJECT", level: "error" }),
+			);
 		});
 
-		it("passes for playwright-cli runtime with export const command", () => {
+		it("errors on playwright-cli runtime containing module syntax", () => {
 			const details = validateCommandPackage(
 				makeInput({
 					manifest: { runtime: "playwright-cli" },
-					code: "export const command = async function(page, params) { return {}; };",
+					code: "/* PARAMS_INJECT */ export async function run(page) { return {}; }",
 				}),
 			);
-			expect(details.filter((d) => d.level === "error")).toHaveLength(0);
+			expect(details).toContainEqual(
+				expect.objectContaining({ code: "MODULE_SYNTAX_IN_FUNCTION_BODY", level: "error" }),
+			);
 		});
 
 		it("warns on undeclared parameter usage", () => {
