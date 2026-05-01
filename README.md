@@ -16,12 +16,16 @@
 **WebSculpt is a harness for information retrieval.** Its core principle is "explore once, reuse forever": AI-discovered information retrieval paths are distilled into locally reusable `domain/action` commands; subsequent tasks invoke them directly, freeing up context space. The accumulated command library evolves with use, making the Agent smarter over time.
 
 ```mermaid
-flowchart TD
-    A[First Encounter] --> B[AI Explores Web]
-    B --> C[Precipitate into<br/>domain/action Command]
-    C --> D[Subsequent Calls]
-    D --> E[Direct Invocation<br/>No Exploration]
-    E --> D
+flowchart LR
+    subgraph Explore["Explore Once"]
+        A[AI Explores<br/>the Web]
+    end
+    subgraph Reuse["Reuse Forever"]
+        B[Direct Call<br/>domain/action]
+    end
+    A -->|"distill"| C[Command Library]
+    C --> B
+    B --> C
 ```
 
 ---
