@@ -16,17 +16,15 @@
 
 ```mermaid
 flowchart LR
-    A([AI 探索网页]) -->|沉淀| B[[命令库]]
-    B --> C([直接调用<br/>domain/action])
-    C -->|进化| B
-
-    classDef explore fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
-    classDef store fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12
-    classDef reuse fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-
-    class A explore
-    class B store
-    class C reuse
+    subgraph Explore["一次探索"]
+        A[AI 探索网页]
+    end
+    subgraph Reuse["永久复用"]
+        B[直接调用<br/>domain/action]
+    end
+    A -->|"沉淀"| C[命令库]
+    C --> B
+    B --> C
 ```
 
 ---
