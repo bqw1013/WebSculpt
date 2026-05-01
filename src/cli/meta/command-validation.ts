@@ -17,6 +17,14 @@ function addWarning(details: ValidationDetail[], code: string, message: string):
 	details.push({ code, message, level: "warning" });
 }
 
+/**
+ * Validate that command code parses as valid JavaScript.
+ *
+ * playwright-cli used to execute inside a VM sandbox, so its syntax check was
+ * stricter (the code had to be a valid function expression). After switching to
+ * direct CDP execution, playwright-cli commands are normal ESM modules just like
+ * node runtime commands, so both runtimes now share the same syntax validation.
+ */
 function checkJsSyntax(code: string, runtime: string): ValidationDetail | null {
 	if (runtime !== "node" && runtime !== "playwright-cli") {
 		return null;
@@ -169,14 +177,24 @@ function validateL1Structure(
 	}
 }
 
+/**
+ * L2 compliance validation: catch prohibited code patterns.
+ *
+ * BROWSER_KEYWORDS are forbidden because command code must not create its own
+ * browser connections — the runner already provides a Page object. For the
+ * playwright-cli runtime we narrow the check to allow "connectOverCDP" in
+ * documentation or comments, because the runner itself uses that API and the
+ * old blanket ban no longer makes sense now that commands run in real Node.js.
+ */
 function validateL2Compliance(code: string, runtime: string, details: ValidationDetail[]): void {
 	if (TEMP_REF_REGEX.test(code)) {
 		addError(details, "TEMP_REF_FOUND", "Command code contains temporary snapshot references (e.g., e1, e15)");
 	}
 	for (const keyword of BROWSER_KEYWORDS) {
-		// Allow connectOverCDP in playwright-cli runtime only if it appears in runner docs,
-		// but command code should never create its own browser connection.
-		// The runner now owns the CDP connection, so we narrow the check for playwright-cli.
+		// The runner owns the CDP connection for playwright-cli runtime, so
+		// command code referencing connectOverCDP is no longer treated as a
+		// VM-escape attempt. We still forbid it for node runtime because node
+		// commands should not spin up their own browsers either.
 		if (runtime === "playwright-cli" && keyword === "connectOverCDP") {
 			continue;
 		}
@@ -213,6 +231,10 @@ function validateL3Contract(manifest: Record<string, unknown>, code: string, det
 			);
 		}
 	}
+
+	// Note: playwright-cli runtime no longer requires PARAMS_INJECT or bans
+	// module syntax. Commands are now normal ESM modules imported by the runner,
+	// so their contract is identical to node runtime exports.
 
 	// Parameter consistency check (warning level).
 	const parameters = manifest.parameters;

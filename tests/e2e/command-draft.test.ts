@@ -77,10 +77,8 @@ describe("command draft", () => {
 		expect(manifest.runtime).toBe("playwright-cli");
 
 		const code = await readFile(join(payload.draftPath, "command.js"), "utf-8");
-		expect(code).toContain("async function (page)");
-		expect(code).toContain("/* PARAMS_INJECT */");
-		expect(code).not.toContain("export");
-		expect(code).not.toContain("import");
+		expect(code).toContain("export default async function (page, params)");
+		expect(code).not.toContain("/* PARAMS_INJECT */");
 	});
 
 	it("pre-fills manifest parameters and command.js variable assignments with --param", async () => {
