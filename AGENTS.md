@@ -1,69 +1,58 @@
-# Agent 指南
+# Agent Guidelines
 
-## 代码质量
+## Code Quality
 
-- 除非绝对必要，否则不要使用 `any` 类型。
-- 查阅 `node_modules` 中的外部 API 类型定义，不要凭猜测。
-- **永远不要使用内联导入** —— 禁止使用 `await import("./foo.js")`、类型位置上的 `import("pkg").Type`，以及用于类型的动态导入。始终使用标准的顶部导入。
-- 不要为了修复因依赖过时而导致的类型错误而删除或降级代码；应该升级依赖。
-- 在删除看起来是故意的功能或代码之前，一定要先询问。
-- 除非明确要求，否则不要保留向后兼容性。
+- Avoid using the `any` type unless absolutely necessary.
+- Consult type definitions for external APIs in `node_modules`; do not guess.
+- **Never use inline imports** — do not use `await import("./foo.js")`, `import("pkg").Type` in type positions, or dynamic imports for types. Always use standard top-level imports.
+- Do not remove or downgrade code to fix type errors caused by outdated dependencies; upgrade the dependencies instead.
+- Ask before deleting functionality or code that appears intentional.
+- Do not preserve backward compatibility unless explicitly requested.
 
-### 注释规范
+### Comment Standards
 
-- **所有注释必须使用英文。**
-- **优先用类型和命名自解释，避免废话注释。** 不要写 `// create a variable` 这类无信息量的注释。
-- **复杂或非直观逻辑必须加行内注释，解释 "why" 而不是 "what"。**
-- **`export` 的公共函数 / 接口 / 类型建议添加 JSDoc**，说明其职责和关键参数。
-- **禁止在代码中保留被注释掉的旧代码。** 需要历史版本时查看 Git，不要将其留在文件里当备份。
+- **All comments must be in English.**
+- **Prefer self-explanatory types and names; avoid pointless comments.** Do not write uninformative comments like `// create a variable`.
+- **Complex or non-obvious logic must have inline comments explaining "why", not "what".**
+- **`export`ed public functions / interfaces / types should include JSDoc**, describing their responsibilities and key parameters.
+- **Do not keep old commented-out code in the codebase.** Use Git for historical versions; do not leave it in files as a backup.
 
-## 跨平台兼容性
+## Cross-Platform Compatibility
 
-- 代码必须在 Windows 和 Linux/macOS 上均可运行。
-- npm scripts 中使用 `&&` 串联命令，禁止使用 `;`（Windows cmd 不支持）。
-- 文件路径使用 Node.js 的 `path` / `os` 模块，禁止硬编码 Windows 路径（如 `C:\`）或使用反斜杠拼接路径。
-- 避免提交 Windows 专有脚本（`.bat`、`.cmd`、`.ps1`）。如确需平台相关逻辑，应使用 `process.platform` 做兼容处理。
+- Code must run on both Windows and Linux/macOS.
+- In npm scripts, chain commands with `&&`; do not use `;` (not supported by Windows cmd).
+- Use Node.js `path` / `os` modules for file paths; do not hardcode Windows paths (e.g., `C:\`) or concatenate paths with backslashes.
+- Avoid committing Windows-specific scripts (`.bat`, `.cmd`, `.ps1`). If platform-specific logic is necessary, use `process.platform` for compatibility.
 
-## 命令执行
+## Command Execution
 
-- 代码改动后（文档改动除外）：运行项目的类型检查 / 校验 /  lint 命令，并在结束前修复所有错误。
-- 仅在收到指令时才运行特定测试；如果你创建或修改了测试文件，**必须**运行该测试并不断迭代直到通过。
+- After code changes (except documentation changes): run the project's type-checking / validation / lint commands, and fix all errors before finishing.
+- Run specific tests only when instructed; if you create or modify test files, you **must** run the test and iterate until it passes.
 
-## E2E 测试可读性
+## E2E Test Readability
 
-- 修改或新增 e2e 测试时，优先按 command 或 capability 分组；当一个文件覆盖多个相关场景时，用 `describe(...)` 明确层次。
-- `describe(...)` 和 `it(...)` 名称应直接表达主要的用户可见行为或结果，不要写成按步骤展开的执行记录。
-- 当一个 `it(...)` 标题已经承载多个并列的主要目标时，优先拆成多个用例；只有在工作流上下文无法分离时才保留在一起。
-- 仅当某段 setup 的存在理由不明显、且它只是为了支撑后续断言时，才添加简短英文注释解释 why；不要用注释复述显而易见的执行步骤。
-- 当 e2e 覆盖范围有实质变化，或某个 e2e 文件的场景意图发生变化时，必须在同一个 change 中更新 `tests/README.md` 的 `E2E Coverage Map`。
+- When modifying or adding e2e tests, group by command or capability first; when one file covers multiple related scenarios, use `describe(...)` to clarify hierarchy.
+- `describe(...)` and `it(...)` names should directly express the primary user-visible behavior or result, not read like step-by-step execution logs.
+- When an `it(...)` title carries multiple parallel primary objectives, prefer splitting it into multiple cases; keep them together only when they cannot be separated in the workflow context.
+- Add a brief English comment explaining why only when a setup block's purpose is non-obvious and it exists solely to support subsequent assertions; do not use comments to restate obvious execution steps.
+- When e2e coverage changes substantially, or the intended scenarios in an e2e file change, update the `E2E Coverage Map` in `tests/README.md` within the same change.
 
-## 工具使用
+## Tool Usage
 
-- **永远不要使用 `sed`/`cat` 来读取文件或文件的某个范围。** 始终使用专门的读取工具（大范围读取时使用 offset + limit）。
-- **在编辑之前，必须完整读取你要修改的每一个文件。**
+- **Never use `sed`/`cat` to read files or specific ranges of a file.** Always use dedicated read tools (use offset + limit for large reads).
+- **Before editing, you must read every file you intend to modify in full.**
 
 ## Git
 
-- **只提交你在本次会话中修改过的文件。**
-- 永远不要使用 `git add -A` 或 `git add .` —— 这会连带提交其他 agent 的改动。
-- 始终使用 `git add <具体文件路径>`，只列出你修改过的文件。
-- 提交前，先运行 `git status`，确认暂存区里只有你的文件。
-- 记录本次会话中创建 / 修改 / 删除的文件。
+- **Only commit files you modified in this session.**
+- Never use `git add -A` or `git add .` — this will commit changes from other agents as well.
+- Always use `git add <specific-file-path>`, listing only the files you modified.
+- Before committing, run `git status` to confirm the staging area contains only your files.
+- Record files created / modified / deleted in this session.
 
-## Skill References 同步规范
+## Communication Style
 
-`scripts/build-skills.js` 会将 `src/explore/`、`src/access/playwright-cli/` 和 `src/compile/` 整目录复制到 `skills/websculpt/references/`。
-
-因此，这些目录下的 Markdown 文件内部引用其他文档时，**必须使用相对于该文件所在目录的相对路径**。禁止使用从项目根目录开始的路径（如 `src/...`），否则同步到 references 后链接会断裂。
-
-示例：
-- `src/explore/strategy.md` 引用 `src/access/playwright-cli/guide.md` 时，应写为 `../access/playwright-cli/guide.md`
-- `src/access/playwright-cli/guide.md` 引用 `src/explore/strategy.md` 时，应写为 `../../explore/strategy.md`
-- `src/compile/contract.md` 引用 `src/explore/strategy.md` 时，应写为 `../explore/strategy.md`
-
-## 沟通风格
-
-- 回答简短、精炼。
-- 在 commit、issue、PR 评论和代码中不要使用 emoji。
-- 不要写废话或过于热情的填充语。
-- 只使用技术性语言；友善但要直接。
+- Keep answers short and concise.
+- Do not use emoji in commits, issues, PR comments, or code.
+- Do not write filler or overly enthusiastic fluff.
+- Use technical language only; be friendly but direct.

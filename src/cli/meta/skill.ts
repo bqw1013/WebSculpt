@@ -26,7 +26,7 @@ function getAgentRootDir(scope: "local" | "global", agent: Agent): string {
 }
 
 /** Resolves the built-in skill source directory. */
-export function resolveSkillSource(from?: string): string {
+export function resolveSkillSource(from?: string, lang?: string): string {
 	if (from) {
 		if (!fs.existsSync(from)) {
 			throw Object.assign(new Error(`Skill source not found: ${from}`), { code: "SKILL_SOURCE_NOT_FOUND" });
@@ -35,12 +35,13 @@ export function resolveSkillSource(from?: string): string {
 	}
 
 	const currentDir = path.dirname(fileURLToPath(import.meta.url));
-	const packageRelative = path.resolve(currentDir, "..", "..", "..", "skills", "websculpt");
+	const skillName = lang === "zh" ? "websculpt" : "websculpt-en";
+	const packageRelative = path.resolve(currentDir, "..", "..", "..", "skills", skillName);
 	if (fs.existsSync(path.join(packageRelative, "SKILL.md"))) {
 		return packageRelative;
 	}
 
-	const cwdRelative = path.join(process.cwd(), "skills", "websculpt");
+	const cwdRelative = path.join(process.cwd(), "skills", skillName);
 	if (fs.existsSync(path.join(cwdRelative, "SKILL.md"))) {
 		return cwdRelative;
 	}
@@ -81,9 +82,10 @@ export function handleSkillInstall(options: {
 	agents?: string;
 	from?: string;
 	force?: boolean;
+	lang?: string;
 }): MetaCommandResult {
 	try {
-		const source = resolveSkillSource(options.from);
+		const source = resolveSkillSource(options.from, options.lang);
 		const scope = options.global ? "global" : "local";
 		const agents = parseAgents(options.agents);
 

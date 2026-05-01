@@ -6,21 +6,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 
 const skillRoot = path.join(root, "skills", "websculpt");
-const referencesDir = path.join(skillRoot, "references");
-const assetsDir = path.join(skillRoot, "assets");
+const skillEnRoot = path.join(root, "skills", "websculpt-en");
 
-const dirMappings = [
+const sourceMappings = [
 	{
 		from: path.join(root, "src", "explore"),
-		to: path.join(referencesDir, "explore"),
+		rel: path.join("explore"),
 	},
 	{
 		from: path.join(root, "src", "access", "playwright-cli"),
-		to: path.join(referencesDir, "access", "playwright-cli"),
+		rel: path.join("access", "playwright-cli"),
 	},
 	{
 		from: path.join(root, "src", "compile"),
-		to: path.join(referencesDir, "compile"),
+		rel: path.join("compile"),
 	},
 ];
 
@@ -34,22 +33,46 @@ function rmrf(dir) {
 	}
 }
 
-function buildSkills() {
-	console.log("=== Building skill artifact ===\n");
+function processEnMarkdownFiles(dir) {
+	const items = fs.readdirSync(dir, { withFileTypes: true });
+	for (const item of items) {
+		const fullPath = path.join(dir, item.name);
+		if (item.isDirectory()) {
+			processEnMarkdownFiles(fullPath);
+		} else if (item.name.endsWith(".en.md")) {
+			const baseName = item.name.replace(".en.md", ".md");
+			const basePath = path.join(dir, baseName);
+			fs.copyFileSync(fullPath, basePath);
+			fs.rmSync(fullPath);
+		}
+	}
+}
 
-	// 1. Ensure references/ exists; do NOT remove the root directory itself
-	// because it may be locked by a shell cwd or file watcher on Windows.
+function readVersion() {
+	const packageJsonPath = path.join(root, "package.json");
+	try {
+		const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+		return pkg.version || "0.0.0";
+	} catch {
+		console.warn(`WARN: Could not read version from ${path.relative(root, packageJsonPath)}`);
+		return "0.0.0";
+	}
+}
+
+function buildSkillPackage(targetRoot, processEn) {
+	const referencesDir = path.join(targetRoot, "references");
+	const assetsDir = path.join(targetRoot, "assets");
+
 	ensureDir(referencesDir);
 
-	// 2. Copy source dirs to references/
-	for (const { from, to } of dirMappings) {
+	for (const { from, rel } of sourceMappings) {
 		if (!fs.existsSync(from)) {
 			console.warn(`SKIP: ${path.relative(root, from)} not found`);
 			continue;
 		}
 
-		// Try to clean the target for a fresh copy. If locked (EBUSY on Windows),
-		// skip removal and let cpSync overwrite files in place.
+		const to = path.join(referencesDir, rel);
+
 		if (fs.existsSync(to)) {
 			try {
 				rmrf(to);
@@ -67,37 +90,40 @@ function buildSkills() {
 
 		fs.cpSync(from, to, { recursive: true, force: true });
 		console.log(`COPY: ${path.relative(root, from)} -> ${path.relative(root, to)}`);
+
+		if (processEn) {
+			processEnMarkdownFiles(to);
+			console.log(`PROCESS: ${path.relative(root, to)} (.en.md -> .md)`);
+		}
 	}
 
-	// 3. Ensure assets/ exists (empty placeholder for future builtin commands)
 	ensureDir(assetsDir);
 	console.log(`ENSURE: ${path.relative(root, assetsDir)}`);
 
-	// 4. Generate version.json from package.json
-	const packageJsonPath = path.join(root, "package.json");
-	let version = "0.0.0";
-	try {
-		const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
-		version = pkg.version || version;
-	} catch {
-		console.warn(`WARN: Could not read version from ${path.relative(root, packageJsonPath)}`);
-	}
-	const versionJsonPath = path.join(skillRoot, "version.json");
+	const version = readVersion();
+	const versionJsonPath = path.join(targetRoot, "version.json");
 	fs.writeFileSync(
 		versionJsonPath,
 		JSON.stringify({ version, builtAt: new Date().toISOString() }, null, 2),
 	);
 	console.log(`WRITE: ${path.relative(root, versionJsonPath)} (${version})`);
 
-	// 5. Validate required files exist
-	const skillMd = path.join(skillRoot, "SKILL.md");
+	const skillMd = path.join(targetRoot, "SKILL.md");
 	if (!fs.existsSync(skillMd)) {
 		throw new Error(`Validation failed: ${path.relative(root, skillMd)} is missing`);
 	}
 	if (!fs.existsSync(versionJsonPath)) {
 		throw new Error(`Validation failed: ${path.relative(root, versionJsonPath)} is missing`);
 	}
-	console.log(`VALIDATE: OK`);
+	console.log(`VALIDATE: ${path.relative(root, targetRoot)} OK`);
+}
+
+function buildSkills() {
+	console.log("=== Building skill artifacts ===\n");
+
+	buildSkillPackage(skillRoot, false);
+	console.log("");
+	buildSkillPackage(skillEnRoot, true);
 
 	console.log("\n=== Done ===");
 }

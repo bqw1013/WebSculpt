@@ -95,8 +95,9 @@ export function registerMetaCommands(program: Command): void {
 		.option("-g, --global", "Install to global agent directories")
 		.option("-a, --agents <agents>", "Target specific agents (claude,codex,agents,all)")
 		.option("--from <path>", "Explicit skill source path")
+		.option("--lang <lang>", "Language: en (default) or zh")
 		.option("--force", "Replace existing installation")
-		.action(async (options: { global?: boolean; agents?: string; from?: string; force?: boolean }) => {
+		.action(async (options: { global?: boolean; agents?: string; from?: string; force?: boolean; lang?: string }) => {
 			renderOutput(handleSkillInstall(options), format());
 		});
 	skill

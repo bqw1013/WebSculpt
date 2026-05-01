@@ -1,6 +1,6 @@
 {
   "name": "websculpt",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "WebSculpt CLI",
   "type": "module",
   "main": "./dist/cli/index.js",
@@ -39,8 +39,9 @@
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:e2e": "vitest run --project e2e",
+    "verify:i18n": "node scripts/verify-i18n.js",
 
-    "prepublishOnly": "npm run build && npm run check && npm run typecheck && npm run test"
+    "prepublishOnly": "npm run build && npm run check && npm run typecheck && npm run test && npm run verify:i18n"
   },
   "keywords": [
     "cli",
