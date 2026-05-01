@@ -4,7 +4,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node Version](https://img.shields.io/node/v/websculpt)](package.json)
 [![npm downloads](https://img.shields.io/npm/dm/websculpt)](https://www.npmjs.com/package/websculpt)
-[![GitHub stars](https://img.shields.io/github/stars/bqw1013/websculpt?style=social)](https://github.com/bqw1013/websculpt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript)](https://www.typescriptlang.org/)
 
 [English](README.md) · [中文](README_zh.md)
