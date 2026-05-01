@@ -49,8 +49,6 @@ interface PackageJsonWithBin {
 
 /**
  * Extract a business error code from diagnostic text.
- * In the new CDP execution model Error.code is preserved natively,
- * but this helper remains useful as a fallback for nested errors.
  */
 function extractBusinessErrorCode(text: string): string | undefined {
 	for (const code of KNOWN_BUSINESS_CODES) {
@@ -107,9 +105,7 @@ async function resolvePlaywrightCliEntrypoint(): Promise<string> {
 
 /**
  * Minimal type stubs for the playwright-core APIs we use.
- * We avoid adding playwright-core as a direct dependency; instead the module
- * is resolved from @playwright/cli's bundled copy at runtime so the versions
- * always stay in sync.
+ * The actual module is resolved from @playwright/cli's node_modules at runtime.
  */
 interface PlaywrightCorePage {
 	close(): Promise<void>;
@@ -131,10 +127,8 @@ interface PlaywrightCoreModule {
 }
 
 /**
- * Resolve playwright-core from the @playwright/cli bundle.
- * We deliberately resolve it from the peer's node_modules rather than declaring
- * our own dependency, because the CDP protocol and Playwright internals must
- * match exactly what the daemon expects.
+ * Resolve playwright-core from the @playwright/cli bundle to ensure
+ * version consistency.
  */
 async function resolvePlaywrightCore(): Promise<PlaywrightCoreModule> {
 	let modulePath: string;
@@ -154,8 +148,6 @@ async function resolvePlaywrightCore(): Promise<PlaywrightCoreModule> {
 
 /**
  * Check whether a playwright-cli session named "default" is open.
- * The daemon writes session state to local files; "list" is the stable
- * CLI interface for reading that state without hard-coding platform paths.
  */
 async function checkPlaywrightCliSession(): Promise<boolean> {
 	try {
@@ -171,10 +163,7 @@ async function checkPlaywrightCliSession(): Promise<boolean> {
 
 /**
  * Auto-attach a playwright-cli session via the CLI.
- * When Chrome remote debugging is enabled, the daemon can discover the
- * DevToolsActivePort file and connect automatically. If it is not enabled,
- * the attach command hangs until timeout; we keep the timeout short (10s)
- * so the user gets a clear error message quickly.
+ * Returns true if attach succeeded, false otherwise.
  */
 async function autoAttachPlaywrightCli(): Promise<boolean> {
 	try {
@@ -190,15 +179,7 @@ async function autoAttachPlaywrightCli(): Promise<boolean> {
 
 /**
  * Executes a browser-automation command by connecting directly to Chrome over CDP.
- *
- * Previous implementation spawned "playwright-cli run-code" which executed the
- * command inside a VM sandbox. The new flow:
- *   1. Ensure the daemon has an open "default" session (auto-attach if needed).
- *   2. Create an independent Playwright client connection via connectOverCDP.
- *   3. Create an isolated page inside the existing persistent context so cookies
- *      and login state are shared with the user's browser.
- *   4. Import command.js as a normal ESM module and invoke handler(page, params).
- *   5. Close only the page and client connection; the real Chrome stays open.
+ * The command module is imported as a normal ESM module and invoked with (page, params).
  */
 async function runPlaywrightCliCommand(commandPath: string, params: Record<string, string>): Promise<unknown> {
 	const sessionOpen = await checkPlaywrightCliSession();
@@ -218,11 +199,7 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 	let page: PlaywrightCorePage | undefined;
 	try {
 		const playwright = await resolvePlaywrightCore();
-		// "chrome" is a special endpoint URL: Playwright reads Chrome's
-		// DevToolsActivePort file and connects over the exposed WebSocket.
 		browser = await playwright.chromium.connectOverCDP("chrome");
-		// Use the existing persistent context so the new page inherits cookies
-		// and storage from the user's logged-in session.
 		const context = browser.contexts()[0];
 		if (!context) {
 			throw new Error("No browser context available after CDP connection.");
@@ -293,8 +270,6 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 			await page.close().catch(() => {});
 		}
 		if (browser) {
-			// Closing a CDP-connected Browser only disconnects the WebSocket client;
-			// it does NOT terminate the actual Chrome process.
 			await browser.close().catch(() => {});
 		}
 	}
