@@ -14,18 +14,7 @@
 
 **WebSculpt 是面向信息获取的 Harness。** 它把"一次探索，永久复用"作为核心：AI 跑通的信息获取路径，沉淀为本地可复用的 `domain/action` 命令；后续直接调用，释放上下文空间。沉淀下来的命令库随使用不断进化，Agent 越用越聪明。
 
-```mermaid
-flowchart LR
-    subgraph Explore["一次探索"]
-        A[AI 探索网页]
-    end
-    subgraph Reuse["永久复用"]
-        B[直接调用<br/>domain/action]
-    end
-    A -->|"沉淀"| C[命令库]
-    C --> B
-    B --> C
-```
+![WebSculpt 工作流程](docs/assets/flow-zh.svg)
 
 ---
 

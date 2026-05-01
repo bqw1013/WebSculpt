@@ -1,0 +1,101 @@
+<svg width="900" height="520" viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 柔和投影 -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#24292F" flood-opacity="0.07"/>
+    </filter>
+
+    <!-- 箭头 -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 1 L 8 5 L 0 9 Z" fill="#6E7781"/>
+    </marker>
+
+    <!-- 渐变色 -->
+    <linearGradient id="gradExplore" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#58A6FF"/>
+      <stop offset="100%" stop-color="#0969DA"/>
+    </linearGradient>
+    <linearGradient id="gradReuse" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#56D364"/>
+      <stop offset="100%" stop-color="#2DA44E"/>
+    </linearGradient>
+    <linearGradient id="gradCore" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D2A8FF"/>
+      <stop offset="100%" stop-color="#8957E5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="900" height="520" fill="#FFFFFF" rx="12"/>
+
+  <!-- ================= 子图区域 ================= -->
+
+  <!-- 左侧：一次探索 -->
+  <rect x="70" y="80" width="260" height="170" rx="16" fill="#F6F8FA" stroke="#D0D7DE" stroke-width="1.5" stroke-dasharray="6,4" filter="url(#shadow)"/>
+  <text x="200" y="110" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#24292F">一次探索</text>
+  <line x1="90" y1="122" x2="310" y2="122" stroke="#D0D7DE" stroke-width="1"/>
+
+  <!-- 右侧：永久复用 -->
+  <rect x="570" y="80" width="260" height="170" rx="16" fill="#F6F8FA" stroke="#D0D7DE" stroke-width="1.5" stroke-dasharray="6,4" filter="url(#shadow)"/>
+  <text x="700" y="110" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#24292F">永久复用</text>
+  <line x1="590" y1="122" x2="810" y2="122" stroke="#D0D7DE" stroke-width="1"/>
+
+  <!-- ================= 节点 ================= -->
+
+  <!-- A：AI 探索网页 -->
+  <g transform="translate(130, 148)">
+    <rect width="140" height="56" rx="12" fill="url(#gradExplore)" filter="url(#shadow)"/>
+    <!-- 放大镜图标 -->
+    <circle cx="34" cy="28" r="8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="40" y1="34" x2="46" y2="40" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="86" y="33" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">AI 探索网页</text>
+  </g>
+
+  <!-- B：直接调用 -->
+  <g transform="translate(630, 148)">
+    <rect width="140" height="56" rx="12" fill="url(#gradReuse)" filter="url(#shadow)"/>
+    <!-- 调用图标 -->
+    <path d="M 30 20 L 40 28 L 30 36" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="40" y1="28" x2="48" y2="28" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="87" y="25" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">直接调用</text>
+    <text x="87" y="43" text-anchor="middle" font-family="'SF Mono',Monaco,Consolas,monospace" font-size="11" fill="rgba(255,255,255,0.9)">domain/action</text>
+  </g>
+
+  <!-- C：命令库（核心节点） -->
+  <g transform="translate(370, 380)">
+    <rect width="160" height="64" rx="32" fill="url(#gradCore)" filter="url(#shadow)"/>
+    <!-- 数据库/层叠图标 -->
+    <ellipse cx="40" cy="24" rx="10" ry="5" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+    <path d="M 30 24 L 30 36 A 10 5 0 0 0 50 36 L 50 24" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+    <path d="M 30 30 A 10 5 0 0 0 50 30" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+    <text x="102" y="35" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">命令库</text>
+  </g>
+
+  <!-- ================= 连线与标签 ================= -->
+
+  <!-- A -> C：沉淀 -->
+  <path d="M 200 204 C 200 300, 300 412, 370 412" fill="none" stroke="#6E7781" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <g transform="translate(250, 287)">
+    <rect width="70" height="26" rx="13" fill="#FFFFFF" stroke="#D0D7DE" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="35" y="17" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#24292F">沉淀</text>
+  </g>
+
+  <!-- C -> B：提供能力 -->
+  <path d="M 530 412 C 530 300, 700 300, 700 204" fill="none" stroke="#6E7781" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <g transform="translate(570, 287)">
+    <rect width="90" height="26" rx="13" fill="#FFFFFF" stroke="#D0D7DE" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="45" y="17" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#24292F">提供能力</text>
+  </g>
+
+  <!-- B -> C：反馈 / 优化（虚线） -->
+  <path d="M 700 204 C 700 360, 600 412, 530 412" fill="none" stroke="#6E7781" stroke-width="2.5" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <g transform="translate(565, 332)">
+    <rect width="100" height="26" rx="13" fill="#FFFFFF" stroke="#D0D7DE" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="50" y="17" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#24292F">反馈 / 优化</text>
+  </g>
+
+  <!-- 底部说明 -->
+  <text x="450" y="490" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" fill="#6E7781" letter-spacing="0.5">
+    AI 探索 → 沉淀为命令 → 永久复用 → 持续反哺命令库
+  </text>
+</svg>
