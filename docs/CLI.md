@@ -1,6 +1,6 @@
 # WebSculpt CLI 命令参考
 
-本文档是 WebSculpt CLI 的参考手册，覆盖所有 Meta 命令的用法、参数、输出契约及已知限制。扩展命令的编写规范见 [`src/compile/contract.md`](../src/compile/contract.md)。
+本文档是 WebSculpt CLI 的参考手册，覆盖所有 Meta 命令的用法、参数、输出契约及已知限制。扩展命令的编写规范见 [`skills/websculpt/references/compile/contract.md`](../skills/websculpt/references/compile/contract.md)。
 
 WebSculpt CLI 是命令的发现、执行与管理入口。它面向人类用户和 AI Agent 提供同一套界面，核心能力分为两类：
 
@@ -23,11 +23,10 @@ WebSculpt CLI 是命令的发现、执行与管理入口。它面向人类用户
 
 1. **User** — 最高优先级，允许覆盖同名的 builtin 命令
 2. **Builtin** — 项目内置的默认实现
-3. **Meta** — 系统保留，不可覆盖
 
 **关键规则**：
 
-- Meta 命令的保留词不会被 User 或 Builtin 覆盖。
+- Meta 命令（`command`、`config`、`skill`）在系统层面直接注册，不参与扩展命令扫描，因此不会被 User 或 Builtin 覆盖。
 - User 与 Builtin 的冲突以 User 为准。
 
 ## 2. 扩展命令结构
@@ -244,6 +243,7 @@ websculpt skill install [options]
 | `-g, --global` | 安装到全局 agent 目录（`~/.claude/skills/websculpt/` 等） |
 | `-a, --agents <agents>` | 指定目标 agent，逗号分隔（`claude`、`codex`、`agents`、`all`） |
 | `--from <path>` | 显式指定 skill 源目录，覆盖自动检测 |
+| `--lang <lang>` | 语言版本：`en`（默认）或 `zh` |
 | `--force` | 覆盖已存在的安装 |
 
 **关键行为**
@@ -285,18 +285,28 @@ websculpt skill status
 
 **关键行为**
 
-- 每行一个 agent，形如 `claude   1.2.0    local [global 1.0.0 present]`
-- local 安装优先于 global；若 local 存在，额外标注 `[global X.X.X present]`
-
-> **Limitation:** 纯 human 可读输出，无 JSON 模式。
+- 逐 agent 报告安装状态（`installed` / `not installed`）及生效范围（`local` / `global`）
+- local 安装优先于 global；若 local 存在且 global 也存在，额外标注 `[global present]`
 
 ## 5. 使用示例
 
 ### 5.1 调用一个 builtin 命令
 
 ```bash
-websculpt example hello --name world
+websculpt github list-trending
 ```
+
+### `help [domain] [action]`
+
+显示命令或域的帮助信息。不带参数时显示全局帮助。
+
+```bash
+websculpt help
+websculpt help github
+websculpt help github list-trending
+```
+
+---
 
 ### 5.2 完整生命周期：从创建到卸载
 

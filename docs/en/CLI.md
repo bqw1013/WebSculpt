@@ -1,6 +1,6 @@
 # WebSculpt CLI Command Reference
 
-This document is the reference manual for the WebSculpt CLI, covering the usage, parameters, output contracts, and known limitations of all Meta commands. Extension command authoring specifications are in [`src/compile/contract.md`](../src/compile/contract.md).
+This document is the reference manual for the WebSculpt CLI, covering the usage, parameters, output contracts, and known limitations of all Meta commands. Extension command authoring specifications are in [`skills/websculpt-en/references/compile/contract.md`](../skills/websculpt-en/references/compile/contract.md).
 
 The WebSculpt CLI is the discovery, execution, and management entry point for commands. It provides the same interface to both human users and AI agents, with core capabilities divided into two categories:
 
@@ -23,11 +23,10 @@ When `websculpt <domain> <action>` is entered, the system resolves in the follow
 
 1. **User** — Highest priority, allows overriding builtin commands with the same name
 2. **Builtin** — Project built-in default implementations
-3. **Meta** — System reserved, non-overridable
 
 **Key Rules**:
 
-- Meta command reserved words cannot be overridden by User or Builtin.
+- Meta commands (`command`, `config`, `skill`) are registered directly at the system level and do not participate in extension command scanning, so they cannot be overridden by User or Builtin.
 - User and Builtin conflicts are resolved in favor of User.
 
 ## 2. Extension Command Structure
@@ -133,7 +132,7 @@ websculpt command draft <domain> <action> [options]
 
 - Reserved domains (`command`, `config`, `skill`) error with `RESERVED_DOMAIN`; target directory already exists and no `--force` errors with `ALREADY_EXISTS`
 - Generates `manifest.json` (without `id`/`domain`/`action`), entry file, `README.md`, `context.md`
-- `shell`/`python` runtimes will附带 `RUNTIME_NOT_EXECUTABLE` warning (not executable)
+- `shell`/`python` runtimes will carry `RUNTIME_NOT_EXECUTABLE` warning (not executable)
 
 > **Limitation:** Only outputs deterministic templates, does not perform L1-L3 validation; after modification, call `command validate` if pre-check is needed.
 
@@ -244,6 +243,7 @@ websculpt skill install [options]
 | `-g, --global` | Install to global agent directory (`~/.claude/skills/websculpt/`, etc.) |
 | `-a, --agents <agents>` | Specify target agents, comma-separated (`claude`, `codex`, `agents`, `all`) |
 | `--from <path>` | Explicitly specify skill source directory, overriding automatic detection |
+| `--lang <lang>` | Language version: `en` (default) or `zh` |
 | `--force` | Override existing installation |
 
 **Key Behaviors**
@@ -285,18 +285,28 @@ websculpt skill status
 
 **Key Behaviors**
 
-- One agent per line, in the form `claude   1.2.0    local [global 1.0.0 present]`
-- Local installation takes precedence over global; if local exists, additionally annotates `[global X.X.X present]`
-
-> **Limitation:** Pure human-readable output, no JSON mode.
+- Reports installation status per agent (`installed` / `not installed`) and effective scope (`local` / `global`)
+- Local installation takes precedence over global; if local exists and global also exists, additionally annotates `[global present]`
 
 ## 5. Usage Examples
 
 ### 5.1 Invoke a builtin command
 
 ```bash
-websculpt example hello --name world
+websculpt github list-trending
 ```
+
+### `help [domain] [action]`
+
+Display help for a command or domain. Without arguments, shows global help.
+
+```bash
+websculpt help
+websculpt help github
+websculpt help github list-trending
+```
+
+---
 
 ### 5.2 Full lifecycle: from creation to uninstallation
 
@@ -311,7 +321,7 @@ websculpt command draft mysite fetch --runtime playwright-cli --param url:requir
 
 # 3. Edit business logic under .websculpt-drafts/mysite-fetch/
 
-# 4. Pre-check compliance
+# 4. Pre-check compliance (standard usage, without domain/action)
 websculpt command validate --from-dir .websculpt-drafts/mysite-fetch/
 
 # 5. Install to command library

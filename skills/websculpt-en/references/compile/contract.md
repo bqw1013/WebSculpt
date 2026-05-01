@@ -58,7 +58,7 @@ The following is only for quick comparison. Implementation details must follow y
 
 ## 2. Precipitation Execution Flow
 
-> For any questions about CLI commands mentioned in this document,优先 execute `websculpt <command> --help` to get real-time help.
+> For any questions about CLI commands mentioned in this document,prioritize executing `websculpt <command> --help` to get real-time help.
 
 After user confirms the precipitation proposal, execute in the following flow:
 
@@ -69,7 +69,7 @@ websculpt command draft <domain> <action> --runtime <rt>
 Defaults output to `.websculpt-drafts/<domain>-<action>/` (can override with `--to <path>`), generating `manifest.json` (metadata, no identity fields at this stage), entry file (default `command.js`), `README.md`, and `context.md`. For specific parameters, see `websculpt command draft --help`.
 
 ### Write Command
-Based on verified results from exploration, write business logic and完善 documentation according to this document and the corresponding runtime contract: implement business logic in the entry file according to runtime specifications; adjust parameters, descriptions, and other metadata in `manifest.json`; fill `README.md` and `context.md` according to Section 3 specifications. `id`/`domain`/`action` do not need to be concerned during draft and writing phases, `create` will forcibly inject them.
+Based on verified results from exploration, write business logic andrefine documentation according to this document and the corresponding runtime contract: implement business logic in the entry file according to runtime specifications; adjust parameters, descriptions, and other metadata in `manifest.json`; fill `README.md` and `context.md` according to Section 3 specifications. `id`/`domain`/`action` do not need to be concerned during draft and writing phases, `create` will forcibly inject them.
 
 ### Pre-check Compliance
 ```bash

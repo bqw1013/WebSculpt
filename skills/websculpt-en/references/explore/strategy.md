@@ -72,7 +72,7 @@ Other tools (WebSearch, WebFetch, curl, etc.) can be directly used according to 
 
 **Principles during execution**
 
-- **Start light when characteristics are unclear**: If the task does not fall into the "directly enable browser" situations above,优先 try WebSearch, WebFetch, or curl. But once receiving structural rejection signals (CAPTCHA, login wall, content only visible after interaction), immediately switch, do not entangle at the same level.
+- **Start light when characteristics are unclear**: If the task does not fall into the "directly enable browser" situations above,prioritize trying WebSearch, WebFetch, or curl. But once receiving structural rejection signals (CAPTCHA, login wall, content only visible after interaction), immediately switch, do not entangle at the same level.
 - **Cut losses**: After adjusting parameters for the same tool with no substantial improvement, switch to the next level; switching tools is not failure.
 - **Primary source priority**: Search engines are only used to locate sources; after finding them, directly visit the original page to read the original text.
 

@@ -44,7 +44,7 @@ const result = await fn(page);
 
 The entire `code` string is wrapped in a pair of parentheses `()`. The valid wrapping result must be an **expression**.
 
-**Wrong写法** (placeholder outside function body):
+**Wrong writing** (placeholder outside function body):
 
 ```js
 /* PARAMS_INJECT */
@@ -70,7 +70,7 @@ Wrapped by daemon:
 
 This is illegal in JS syntax — `const` declarations cannot appear in expression context, will report `SyntaxError: Unexpected token 'const'`.
 
-**Correct写法**:
+**Correct writing**:
 
 ```js
 async function (page) {
@@ -306,7 +306,7 @@ await page.waitForSelector("article.Box-row", { timeout: 15000 });
 
 ### URL Construction
 
-When manually拼接 URLs, parameter values should be encoded using `encodeURIComponent`. Even common language names have no special characters, characters like C++'s `++` must be encoded, otherwise URL parsing will error.
+When manually concatenating URLs, parameter values should be encoded using `encodeURIComponent`. Even common language names have no special characters, characters like C++'s `++` must be encoded, otherwise URL parsing will error.
 
 ### Selector Stability
 

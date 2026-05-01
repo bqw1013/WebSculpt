@@ -99,7 +99,7 @@ compile 层定义命令资产的编写规范。
 
 与 access、explore 一样，它的核心产出是**面向 AI 的规范文档**，而非可执行代码。
 
-运行时契约与编写规范见 [`src/compile/contract.md`](../src/compile/contract.md)；L1-L3 校验由 `src/cli/meta/command-validation.ts` 实现。
+运行时契约与编写规范见 [`skills/websculpt/references/compile/contract.md`](../skills/websculpt/references/compile/contract.md)；L1-L3 校验由 `src/cli/meta/command-validation.ts` 实现。
 
 ### 4.2 关键设计决策
 

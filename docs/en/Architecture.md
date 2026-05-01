@@ -100,7 +100,7 @@ The compile layer defines the authoring specifications for command assets.
 
 Like access and explore, its core output is **AI-facing specification documentation**, not executable code.
 
-Runtime contracts and authoring specifications are in [`src/compile/contract.md`](../src/compile/contract.md); L1-L3 validation is implemented in `src/cli/meta/command-validation.ts`.
+Runtime contracts and authoring specifications are in [`skills/websculpt-en/references/compile/contract.md`](../skills/websculpt-en/references/compile/contract.md); L1-L3 validation is implemented in `src/cli/meta/command-validation.ts`.
 
 ### 4.2 Key Design Decisions
 
