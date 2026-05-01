@@ -16,9 +16,17 @@
 
 ```mermaid
 flowchart LR
-    A([AI Explores<br/>the Web]) -->|distill| B[(Command Library)]
+    A([AI Explores<br/>the Web]) -->|distill| B[[Command Library]]
     B --> C([Direct Call<br/>domain/action])
     C -->|evolve| B
+
+    classDef explore fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+    classDef store fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12
+    classDef reuse fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+
+    class A explore
+    class B store
+    class C reuse
 ```
 
 ---
