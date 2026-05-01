@@ -167,12 +167,13 @@ describe("handleSkillUninstall", () => {
 });
 
 describe("handleSkillStatus", () => {
+	let existingPaths: Set<string>;
+
 	beforeEach(() => {
+		existingPaths = new Set();
 		vi.spyOn(os, "homedir").mockReturnValue(MOCK_HOME);
 		vi.spyOn(process, "cwd").mockReturnValue(MOCK_CWD);
-		vi.spyOn(fs, "readFileSync").mockImplementation(() => {
-			throw new Error("ENOENT");
-		});
+		vi.spyOn(fs, "existsSync").mockImplementation((p: fs.PathLike) => existingPaths.has(String(p)));
 	});
 
 	afterEach(() => {
@@ -180,28 +181,14 @@ describe("handleSkillStatus", () => {
 	});
 
 	it("shows local-priority with global annotation and not-installed fallback", () => {
-		vi.spyOn(fs, "readFileSync").mockImplementation((p: fs.PathLike) => {
-			const filePath = String(p);
-			if (filePath === path.join(MOCK_CWD, ".claude", "skills", "websculpt", "version.json")) {
-				return JSON.stringify({ version: "1.0.0" });
-			}
-			if (filePath === path.join(MOCK_HOME, ".claude", "skills", "websculpt", "version.json")) {
-				return JSON.stringify({ version: "0.9.0" });
-			}
-			if (filePath === path.join(MOCK_HOME, ".codex", "skills", "websculpt", "version.json")) {
-				return JSON.stringify({ version: "0.8.0" });
-			}
-			throw new Error("ENOENT");
-		});
+		existingPaths.add(path.join(MOCK_CWD, ".claude", "skills", "websculpt"));
+		existingPaths.add(path.join(MOCK_HOME, ".claude", "skills", "websculpt"));
+		existingPaths.add(path.join(MOCK_HOME, ".codex", "skills", "websculpt"));
 
 		const result = handleSkillStatus();
 		expect(result).toEqual({
 			success: true,
-			lines: [
-				"claude   1.0.0    local [global 0.9.0 present]",
-				"codex    0.8.0    global",
-				"agents   not installed",
-			],
+			lines: ["claude   installed  local [global present]", "codex    installed  global", "agents   not installed"],
 		});
 	});
 });

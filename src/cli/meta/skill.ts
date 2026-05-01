@@ -66,16 +66,6 @@ function parseAgents(filter?: string): Agent[] {
 	return valid;
 }
 
-function readVersion(dir: string): string | undefined {
-	try {
-		const versionPath = path.join(dir, "version.json");
-		const data = JSON.parse(fs.readFileSync(versionPath, "utf-8"));
-		return typeof data.version === "string" ? data.version : undefined;
-	} catch {
-		return undefined;
-	}
-}
-
 /** Installs the WebSculpt skill to agent directories. */
 export function handleSkillInstall(options: {
 	global?: boolean;
@@ -179,14 +169,14 @@ export function handleSkillStatus(): MetaCommandResult {
 	const lines: string[] = [];
 
 	for (const agent of AGENTS) {
-		const localVersion = readVersion(localDirs[agent]);
-		const globalVersion = readVersion(globalDirs[agent]);
+		const localExists = fs.existsSync(localDirs[agent]);
+		const globalExists = fs.existsSync(globalDirs[agent]);
 
-		if (localVersion) {
-			const suffix = globalVersion ? ` [global ${globalVersion} present]` : "";
-			lines.push(`${agent.padEnd(8)} ${localVersion.padEnd(8)} local${suffix}`);
-		} else if (globalVersion) {
-			lines.push(`${agent.padEnd(8)} ${globalVersion.padEnd(8)} global`);
+		if (localExists) {
+			const suffix = globalExists ? " [global present]" : "";
+			lines.push(`${agent.padEnd(8)} installed  local${suffix}`);
+		} else if (globalExists) {
+			lines.push(`${agent.padEnd(8)} installed  global`);
 		} else {
 			lines.push(`${agent.padEnd(8)} not installed`);
 		}

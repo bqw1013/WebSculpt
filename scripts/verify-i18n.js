@@ -8,106 +8,48 @@ const root = path.resolve(__dirname, "..");
 const errors = [];
 const warnings = [];
 
-function collectMarkdownFiles(dir) {
+function collectMarkdownFiles(dir, baseDir = dir) {
 	const results = [];
+	if (!fs.existsSync(dir)) return results;
 	const items = fs.readdirSync(dir, { withFileTypes: true });
 	for (const item of items) {
 		const fullPath = path.join(dir, item.name);
 		if (item.isDirectory()) {
-			results.push(...collectMarkdownFiles(fullPath));
+			results.push(...collectMarkdownFiles(fullPath, baseDir));
 		} else if (item.name.endsWith(".md")) {
-			results.push(path.relative(dir, fullPath));
+			results.push(path.relative(baseDir, fullPath));
 		}
 	}
 	return results;
 }
 
-function extractRelativeLinks(content) {
-	const links = [];
-	const regex = /\[([^\]]*)\]\(([^)]+)\)/g;
-	let match;
-	while ((match = regex.exec(content)) !== null) {
-		const raw = match[2];
-		const linkPath = raw.split("#")[0];
-		if (!linkPath || linkPath.startsWith("http://") || linkPath.startsWith("https://") || linkPath.startsWith("/")) {
-			continue;
-		}
-		links.push(linkPath);
-	}
-	return links;
-}
+// 1. Check skill references structural parity between Chinese and English trees
+const skillRefsDir = path.join(root, "skills", "websculpt", "references");
+const skillEnRefsDir = path.join(root, "skills", "websculpt-en", "references");
 
-// 1. Check src/ docs have paired .en.md
-const srcDocDirs = [
-	path.join(root, "src", "explore"),
-	path.join(root, "src", "compile"),
-	path.join(root, "src", "access", "playwright-cli"),
-];
+const zhFiles = collectMarkdownFiles(skillRefsDir);
+const enFiles = collectMarkdownFiles(skillEnRefsDir);
 
-for (const dir of srcDocDirs) {
-	if (!fs.existsSync(dir)) continue;
-	const files = fs.readdirSync(dir);
-	const mdFiles = files.filter((f) => f.endsWith(".md") && !f.endsWith(".en.md"));
+const zhSet = new Set(zhFiles);
+const enSet = new Set(enFiles);
 
-	for (const md of mdFiles) {
-		const en = `${path.parse(md).name}.en.md`;
-		if (!files.includes(en)) {
-			errors.push(`Missing English translation: ${path.relative(root, path.join(dir, en))}`);
-		}
-	}
-
-	const enFiles = files.filter((f) => f.endsWith(".en.md"));
-	for (const en of enFiles) {
-		const base = en.replace(".en.md", ".md");
-		if (!files.includes(base)) {
-			errors.push(`Missing Chinese source: ${path.relative(root, path.join(dir, base))} (for ${en})`);
-		}
+for (const f of zhFiles) {
+	if (!enSet.has(f)) {
+		errors.push(
+			`Missing English skill reference: ${path.join("skills", "websculpt-en", "references", f)}`,
+		);
 	}
 }
 
-// 2. Check link consistency between .md and .en.md
-for (const dir of srcDocDirs) {
-	if (!fs.existsSync(dir)) continue;
-	const files = fs.readdirSync(dir);
-	const mdFiles = files.filter((f) => f.endsWith(".md") && !f.endsWith(".en.md"));
-
-	for (const md of mdFiles) {
-		const en = `${path.parse(md).name}.en.md`;
-		if (!files.includes(en)) continue;
-
-		const mdPath = path.join(dir, md);
-		const enPath = path.join(dir, en);
-
-		const mdLinks = extractRelativeLinks(fs.readFileSync(mdPath, "utf-8"));
-		const enLinks = extractRelativeLinks(fs.readFileSync(enPath, "utf-8"));
-
-		// English docs must not link to .en.md files (these become dead links after build)
-		for (const link of enLinks) {
-			if (link.endsWith(".en.md")) {
-				errors.push(
-					`English doc links to .en.md (dead after build): ${path.relative(root, enPath)} -> ${link}`,
-				);
-			}
-		}
-
-		// Warn if link sets differ
-		const mdSet = new Set(mdLinks);
-		const enSet = new Set(enLinks);
-
-		for (const link of mdSet) {
-			if (!enSet.has(link)) {
-				warnings.push(`Link only in Chinese doc: ${path.relative(root, mdPath)} -> ${link}`);
-			}
-		}
-		for (const link of enSet) {
-			if (!mdSet.has(link)) {
-				warnings.push(`Link only in English doc: ${path.relative(root, enPath)} -> ${link}`);
-			}
-		}
+for (const f of enFiles) {
+	if (!zhSet.has(f)) {
+		errors.push(
+			`Missing Chinese skill reference: ${path.join("skills", "websculpt", "references", f)}`,
+		);
 	}
 }
 
-// 3. Check docs/ has matching docs/en/ files
+// 2. Check docs/ has matching docs/en/ files
 const docsDir = path.join(root, "docs");
 const docsEnDir = path.join(root, "docs", "en");
 
@@ -117,15 +59,15 @@ if (fs.existsSync(docsDir)) {
 	if (!fs.existsSync(docsEnDir)) {
 		errors.push("Missing docs/en/ directory");
 	} else {
-		const enFiles = collectMarkdownFiles(docsEnDir);
+		const docsEnFiles = collectMarkdownFiles(docsEnDir);
 
 		for (const f of docsFiles) {
-			if (!enFiles.includes(f)) {
+			if (!docsEnFiles.includes(f)) {
 				errors.push(`Missing English translation in docs/en/: ${f}`);
 			}
 		}
 
-		for (const f of enFiles) {
+		for (const f of docsEnFiles) {
 			if (!docsFiles.includes(f)) {
 				warnings.push(`Extra file in docs/en/ not in docs/: ${f}`);
 			}
@@ -133,22 +75,15 @@ if (fs.existsSync(docsDir)) {
 	}
 }
 
-// 4. Check built skill artifacts
-const skillEnDir = path.join(root, "skills", "websculpt-en");
-if (!fs.existsSync(skillEnDir)) {
-	errors.push("Missing skills/websculpt-en/. Run `npm run build:skills` first.");
-} else {
-	if (!fs.existsSync(path.join(skillEnDir, "SKILL.md"))) {
-		errors.push("Missing skills/websculpt-en/SKILL.md");
-	}
+// 3. Check root README files exist
+const readmePath = path.join(root, "README.md");
+const readmeEnPath = path.join(root, "README_en.md");
 
-	const refDir = path.join(skillEnDir, "references");
-	if (fs.existsSync(refDir)) {
-		const enMdArtifacts = collectMarkdownFiles(refDir).filter((f) => f.endsWith(".en.md"));
-		for (const f of enMdArtifacts) {
-			errors.push(`Build artifact should not contain .en.md files: references/${f}`);
-		}
-	}
+if (!fs.existsSync(readmePath)) {
+	errors.push("Missing root README.md");
+}
+if (!fs.existsSync(readmeEnPath)) {
+	errors.push("Missing root README_en.md");
 }
 
 // Report

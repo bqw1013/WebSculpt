@@ -26,8 +26,7 @@
   },
   "scripts": {
     "clean": "node --input-type=module -e \"import fs from 'node:fs'; fs.rmSync('dist', {recursive:true, force:true})\"",
-    "build": "npm run clean && tsc && npm run copy:commands && npm run build:skills",
-    "build:skills": "node scripts/build-skills.js",
+    "build": "npm run clean && tsc && npm run copy:commands",
     "copy:commands": "node --input-type=module -e \"import fs from 'node:fs'; fs.rmSync('dist/cli/builtin', {recursive:true, force:true}); fs.cpSync('src/cli/builtin', 'dist/cli/builtin', {recursive:true, force:true})\"",
     "dev": "tsx src/cli/index.ts",
     "typecheck": "tsc --noEmit",
