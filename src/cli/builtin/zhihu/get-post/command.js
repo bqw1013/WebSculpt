@@ -1,5 +1,4 @@
-async function (page) {
-  /* PARAMS_INJECT */
+export default async function (page, params) {
   const url = params.url;
 
   page = await page.context().newPage();

@@ -1,5 +1,4 @@
-async function (page) {
-  /* PARAMS_INJECT */
+export default async function (page, params) {
   const language = params.language || "";
   const since = params.since;
   const limit = parseInt(params.limit, 10);

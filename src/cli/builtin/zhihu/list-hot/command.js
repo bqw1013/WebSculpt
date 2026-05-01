@@ -1,5 +1,4 @@
-async function (page) {
-  /* PARAMS_INJECT */
+export default async function (page, params) {
   const limit = parseInt(params.limit, 10);
 
   page = await page.context().newPage();

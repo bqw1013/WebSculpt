@@ -104,64 +104,116 @@ async function resolvePlaywrightCliEntrypoint(): Promise<string> {
 }
 
 /**
- * Spawns playwright-cli to execute a browser-automation command.
- * Params are injected by replacing the `PARAMS_INJECT` placeholder
- * inside the command file with a `const params = {...};` declaration.
- * The wrapped code is passed directly as the run-code positional argument
- * to avoid playwright-cli's sandbox file-access restrictions on temporary files.
- * The JSON result surfaced under "### Result" in stdout is parsed and returned.
+ * Minimal type stubs for the playwright-core APIs we use.
+ * The actual module is resolved from @playwright/cli's node_modules at runtime.
  */
-async function runPlaywrightCliCommand(commandPath: string, params: Record<string, string>): Promise<unknown> {
-	const originalCode = await readFile(commandPath, "utf-8");
+interface PlaywrightCorePage {
+	close(): Promise<void>;
+}
 
-	if (!originalCode.includes("/* PARAMS_INJECT */")) {
-		const error = new Error(
-			"Command code is missing the /* PARAMS_INJECT */ placeholder. " +
-				"This placeholder is required for playwright-cli runtime commands.",
-		);
-		(error as Error & { code: string }).code = "MISSING_PARAMS_INJECT";
+interface PlaywrightCoreContext {
+	newPage(): Promise<PlaywrightCorePage>;
+}
+
+interface PlaywrightCoreBrowser {
+	contexts(): PlaywrightCoreContext[];
+	close(): Promise<void>;
+}
+
+interface PlaywrightCoreModule {
+	chromium: {
+		connectOverCDP(endpointURL: string, options?: unknown): Promise<PlaywrightCoreBrowser>;
+	};
+}
+
+/**
+ * Resolve playwright-core from the @playwright/cli bundle to ensure
+ * version consistency.
+ */
+async function resolvePlaywrightCore(): Promise<PlaywrightCoreModule> {
+	let modulePath: string;
+	try {
+		const cliPackageJsonPath = require.resolve("@playwright/cli/package.json");
+		modulePath = resolve(dirname(cliPackageJsonPath), "node_modules", "playwright-core");
+		// Verify the bundled copy exists
+		require.resolve(resolve(modulePath, "package.json"));
+	} catch {
+		const error = new Error('playwright-core not found inside @playwright/cli. Run "npm install".');
+		(error as Error & { code: string }).code = "RUNTIME_NOT_FOUND";
 		throw error;
 	}
 
-	const paramsLine = `const params = ${JSON.stringify(params)};`;
-	const wrappedCode = originalCode.replace("/* PARAMS_INJECT */", paramsLine);
+	return (await import(pathToFileURL(resolve(modulePath, "index.mjs")).href)) as PlaywrightCoreModule;
+}
 
+/**
+ * Check whether a playwright-cli session named "default" is open.
+ */
+async function checkPlaywrightCliSession(): Promise<boolean> {
 	try {
 		const playwrightCliEntrypoint = await resolvePlaywrightCliEntrypoint();
-		// NOTE: Passing the code directly as a positional argument relies on
-		// execFileAsync (array-based args), which bypasses shell interpretation.
-		// Windows command-line length limit is ~32,767 chars; current commands
-		// are typically well under 5,000 chars, leaving a large safety margin.
-		const { stdout } = await execFileAsync(process.execPath, [playwrightCliEntrypoint, "run-code", wrappedCode], {
-			timeout: 60000,
+		const { stdout } = await execFileAsync(process.execPath, [playwrightCliEntrypoint, "list"], {
+			timeout: 10000,
 		});
+		return stdout.includes("default") && stdout.includes("status: open");
+	} catch {
+		return false;
+	}
+}
 
-		// playwright-cli surfaces command-level errors under "### Error" with exit code 0
-		const errorMatch = stdout.match(/### Error\n([\s\S]*?)(?=\n### |$)/);
-		if (errorMatch) {
-			const errorMessage = errorMatch[1].trim();
-			const businessCode = extractBusinessErrorCode(errorMessage);
-			const error = new Error(errorMessage);
-			(error as Error & { code: string }).code = businessCode ?? "COMMAND_EXECUTION_ERROR";
+/**
+ * Auto-attach a playwright-cli session via the CLI.
+ * Returns true if attach succeeded, false otherwise.
+ */
+async function autoAttachPlaywrightCli(): Promise<boolean> {
+	try {
+		const playwrightCliEntrypoint = await resolvePlaywrightCliEntrypoint();
+		await execFileAsync(process.execPath, [playwrightCliEntrypoint, "attach", "--cdp=chrome", "--session=default"], {
+			timeout: 10000,
+		});
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Executes a browser-automation command by connecting directly to Chrome over CDP.
+ * The command module is imported as a normal ESM module and invoked with (page, params).
+ */
+async function runPlaywrightCliCommand(commandPath: string, params: Record<string, string>): Promise<unknown> {
+	const sessionOpen = await checkPlaywrightCliSession();
+	if (!sessionOpen) {
+		const attached = await autoAttachPlaywrightCli();
+		if (!attached) {
+			const error = new Error(
+				"Browser remote debugging is not enabled or no playwright-cli attach has been performed. " +
+					"Enable remote debugging and run 'playwright-cli attach --cdp=chrome --session=default'.",
+			);
+			(error as Error & { code: string }).code = "PLAYWRIGHT_CLI_ATTACH_REQUIRED";
 			throw error;
 		}
+	}
 
-		// Extract the JSON result that follows "### Result" in stdout
-		const resultMatch = stdout.match(/### Result\n([\s\S]*?)(?=\n### |$)/);
-		if (!resultMatch) {
-			const error = new Error("Command did not produce the expected '### Result' marker in stdout.");
-			(error as Error & { code: string }).code = "MISSING_RESULT_MARKER";
-			throw error;
+	let browser: PlaywrightCoreBrowser | undefined;
+	let page: PlaywrightCorePage | undefined;
+	try {
+		const playwright = await resolvePlaywrightCore();
+		browser = await playwright.chromium.connectOverCDP("chrome");
+		const context = browser.contexts()[0];
+		if (!context) {
+			throw new Error("No browser context available after CDP connection.");
+		}
+		page = await context.newPage();
+
+		const module = await import(`${pathToFileURL(commandPath).href}?t=${Date.now()}`);
+		const handler = module.default || module.command || module;
+
+		if (typeof handler !== "function") {
+			throw new Error(`Command module at ${commandPath} does not export a function`);
 		}
 
-		const rawJson = resultMatch[1].trim();
-		try {
-			return JSON.parse(rawJson);
-		} catch (_parseErr) {
-			const error = new Error(`Malformed JSON after result marker: ${rawJson}`);
-			(error as Error & { code: string }).code = "MALFORMED_RESULT_JSON";
-			throw error;
-		}
+		return await handler(page, params);
 	} catch (err) {
 		const execErr = err as Error & {
 			code?: string | number | null;
@@ -171,30 +223,20 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 			stdout?: string;
 		};
 
-		// Already a structured error thrown by this function; re-throw as-is
-		if (
-			execErr.code &&
-			typeof execErr.code === "string" &&
-			[
-				"RUNTIME_NOT_FOUND",
-				"MISSING_PARAMS_INJECT",
-				"MISSING_RESULT_MARKER",
-				"MALFORMED_RESULT_JSON",
-				"COMMAND_EXECUTION_ERROR",
-			].includes(execErr.code)
-		) {
+		// Re-throw errors that already carry a structured code
+		if (execErr.code && typeof execErr.code === "string" && execErr.code !== "COMMAND_EXECUTION_ERROR") {
 			throw execErr;
 		}
 
-		// Infrastructure: local playwright-cli entrypoint not found
+		// Infrastructure: local playwright-cli or playwright-core not found
 		if (execErr.code === "ENOENT") {
 			const error = new Error('playwright-cli not found. Run "npm install -g @playwright/cli".');
 			(error as Error & { code: string }).code = "RUNTIME_NOT_FOUND";
 			throw error;
 		}
 
-		// Infrastructure: command timed out
-		if (execErr.killed && execErr.signal === "SIGTERM") {
+		// Infrastructure: command timed out (page operation timeout)
+		if (execErr.message && /timeout/i.test(execErr.message)) {
 			const error = new Error("Command execution timed out after 60 seconds.");
 			(error as Error & { code: string }).code = "TIMEOUT";
 			throw error;
@@ -211,7 +253,7 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 			throw error;
 		}
 
-		// Business errors: extract known codes from stderr/message text
+		// Business errors: extract known codes from error message
 		const businessCode = extractBusinessErrorCode(diagnosticText);
 		if (businessCode) {
 			const error = new Error(execErr.message);
@@ -223,6 +265,13 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 		const fallbackError = new Error(execErr.message);
 		(fallbackError as Error & { code: string }).code = "COMMAND_EXECUTION_ERROR";
 		throw fallbackError;
+	} finally {
+		if (page) {
+			await page.close().catch(() => {});
+		}
+		if (browser) {
+			await browser.close().catch(() => {});
+		}
 	}
 }
 

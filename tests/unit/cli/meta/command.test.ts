@@ -78,7 +78,7 @@ describe("handleCommandShow", () => {
 		const result = await handleCommandShow("github", "list-trending");
 		expect(result.success).toBe(true);
 		if (!result.success) return;
-		expect(result.command.prerequisites).toContain("Requires `playwright-cli attach --cdp=chrome|msedge --session=default`");
+		expect(result.command.prerequisites).toContain("Requires Chrome remote debugging enabled; auto-attach will be attempted on first command");
 	});
 
 	it("returns readmeContent when includeReadme is true and README.md exists", async () => {
