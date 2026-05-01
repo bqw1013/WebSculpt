@@ -17,19 +17,11 @@
 
 ```mermaid
 flowchart TD
-    A[User Request] --> B{Check Command Library}
-    B -->|Match Found| C[Direct Invocation<br/>Parameterize & Execute]
-    B -->|No Match| D[AI Exploration<br/>WebSearch / curl / Browser]
-    D --> E[Deliver Answer]
-    E --> F{Precipitation<br/>Assessment}
-    F -->|Worth Reusing| G[Draft → Write → Validate → Create → Test]
-    G --> H[Install to Library]
-    H --> B
-    F -->|One-time Only| I[End]
-    C --> J[Result Delivered]
-    J --> K{Failure /<br/>Drift Detected?}
-    K -->|Yes| D
-    K -->|No| L[Reused Multiple Times]
+    A[首次遇到] --> B[AI 探索网页]
+    B --> C[沉淀为<br/>domain/action 命令]
+    C --> D[后续调用]
+    D --> E[直接调用<br/>无需探索]
+    E --> D
 ```
 
 ---
@@ -144,3 +136,9 @@ Agent 会自动检查命令库中是否有已沉淀的命令可用，没有则�
 ## License
 
 MIT
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=bqw1013/WebSculpt&type=Date)](https://star-history.com/#bqw1013/WebSculpt&Date)

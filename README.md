@@ -17,19 +17,11 @@
 
 ```mermaid
 flowchart TD
-    A[User Request] --> B{Check Command Library}
-    B -->|Match Found| C[Direct Invocation<br/>Parameterize & Execute]
-    B -->|No Match| D[AI Exploration<br/>WebSearch / curl / Browser]
-    D --> E[Deliver Answer]
-    E --> F{Precipitation<br/>Assessment}
-    F -->|Worth Reusing| G[Draft → Write → Validate → Create → Test]
-    G --> H[Install to Library]
-    H --> B
-    F -->|One-time Only| I[End]
-    C --> J[Result Delivered]
-    J --> K{Failure /<br/>Drift Detected?}
-    K -->|Yes| D
-    K -->|No| L[Reused Multiple Times]
+    A[First Encounter] --> B[AI Explores Web]
+    B --> C[Precipitate into<br/>domain/action Command]
+    C --> D[Subsequent Calls]
+    D --> E[Direct Invocation<br/>No Exploration]
+    E --> D
 ```
 
 ---
@@ -144,3 +136,9 @@ When using WebSculpt, please comply with the target website's robots.txt and Ter
 ## License
 
 MIT
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=bqw1013/WebSculpt&type=Date)](https://star-history.com/#bqw1013/WebSculpt&Date)
