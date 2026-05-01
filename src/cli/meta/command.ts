@@ -1,5 +1,5 @@
-import { access, readdir, readFile, rm, rmdir } from "fs/promises";
-import { basename, dirname, join } from "path";
+import { access, readdir, readFile, rm, rmdir } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import { findCommand, listAllCommands, rebuildIndex } from "../engine/registry.js";
 import { RUNTIME_SYSTEM_PREREQUISITES } from "../engine/runtime-meta.js";
 import type { CommandShowResult, MetaCommandResult } from "../output.js";

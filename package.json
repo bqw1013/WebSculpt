@@ -19,6 +19,7 @@
     "skills",
     "README.md"
   ],
+  "packageManager": "npm@10.9.3",
   "engines": {
     "node": ">=20"
   },

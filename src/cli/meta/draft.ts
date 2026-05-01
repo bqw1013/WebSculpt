@@ -1,5 +1,5 @@
-import { access, mkdir, rm, writeFile } from "fs/promises";
-import { join, resolve } from "path";
+import { access, mkdir, rm, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import type { CommandParameter, CommandRuntime, ValidationDetail } from "../../types/index.js";
 import { RESERVED_DOMAINS } from "../engine/registry.js";
 import type { MetaCommandResult } from "../output.js";

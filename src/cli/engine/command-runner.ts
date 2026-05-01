@@ -1,10 +1,10 @@
-import { execFile } from "child_process";
-import { readFile } from "fs/promises";
-import { createRequire } from "module";
+import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 
-import { dirname, resolve } from "path";
-import { pathToFileURL } from "url";
-import { promisify } from "util";
+import { dirname, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 import type { CommandManifest } from "../../types/index.js";
 
 const execFileAsync = promisify(execFile);
@@ -139,7 +139,7 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 		// playwright-cli surfaces command-level errors under "### Error" with exit code 0
 		const errorMatch = stdout.match(/### Error\n([\s\S]*?)(?=\n### |$)/);
 		if (errorMatch) {
-			const errorMessage = errorMatch[1].trim();
+			const errorMessage = (errorMatch[1] ?? "").trim();
 			const businessCode = extractBusinessErrorCode(errorMessage);
 			const error = new Error(errorMessage);
 			(error as Error & { code: string }).code = businessCode ?? "COMMAND_EXECUTION_ERROR";
@@ -154,7 +154,7 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 			throw error;
 		}
 
-		const rawJson = resultMatch[1].trim();
+		const rawJson = (resultMatch[1] ?? "").trim();
 		try {
 			return JSON.parse(rawJson);
 		} catch (_parseErr) {

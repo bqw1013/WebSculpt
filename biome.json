@@ -5,12 +5,12 @@
 		"rules": {
 			"recommended": true,
 			"style": {
-				"noNonNullAssertion": "off",
+				"noNonNullAssertion": "warn",
 				"useConst": "error",
-				"useNodejsImportProtocol": "off"
+				"useNodejsImportProtocol": "error"
 			},
 			"suspicious": {
-				"noExplicitAny": "off",
+				"noExplicitAny": "warn",
 				"noControlCharactersInRegex": "off",
 				"noEmptyInterface": "off"
 			}

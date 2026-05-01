@@ -224,17 +224,14 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		return;
 	}
 
-	if (
-		"results" in result &&
-		Array.isArray(result.results) &&
-		result.results.length > 0 &&
-		"agent" in result.results[0] &&
-		"status" in result.results[0]
-	) {
-		for (const r of result.results) {
-			console.log(`${r.agent}: ${r.status}`);
+	if ("results" in result && Array.isArray(result.results) && result.results.length > 0) {
+		const firstResult = result.results[0];
+		if (firstResult && "agent" in firstResult && "status" in firstResult) {
+			for (const r of result.results) {
+				console.log(`${r.agent}: ${r.status}`);
+			}
+			return;
 		}
-		return;
 	}
 
 	if ("message" in result) {

@@ -1,5 +1,5 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { RESERVED_DOMAINS } from "../engine/registry.js";
 import type { MetaCommandResult } from "../output.js";
 import { validateCommandPackage } from "./command-validation.js";

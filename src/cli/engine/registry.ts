@@ -1,7 +1,7 @@
-import { existsSync } from "fs";
-import { access, readdir, readFile, writeFile } from "fs/promises";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { existsSync } from "node:fs";
+import { access, readdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { USER_COMMANDS_DIR, WEBSCULPT_DIR } from "../../infra/paths.js";
 import type { CommandManifest } from "../../types/index.js";
 import { getBuiltinCommandsDir } from "./paths.js";

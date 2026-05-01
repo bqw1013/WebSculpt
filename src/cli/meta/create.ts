@@ -1,5 +1,5 @@
-import { access, copyFile, mkdir, readFile, rm, writeFile } from "fs/promises";
-import { join } from "path";
+import { access, copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { USER_COMMANDS_DIR } from "../../infra/paths.js";
 import { appendAuditLog } from "../../infra/store.js";
 import type { CommandManifest } from "../../types/index.js";

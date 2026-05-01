@@ -243,7 +243,7 @@ function validateL3Contract(manifest: Record<string, unknown>, code: string, det
 	const paramMatches = code.matchAll(PARAM_ACCESS_REGEX);
 	const usedNames = new Set<string>();
 	for (const match of paramMatches) {
-		usedNames.add(match[1]);
+		if (match[1]) usedNames.add(match[1]);
 	}
 	for (const name of usedNames) {
 		if (!declaredNames.has(name)) {

@@ -1,5 +1,5 @@
-import { homedir } from "os";
-import { join } from "path";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 /** Root directory for all WebSculpt user data. */
 export const WEBSCULPT_DIR = join(homedir(), ".websculpt");

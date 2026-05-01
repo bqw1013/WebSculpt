@@ -14,7 +14,7 @@ vi.mock("fs/promises", async (importOriginal) => {
 	};
 });
 
-import { access, readFile } from "fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { findCommand } from "../../../../src/cli/engine/registry.js";
 
 describe("handleCommandShow", () => {
