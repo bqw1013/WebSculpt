@@ -55,21 +55,22 @@ The access layer explicitly stays out of the following areas:
 Current actual state:
 
 ```
-src/access/
+skills/websculpt/references/access/
   playwright-cli/
     guide.md             # Playwright CLI operation reference
 ```
 
+The English version is located at `skills/websculpt-en/references/access/`.
+
 Minimum requirements for each tool subdirectory:
 
 ```
-src/access/<tool-name>/
+skills/websculpt/references/access/<tool-name>/
   guide.md             # Required: connection method, available commands, risk warnings
-  index.ts             # Optional: tool-specific additional entry point
-  ...                  # Tool-specific implementation files
+  ...                  # Tool-specific reference documentation
 ```
 
-When adding a new tool, create a subdirectory under `src/access/<tool-name>/` containing at least `guide.md`.
+When adding a new tool, create a subdirectory under `skills/websculpt/references/access/<tool-name>/` containing at least `guide.md`.
 
 ---
 
@@ -84,9 +85,11 @@ The explore layer is not a code layer; it does not produce machine-consumable st
 ### 3.2 Directory Structure
 
 ```
-src/explore/
+skills/websculpt/references/explore/
   strategy.md          # Exploration strategy documentation
 ```
+
+The English version is located at `skills/websculpt-en/references/explore/`.
 
 For specific strategies on tool selection, human-AI collaboration, and the connection between exploration and precipitation, see `src/explore/strategy.md`.
 
@@ -110,9 +113,9 @@ Runtime contracts and authoring specifications are in [`skills/websculpt-en/refe
   - **Structure enforced**: Manifest format, export signatures, parameter declaration methods, prohibitions, etc. are hard constraints of the system
   - **Logic free**: The specific implementation inside commands is written by AI based on exploration results
 
-- **No code templates**: No preset fill-in-the-blank code templates, avoiding constraints on AI creativity. Only specifies runtime signature contracts and prohibitions through specification documents.
+- **Minimal runnable skeleton**: `command draft` generates a minimal runnable skeleton that includes the runtime signature and parameter parsing (e.g., `export default async function(params)`), preventing AI from writing boilerplate from scratch while not constraining how business logic is implemented.
 
-- **AI-driven testing**: The system does not provide an automated testing framework. After command creation, AI calls `websculpt <domain> <action>` for testing, responsible for designing different parameter combinations to verify correctness and generalization.
+- **AI-driven testing**: The system does not provide an automated testing framework for command assets. After command creation, AI calls `websculpt <domain> <action>` on its own to verify. WebSculpt CLI itself has a complete test suite (see `tests/`), but test coverage is limited to the CLI engine and Meta commands, not the business logic of extension commands.
 
 ### 4.3 Validation System
 
@@ -146,49 +149,7 @@ For specific classification definitions and resolution rules, see [CLI Command R
 
 ### 5.3 Self-healing Closure and Precipitation Triggers
 
-When a command fails, the system does not automatically repair, but triggers an AI-led self-healing process:
-
-```
-Command failure
-  -> Re-exploration with explore strategy (AI autonomous exploration)
-  -> AI fixes code logic
-  -> After compile validation, re-write to disk via command create
-```
-
-**Precipitation Trigger Mechanism**
-
-Precipitation refers to the process of transforming exploration results into reusable command assets. Currently adopts mandatory proposal mode:
-
-**Proposal Interaction Flow**
-
-```
-AI proposes precipitation proposal card -> Human agent confirms/modifies/rejects
-  -> AI calls command draft to generate skeleton -> Edit business logic
-  -> command validate pre-check
-  -> Call command create to write to disk
-```
-
-**Proposal Format Specification**
-
-AI proposals must contain the following fields:
-
-| Field | Description |
-|------|------|
-| `domain` / `action` | Command name suggestion |
-| `description` | One-sentence description of command purpose |
-| `ioExamples` | At least one set of input parameter examples and expected output |
-| `valueAssessment` | Why it's worth precipitating |
-| `stabilityAssessment` | Structural stability assessment of target site/interface |
-| `antiCrawlAssessment` | Anti-crawling risk and current circumvention strategy |
-| `expectedFailures` | Known conditions under which it may fail and expected behavior |
-
-Before explicit user confirmation, AI must not execute `draft` or `create`.
-
-**Completeness of Precipitation Artifacts**
-
-When precipitating, besides `manifest.json` and `command.js`, `README.md` and `context.md` are optional assets. If present, `README.md` should contain Description, Parameters, Return Value, Usage, Common Error Codes sections; `context.md` should contain Precipitation Background, Page Structure, Environment Dependencies, Failure Signals, Repair Clues sections. The validator issues warnings for missing or incomplete sections, but does not prevent writing to disk.
-
-Current code has implemented basic execution exception identification (e.g., `PLAYWRIGHT_CLI_ATTACH_REQUIRED`), but **automatic detection and trigger mechanisms for the self-healing closure** (periodic inspection, version comparison, automatic degradation) are not yet implemented. Currently relies on manual discovery of command failures or AI actively identifying exceptions during execution to initiate repairs.
+When a command fails, the system does not automatically repair, but triggers an AI-led self-healing process: re-exploration, code fix, compile validation, and re-write to disk via `command create`. The complete proposal interaction flow, format specification, and automatic trigger mechanism are not yet implemented.
 
 ### 5.4 Responsibility Boundaries in Command Lifecycle
 
@@ -204,7 +165,7 @@ For specific behavior, see [CLI Command Reference](CLI.md).
 
 ## 6. Runtimes
 
-WebSculpt currently supports two runtimes: `node` and `playwright-cli`. The `node` runtime executes via ESM import in a full Node.js environment; the `playwright-cli` runtime executes via code injection in an isolated browser context. `shell` and `python` are reserved types.
+WebSculpt currently supports full execution for `node` and `playwright-cli` runtimes. `shell` and `python` have completed command package lifecycle support (`draft`, `validate`, `create` can all generate and validate), but the CLI execution engine has not yet been integrated.
 
 ---
 
@@ -215,14 +176,11 @@ WebSculpt currently supports two runtimes: `node` and `playwright-cli`. The `nod
 ```
 WebSculpt/
 ├── src/
-│   ├── access/          # Tool guides and behavioral constraints (doc layer)
-│   ├── explore/         # Exploration strategy docs (doc layer)
-│   ├── compile/         # Command specification docs (doc layer)
 │   ├── cli/             # Entry points, engine, Meta commands, builtins, validators
 │   ├── types/           # Cross-layer shared TypeScript type definitions
 │   └── infra/           # Infrastructure utilities: user directory paths, config/log I/O
-├── skills/websculpt/    # Agent skill deliverables
-├── tests/               # Test suites
+├── skills/websculpt/    # Agent skill deliverables (includes access, explore, compile reference docs)
+├── tests/               # Test suites (CLI engine and Meta commands)
 └── dist/                # Build output
 ```
 
@@ -234,6 +192,7 @@ WebSculpt/
 ~/.websculpt/
 ├── commands/                # User-defined extension commands
 ├── config.json              # User configuration
-├── log.jsonl                # Execution logs
+├── log.jsonl                # Extension command execution logs
+├── audit.jsonl              # Command installation/override audit logs
 └── registry-index.json      # Persistent registry index (command manifest cache)
 ```
