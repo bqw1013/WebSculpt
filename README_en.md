@@ -16,15 +16,9 @@
 
 ```mermaid
 flowchart LR
-    subgraph Explore["Explore Once"]
-        A[AI Explores<br/>the Web]
-    end
-    subgraph Reuse["Reuse Forever"]
-        B[Direct Call<br/>domain/action]
-    end
-    A -->|"distill"| C[Command Library]
-    C --> B
-    B --> C
+    A([AI Explores<br/>the Web]) -->|distill| B[(Command Library)]
+    B --> C([Direct Call<br/>domain/action])
+    C -->|evolve| B
 ```
 
 ---

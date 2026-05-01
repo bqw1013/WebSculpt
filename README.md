@@ -16,15 +16,9 @@
 
 ```mermaid
 flowchart LR
-    subgraph Explore["一次探索"]
-        A[AI 探索网页]
-    end
-    subgraph Reuse["永久复用"]
-        B[直接调用<br/>domain/action]
-    end
-    A -->|"沉淀"| C[命令库]
-    C --> B
-    B --> C
+    A([AI 探索网页]) -->|沉淀| B[(命令库)]
+    B --> C([直接调用<br/>domain/action])
+    C -->|进化| B
 ```
 
 ---
