@@ -177,26 +177,24 @@ describe("validateCommandPackage", () => {
 			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_JS_SYNTAX", level: "error" }));
 		});
 
-		it("errors on playwright-cli runtime missing PARAMS_INJECT", () => {
+		it("errors on playwright-cli runtime missing export default", () => {
 			const details = validateCommandPackage(
 				makeInput({
 					manifest: { runtime: "playwright-cli" },
 					code: "async (page) => { return {}; }",
 				}),
 			);
-			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_PARAMS_INJECT", level: "error" }));
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_EXPORT_DEFAULT", level: "error" }));
 		});
 
-		it("errors on playwright-cli runtime containing module syntax", () => {
+		it("passes for playwright-cli runtime with export default", () => {
 			const details = validateCommandPackage(
 				makeInput({
 					manifest: { runtime: "playwright-cli" },
-					code: "/* PARAMS_INJECT */ export async function run(page) { return {}; }",
+					code: "export default async (page, params) => { return {}; }",
 				}),
 			);
-			expect(details).toContainEqual(
-				expect.objectContaining({ code: "MODULE_SYNTAX_IN_FUNCTION_BODY", level: "error" }),
-			);
+			expect(details.filter((d) => d.level === "error")).toHaveLength(0);
 		});
 
 		it("warns on undeclared parameter usage", () => {

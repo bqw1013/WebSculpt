@@ -46,7 +46,7 @@ describe("command draft", () => {
 		expect(code).toContain("export default async function");
 	});
 
-	it("produces function-body syntax without module keywords for playwright-cli runtime", async () => {
+	it("produces ESM module syntax with export default for playwright-cli runtime", async () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
@@ -68,9 +68,7 @@ describe("command draft", () => {
 		expect(manifest.runtime).toBe("playwright-cli");
 
 		const code = await readFile(join(payload.draftPath, "command.js"), "utf-8");
-		expect(code).toContain("async function (page)");
-		expect(code).toContain("/* PARAMS_INJECT */");
-		expect(code).not.toContain("export");
+		expect(code).toContain("export default async (page, params)");
 		expect(code).not.toContain("import");
 	});
 

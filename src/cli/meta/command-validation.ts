@@ -7,7 +7,6 @@ const BROWSER_KEYWORDS = ["launch", "connect", "connectOverCDP", "newBrowser", "
 const INLINE_IMPORT_REGEX = /await\s+import\s*\(/;
 const EXPORT_DEFAULT_REGEX = /export\s+default/;
 const EXPORT_COMMAND_REGEX = /export\s+(?:(?:const|let|var)\s+command|(?:async\s+)?function\s+command)\b/;
-const PARAMS_INJECT_MARKER = "/* PARAMS_INJECT */";
 const PARAM_ACCESS_REGEX = /params\.([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
 
 function addError(details: ValidationDetail[], code: string, message: string): void {
@@ -23,17 +22,14 @@ function checkJsSyntax(code: string, runtime: string): ValidationDetail | null {
 		return null;
 	}
 	let trial: string;
-	if (runtime === "node") {
-		if (/^export\s+default\s+/s.test(code)) {
-			trial = `return (${code.replace(/^export\s+default\s+/s, "")})`;
-		} else if (/^export\s+(?:const|let|var)\s+command\s*=\s*/s.test(code)) {
-			const expr = code.replace(/^export\s+(?:const|let|var)\s+command\s*=\s*/s, "").replace(/;\s*$/s, "");
-			trial = `return (${expr})`;
-		} else if (/^export\s+(?:async\s+)?function\s+command\s*\(/s.test(code)) {
-			trial = `return (${code.replace(/^export\s+/s, "")})`;
-		} else {
-			trial = `return (${code})`;
-		}
+	if (/^export\s+default\s+/s.test(code)) {
+		const expr = code.replace(/^export\s+default\s+/s, "").replace(/;\s*$/s, "");
+		trial = `return (${expr})`;
+	} else if (runtime === "node" && /^export\s+(?:const|let|var)\s+command\s*=\s*/s.test(code)) {
+		const expr = code.replace(/^export\s+(?:const|let|var)\s+command\s*=\s*/s, "").replace(/;\s*$/s, "");
+		trial = `return (${expr})`;
+	} else if (runtime === "node" && /^export\s+(?:async\s+)?function\s+command\s*\(/s.test(code)) {
+		trial = `return (${code.replace(/^export\s+/s, "")})`;
 	} else {
 		trial = `return (${code})`;
 	}
@@ -214,18 +210,11 @@ function validateL3Contract(manifest: Record<string, unknown>, code: string, det
 	}
 
 	if (runtime === "playwright-cli") {
-		if (!code.includes(PARAMS_INJECT_MARKER)) {
+		if (!EXPORT_DEFAULT_REGEX.test(code)) {
 			addError(
 				details,
-				"MISSING_PARAMS_INJECT",
-				`Playwright-cli runtime command must contain "${PARAMS_INJECT_MARKER}"`,
-			);
-		}
-		if (/\bexport\b/.test(code) || /\bimport\b/.test(code)) {
-			addError(
-				details,
-				"MODULE_SYNTAX_IN_FUNCTION_BODY",
-				"Playwright-cli runtime command must not contain module keywords (`export` or `import`)",
+				"MISSING_EXPORT_DEFAULT",
+				"Playwright-cli runtime command must contain `export default` async function",
 			);
 		}
 	}
