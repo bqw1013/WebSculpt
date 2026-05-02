@@ -50,7 +50,7 @@ WebSculpt consists of a CLI and an Agent Skill. You state the requirement; the A
 ### 1. Install
 
 ```bash
-npm install -g websculpt
+npm install -g @playwright/cli websculpt
 websculpt config init
 websculpt skill install
 ```

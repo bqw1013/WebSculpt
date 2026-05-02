@@ -31,7 +31,7 @@ Executing exploration does not end when "the answer is found", but is a complete
 If the environment is not ready:
 
 ```bash
-npm install -g websculpt
+npm install -g @playwright/cli websculpt
 websculpt config init
 ```
 
