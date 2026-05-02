@@ -47,15 +47,23 @@
 
 WebSculpt 由 CLI 和 Agent Skill 两部分组成。你负责提需求，Agent 负责执行。
 
-### 1. 安装
+### 1. 安装 CLI
 
 ```bash
 npm install -g @playwright/cli websculpt
-websculpt config init
+```
+
+### 2. 配置 Agent Skill
+
+进入你的项目目录，将 WebSculpt 规范安装到当前项目使用的 Agent 中：
+
+```bash
 websculpt skill install
 ```
 
-### 2. 提需求
+如需全局生效，可加上 `--global`。
+
+### 3. 提需求
 
 之后有信息获取类需求时，直接告诉 Agent 即可。例如：
 

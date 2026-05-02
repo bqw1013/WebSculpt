@@ -47,15 +47,23 @@
 
 WebSculpt consists of a CLI and an Agent Skill. You state the requirement; the Agent handles execution.
 
-### 1. Install
+### 1. Install CLI
 
 ```bash
 npm install -g @playwright/cli websculpt
-websculpt config init
+```
+
+### 2. Configure Agent Skill
+
+Navigate to your project directory and install the WebSculpt conventions into the Agent used by the current project:
+
+```bash
 websculpt skill install
 ```
 
-### 2. State Your Requirements
+Add `--global` if you want it to apply globally.
+
+### 3. State Your Requirements
 
 Whenever you have an information retrieval need, simply tell the Agent. For example:
 

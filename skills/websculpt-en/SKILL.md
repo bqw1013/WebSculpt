@@ -32,7 +32,6 @@ If the environment is not ready:
 
 ```bash
 npm install -g @playwright/cli websculpt
-websculpt config init
 ```
 
 When uncertain about any command's parameters, use `websculpt <command> --help` to get real-time help.
