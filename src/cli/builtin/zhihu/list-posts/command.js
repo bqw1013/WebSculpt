@@ -2,6 +2,19 @@ export default async (page, params) => {
   const user = params.user;
   const limit = parseInt(params.limit, 10);
 
+  const userId = user
+    .replace(/^https?:\/\/www\.zhihu\.com\/people\//, '')
+    .replace(/\/.*$/, '');
+  const postsUrl = 'https://www.zhihu.com/people/' + userId + '/posts';
+
+  await page.goto(postsUrl, { waitUntil: 'networkidle' });
+
+  const selectors = ['.ContentItem', '.List-item'];
+  let selectorFound = false;
+  let rawPosts = [];
+
+  for (const selector of selectors) {
+    try {
       await page.waitForSelector(selector, { timeout: 15000 });
       rawPosts = await page.evaluate((sel) => {
         const items = Array.from(document.querySelectorAll(sel));

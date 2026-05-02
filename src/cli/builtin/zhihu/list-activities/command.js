@@ -2,6 +2,14 @@ export default async (page, params) => {
   const user = params.user;
   const limit = parseInt(params.limit, 10);
 
+  const userId = user
+    .replace(/^https?:\/\/www\.zhihu\.com\/people\//, '')
+    .replace(/\/.*$/, '');
+  const activitiesUrl = 'https://www.zhihu.com/people/' + userId + '/activities';
+
+  await page.goto(activitiesUrl, { waitUntil: 'networkidle' });
+
+  try {
     await page.waitForSelector('.List-item', { timeout: 15000 });
   } catch (e) {
     throw new Error('[DRIFT_DETECTED] Activity list selector not found. Page structure may have changed.');
