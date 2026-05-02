@@ -20,12 +20,21 @@ export interface SocketServerOptions {
 }
 
 let activeSessions = 0;
+let executionCount = 0;
+const MAX_CONCURRENT_SESSIONS = 10;
 
 /**
  * Returns the number of currently active command executions.
  */
 export function getActiveSessions(): number {
 	return activeSessions;
+}
+
+/**
+ * Returns the total number of command executions since daemon startup.
+ */
+export function getExecutionCount(): number {
+	return executionCount;
 }
 
 async function handleRequest(req: SocketRequest, options: SocketServerOptions): Promise<SocketResponse> {
@@ -45,6 +54,14 @@ async function handleRequest(req: SocketRequest, options: SocketServerOptions): 
 				};
 			}
 
+			if (activeSessions >= MAX_CONCURRENT_SESSIONS) {
+				return {
+					id: requestId,
+					error: { message: "Daemon is at capacity", code: "DAEMON_BUSY" },
+				};
+			}
+
+			executionCount++;
 			activeSessions++;
 			try {
 				const data = await executeCommand(commandPath, params);

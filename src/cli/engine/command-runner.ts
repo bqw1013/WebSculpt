@@ -75,7 +75,7 @@ async function runPlaywrightDaemonCommand(commandPath: string, params: Record<st
 		}
 
 		// Infrastructure: socket request timed out (60s)
-		if (message.includes("Socket request timed out") || message.includes("timeout")) {
+		if (code === "SOCKET_TIMEOUT") {
 			const error = new Error("Command execution timed out after 60 seconds.");
 			(error as Error & { code: string }).code = "TIMEOUT";
 			throw error;

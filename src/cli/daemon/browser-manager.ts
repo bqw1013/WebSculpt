@@ -7,7 +7,8 @@ let cachedBrowser: Browser | null = null;
  * Connections are lazily established and cached for reuse.
  */
 export async function getBrowser(): Promise<Browser> {
-	if (!cachedBrowser) {
+	if (!cachedBrowser || !cachedBrowser.isConnected()) {
+		cachedBrowser = null;
 		try {
 			cachedBrowser = await chromium.connectOverCDP("chrome");
 		} catch {
@@ -46,7 +47,7 @@ export async function getBrowser(): Promise<Browser> {
  * Does not trigger a new connection.
  */
 export function isBrowserConnected(): boolean {
-	return cachedBrowser !== null;
+	return cachedBrowser?.isConnected() ?? false;
 }
 
 /**
@@ -77,13 +78,18 @@ export async function withBrowser<T>(fn: (browser: Browser) => Promise<T>): Prom
 			throw err;
 		}
 
+		const errName = (err as Error).name;
+		const errCode = (err as Error & { code?: string }).code;
+
 		// Detect stale connection errors and retry once.
 		if (
+			errName === "TargetClosedError" ||
+			errCode === "ECONNRESET" ||
+			errCode === "ECONNREFUSED" ||
+			errCode === "EPIPE" ||
 			message.includes("Browser has been closed") ||
-			message.includes("disconnected") ||
 			message.includes("Session closed") ||
-			message.includes("Target closed") ||
-			message.includes("WebSocket")
+			message.includes("Target closed")
 		) {
 			await closeBrowser();
 			browser = await getBrowser();

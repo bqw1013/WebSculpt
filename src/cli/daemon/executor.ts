@@ -13,11 +13,10 @@ export async function executeCommand(commandPath: string, params: Record<string,
 	return withBrowser(async (browser) => {
 		// Reuse the default browser context so the new page inherits
 		// cookies, localStorage, and login state from the existing Chrome session.
-		const contexts = browser.contexts();
-		if (contexts.length === 0) {
+		const context = browser.contexts()[0];
+		if (!context) {
 			throw new Error("Browser has no default context available");
 		}
-		const context = contexts[0]!;
 		let page: Page | undefined;
 
 		try {

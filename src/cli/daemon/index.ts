@@ -1,20 +1,27 @@
-import { createWriteStream } from "node:fs";
+import { createWriteStream, type WriteStream } from "node:fs";
 import { mkdir, unlink } from "node:fs/promises";
 import { closeBrowser } from "./browser-manager.js";
 import { getDaemonLogPath, getDaemonStateDir, getSocketPath } from "./paths.js";
-import { createSocketServer } from "./socket-server.js";
+import { createSocketServer, getExecutionCount } from "./socket-server.js";
 
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_EXECUTIONS_BEFORE_RESTART = 200;
 
 let idleTimer: NodeJS.Timeout | null = null;
 let server: ReturnType<typeof createSocketServer>;
+let logStream: WriteStream | null = null;
+let restartPending = false;
 
 function resetIdleTimer(): void {
 	if (idleTimer) {
 		clearTimeout(idleTimer);
 	}
 	idleTimer = setTimeout(() => {
-		console.error("Idle timeout reached, shutting down.");
+		if (restartPending) {
+			console.error("Execution threshold reached, shutting down daemon for restart.");
+		} else {
+			console.error("Idle timeout reached, shutting down.");
+		}
 		gracefulShutdown();
 	}, IDLE_TIMEOUT_MS);
 }
@@ -28,10 +35,21 @@ function stopIdleTimer(): void {
 
 async function gracefulShutdown(): Promise<void> {
 	stopIdleTimer();
-	await closeBrowser();
-	server?.close(() => {
-		process.exit(0);
-	});
+	try {
+		await closeBrowser();
+	} catch {
+		// Ignore browser close errors during shutdown.
+	}
+	try {
+		server?.close(() => {
+			process.exit(0);
+		});
+	} catch {
+		// Ignore server close errors.
+	}
+	if (logStream) {
+		logStream.end();
+	}
 	// Force exit if server close hangs.
 	setTimeout(() => process.exit(0), 5000);
 }
@@ -40,7 +58,7 @@ async function gracefulShutdown(): Promise<void> {
  * Redirects process.stderr to both the original stderr and a persistent log file.
  */
 function redirectStderrToFile(logPath: string): void {
-	const logStream = createWriteStream(logPath, { flags: "a" });
+	logStream = createWriteStream(logPath, { flags: "a" });
 	const originalWrite = process.stderr.write.bind(process.stderr);
 
 	function writeOverride(
@@ -52,7 +70,7 @@ function redirectStderrToFile(logPath: string): void {
 			callback = encoding;
 			encoding = undefined;
 		}
-		logStream.write(chunk, encoding as BufferEncoding);
+		logStream?.write(chunk, encoding as BufferEncoding);
 		return originalWrite(chunk, encoding as BufferEncoding, callback);
 	}
 
@@ -79,7 +97,12 @@ async function main(): Promise<void> {
 
 	server = createSocketServer(socketPath, {
 		onStop: () => gracefulShutdown(),
-		onActivity: () => resetIdleTimer(),
+		onActivity: () => {
+			if (getExecutionCount() >= MAX_EXECUTIONS_BEFORE_RESTART) {
+				restartPending = true;
+			}
+			resetIdleTimer();
+		},
 	});
 
 	server.on("error", (err: NodeJS.ErrnoException) => {
@@ -103,6 +126,12 @@ async function main(): Promise<void> {
 	// Log uncaught exceptions and initiate graceful shutdown.
 	process.on("uncaughtException", (err) => {
 		console.error("Uncaught exception:", err);
+		gracefulShutdown();
+	});
+
+	// Log unhandled rejections and initiate graceful shutdown.
+	process.on("unhandledRejection", (reason) => {
+		console.error("Unhandled rejection:", reason);
 		gracefulShutdown();
 	});
 }

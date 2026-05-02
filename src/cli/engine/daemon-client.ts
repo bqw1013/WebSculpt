@@ -213,7 +213,9 @@ function sendRequest(socketPath: string, method: string, params: Record<string, 
 			if (!settled) {
 				settled = true;
 				socket.destroy();
-				reject(new Error("Socket request timed out"));
+				const error = new Error("Socket request timed out");
+				(error as Error & { code: string }).code = "SOCKET_TIMEOUT";
+				reject(error);
 			}
 		}, REQUEST_TIMEOUT_MS);
 
@@ -281,7 +283,8 @@ function splitLines(buffer: string): [string[], string] {
 /**
  * Creates a DaemonClient backed by the given socket path.
  */
-function createClient(socketPath: string): DaemonClient {
+export function createClient(state: DaemonState): DaemonClient {
+	const { socketPath, pid: recordedPid } = state;
 	return {
 		async run(commandPath: string, params: Record<string, string>): Promise<unknown> {
 			try {
@@ -305,15 +308,19 @@ function createClient(socketPath: string): DaemonClient {
 				if (unreachable) {
 					cachedClient = null;
 
-					// Kill stale daemon and clear state
-					const state = await readDaemonState();
-					if (state) {
-						try {
-							process.kill(state.pid, "SIGTERM");
-						} catch {
-							// Ignore if process already gone
+					// Kill stale daemon and clear state only if PID still matches
+					const currentState = await readDaemonState();
+					if (currentState) {
+						if (currentState.pid === recordedPid) {
+							try {
+								process.kill(currentState.pid, "SIGTERM");
+							} catch {
+								// Ignore if process already gone
+							}
+							await unlink(DAEMON_JSON).catch(() => {});
 						}
-						await unlink(DAEMON_JSON).catch(() => {});
+						// If PID does not match, another process restarted the daemon.
+						// Do not kill the healthy daemon and do not clear daemon.json.
 					}
 
 					// Retry once with a fresh daemon
@@ -341,7 +348,7 @@ export async function ensureDaemonClient(): Promise<DaemonClient> {
 	if (state && isProcessAlive(state.pid)) {
 		try {
 			await healthCheck(state.socketPath);
-			cachedClient = createClient(state.socketPath);
+			cachedClient = createClient(state);
 			return cachedClient;
 		} catch {
 			// Stale daemon; fall through to start a new one
@@ -366,6 +373,6 @@ export async function ensureDaemonClient(): Promise<DaemonClient> {
 		throw error;
 	}
 
-	cachedClient = createClient(state.socketPath);
+	cachedClient = createClient(state);
 	return cachedClient;
 }
