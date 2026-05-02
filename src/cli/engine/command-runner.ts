@@ -1,4 +1,4 @@
-import { execFile, exec } from "node:child_process";
+import { exec, execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 
