@@ -66,11 +66,10 @@ function isCdpAttachError(text: string): boolean {
 	const patterns = [
 		/attach failed/i,
 		/No browser session/i,
-		/browser session/i,
 		/remote debugging/i,
 		/Session.*closed/i,
 		/Session.*not found/i,
-		/not open/i,
+		/browser .* not open/i,
 	];
 	return patterns.some((p) => p.test(text));
 }
@@ -204,8 +203,27 @@ async function runPlaywrightCliCommand(commandPath: string, params: Record<strin
 		const diagnosticText = `${execErr.stderr ?? ""}\n${execErr.stdout ?? ""}\n${execErr.message}`;
 		if (isCdpAttachError(diagnosticText)) {
 			const error = new Error(
-				"Browser remote debugging is not enabled or no playwright-cli attach has been performed. " +
-					"Enable remote debugging and run 'playwright-cli attach --cdp=chrome --session=default'.",
+				"No active browser CDP session found.\n\n" +
+					"Follow these steps to establish a connection:\n\n" +
+					"1. Ensure Chrome or Edge is running.\n\n" +
+					"2. Enable remote debugging in your browser:\n" +
+					"   - Open a new tab\n" +
+					"   - Go to: chrome://inspect/#remote-debugging\n" +
+					'   - Check "Allow this browser instance to be remotely debugged"\n' +
+					"   - Leave the browser open\n\n" +
+					"3. Attach playwright-cli:\n" +
+					"   playwright-cli attach --cdp=chrome --session=default\n" +
+					"   (For Edge, use: playwright-cli attach --cdp=msedge --session=default)\n\n" +
+					"4. Verify the session is active:\n" +
+					"   playwright-cli list\n" +
+					"   Expected output includes: default: status: open\n\n" +
+					"5. If other sessions are listed but 'default' is not:\n" +
+					"   playwright-cli close-all\n" +
+					"   playwright-cli attach --cdp=chrome --session=default\n\n" +
+					"6. On Windows, if attach still fails (background daemon processes may linger):\n" +
+					"   playwright-cli kill-all\n" +
+					"   playwright-cli close-all\n" +
+					"   playwright-cli attach --cdp=chrome --session=default",
 			);
 			(error as Error & { code: string }).code = "PLAYWRIGHT_CLI_ATTACH_REQUIRED";
 			throw error;

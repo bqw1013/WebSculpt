@@ -65,7 +65,14 @@ export function registerDomainCommands(program: Command): void {
 					}
 				}
 				const result = await executeCommand(c, args);
-				printJson(result);
+				const format = program.opts().format as "human" | "json";
+				const formatSource = program.getOptionValueSource("format");
+				const effectiveFormat = formatSource !== "default" ? format : "json";
+				if (!result.success && effectiveFormat === "human") {
+					console.error(`${result.error.code}: ${result.error.message}`);
+				} else {
+					printJson(result);
+				}
 			});
 
 			const systemPrereqs = RUNTIME_SYSTEM_PREREQUISITES[c.runtime as CommandRuntime];
