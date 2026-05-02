@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, exec } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 
@@ -8,6 +8,7 @@ import { promisify } from "node:util";
 import type { CommandManifest } from "../../types/index.js";
 
 const execFileAsync = promisify(execFile);
+const execAsync = promisify(exec);
 const require = createRequire(import.meta.url);
 
 function buildParams(manifest: CommandManifest, args: Record<string, string>): Record<string, string> {
@@ -76,14 +77,41 @@ function isCdpAttachError(text: string): boolean {
 
 /**
  * Resolve the playwright-cli entrypoint.
- * playwright-cli is expected to be installed as a global tool (peer dependency).
+ * Explicitly resolves from global node_modules before falling back to local resolution.
  */
 async function resolvePlaywrightCliEntrypoint(): Promise<string> {
-	let packageJsonPath: string;
+	let packageJsonPath: string | undefined;
+
+	// 1. Try global node_modules via npm root -g
 	try {
-		packageJsonPath = require.resolve("@playwright/cli/package.json");
+		const { stdout } = await execAsync("npm root -g", { encoding: "utf-8" });
+		const globalNodeModules = stdout.trim();
+		packageJsonPath = require.resolve("@playwright/cli/package.json", { paths: [globalNodeModules] });
 	} catch {
-		const error = new Error('playwright-cli not found in project dependencies. Run "npm install".');
+		// Ignore and try next fallback
+	}
+
+	// 2. Fallback: node_modules adjacent to the Node.js executable (covers nvm/fnm edge cases)
+	if (!packageJsonPath) {
+		try {
+			const execDirNodeModules = resolve(dirname(process.execPath), "node_modules");
+			packageJsonPath = require.resolve("@playwright/cli/package.json", { paths: [execDirNodeModules] });
+		} catch {
+			// Ignore and try next fallback
+		}
+	}
+
+	// 3. Final fallback: standard require.resolve (backward compatibility)
+	if (!packageJsonPath) {
+		try {
+			packageJsonPath = require.resolve("@playwright/cli/package.json");
+		} catch {
+			// Ignore
+		}
+	}
+
+	if (!packageJsonPath) {
+		const error = new Error('playwright-cli not found. Run "npm install -g @playwright/cli".');
 		(error as Error & { code: string }).code = "RUNTIME_NOT_FOUND";
 		throw error;
 	}
