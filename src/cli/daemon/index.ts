@@ -1,7 +1,12 @@
+import { unlinkSync } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { getOpenPageCount } from "./browser-manager.js";
 import { closeBrowser } from "./browser-manager.js";
 import { closeLogger, initLogger, logEvent } from "./logger.js";
+import { DAEMON_LIMITS } from "./limits.js";
+import { degraded, restartPending, setRestartPending, startMemoryMonitoring, stopMemoryMonitoring } from "./memory-monitor.js";
+import { flushMetrics, recordPeakPages, recordPeakRss } from "./metrics.js";
 import { getDaemonStateDir, getSocketPath } from "./paths.js";
 import { createSocketServer, getExecutionCount } from "./socket-server.js";
 
@@ -10,10 +15,14 @@ export { DAEMON_LIMITS } from "./limits.js";
 const MAX_EXECUTIONS_BEFORE_RESTART = 200;
 
 let server: ReturnType<typeof createSocketServer>;
-let restartPending = false;
 
 export async function gracefulShutdown(reason: string = "stop"): Promise<void> {
+	stopMemoryMonitoring();
+
 	logEvent("INFO", "daemon_shutdown", { reason });
+
+	// Flush metrics before cleanup so the session summary is persisted.
+	await flushMetrics(reason);
 
 	// Delete state file first so stale PID is never left on disk,
 	// regardless of which subsequent step hangs or fails.
@@ -62,10 +71,23 @@ async function main(): Promise<void> {
 		onStop: () => gracefulShutdown("stop"),
 		onActivity: () => {
 			if (getExecutionCount() >= MAX_EXECUTIONS_BEFORE_RESTART) {
-				restartPending = true;
+				setRestartPending(true);
 			}
+			recordPeakPages(getOpenPageCount());
+			recordPeakRss(Math.round(process.memoryUsage().rss / 1024 / 1024));
 		},
 		isRestartPending: () => restartPending,
+		isDegraded: () => degraded,
+	});
+
+	startMemoryMonitoring(() => {
+		try {
+			unlinkSync(join(getDaemonStateDir(), "daemon.json"));
+		} catch {
+			// Ignore errors during emergency cleanup.
+		}
+		logEvent("ERROR", "daemon_shutdown", { reason: "memory_emergency" });
+		process.exit(1);
 	});
 
 	// Persist daemon state so CLI processes can discover this instance.

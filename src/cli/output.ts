@@ -147,6 +147,18 @@ export interface DaemonLogsResult {
 	lines: string[];
 }
 
+/** Result shape for a successful daemon start. */
+export interface DaemonStartResult {
+	success: true;
+	message: string;
+}
+
+/** Result shape for a successful daemon restart. */
+export interface DaemonRestartResult {
+	success: true;
+	message: string;
+}
+
 /** Result shape for a successful skill install. */
 export interface SkillInstallResult {
 	success: true;

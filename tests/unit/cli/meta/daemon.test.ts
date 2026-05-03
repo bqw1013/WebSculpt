@@ -23,11 +23,16 @@ vi.mock("../../../../src/cli/daemon/paths.js", () => ({
 	getDaemonLogPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.log"),
 }));
 
+vi.mock("../../../../src/cli/engine/daemon/client.js", () => ({
+	ensureDaemonClient: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { readFile, unlink } from "node:fs/promises";
 import { getDaemonLogPath } from "../../../../src/cli/daemon/paths.js";
+import { ensureDaemonClient } from "../../../../src/cli/engine/daemon/client.js";
 import { isProcessAlive, readDaemonState } from "../../../../src/cli/engine/daemon/state.js";
 import { sendRequest } from "../../../../src/cli/engine/daemon/transport.js";
-import { handleDaemonLogs, handleDaemonStatus, handleDaemonStop } from "../../../../src/cli/meta/daemon.js";
+import { handleDaemonLogs, handleDaemonRestart, handleDaemonStart, handleDaemonStatus, handleDaemonStop } from "../../../../src/cli/meta/daemon.js";
 
 describe("handleDaemonStop", () => {
 	beforeEach(() => {
@@ -173,6 +178,7 @@ describe("handleDaemonStatus", () => {
 				maxTotalPages: 50,
 				memoryWarningMB: 400,
 				memoryLimitMB: 600,
+				memoryEmergencyMB: 1000,
 				restartAfterExecutions: 200,
 			},
 		};
@@ -242,5 +248,100 @@ describe("handleDaemonLogs", () => {
 
 		expect(getDaemonLogPath).toHaveBeenCalled();
 		expect(readFile).toHaveBeenCalledWith("/tmp/.websculpt/daemon.log", "utf-8");
+	});
+});
+
+describe("handleDaemonStart", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("returns already running when daemon is healthy", async () => {
+		vi.mocked(readDaemonState).mockResolvedValueOnce({ pid: 1234, socketPath: "/tmp/daemon.sock" });
+		vi.mocked(isProcessAlive).mockReturnValueOnce(true);
+		vi.mocked(sendRequest).mockResolvedValueOnce({});
+
+		const result = await handleDaemonStart();
+
+		expect(result).toEqual({ success: true, message: "Daemon already running" });
+		expect(ensureDaemonClient).not.toHaveBeenCalled();
+	});
+
+	it("starts the daemon when no daemon is running", async () => {
+		vi.mocked(readDaemonState).mockResolvedValueOnce(null);
+
+		const result = await handleDaemonStart();
+
+		expect(result).toEqual({ success: true, message: "Daemon started" });
+		expect(ensureDaemonClient).toHaveBeenCalled();
+	});
+
+	it("starts the daemon when existing daemon is unreachable", async () => {
+		vi.mocked(readDaemonState).mockResolvedValueOnce({ pid: 1234, socketPath: "/tmp/daemon.sock" });
+		vi.mocked(isProcessAlive).mockReturnValueOnce(true);
+		vi.mocked(sendRequest).mockRejectedValueOnce(new Error("ECONNREFUSED"));
+
+		const result = await handleDaemonStart();
+
+		expect(result).toEqual({ success: true, message: "Daemon started" });
+		expect(ensureDaemonClient).toHaveBeenCalled();
+	});
+
+	it("returns error when ensureDaemonClient fails", async () => {
+		vi.mocked(readDaemonState).mockResolvedValueOnce(null);
+		vi.mocked(ensureDaemonClient).mockRejectedValueOnce(new Error("spawn failed"));
+
+		const result = await handleDaemonStart();
+
+		expect(result.success).toBe(false);
+		expect("error" in result && result.error.code).toBe("DAEMON_START_FAILED");
+	});
+});
+
+describe("handleDaemonRestart", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it("returns restarted when stop and start both succeed", async () => {
+		vi.mocked(readDaemonState).mockResolvedValueOnce({ pid: 1234, socketPath: "/tmp/daemon.sock" });
+		vi.mocked(isProcessAlive).mockReturnValue(false);
+
+		const result = await handleDaemonRestart();
+
+		expect(result).toEqual({ success: true, message: "Daemon restarted" });
+		expect(ensureDaemonClient).toHaveBeenCalled();
+	});
+
+	it("returns stop error when stop fails", async () => {
+		const killSpy = vi.spyOn(process, "kill").mockImplementation(() => true);
+		vi.mocked(readDaemonState).mockResolvedValueOnce({ pid: 1234, socketPath: "/tmp/daemon.sock" });
+		vi.mocked(isProcessAlive).mockReturnValue(true);
+
+		const promise = handleDaemonRestart();
+		await vi.advanceTimersByTimeAsync(7000);
+		const result = await promise;
+
+		expect(result.success).toBe(false);
+		expect("error" in result && result.error.code).toBe("DAEMON_STOP_FAILED");
+		expect(ensureDaemonClient).not.toHaveBeenCalled();
+
+		killSpy.mockRestore();
+	});
+
+	it("returns start error when stop succeeds but start fails", async () => {
+		vi.mocked(readDaemonState).mockResolvedValueOnce({ pid: 1234, socketPath: "/tmp/daemon.sock" });
+		vi.mocked(isProcessAlive).mockReturnValue(false);
+		vi.mocked(ensureDaemonClient).mockRejectedValueOnce(new Error("spawn failed"));
+
+		const result = await handleDaemonRestart();
+
+		expect(result.success).toBe(false);
+		expect("error" in result && result.error.code).toBe("DAEMON_START_FAILED");
 	});
 });

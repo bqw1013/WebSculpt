@@ -1,8 +1,9 @@
 import { readFile, unlink } from "node:fs/promises";
 import { getDaemonLogPath } from "../daemon/paths.js";
+import { ensureDaemonClient } from "../engine/daemon/client.js";
 import { DAEMON_JSON, isProcessAlive, readDaemonState } from "../engine/daemon/state.js";
 import { sendRequest } from "../engine/daemon/transport.js";
-import type { DaemonLogsResult, DaemonStatusResult, DaemonStopResult, MetaCommandError } from "../output.js";
+import type { DaemonLogsResult, DaemonRestartResult, DaemonStartResult, DaemonStatusResult, DaemonStopResult, MetaCommandError } from "../output.js";
 
 const STOP_POLL_INTERVAL_MS = 200;
 const STOP_POLL_MAX_WAIT_MS = 6000;
@@ -57,6 +58,52 @@ export async function handleDaemonStop(): Promise<DaemonStopResult | MetaCommand
 	}
 
 	return { success: true, message: "Daemon killed forcefully" };
+}
+
+/**
+ * Starts the daemon if it is not already running.
+ */
+export async function handleDaemonStart(): Promise<DaemonStartResult | MetaCommandError> {
+	const state = await readDaemonState();
+
+	if (state && isProcessAlive(state.pid)) {
+		try {
+			await sendRequest(state.socketPath, "health", {});
+			return { success: true, message: "Daemon already running" };
+		} catch {
+			// Daemon is alive but unreachable; fall through to restart.
+		}
+	}
+
+	try {
+		await ensureDaemonClient();
+		return { success: true, message: "Daemon started" };
+	} catch (err) {
+		return {
+			success: false,
+			error: { code: "DAEMON_START_FAILED", message: `Failed to start daemon: ${(err as Error).message}` },
+		};
+	}
+}
+
+/**
+ * Restarts the daemon by stopping it and then starting a fresh instance.
+ */
+export async function handleDaemonRestart(): Promise<DaemonRestartResult | MetaCommandError> {
+	const stopResult = await handleDaemonStop();
+	if (!stopResult.success) {
+		return stopResult as MetaCommandError;
+	}
+
+	try {
+		await ensureDaemonClient();
+		return { success: true, message: "Daemon restarted" };
+	} catch (err) {
+		return {
+			success: false,
+			error: { code: "DAEMON_START_FAILED", message: `Daemon stopped but failed to start: ${(err as Error).message}` },
+		};
+	}
 }
 
 /**

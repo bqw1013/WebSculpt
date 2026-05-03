@@ -3,12 +3,14 @@ import { getOpenPageCount, isBrowserConnected, isBrowserLazy } from "./browser-m
 import { executeCommand } from "./executor.js";
 import { DAEMON_LIMITS } from "./limits.js";
 import { logEvent } from "./logger.js";
+import { recordExecutionEnd, recordExecutionStart } from "./metrics.js";
 import { type SocketRequest, type SocketResponse, splitLines } from "./protocol.js";
 
 export interface SocketServerOptions {
 	onStop?: () => void;
 	onActivity?: () => void;
 	isRestartPending?: () => boolean;
+	isDegraded?: () => boolean;
 }
 
 let activeSessions = 0;
@@ -71,6 +73,13 @@ async function handleRequest(
 				};
 			}
 
+			if (getOpenPageCount() >= DAEMON_LIMITS.maxTotalPages) {
+				return {
+					id: requestId,
+					error: { message: "Daemon page limit reached", code: "DAEMON_PAGE_LIMIT" },
+				};
+			}
+
 			if (activeSessions >= DAEMON_LIMITS.maxConcurrentSessions) {
 				return {
 					id: requestId,
@@ -82,8 +91,11 @@ async function handleRequest(
 			logEvent("INFO", "req_start", { method: "run", commandPath });
 			executionCount++;
 			activeSessions++;
+			recordExecutionStart(activeSessions);
+			let executionSuccess = false;
 			try {
 				const data = await executeCommand(commandPath, params);
+				executionSuccess = true;
 				logEvent("INFO", "req_end", { method: "run", duration_ms: Date.now() - startTime, success: true });
 				return { id: requestId, result: { success: true, data } };
 			} catch (err) {
@@ -93,6 +105,7 @@ async function handleRequest(
 				return { id: requestId, error: { message: (err as Error).message, code } };
 			} finally {
 				activeSessions--;
+				recordExecutionEnd(executionSuccess);
 				if (options.isRestartPending?.() && activeSessions === 0) {
 					scheduleShutdown(options, drainState);
 				}
@@ -120,7 +133,7 @@ async function handleRequest(
 					pid: process.pid,
 					uptime,
 					healthy: true,
-					degraded: false,
+					degraded: options.isDegraded?.() ?? false,
 					browser: { connected, lazy, pages },
 					sessions: { active: activeSessions, max: DAEMON_LIMITS.maxConcurrentSessions, total: executionCount },
 					resources: {

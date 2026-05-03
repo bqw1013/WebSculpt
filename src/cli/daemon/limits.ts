@@ -8,5 +8,6 @@ export const DAEMON_LIMITS = {
 	maxTotalPages: 50,
 	memoryWarningMB: 400,
 	memoryLimitMB: 600,
+	memoryEmergencyMB: 1000,
 	restartAfterExecutions: 200,
 } as const;

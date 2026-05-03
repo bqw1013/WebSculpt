@@ -4,7 +4,7 @@ import { renderOutput } from "../output.js";
 import { handleCommandList, handleCommandRemove, handleCommandShow } from "./command.js";
 import { handleConfigInit } from "./config.js";
 import { handleCommandCreate } from "./create.js";
-import { handleDaemonLogs, handleDaemonStatus, handleDaemonStop } from "./daemon.js";
+import { handleDaemonLogs, handleDaemonRestart, handleDaemonStart, handleDaemonStatus, handleDaemonStop } from "./daemon.js";
 import { handleCommandDraft } from "./draft.js";
 import { handleSkillInstall, handleSkillStatus, handleSkillUninstall } from "./skill.js";
 import { handleCommandValidate } from "./validate.js";
@@ -28,6 +28,8 @@ export {
 	handleDaemonStatus,
 	handleDaemonLogs,
 	handleDaemonStop,
+	handleDaemonStart,
+	handleDaemonRestart,
 };
 
 /** Registers all meta commands (command, config, skill) on the given program. */
@@ -113,6 +115,18 @@ export function registerMetaCommands(program: Command): void {
 			if (!result.success) {
 				process.exitCode = 1;
 			}
+		});
+	daemon
+		.command("start")
+		.description("Start the background daemon if not already running")
+		.action(async () => {
+			renderOutput(await handleDaemonStart(), format());
+		});
+	daemon
+		.command("restart")
+		.description("Restart the background daemon")
+		.action(async () => {
+			renderOutput(await handleDaemonRestart(), format());
 		});
 	daemon
 		.command("stop")
