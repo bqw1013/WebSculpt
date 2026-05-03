@@ -1,18 +1,7 @@
 import { createServer, type Server, type Socket } from "node:net";
 import { isBrowserConnected } from "./browser-manager.js";
 import { executeCommand } from "./executor.js";
-
-export interface SocketRequest {
-	id: number;
-	method: string;
-	params?: Record<string, unknown>;
-}
-
-export interface SocketResponse {
-	id: number;
-	result?: unknown;
-	error?: { message: string; code: string };
-}
+import { type SocketRequest, type SocketResponse, splitLines } from "./protocol.js";
 
 export interface SocketServerOptions {
 	onStop?: () => void;
@@ -169,13 +158,4 @@ export function createSocketServer(socketPath: string, options: SocketServerOpti
 	});
 
 	return server;
-}
-
-/**
- * Splits a buffer into complete lines and returns the remaining incomplete buffer.
- */
-function splitLines(buffer: string): [string[], string] {
-	const lines = buffer.split("\n");
-	const remainder = lines.pop() ?? "";
-	return [lines, remainder];
 }

@@ -5,7 +5,7 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 	return {
 		...actual,
 		readFile: vi.fn(),
-		unlink: vi.fn(),
+		unlink: vi.fn().mockResolvedValue(undefined),
 		writeFile: vi.fn(),
 		mkdir: vi.fn(),
 		open: vi.fn().mockResolvedValue({
@@ -18,19 +18,11 @@ vi.mock("node:net", () => ({
 	createConnection: vi.fn(),
 }));
 
-vi.mock("../../../../src/cli/engine/daemon-client.js", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("../../../../src/cli/engine/daemon-client.js")>();
-	return {
-		...actual,
-		ensureDaemonClient: vi.fn().mockResolvedValue({
-			run: vi.fn().mockResolvedValue("ok"),
-		}),
-	};
-});
+
 
 import { readFile, unlink } from "node:fs/promises";
 import { createConnection } from "node:net";
-import { createClient } from "../../../../src/cli/engine/daemon-client.js";
+import { createClient, type DaemonClient } from "../../../../src/cli/engine/daemon/client.js";
 
 describe("createClient PID ownership", () => {
 	beforeEach(() => {
@@ -64,9 +56,10 @@ describe("createClient PID ownership", () => {
 			return socket as unknown as ReturnType<typeof createConnection>;
 		});
 
-		const client = createClient({ pid: 1234, socketPath: "\\.\\pipe\\test" });
+		const mockEnsure = vi.fn().mockRejectedValue(new Error("retry failed"));
+		const client = createClient({ pid: 1234, socketPath: "\\.\\pipe\\test" }, mockEnsure);
 
-		await expect(client.run("/tmp/cmd.js", {})).rejects.toThrow();
+		await expect(client.run("/tmp/cmd.js", {})).rejects.toThrow("retry failed");
 		expect(killSpy).toHaveBeenCalledWith(1234, "SIGTERM");
 		expect(unlink).toHaveBeenCalled();
 	});
@@ -94,9 +87,10 @@ describe("createClient PID ownership", () => {
 			return socket as unknown as ReturnType<typeof createConnection>;
 		});
 
-		const client = createClient({ pid: 1234, socketPath: "\\.\\pipe\\test" });
+		const mockEnsure = vi.fn().mockRejectedValue(new Error("retry failed"));
+		const client = createClient({ pid: 1234, socketPath: "\\.\\pipe\\test" }, mockEnsure);
 
-		await expect(client.run("/tmp/cmd.js", {})).rejects.toThrow();
+		await expect(client.run("/tmp/cmd.js", {})).rejects.toThrow("retry failed");
 		const sigtermCalls = killSpy.mock.calls.filter((call) => call[1] === "SIGTERM");
 		expect(sigtermCalls).toHaveLength(0);
 		// Lock file cleanup from acquireDaemonLock may call unlink; ensure daemon.json is NOT removed.

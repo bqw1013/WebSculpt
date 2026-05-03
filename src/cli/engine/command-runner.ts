@@ -31,6 +31,11 @@ async function runNodeCommand(commandPath: string, params: Record<string, string
 }
 
 /**
+ * Infrastructure error codes that should be surfaced to the user as-is.
+ */
+const INFRASTRUCTURE_CODES = new Set(["DAEMON_START_FAILED", "DAEMON_UNREACHABLE", "PLAYWRIGHT_CLI_ATTACH_REQUIRED"]);
+
+/**
  * Executes a playwright-cli runtime command via the websculpt-daemon.
  */
 async function runPlaywrightDaemonCommand(commandPath: string, params: Record<string, string>): Promise<unknown> {
@@ -40,24 +45,13 @@ async function runPlaywrightDaemonCommand(commandPath: string, params: Record<st
 	} catch (err) {
 		const execErr = err as Error & { code?: string };
 		const code = execErr.code;
-		const message = execErr.message ?? "";
 
-		// Infrastructure: daemon failed to start
-		if (code === "DAEMON_START_FAILED") {
+		// Infrastructure errors are surfaced as-is.
+		if (code && INFRASTRUCTURE_CODES.has(code)) {
 			throw err;
 		}
 
-		// Infrastructure: daemon is unreachable
-		if (code === "DAEMON_UNREACHABLE") {
-			throw err;
-		}
-
-		// Infrastructure: CDP session not attached (detailed message comes from the daemon)
-		if (code === "PLAYWRIGHT_CLI_ATTACH_REQUIRED") {
-			throw err;
-		}
-
-		// Infrastructure: socket request timed out (60s)
+		// Socket timeout is mapped to a user-facing TIMEOUT code.
 		if (code === "SOCKET_TIMEOUT") {
 			const error = new Error("Command execution timed out after 60 seconds.");
 			(error as Error & { code: string }).code = "TIMEOUT";
@@ -69,8 +63,8 @@ async function runPlaywrightDaemonCommand(commandPath: string, params: Record<st
 			throw err;
 		}
 
-		// Fallback: generic command execution error
-		const fallbackError = new Error(message);
+		// Fallback: generic command execution error.
+		const fallbackError = new Error(execErr.message ?? "");
 		(fallbackError as Error & { code: string }).code = "COMMAND_EXECUTION_ERROR";
 		throw fallbackError;
 	}
