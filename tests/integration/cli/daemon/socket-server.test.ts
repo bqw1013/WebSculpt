@@ -93,9 +93,9 @@ describe("socket-server execution limits", () => {
 	});
 
 	it("rejects requests with DAEMON_BUSY when concurrent limit is reached", async () => {
-		// Spawn many concurrent requests
+		// Spawn more concurrent requests than the limit to force saturation
 		const requests: Promise<string>[] = [];
-		for (let i = 0; i < 15; i++) {
+		for (let i = 0; i < 25; i++) {
 			requests.push(
 				sendRequest(socketPath, {
 					id: i + 1,

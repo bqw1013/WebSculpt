@@ -54,4 +54,30 @@ describe("runCommand playwright-cli timeout classification", () => {
 			(err: Error & { code?: string }) => err.code === "COMMAND_EXECUTION_ERROR",
 		);
 	});
+
+	it("does not infer business codes from message text when err.code is absent", async () => {
+		const inferredError = new Error("NOT_FOUND in module foo");
+
+		vi.mocked(ensureDaemonClient).mockResolvedValue({
+			run: vi.fn().mockRejectedValue(inferredError),
+		});
+
+		await expect(runCommand(mockManifest("playwright-cli") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
+			(err: Error & { code?: string }) =>
+				err.code === "COMMAND_EXECUTION_ERROR" && err.message === "NOT_FOUND in module foo",
+		);
+	});
+
+	it("preserves business error codes directly from err.code", async () => {
+		const businessError = new Error("Please log in to Zhihu");
+		(businessError as Error & { code: string }).code = "AUTH_REQUIRED";
+
+		vi.mocked(ensureDaemonClient).mockResolvedValue({
+			run: vi.fn().mockRejectedValue(businessError),
+		});
+
+		await expect(runCommand(mockManifest("playwright-cli") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
+			(err: Error & { code?: string }) => err.code === "AUTH_REQUIRED" && err.message === "Please log in to Zhihu",
+		);
+	});
 });

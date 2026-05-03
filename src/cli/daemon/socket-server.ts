@@ -21,7 +21,7 @@ export interface SocketServerOptions {
 
 let activeSessions = 0;
 let executionCount = 0;
-const MAX_CONCURRENT_SESSIONS = 10;
+const MAX_CONCURRENT_SESSIONS = 20;
 
 /**
  * Returns the number of currently active command executions.

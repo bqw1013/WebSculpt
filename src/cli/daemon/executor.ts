@@ -22,7 +22,7 @@ export async function executeCommand(commandPath: string, params: Record<string,
 		try {
 			page = await context.newPage();
 
-			const module = await import(`${pathToFileURL(commandPath).href}?bust=${Date.now()}`);
+			const module = await import(`${pathToFileURL(commandPath).href}?t=${Date.now()}`);
 			const handler = module.default;
 
 			if (typeof handler !== "function") {

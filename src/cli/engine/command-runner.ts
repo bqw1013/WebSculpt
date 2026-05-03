@@ -31,23 +31,6 @@ async function runNodeCommand(commandPath: string, params: Record<string, string
 }
 
 /**
- * Known business error codes that may be thrown by command.js.
- */
-const KNOWN_BUSINESS_CODES = ["AUTH_REQUIRED", "NOT_FOUND", "EMPTY_RESULT", "MISSING_PARAM", "DRIFT_DETECTED"];
-
-/**
- * Extract a business error code from diagnostic text.
- */
-function extractBusinessErrorCode(text: string): string | undefined {
-	for (const code of KNOWN_BUSINESS_CODES) {
-		if (text.includes(code)) {
-			return code;
-		}
-	}
-	return undefined;
-}
-
-/**
  * Executes a playwright-cli runtime command via the websculpt-daemon.
  */
 async function runPlaywrightDaemonCommand(commandPath: string, params: Record<string, string>): Promise<unknown> {
@@ -81,15 +64,7 @@ async function runPlaywrightDaemonCommand(commandPath: string, params: Record<st
 			throw error;
 		}
 
-		// Business errors: preserve codes thrown by command code
-		const businessCode = extractBusinessErrorCode(message);
-		if (businessCode) {
-			const error = new Error(message);
-			(error as Error & { code: string }).code = businessCode;
-			throw error;
-		}
-
-		// If the error already carries a structured code, preserve it.
+		// If the error carries a structured code, preserve it directly.
 		if (code && typeof code === "string") {
 			throw err;
 		}
