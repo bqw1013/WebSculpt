@@ -1,6 +1,8 @@
 import { createServer, type Server, type Socket } from "node:net";
-import { isBrowserConnected } from "./browser-manager.js";
+import { getOpenPageCount, isBrowserConnected, isBrowserLazy } from "./browser-manager.js";
 import { executeCommand } from "./executor.js";
+import { DAEMON_LIMITS } from "./limits.js";
+import { logEvent } from "./logger.js";
 import { type SocketRequest, type SocketResponse, splitLines } from "./protocol.js";
 
 export interface SocketServerOptions {
@@ -11,7 +13,6 @@ export interface SocketServerOptions {
 
 let activeSessions = 0;
 let executionCount = 0;
-const MAX_CONCURRENT_SESSIONS = 20;
 
 /**
  * Returns the number of currently active command executions.
@@ -39,7 +40,11 @@ function scheduleShutdown(options: SocketServerOptions, drainState: DrainState):
 	});
 }
 
-async function handleRequest(req: SocketRequest, options: SocketServerOptions, drainState: DrainState): Promise<SocketResponse> {
+async function handleRequest(
+	req: SocketRequest,
+	options: SocketServerOptions,
+	drainState: DrainState,
+): Promise<SocketResponse> {
 	options.onActivity?.();
 
 	const requestId = typeof req.id === "number" ? req.id : -1;
@@ -66,20 +71,25 @@ async function handleRequest(req: SocketRequest, options: SocketServerOptions, d
 				};
 			}
 
-			if (activeSessions >= MAX_CONCURRENT_SESSIONS) {
+			if (activeSessions >= DAEMON_LIMITS.maxConcurrentSessions) {
 				return {
 					id: requestId,
 					error: { message: "Daemon is at capacity", code: "DAEMON_BUSY" },
 				};
 			}
 
+			const startTime = Date.now();
+			logEvent("INFO", "req_start", { method: "run", commandPath });
 			executionCount++;
 			activeSessions++;
 			try {
 				const data = await executeCommand(commandPath, params);
+				logEvent("INFO", "req_end", { method: "run", duration_ms: Date.now() - startTime, success: true });
 				return { id: requestId, result: { success: true, data } };
 			} catch (err) {
 				const code = (err as Error & { code?: string }).code ?? "COMMAND_EXECUTION_ERROR";
+				logEvent("ERROR", "req_error", { method: "run", error_code: code, error_message: (err as Error).message });
+				logEvent("INFO", "req_end", { method: "run", duration_ms: Date.now() - startTime, success: false });
 				return { id: requestId, error: { message: (err as Error).message, code } };
 			} finally {
 				activeSessions--;
@@ -92,7 +102,35 @@ async function handleRequest(req: SocketRequest, options: SocketServerOptions, d
 		case "health": {
 			// Use isBrowserConnected to avoid triggering a lazy connection on health checks.
 			const connected = isBrowserConnected();
-			return { id: requestId, result: { connected, sessions: activeSessions } };
+			const lazy = isBrowserLazy();
+			let pages = 0;
+			if (connected) {
+				try {
+					pages = getOpenPageCount();
+				} catch {
+					pages = 0;
+				}
+			}
+			const mem = process.memoryUsage();
+			const uptime = Math.floor((Date.now() - startupTime) / 1000);
+
+			return {
+				id: requestId,
+				result: {
+					pid: process.pid,
+					uptime,
+					healthy: true,
+					degraded: false,
+					browser: { connected, lazy, pages },
+					sessions: { active: activeSessions, max: DAEMON_LIMITS.maxConcurrentSessions, total: executionCount },
+					resources: {
+						rssMB: Math.round(mem.rss / 1024 / 1024),
+						heapUsedMB: Math.round(mem.heapUsed / 1024 / 1024),
+						heapTotalMB: Math.round(mem.heapTotal / 1024 / 1024),
+					},
+					limits: { ...DAEMON_LIMITS },
+				},
+			};
 		}
 
 		case "stop": {
@@ -111,11 +149,14 @@ async function handleRequest(req: SocketRequest, options: SocketServerOptions, d
 	}
 }
 
+let startupTime = Date.now();
+
 /**
  * Creates a net.Server that listens on the given local socket path
  * and communicates via newline-delimited JSON (NDJSON).
  */
 export function createSocketServer(socketPath: string, options: SocketServerOptions = {}): Server {
+	startupTime = Date.now();
 	const drainState: DrainState = { initiated: false };
 	const server = createServer((socket: Socket) => {
 		let buffer = "";

@@ -1,7 +1,9 @@
 import { type Browser, chromium } from "playwright-core";
+import { logEvent } from "./logger.js";
 
 let cachedBrowser: Browser | null = null;
 let connectingPromise: Promise<Browser> | null = null;
+let hasEverConnected = false;
 
 /**
  * Returns an active Browser connected over Chrome DevTools Protocol.
@@ -22,6 +24,8 @@ export async function getBrowser(): Promise<Browser> {
 			try {
 				const browser = await chromium.connectOverCDP("chrome");
 				cachedBrowser = browser;
+				hasEverConnected = true;
+				logEvent("INFO", "browser_connect");
 				return browser;
 			} catch {
 				const error = new Error(
@@ -71,11 +75,33 @@ export function isBrowserConnected(): boolean {
 }
 
 /**
+ * Returns true if connectOverCDP has never been called.
+ * This disambiguates "not yet connected" from "connection lost."
+ */
+export function isBrowserLazy(): boolean {
+	return !hasEverConnected;
+}
+
+/**
+ * Returns the total count of open pages across all browser contexts.
+ * Returns 0 if the browser is not connected.
+ */
+export function getOpenPageCount(): number {
+	if (!cachedBrowser?.isConnected()) return 0;
+	try {
+		return cachedBrowser.contexts().reduce((sum, ctx) => sum + ctx.pages().length, 0);
+	} catch {
+		return 0;
+	}
+}
+
+/**
  * Closes the cached browser connection and clears the cache.
  */
 export async function closeBrowser(): Promise<void> {
 	if (cachedBrowser) {
 		await cachedBrowser.close().catch(() => {});
+		logEvent("WARN", "browser_disconnect");
 		cachedBrowser = null;
 	}
 }

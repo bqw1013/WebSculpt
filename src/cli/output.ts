@@ -104,6 +104,49 @@ export interface DaemonStopResult {
 	message: string;
 }
 
+/** Runtime health status returned by the daemon health endpoint. */
+export interface DaemonHealthStatus {
+	pid: number;
+	uptime: number;
+	healthy: boolean;
+	degraded: boolean;
+	browser: {
+		connected: boolean;
+		lazy: boolean;
+		pages: number;
+	};
+	sessions: {
+		active: number;
+		max: number;
+		total: number;
+	};
+	resources: {
+		rssMB: number;
+		heapUsedMB: number;
+		heapTotalMB: number;
+	};
+	limits: {
+		commandTimeoutSec: number;
+		maxConcurrentSessions: number;
+		maxTotalPages: number;
+		memoryWarningMB: number;
+		memoryLimitMB: number;
+		restartAfterExecutions: number;
+	};
+}
+
+/** Result shape for a successful daemon status query. */
+export interface DaemonStatusResult {
+	success: true;
+	status: DaemonHealthStatus;
+}
+
+/** Result shape for a successful daemon logs query. */
+export interface DaemonLogsResult {
+	success: true;
+	lines: string[];
+}
+
 /** Result shape for a successful skill install. */
 export interface SkillInstallResult {
 	success: true;
@@ -129,6 +172,8 @@ export type MetaCommandResult =
 	| CommandListResult
 	| ConfigInitResult
 	| DaemonStopResult
+	| DaemonStatusResult
+	| DaemonLogsResult
 	| SkillInstallResult
 	| SkillUninstallResult
 	| SkillStatusResult
@@ -141,6 +186,15 @@ export type MetaCommandResult =
 /** Prints a value as pretty-printed JSON to stdout. */
 export function printJson(data: unknown): void {
 	console.log(JSON.stringify(data, null, 2));
+}
+
+function formatUptime(seconds: number): string {
+	const h = Math.floor(seconds / 3600);
+	const m = Math.floor((seconds % 3600) / 60);
+	const s = seconds % 60;
+	if (h > 0) return `${h}h ${m}m`;
+	if (m > 0) return `${m}m ${s}s`;
+	return `${s}s`;
 }
 
 /** Renders a meta command result as either human-readable text or JSON. */
@@ -220,6 +274,42 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		console.log(`${pad("Command", commandMaxWidth)}${pad("Source", sourceMaxWidth)}Description`);
 		for (const row of rows) {
 			console.log(`${pad(row.command, commandMaxWidth)}${pad(row.source, sourceMaxWidth)}${row.description}`);
+		}
+		return;
+	}
+
+	if ("status" in result) {
+		const s = result.status;
+		const pad = (label: string, value: string) => {
+			console.log(`${label.padEnd(12)}${value}`);
+		};
+		console.log("Daemon Status");
+		console.log("=============");
+		pad("PID:", String(s.pid));
+		pad("Uptime:", formatUptime(s.uptime));
+		pad("Healthy:", s.healthy ? "yes" : "no");
+		pad("Degraded:", s.degraded ? "yes" : "no");
+		console.log("");
+		console.log("Browser");
+		pad("  Connected:", s.browser.connected ? "yes" : "no");
+		pad("  Pages:", String(s.browser.pages));
+		console.log("");
+		console.log("Sessions");
+		pad("  Active:", `${s.sessions.active} / ${s.sessions.max}`);
+		pad("  Total:", String(s.sessions.total));
+		console.log("");
+		console.log("Resources");
+		pad("  RSS:", `${s.resources.rssMB} MB`);
+		pad("  Heap:", `${s.resources.heapUsedMB} / ${s.resources.heapTotalMB} MB`);
+		console.log("");
+		console.log("Limits");
+		pad("  Command timeout:", `${Math.floor(s.limits.commandTimeoutSec / 60)} min`);
+		pad("  Max sessions:", String(s.limits.maxConcurrentSessions));
+		pad("  Max pages:", String(s.limits.maxTotalPages));
+		pad("  Restart after:", `${s.limits.restartAfterExecutions} executions`);
+		if (s.degraded) {
+			console.log("");
+			console.log("WARNING: Daemon is degraded");
 		}
 		return;
 	}

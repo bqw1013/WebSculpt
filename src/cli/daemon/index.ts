@@ -1,17 +1,20 @@
-import { createWriteStream, type WriteStream } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { closeBrowser } from "./browser-manager.js";
-import { getDaemonLogPath, getDaemonStateDir, getSocketPath } from "./paths.js";
+import { closeLogger, initLogger, logEvent } from "./logger.js";
+import { getDaemonStateDir, getSocketPath } from "./paths.js";
 import { createSocketServer, getExecutionCount } from "./socket-server.js";
+
+export { DAEMON_LIMITS } from "./limits.js";
 
 const MAX_EXECUTIONS_BEFORE_RESTART = 200;
 
 let server: ReturnType<typeof createSocketServer>;
-let logStream: WriteStream | null = null;
 let restartPending = false;
 
-export async function gracefulShutdown(): Promise<void> {
+export async function gracefulShutdown(reason: string = "stop"): Promise<void> {
+	logEvent("INFO", "daemon_shutdown", { reason });
+
 	// Delete state file first so stale PID is never left on disk,
 	// regardless of which subsequent step hangs or fails.
 	try {
@@ -32,42 +35,17 @@ export async function gracefulShutdown(): Promise<void> {
 	} catch {
 		// Ignore server close errors.
 	}
-	if (logStream) {
-		logStream.end();
-	}
+	closeLogger();
 	// Force exit if server close hangs.
 	setTimeout(() => process.exit(0), 5000);
-}
-
-/**
- * Redirects process.stderr to both the original stderr and a persistent log file.
- */
-function redirectStderrToFile(logPath: string): void {
-	logStream = createWriteStream(logPath, { flags: "a" });
-	const originalWrite = process.stderr.write.bind(process.stderr);
-
-	function writeOverride(
-		chunk: string | Uint8Array,
-		encoding?: BufferEncoding | ((err?: Error | null) => void),
-		callback?: (err?: Error | null) => void,
-	): boolean {
-		if (typeof encoding === "function") {
-			callback = encoding;
-			encoding = undefined;
-		}
-		logStream?.write(chunk, encoding as BufferEncoding);
-		return originalWrite(chunk, encoding as BufferEncoding, callback);
-	}
-
-	process.stderr.write = writeOverride as typeof process.stderr.write;
 }
 
 async function main(): Promise<void> {
 	const stateDir = getDaemonStateDir();
 	await mkdir(stateDir, { recursive: true });
 
-	const logPath = getDaemonLogPath();
-	redirectStderrToFile(logPath);
+	initLogger();
+	logEvent("INFO", "daemon_start", { pid: process.pid, socketPath: getSocketPath() });
 
 	const socketPath = getSocketPath();
 
@@ -81,7 +59,7 @@ async function main(): Promise<void> {
 	}
 
 	server = createSocketServer(socketPath, {
-		onStop: () => gracefulShutdown(),
+		onStop: () => gracefulShutdown("stop"),
 		onActivity: () => {
 			if (getExecutionCount() >= MAX_EXECUTIONS_BEFORE_RESTART) {
 				restartPending = true;
@@ -102,23 +80,23 @@ async function main(): Promise<void> {
 			process.exit(0);
 		}
 		console.error("Server error:", err);
-		gracefulShutdown();
+		gracefulShutdown("error");
 	});
 
 	// Graceful shutdown on termination signals.
-	process.on("SIGTERM", () => gracefulShutdown());
-	process.on("SIGINT", () => gracefulShutdown());
+	process.on("SIGTERM", () => gracefulShutdown("signal"));
+	process.on("SIGINT", () => gracefulShutdown("signal"));
 
 	// Log uncaught exceptions and initiate graceful shutdown.
 	process.on("uncaughtException", (err) => {
 		console.error("Uncaught exception:", err);
-		gracefulShutdown();
+		gracefulShutdown("error");
 	});
 
 	// Log unhandled rejections and initiate graceful shutdown.
 	process.on("unhandledRejection", (reason) => {
 		console.error("Unhandled rejection:", reason);
-		gracefulShutdown();
+		gracefulShutdown("error");
 	});
 }
 

@@ -1,7 +1,8 @@
-import { unlink } from "node:fs/promises";
+import { readFile, unlink } from "node:fs/promises";
+import { getDaemonLogPath } from "../daemon/paths.js";
 import { DAEMON_JSON, isProcessAlive, readDaemonState } from "../engine/daemon/state.js";
 import { sendRequest } from "../engine/daemon/transport.js";
-import type { DaemonStopResult, MetaCommandError } from "../output.js";
+import type { DaemonLogsResult, DaemonStatusResult, DaemonStopResult, MetaCommandError } from "../output.js";
 
 const STOP_POLL_INTERVAL_MS = 200;
 const STOP_POLL_MAX_WAIT_MS = 6000;
@@ -56,4 +57,50 @@ export async function handleDaemonStop(): Promise<DaemonStopResult | MetaCommand
 	}
 
 	return { success: true, message: "Daemon killed forcefully" };
+}
+
+/**
+ * Queries the running daemon's health endpoint and returns its current state.
+ */
+export async function handleDaemonStatus(): Promise<DaemonStatusResult | MetaCommandError> {
+	const state = await readDaemonState();
+
+	if (!state || !isProcessAlive(state.pid)) {
+		return {
+			success: false,
+			error: { code: "DAEMON_NOT_RUNNING", message: "Daemon is not running" },
+		};
+	}
+
+	try {
+		const status = (await sendRequest(state.socketPath, "health", {})) as DaemonStatusResult["status"];
+		return { success: true, status };
+	} catch (err) {
+		return {
+			success: false,
+			error: {
+				code: "DAEMON_UNREACHABLE",
+				message: `Daemon is running but unreachable: ${(err as Error).message}`,
+			},
+		};
+	}
+}
+
+/**
+ * Reads and returns recent entries from the daemon log file.
+ */
+export async function handleDaemonLogs(options: { lines?: number } = {}): Promise<DaemonLogsResult | MetaCommandError> {
+	const logPath = getDaemonLogPath();
+	const lineCount = options.lines ?? 50;
+
+	try {
+		const content = await readFile(logPath, "utf-8");
+		const lines = content.split("\n").filter((l) => l.trim() !== "");
+		return { success: true, lines: lines.slice(-lineCount) };
+	} catch {
+		return {
+			success: false,
+			error: { code: "NO_LOGS_AVAILABLE", message: "No daemon logs are available" },
+		};
+	}
 }

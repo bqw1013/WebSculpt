@@ -113,6 +113,74 @@ describe("socket-server execution limits", () => {
 	});
 });
 
+describe("socket-server health check", () => {
+	let socketPath: string;
+	let server: ReturnType<typeof createSocketServer>;
+
+	beforeEach(async () => {
+		socketPath = await createTestSocketPath();
+		server = createSocketServer(socketPath, {
+			onStop: () => {},
+			onActivity: () => {},
+		});
+
+		await new Promise<void>((resolve, reject) => {
+			server.on("listening", resolve);
+			server.on("error", reject);
+		});
+	});
+
+	afterEach(async () => {
+		server?.close();
+		if (process.platform !== "win32") {
+			try {
+				await unlink(socketPath);
+			} catch {
+				// ignore
+			}
+		}
+	});
+
+	it("returns comprehensive status including pid, uptime, browser, sessions, resources, and limits", async () => {
+		const response = await sendRequest(socketPath, {
+			id: 1,
+			method: "health",
+		});
+
+		const parsed = JSON.parse(response);
+		expect(parsed.error).toBeUndefined();
+		expect(parsed.result).toMatchObject({
+			pid: expect.any(Number),
+			uptime: expect.any(Number),
+			healthy: true,
+			degraded: false,
+			browser: {
+				connected: expect.any(Boolean),
+				lazy: expect.any(Boolean),
+				pages: expect.any(Number),
+			},
+			sessions: {
+				active: expect.any(Number),
+				max: expect.any(Number),
+				total: expect.any(Number),
+			},
+			resources: {
+				rssMB: expect.any(Number),
+				heapUsedMB: expect.any(Number),
+				heapTotalMB: expect.any(Number),
+			},
+			limits: {
+				commandTimeoutSec: expect.any(Number),
+				maxConcurrentSessions: expect.any(Number),
+				maxTotalPages: expect.any(Number),
+				memoryWarningMB: expect.any(Number),
+				memoryLimitMB: expect.any(Number),
+				restartAfterExecutions: expect.any(Number),
+			},
+		});
+	});
+});
+
 describe("socket-server drain mode", () => {
 	let socketPath: string;
 	let server: ReturnType<typeof createSocketServer>;
