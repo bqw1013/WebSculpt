@@ -39,6 +39,7 @@ coverage/
 .cache/
 tmp/
 .tmp/
+.tmp-drafts/
 .websculpt-drafts/
 
 # Process / seed files
