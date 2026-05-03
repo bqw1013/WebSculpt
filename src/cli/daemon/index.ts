@@ -5,37 +5,21 @@ import { closeBrowser } from "./browser-manager.js";
 import { getDaemonLogPath, getDaemonStateDir, getSocketPath } from "./paths.js";
 import { createSocketServer, getExecutionCount } from "./socket-server.js";
 
-const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_EXECUTIONS_BEFORE_RESTART = 200;
 
-let idleTimer: NodeJS.Timeout | null = null;
 let server: ReturnType<typeof createSocketServer>;
 let logStream: WriteStream | null = null;
 let restartPending = false;
 
-function resetIdleTimer(): void {
-	if (idleTimer) {
-		clearTimeout(idleTimer);
+export async function gracefulShutdown(): Promise<void> {
+	// Delete state file first so stale PID is never left on disk,
+	// regardless of which subsequent step hangs or fails.
+	try {
+		await unlink(join(getDaemonStateDir(), "daemon.json"));
+	} catch {
+		// Ignore if the state file does not exist or is not writable.
 	}
-	idleTimer = setTimeout(() => {
-		if (restartPending) {
-			console.error("Execution threshold reached, shutting down daemon for restart.");
-		} else {
-			console.error("Idle timeout reached, shutting down.");
-		}
-		gracefulShutdown();
-	}, IDLE_TIMEOUT_MS);
-}
 
-function stopIdleTimer(): void {
-	if (idleTimer) {
-		clearTimeout(idleTimer);
-		idleTimer = null;
-	}
-}
-
-async function gracefulShutdown(): Promise<void> {
-	stopIdleTimer();
 	try {
 		await closeBrowser();
 	} catch {
@@ -102,8 +86,8 @@ async function main(): Promise<void> {
 			if (getExecutionCount() >= MAX_EXECUTIONS_BEFORE_RESTART) {
 				restartPending = true;
 			}
-			resetIdleTimer();
 		},
+		isRestartPending: () => restartPending,
 	});
 
 	// Persist daemon state so CLI processes can discover this instance.
@@ -120,8 +104,6 @@ async function main(): Promise<void> {
 		console.error("Server error:", err);
 		gracefulShutdown();
 	});
-
-	resetIdleTimer();
 
 	// Graceful shutdown on termination signals.
 	process.on("SIGTERM", () => gracefulShutdown());

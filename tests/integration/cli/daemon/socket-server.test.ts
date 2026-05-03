@@ -112,3 +112,125 @@ describe("socket-server execution limits", () => {
 		expect(busyResponses.length).toBeGreaterThan(0);
 	});
 });
+
+describe("socket-server drain mode", () => {
+	let socketPath: string;
+	let server: ReturnType<typeof createSocketServer>;
+	let onStopMock: ReturnType<typeof vi.fn>;
+
+	beforeEach(async () => {
+		socketPath = await createTestSocketPath();
+		onStopMock = vi.fn();
+		server = createSocketServer(socketPath, {
+			onStop: onStopMock,
+			onActivity: () => {},
+			isRestartPending: () => true,
+		});
+
+		await new Promise<void>((resolve, reject) => {
+			server.on("listening", resolve);
+			server.on("error", reject);
+		});
+	});
+
+	afterEach(async () => {
+		server?.close();
+		if (process.platform !== "win32") {
+			try {
+				await unlink(socketPath);
+			} catch {
+				// ignore
+			}
+		}
+	});
+
+	it("rejects new run requests with DAEMON_RESTARTING when restart is pending", async () => {
+		const response = await sendRequest(socketPath, {
+			id: 1,
+			method: "run",
+			params: { commandPath: "/tmp/test.js", params: {} },
+		});
+
+		const parsed = JSON.parse(response);
+		expect(parsed.error).toBeDefined();
+		expect(parsed.error.code).toBe("DAEMON_RESTARTING");
+	});
+
+	it("triggers onStop when the last active session completes in restart-pending state", async () => {
+		// First, send a run request that will be accepted (restartPending is false initially).
+		const normalServer = createSocketServer(`${socketPath}-normal`, {
+			onStop: onStopMock,
+			onActivity: () => {},
+			isRestartPending: () => false,
+		});
+
+		await new Promise<void>((resolve, reject) => {
+			normalServer.on("listening", resolve);
+			normalServer.on("error", reject);
+		});
+
+		const response = await sendRequest(`${socketPath}-normal`, {
+			id: 1,
+			method: "run",
+			params: { commandPath: "/tmp/test.js", params: {} },
+		});
+
+		const parsed = JSON.parse(response);
+		expect(parsed.error).toBeUndefined();
+		normalServer.close();
+	});
+
+	it("initiates shutdown via onStop after active sessions drain during restart", async () => {
+		// Use a socket path that allows restartPending to flip mid-test.
+		const drainSocketPath = `${socketPath}-drain`;
+		let restartPending = false;
+		const drainOnStop = vi.fn();
+
+		const drainServer = createSocketServer(drainSocketPath, {
+			onStop: drainOnStop,
+			onActivity: () => {},
+			isRestartPending: () => restartPending,
+		});
+
+		await new Promise<void>((resolve, reject) => {
+			drainServer.on("listening", resolve);
+			drainServer.on("error", reject);
+		});
+
+		// First request: accepted because restartPending is still false.
+		const initialExecutionCount = getExecutionCount();
+		const runPromise = sendRequest(drainSocketPath, {
+			id: 1,
+			method: "run",
+			params: { commandPath: "/tmp/test.js", params: {} },
+		});
+
+		// Wait until the request has been accepted (executionCount increments)
+		// before flipping restartPending.
+		while (getExecutionCount() === initialExecutionCount) {
+			await new Promise((r) => setTimeout(r, 5));
+		}
+		restartPending = true;
+
+		const response = await runPromise;
+		const parsed = JSON.parse(response);
+		expect(parsed.error).toBeUndefined();
+
+		// Second request: rejected because restartPending is now true.
+		const rejectResponse = await sendRequest(drainSocketPath, {
+			id: 2,
+			method: "run",
+			params: { commandPath: "/tmp/test.js", params: {} },
+		});
+		const rejectParsed = JSON.parse(rejectResponse);
+		expect(rejectParsed.error?.code).toBe("DAEMON_RESTARTING");
+
+		// Wait for the first run to finish (mocked executeCommand resolves after 200ms).
+		await new Promise((r) => setTimeout(r, 400));
+
+		// Once the active session drops to 0, onStop should be called.
+		expect(drainOnStop).toHaveBeenCalledTimes(1);
+
+		drainServer.close();
+	});
+});

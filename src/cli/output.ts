@@ -98,6 +98,12 @@ export interface ConfigInitResult {
 	message: string;
 }
 
+/** Result shape for a successful daemon stop. */
+export interface DaemonStopResult {
+	success: true;
+	message: string;
+}
+
 /** Result shape for a successful skill install. */
 export interface SkillInstallResult {
 	success: true;
@@ -122,6 +128,7 @@ export type MetaCommandResult =
 	| CommandRemoveResult
 	| CommandListResult
 	| ConfigInitResult
+	| DaemonStopResult
 	| SkillInstallResult
 	| SkillUninstallResult
 	| SkillStatusResult

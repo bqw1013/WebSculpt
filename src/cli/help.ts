@@ -30,7 +30,7 @@ export class WebSculptHelp extends Help {
 		}
 
 		const visibleCommands = helper.visibleCommands(cmd);
-		const metaNames = new Set(["command", "config", "skill"]);
+		const metaNames = new Set(["command", "config", "daemon", "skill"]);
 		const meta = visibleCommands.filter((c) => metaNames.has(c.name()));
 		const domains = visibleCommands.filter((c) => !metaNames.has(c.name()) && !c.name().startsWith("help"));
 		const builtinDomains = domains.filter((c) => c._domainSource === "builtin");

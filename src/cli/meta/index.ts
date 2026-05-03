@@ -4,6 +4,7 @@ import { renderOutput } from "../output.js";
 import { handleCommandList, handleCommandRemove, handleCommandShow } from "./command.js";
 import { handleConfigInit } from "./config.js";
 import { handleCommandCreate } from "./create.js";
+import { handleDaemonStop } from "./daemon.js";
 import { handleCommandDraft } from "./draft.js";
 import { handleSkillInstall, handleSkillStatus, handleSkillUninstall } from "./skill.js";
 import { handleCommandValidate } from "./validate.js";
@@ -24,6 +25,7 @@ export {
 	handleSkillUninstall,
 	handleCommandValidate,
 	handleCommandDraft,
+	handleDaemonStop,
 };
 
 /** Registers all meta commands (command, config, skill) on the given program. */
@@ -86,6 +88,14 @@ export function registerMetaCommands(program: Command): void {
 		.description("Initialize ~/.websculpt with config.json and log.jsonl")
 		.action(async () => {
 			renderOutput(await handleConfigInit(), format());
+		});
+
+	const daemon = program.command("daemon").description("Manage the background browser daemon");
+	daemon
+		.command("stop")
+		.description("Stop the running daemon process")
+		.action(async () => {
+			renderOutput(await handleDaemonStop(), format());
 		});
 
 	const skill = program.command("skill").description("Install strategy docs to AI agent directories");

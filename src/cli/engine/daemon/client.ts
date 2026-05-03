@@ -20,10 +20,7 @@ export interface DaemonClient {
 /**
  * Creates a DaemonClient backed by the given socket path.
  */
-export function createClient(
-	state: DaemonState,
-	ensureClient?: () => Promise<DaemonClient>,
-): DaemonClient {
+export function createClient(state: DaemonState, ensureClient?: () => Promise<DaemonClient>): DaemonClient {
 	const { socketPath, pid: recordedPid } = state;
 	const ensure = ensureClient ?? ensureDaemonClient;
 	return {
@@ -46,22 +43,28 @@ export function createClient(
 					message.includes("ENOENT") ||
 					message.includes("EADDRINUSE");
 
-				if (unreachable) {
+				const shouldRetry = unreachable || code === "DAEMON_RESTARTING";
+
+				if (shouldRetry) {
 					cachedClient = null;
 
-					// Kill stale daemon and clear state only if PID still matches
-					const currentState = await readDaemonState();
-					if (currentState) {
-						if (currentState.pid === recordedPid) {
-							try {
-								process.kill(currentState.pid, "SIGTERM");
-							} catch {
-								// Ignore if process already gone
+					// For unreachable daemons, kill stale process and clear state
+					// only if PID still matches. For DAEMON_RESTARTING the daemon
+					// is already shutting down gracefully, so skip SIGTERM.
+					if (unreachable) {
+						const currentState = await readDaemonState();
+						if (currentState) {
+							if (currentState.pid === recordedPid) {
+								try {
+									process.kill(currentState.pid, "SIGTERM");
+								} catch {
+									// Ignore if process already gone
+								}
+								await unlink(DAEMON_JSON).catch(() => {});
 							}
-							await unlink(DAEMON_JSON).catch(() => {});
+							// If PID does not match, another process restarted the daemon.
+							// Do not kill the healthy daemon and do not clear daemon.json.
 						}
-						// If PID does not match, another process restarted the daemon.
-						// Do not kill the healthy daemon and do not clear daemon.json.
 					}
 
 					// Retry once with a fresh daemon

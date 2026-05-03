@@ -6,6 +6,7 @@ import { type SocketRequest, type SocketResponse, splitLines } from "./protocol.
 export interface SocketServerOptions {
 	onStop?: () => void;
 	onActivity?: () => void;
+	isRestartPending?: () => boolean;
 }
 
 let activeSessions = 0;
@@ -26,7 +27,19 @@ export function getExecutionCount(): number {
 	return executionCount;
 }
 
-async function handleRequest(req: SocketRequest, options: SocketServerOptions): Promise<SocketResponse> {
+interface DrainState {
+	initiated: boolean;
+}
+
+function scheduleShutdown(options: SocketServerOptions, drainState: DrainState): void {
+	if (drainState.initiated) return;
+	drainState.initiated = true;
+	setImmediate(() => {
+		options.onStop?.();
+	});
+}
+
+async function handleRequest(req: SocketRequest, options: SocketServerOptions, drainState: DrainState): Promise<SocketResponse> {
 	options.onActivity?.();
 
 	const requestId = typeof req.id === "number" ? req.id : -1;
@@ -40,6 +53,16 @@ async function handleRequest(req: SocketRequest, options: SocketServerOptions): 
 				return {
 					id: requestId,
 					error: { message: "Missing or invalid 'commandPath' in params", code: "INVALID_PARAMS" },
+				};
+			}
+
+			if (options.isRestartPending?.()) {
+				if (activeSessions === 0) {
+					scheduleShutdown(options, drainState);
+				}
+				return {
+					id: requestId,
+					error: { message: "Daemon is restarting", code: "DAEMON_RESTARTING" },
 				};
 			}
 
@@ -60,6 +83,9 @@ async function handleRequest(req: SocketRequest, options: SocketServerOptions): 
 				return { id: requestId, error: { message: (err as Error).message, code } };
 			} finally {
 				activeSessions--;
+				if (options.isRestartPending?.() && activeSessions === 0) {
+					scheduleShutdown(options, drainState);
+				}
 			}
 		}
 
@@ -90,6 +116,7 @@ async function handleRequest(req: SocketRequest, options: SocketServerOptions): 
  * and communicates via newline-delimited JSON (NDJSON).
  */
 export function createSocketServer(socketPath: string, options: SocketServerOptions = {}): Server {
+	const drainState: DrainState = { initiated: false };
 	const server = createServer((socket: Socket) => {
 		let buffer = "";
 
@@ -116,7 +143,7 @@ export function createSocketServer(socketPath: string, options: SocketServerOpti
 				}
 
 				// Dispatch asynchronously to keep the socket responsive to further data.
-				handleRequest(req, options)
+				handleRequest(req, options, drainState)
 					.then((response) => {
 						socket.write(`${JSON.stringify(response)}\n`);
 					})
@@ -135,7 +162,7 @@ export function createSocketServer(socketPath: string, options: SocketServerOpti
 			if (buffer.trim()) {
 				try {
 					const req = JSON.parse(buffer) as SocketRequest;
-					handleRequest(req, options)
+					handleRequest(req, options, drainState)
 						.then((response) => socket.write(`${JSON.stringify(response)}\n`))
 						.catch(() => {
 							// Ignore errors during end-of-stream cleanup.
