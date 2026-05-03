@@ -27,7 +27,7 @@ export function resolveDaemonEntrypoint(): [string, ...string[]] {
 	}
 
 	// Development mode: use tsx to run TypeScript source.
-	const tsxPath = require.resolve("tsx/dist/cli.mjs");
+	const tsxPath = require.resolve("tsx/cli");
 	const srcPath = join(__dirname, "..", "..", "..", "..", "src", "cli", "daemon", "index.ts");
 	return [process.execPath, tsxPath, srcPath];
 }
