@@ -1,5 +1,6 @@
 import { createWriteStream, type WriteStream } from "node:fs";
-import { mkdir, unlink } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { closeBrowser } from "./browser-manager.js";
 import { getDaemonLogPath, getDaemonStateDir, getSocketPath } from "./paths.js";
 import { createSocketServer, getExecutionCount } from "./socket-server.js";
@@ -105,6 +106,12 @@ async function main(): Promise<void> {
 		},
 	});
 
+	// Persist daemon state so CLI processes can discover this instance.
+	// On Windows the CLI launcher (WScript.Shell COM object) cannot obtain
+	// the child PID, so the daemon writes its own state file.
+	const state = { pid: process.pid, socketPath };
+	await writeFile(join(stateDir, "daemon.json"), JSON.stringify(state, null, 2), "utf-8");
+
 	server.on("error", (err: NodeJS.ErrnoException) => {
 		if (err.code === "EADDRINUSE") {
 			console.error("Socket already in use, another daemon instance is running. Exiting.");
@@ -115,9 +122,6 @@ async function main(): Promise<void> {
 	});
 
 	resetIdleTimer();
-
-	// Signal readiness to any parent process that spawned the daemon.
-	process.stdout.write("WEBSCULPT_DAEMON_READY\n");
 
 	// Graceful shutdown on termination signals.
 	process.on("SIGTERM", () => gracefulShutdown());

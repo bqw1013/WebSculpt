@@ -1,8 +1,9 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, unlink, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { createConnection } from "node:net";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getDaemonStateDir, getSocketPath } from "../daemon/paths.js";
@@ -61,8 +62,12 @@ async function writeDaemonState(state: DaemonState): Promise<void> {
 
 /**
  * Checks whether a process with the given PID is alive.
+ * Non-positive PIDs are treated as invalid (used for provisional states).
  */
 function isProcessAlive(pid: number): boolean {
+	if (pid <= 0) {
+		return false;
+	}
 	try {
 		process.kill(pid, 0);
 		return true;
@@ -88,46 +93,21 @@ function resolveDaemonEntrypoint(): [string, ...string[]] {
 }
 
 /**
- * Waits for the daemon process to print the readiness marker on stdout.
+ * Polls the daemon with health checks until it responds or a timeout is reached.
+ * This replaces the previous stdout-pipe ready marker to avoid keeping the
+ * parent's event loop alive on Windows.
  */
-function waitForReadyMarker(child: ChildProcess): Promise<void> {
-	return new Promise((resolve, reject) => {
-		const timeout = setTimeout(() => {
-			cleanup();
-			reject(new Error("Daemon startup timeout: ready marker not received within 10s"));
-		}, STARTUP_TIMEOUT_MS);
-
-		const onData = (data: Buffer) => {
-			const text = data.toString();
-			if (text.includes("WEBSCULPT_DAEMON_READY")) {
-				clearTimeout(timeout);
-				cleanup();
-				resolve();
-			}
-		};
-
-		const onError = (err: Error) => {
-			clearTimeout(timeout);
-			cleanup();
-			reject(err);
-		};
-
-		const onExit = (code: number | null) => {
-			clearTimeout(timeout);
-			cleanup();
-			reject(new Error(`Daemon exited prematurely with code ${code ?? "unknown"}`));
-		};
-
-		const cleanup = () => {
-			child.stdout?.off("data", onData);
-			child.off("error", onError);
-			child.off("exit", onExit);
-		};
-
-		child.stdout?.on("data", onData);
-		child.on("error", onError);
-		child.on("exit", onExit);
-	});
+async function waitForDaemonReady(socketPath: string): Promise<void> {
+	const start = Date.now();
+	while (Date.now() - start < STARTUP_TIMEOUT_MS) {
+		try {
+			await healthCheck(socketPath);
+			return;
+		} catch {
+			await new Promise((r) => setTimeout(r, 200));
+		}
+	}
+	throw new Error("Daemon startup timeout: health check did not pass within 10s");
 }
 
 /**
@@ -141,7 +121,26 @@ async function healthCheck(socketPath: string): Promise<void> {
 }
 
 /**
+ * Builds a temporary VBScript that launches the daemon via WScript.Shell.Run.
+ * On Windows this breaks the daemon away from the parent process's Job Object,
+ * preventing the shell from waiting for the daemon to exit.
+ */
+function buildVbsLauncher(command: string, args: string[]): string {
+	// Quote each argument for the command-line string.
+	const parts = [command, ...args].map((arg) => `"${arg.replace(/"/g, '""')}"`);
+	const cmdLine = parts.join(" ");
+	// VBScript string literals use double quotes; internal quotes are doubled.
+	const vbsString = `"${cmdLine.replace(/"/g, '""')}"`;
+	return `Set WshShell = CreateObject("WScript.Shell")\nWshShell.Run ${vbsString}, 0, False\n`;
+}
+
+/**
  * Spawns the daemon process, waits for readiness, and persists its state.
+ *
+ * On Windows the daemon is launched via a temporary VBScript executed by
+ * cscript. This uses the WScript.Shell COM object which creates a process
+ * outside the parent's Job Object, avoiding the shell-level hang that occurs
+ * with child_process.spawn on Windows.
  */
 async function startDaemon(): Promise<DaemonState> {
 	const [command, ...args] = resolveDaemonEntrypoint();
@@ -156,16 +155,45 @@ async function startDaemon(): Promise<DaemonState> {
 		}
 	}
 
+	if (process.platform === "win32") {
+		const vbsPath = join(tmpdir(), `websculpt-daemon-${Date.now()}.vbs`);
+		const vbsContent = buildVbsLauncher(command, args);
+		await writeFile(vbsPath, vbsContent, "utf-8");
+
+		try {
+			await new Promise<void>((resolve, reject) => {
+				const launcher = spawn("cscript", ["//NoLogo", vbsPath], {
+					windowsHide: true,
+					stdio: "ignore",
+				});
+				launcher.on("exit", (code) => {
+					if (code !== 0) {
+						reject(new Error(`Daemon launcher exited with code ${code}`));
+					} else {
+						resolve();
+					}
+				});
+				launcher.on("error", (err) => reject(err));
+			});
+		} finally {
+			await unlink(vbsPath).catch(() => {});
+		}
+
+		// We don't know the PID yet; the daemon will write it itself.
+		// Return a provisional state so the caller can re-read after health check.
+		return { pid: -1, socketPath };
+	}
+
 	const child = spawn(command, args, {
 		detached: true,
-		stdio: ["ignore", "pipe", "pipe"],
+		stdio: "ignore",
 	}) as ChildProcess;
 
 	if (!child.pid) {
 		throw new Error("Failed to spawn daemon process");
 	}
 
-	await waitForReadyMarker(child);
+	child.unref();
 
 	const state: DaemonState = { pid: child.pid, socketPath };
 	await writeDaemonState(state);
@@ -335,6 +363,26 @@ export function createClient(state: DaemonState): DaemonClient {
 }
 
 /**
+ * Acquires a cross-process lock using an exclusive file creation.
+ * Only one process can hold this lock at a time.
+ */
+async function acquireDaemonLock(): Promise<() => Promise<void>> {
+	const lockFile = join(getDaemonStateDir(), "daemon-start.lock");
+	while (true) {
+		try {
+			const handle = await open(lockFile, "wx");
+			return async () => {
+				await handle.close();
+				await unlink(lockFile).catch(() => {});
+			};
+		} catch {
+			// Lock file exists; another process is starting the daemon.
+			await new Promise((r) => setTimeout(r, 100));
+		}
+	}
+}
+
+/**
  * Returns a healthy DaemonClient, spawning a new daemon if necessary.
  */
 export async function ensureDaemonClient(): Promise<DaemonClient> {
@@ -355,24 +403,69 @@ export async function ensureDaemonClient(): Promise<DaemonClient> {
 		}
 	}
 
-	// Start a new daemon process
+	// Acquire cross-process lock to prevent multiple CLI processes
+	// from spawning daemons simultaneously.
+	const release = await acquireDaemonLock();
 	try {
-		state = await startDaemonWithRetry();
-	} catch (err) {
-		const error = new Error(`Failed to start daemon: ${(err as Error).message}`);
-		(error as Error & { code: string }).code = "DAEMON_START_FAILED";
-		throw error;
-	}
+		// Re-check after acquiring lock: another process may have
+		// started the daemon while we were waiting.
+		state = await readDaemonState();
+		if (state && isProcessAlive(state.pid)) {
+			try {
+				await healthCheck(state.socketPath);
+				cachedClient = createClient(state);
+				return cachedClient;
+			} catch {
+				// Stale daemon; fall through to start a new one
+			}
+		}
 
-	// Verify the newly started daemon is reachable
-	try {
-		await healthCheck(state.socketPath);
-	} catch (err) {
-		const error = new Error(`Daemon started but is unreachable: ${(err as Error).message}`);
-		(error as Error & { code: string }).code = "DAEMON_UNREACHABLE";
-		throw error;
-	}
+		// Start a new daemon process
+		try {
+			state = await startDaemonWithRetry();
+		} catch (err) {
+			const error = new Error(`Failed to start daemon: ${(err as Error).message}`);
+			(error as Error & { code: string }).code = "DAEMON_START_FAILED";
+			throw error;
+		}
 
-	cachedClient = createClient(state);
-	return cachedClient;
+		// Verify the newly started daemon is reachable.
+		// Use polling with a startup timeout since the daemon no longer signals
+		// readiness via stdout (stdio is "ignore" to prevent pipe handles from
+		// keeping the parent process alive on Windows).
+		try {
+			await waitForDaemonReady(state.socketPath);
+		} catch (err) {
+			const error = new Error(`Daemon started but is unreachable: ${(err as Error).message}`);
+			(error as Error & { code: string }).code = "DAEMON_UNREACHABLE";
+			throw error;
+		}
+
+		// On Windows the daemon writes its own PID file asynchronously.
+		// Ensure the real PID is persisted before releasing the lock so
+		// subsequent CLI processes can discover the daemon correctly and
+		// so the client's stale-daemon cleanup logic uses the real PID.
+		if (state.pid <= 0) {
+			const pollStart = Date.now();
+			while (Date.now() - pollStart < 5000) {
+				const fresh = await readDaemonState();
+				if (fresh && fresh.pid > 0 && isProcessAlive(fresh.pid)) {
+					state = fresh;
+					break;
+				}
+				await new Promise((r) => setTimeout(r, 50));
+			}
+		}
+
+		if (state.pid <= 0) {
+			const error = new Error("Daemon started but did not write its state file");
+			(error as Error & { code: string }).code = "DAEMON_UNREACHABLE";
+			throw error;
+		}
+
+		cachedClient = createClient(state);
+		return cachedClient;
+	} finally {
+		await release();
+	}
 }

@@ -8,6 +8,9 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 		unlink: vi.fn(),
 		writeFile: vi.fn(),
 		mkdir: vi.fn(),
+		open: vi.fn().mockResolvedValue({
+			close: vi.fn().mockResolvedValue(undefined),
+		}),
 	};
 });
 
@@ -96,6 +99,8 @@ describe("createClient PID ownership", () => {
 		await expect(client.run("/tmp/cmd.js", {})).rejects.toThrow();
 		const sigtermCalls = killSpy.mock.calls.filter((call) => call[1] === "SIGTERM");
 		expect(sigtermCalls).toHaveLength(0);
-		expect(unlink).not.toHaveBeenCalled();
+		// Lock file cleanup from acquireDaemonLock may call unlink; ensure daemon.json is NOT removed.
+		const daemonJsonUnlinks = vi.mocked(unlink).mock.calls.filter((call) => String(call[0]).includes("daemon.json"));
+		expect(daemonJsonUnlinks).toHaveLength(0);
 	});
 });

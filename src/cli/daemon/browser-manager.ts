@@ -1,45 +1,65 @@
 import { type Browser, chromium } from "playwright-core";
 
 let cachedBrowser: Browser | null = null;
+let connectingPromise: Promise<Browser> | null = null;
 
 /**
  * Returns an active Browser connected over Chrome DevTools Protocol.
  * Connections are lazily established and cached for reuse.
+ *
+ * Concurrent callers share a single connection attempt via `connectingPromise`,
+ * preventing multiple overlapping CDP connection attempts from spawning
+ * redundant browser windows or dialogs.
  */
 export async function getBrowser(): Promise<Browser> {
-	if (!cachedBrowser || !cachedBrowser.isConnected()) {
-		cachedBrowser = null;
-		try {
-			cachedBrowser = await chromium.connectOverCDP("chrome");
-		} catch {
-			const error = new Error(
-				"No active browser CDP session found.\n\n" +
-					"Follow these steps to establish a connection:\n\n" +
-					"1. Ensure Chrome or Edge is running.\n\n" +
-					"2. Enable remote debugging in your browser:\n" +
-					"   - Open a new tab\n" +
-					"   - Go to: chrome://inspect/#remote-debugging\n" +
-					'   - Check "Allow this browser instance to be remotely debugged"\n' +
-					"   - Leave the browser open\n\n" +
-					"3. Attach playwright-cli:\n" +
-					"   playwright-cli attach --cdp=chrome --session=default\n" +
-					"   (For Edge, use: playwright-cli attach --cdp=msedge --session=default)\n\n" +
-					"4. Verify the session is active:\n" +
-					"   playwright-cli list\n" +
-					"   Expected output includes: default: status: open\n\n" +
-					"5. If other sessions are listed but 'default' is not:\n" +
-					"   playwright-cli close-all\n" +
-					"   playwright-cli attach --cdp=chrome --session=default\n\n" +
-					"6. On Windows, if attach still fails (background daemon processes may linger):\n" +
-					"   playwright-cli kill-all\n" +
-					"   playwright-cli close-all\n" +
-					"   playwright-cli attach --cdp=chrome --session=default",
-			);
-			(error as Error & { code: string }).code = "PLAYWRIGHT_CLI_ATTACH_REQUIRED";
-			throw error;
-		}
+	if (cachedBrowser?.isConnected()) {
+		return cachedBrowser;
 	}
-	return cachedBrowser;
+	cachedBrowser = null;
+
+	if (!connectingPromise) {
+		const promise = (async (): Promise<Browser> => {
+			try {
+				const browser = await chromium.connectOverCDP("chrome");
+				cachedBrowser = browser;
+				return browser;
+			} catch {
+				const error = new Error(
+					"No active browser CDP session found.\n\n" +
+						"Follow these steps to establish a connection:\n\n" +
+						"1. Ensure Chrome or Edge is running.\n\n" +
+						"2. Enable remote debugging in your browser:\n" +
+						"   - Open a new tab\n" +
+						"   - Go to: chrome://inspect/#remote-debugging\n" +
+						'   - Check "Allow this browser instance to be remotely debugged"\n' +
+						"   - Leave the browser open\n\n" +
+						"3. Attach playwright-cli:\n" +
+						"   playwright-cli attach --cdp=chrome --session=default\n" +
+						"   (For Edge, use: playwright-cli attach --cdp=msedge --session=default)\n\n" +
+						"4. Verify the session is active:\n" +
+						"   playwright-cli list\n" +
+						"   Expected output includes: default: status: open\n\n" +
+						"5. If other sessions are listed but 'default' is not:\n" +
+						"   playwright-cli close-all\n" +
+						"   playwright-cli attach --cdp=chrome --session=default\n\n" +
+						"6. On Windows, if attach still fails (background daemon processes may linger):\n" +
+						"   playwright-cli kill-all\n" +
+						"   playwright-cli close-all\n" +
+						"   playwright-cli attach --cdp=chrome --session=default",
+				);
+				(error as Error & { code: string }).code = "PLAYWRIGHT_CLI_ATTACH_REQUIRED";
+				throw error;
+			}
+		})();
+		connectingPromise = promise;
+		promise.finally(() => {
+			if (connectingPromise === promise) {
+				connectingPromise = null;
+			}
+		});
+	}
+
+	return connectingPromise;
 }
 
 /**
