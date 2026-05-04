@@ -16,5 +16,7 @@
   ],
   "id": "zhihu-list-posts",
   "domain": "zhihu",
-  "action": "list-posts"
+  "action": "list-posts",
+  "requiresBrowser": true,
+  "authRequired": "unknown"
 }

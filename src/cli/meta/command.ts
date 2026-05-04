@@ -15,6 +15,8 @@ export function handleCommandList(): MetaCommandResult {
 			type: c.source,
 			id: c.manifest.id,
 			description: c.manifest.description,
+			requiresBrowser: c.manifest.requiresBrowser,
+			authRequired: c.manifest.authRequired,
 		})),
 	};
 }
@@ -74,6 +76,8 @@ export async function handleCommandShow(
 			parameters: resolved.manifest.parameters ?? [],
 			prerequisites,
 			assets,
+			requiresBrowser: resolved.manifest.requiresBrowser,
+			authRequired: resolved.manifest.authRequired,
 		},
 	};
 

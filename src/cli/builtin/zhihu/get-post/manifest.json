@@ -10,5 +10,7 @@
   ],
   "id": "zhihu-get-post",
   "domain": "zhihu",
-  "action": "get-post"
+  "action": "get-post",
+  "requiresBrowser": true,
+  "authRequired": "unknown"
 }

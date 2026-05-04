@@ -65,6 +65,8 @@ export interface CommandListResult {
 		type: string;
 		id: string;
 		description: string;
+		requiresBrowser: boolean;
+		authRequired?: "required" | "not-required" | "unknown";
 	}>;
 }
 
@@ -88,6 +90,8 @@ export interface CommandShowResult {
 			context: boolean;
 			entryFile: boolean;
 		};
+		requiresBrowser: boolean;
+		authRequired?: "required" | "not-required" | "unknown";
 	};
 	readmeContent?: string;
 }
@@ -275,17 +279,25 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		const rows = result.commands.map((cmd) => ({
 			command: `websculpt ${cmd.domain} ${cmd.action}`,
 			source: cmd.type,
+			browser: cmd.requiresBrowser ? "yes" : "no",
+			login: cmd.authRequired === "required" ? "yes" : cmd.authRequired === "not-required" ? "no" : "",
 			description: cmd.description,
 		}));
 
 		const commandMaxWidth = Math.max("Command".length, ...rows.map((r) => r.command.length));
 		const sourceMaxWidth = Math.max("Source".length, ...rows.map((r) => r.source.length));
+		const browserMaxWidth = Math.max("Browser".length, ...rows.map((r) => r.browser.length));
+		const loginMaxWidth = Math.max("Login".length, ...rows.map((r) => r.login.length));
 
 		const pad = (s: string, width: number) => s.padEnd(width + 2);
 
-		console.log(`${pad("Command", commandMaxWidth)}${pad("Source", sourceMaxWidth)}Description`);
+		console.log(
+			`${pad("Command", commandMaxWidth)}${pad("Source", sourceMaxWidth)}${pad("Browser", browserMaxWidth)}${pad("Login", loginMaxWidth)}Description`,
+		);
 		for (const row of rows) {
-			console.log(`${pad(row.command, commandMaxWidth)}${pad(row.source, sourceMaxWidth)}${row.description}`);
+			console.log(
+				`${pad(row.command, commandMaxWidth)}${pad(row.source, sourceMaxWidth)}${pad(row.browser, browserMaxWidth)}${pad(row.login, loginMaxWidth)}${row.description}`,
+			);
 		}
 		return;
 	}
@@ -372,6 +384,10 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		console.log(`${pad("source:")}${cmd.source}`);
 		console.log(`${pad("path:")}${cmd.path}`);
 		console.log(`${pad("entryFile:")}${cmd.entryFile}`);
+		console.log(`${pad("requiresBrowser:")}${cmd.requiresBrowser ? "yes" : "no"}`);
+		if (cmd.authRequired !== undefined) {
+			console.log(`${pad("authRequired:")}${cmd.authRequired}`);
+		}
 		console.log("");
 		if (cmd.parameters.length > 0) {
 			console.log("parameters:");

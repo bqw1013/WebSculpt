@@ -143,6 +143,7 @@ describe("command create", () => {
 				domain: "test",
 				id: "test-noentry",
 				runtime: "node",
+				requiresBrowser: false,
 			}),
 			"utf8",
 		);
@@ -175,6 +176,7 @@ describe("command create", () => {
 				id: "test-complete",
 				parameters: [],
 				runtime: "node",
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(homeDir, "complete-package", packageBody);
@@ -209,6 +211,7 @@ describe("command create", () => {
 			manifest: {
 				description: "Minimal command",
 				parameters: [],
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(
@@ -248,6 +251,7 @@ describe("command create", () => {
 				id: "config-sync",
 				parameters: [],
 				runtime: "node",
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(homeDir, "config-dir", configPackage);

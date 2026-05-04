@@ -11,5 +11,7 @@
   ],
   "id": "zhihu-list-hot",
   "domain": "zhihu",
-  "action": "list-hot"
+  "action": "list-hot",
+  "requiresBrowser": true,
+  "authRequired": "unknown"
 }

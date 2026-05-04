@@ -38,14 +38,22 @@ describe("renderOutput", () => {
 			{
 				success: true,
 				commands: [
-					{ domain: "example", action: "hello", type: "builtin", id: "example-hello", description: "Say hello" },
+					{
+						domain: "example",
+						action: "hello",
+						type: "builtin",
+						id: "example-hello",
+						description: "Say hello",
+						requiresBrowser: false,
+						authRequired: "unknown",
+					},
 				],
 			},
 			"human",
 		);
 		expect(logSpy).toHaveBeenCalledTimes(2);
-		expect(logSpy).toHaveBeenNthCalledWith(1, "Command                  Source   Description");
-		expect(logSpy).toHaveBeenNthCalledWith(2, "websculpt example hello  builtin  Say hello");
+		expect(logSpy).toHaveBeenNthCalledWith(1, "Command                  Source   Browser  Login  Description");
+		expect(logSpy).toHaveBeenNthCalledWith(2, "websculpt example hello  builtin  no              Say hello");
 		logSpy.mockRestore();
 	});
 
@@ -89,6 +97,7 @@ describe("renderOutput", () => {
 					parameters: [],
 					prerequisites: [],
 					assets: { manifest: true, readme: true, context: true, entryFile: true },
+					requiresBrowser: false,
 				},
 			},
 			"human",
@@ -114,6 +123,7 @@ describe("renderOutput", () => {
 					parameters: [],
 					prerequisites: [],
 					assets: { manifest: true, readme: true, context: true, entryFile: true },
+					requiresBrowser: false,
 				},
 				readmeContent: "# Usage\nRun with --name",
 			},

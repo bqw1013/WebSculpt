@@ -126,6 +126,33 @@ function validateL1Structure(
 		addError(details, "MISSING_DESCRIPTION", "Manifest 'description' must be a non-empty string");
 	}
 
+	// requiresBrowser validation
+	if (!Object.hasOwn(manifest, "requiresBrowser")) {
+		addError(details, "MISSING_REQUIRES_BROWSER", "Manifest 'requiresBrowser' is required");
+	} else if (typeof manifest.requiresBrowser !== "boolean") {
+		addError(details, "INVALID_REQUIRES_BROWSER", "Manifest 'requiresBrowser' must be a boolean");
+	} else {
+		const effectiveRuntime = typeof runtime === "string" ? runtime : "node";
+		if (effectiveRuntime === "playwright-cli" && manifest.requiresBrowser !== true) {
+			addError(details, "RUNTIME_BROWSER_MISMATCH", "playwright-cli runtime requires requiresBrowser: true");
+		}
+		if (effectiveRuntime !== "playwright-cli" && manifest.requiresBrowser !== false) {
+			addError(details, "RUNTIME_BROWSER_MISMATCH", `${effectiveRuntime} runtime requires requiresBrowser: false`);
+		}
+	}
+
+	// authRequired validation
+	if (Object.hasOwn(manifest, "authRequired")) {
+		const auth = manifest.authRequired;
+		if (typeof auth !== "string" || !["required", "not-required", "unknown"].includes(auth)) {
+			addError(
+				details,
+				"INVALID_AUTH_REQUIRED",
+				'Manifest \'authRequired\' must be one of: "required", "not-required", "unknown"',
+			);
+		}
+	}
+
 	// Prerequisites validation
 	const prerequisites = manifest.prerequisites;
 	if (prerequisites !== undefined) {

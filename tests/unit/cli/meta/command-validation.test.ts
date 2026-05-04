@@ -2,16 +2,27 @@ import { describe, expect, it } from "vitest";
 import { validateCommandPackage } from "../../../../src/cli/meta/command-validation.js";
 
 function makeInput(overrides: Record<string, unknown> = {}) {
+	const manifest: Record<string, unknown> = {
+		id: "test-domain-test-action",
+		domain: "test-domain",
+		action: "test-action",
+		description: "Test description",
+		runtime: "node",
+		parameters: [],
+		requiresBrowser: false,
+	};
+	const overrideManifest = overrides.manifest as Record<string, unknown> | undefined;
+	if (overrideManifest) {
+		for (const [key, value] of Object.entries(overrideManifest)) {
+			if (value === undefined) {
+				delete manifest[key];
+			} else {
+				manifest[key] = value;
+			}
+		}
+	}
 	return {
-		manifest: {
-			id: "test-domain-test-action",
-			domain: "test-domain",
-			action: "test-action",
-			description: "Test description",
-			runtime: "node",
-			parameters: [],
-			...overrides.manifest,
-		},
+		manifest,
 		code: overrides.code ?? "export default async function(params) { return {}; }",
 		hasReadme: overrides.hasReadme ?? true,
 		hasContext: overrides.hasContext ?? true,
@@ -125,6 +136,67 @@ describe("validateCommandPackage", () => {
 			const warnings = details.filter((d) => d.level === "warning");
 			expect(warnings.some((w) => w.code === "MISSING_IDENTITY_FIELDS")).toBe(true);
 		});
+
+		it("errors on missing requiresBrowser", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { requiresBrowser: undefined } }));
+			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_REQUIRES_BROWSER", level: "error" }));
+		});
+
+		it("errors on non-boolean requiresBrowser", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { requiresBrowser: "yes" } }));
+			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_REQUIRES_BROWSER", level: "error" }));
+		});
+
+		it("errors on playwright-cli runtime with requiresBrowser false", () => {
+			const details = validateCommandPackage(
+				makeInput({ manifest: { runtime: "playwright-cli", requiresBrowser: false } }),
+			);
+			expect(details).toContainEqual(expect.objectContaining({ code: "RUNTIME_BROWSER_MISMATCH", level: "error" }));
+		});
+
+		it("errors on node runtime with requiresBrowser true", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { requiresBrowser: true } }));
+			expect(details).toContainEqual(expect.objectContaining({ code: "RUNTIME_BROWSER_MISMATCH", level: "error" }));
+		});
+
+		it("passes for valid requiresBrowser with playwright-cli runtime", () => {
+			const details = validateCommandPackage(
+				makeInput({ manifest: { runtime: "playwright-cli", requiresBrowser: true } }),
+			);
+			expect(details.filter((d) => d.level === "error")).toHaveLength(0);
+		});
+
+		it("passes for valid requiresBrowser with shell runtime", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { runtime: "shell", requiresBrowser: false } }));
+			expect(details.filter((d) => d.level === "error" && d.code.includes("REQUIRES_BROWSER"))).toHaveLength(0);
+		});
+
+		it("passes for valid requiresBrowser with python runtime", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { runtime: "python", requiresBrowser: false } }));
+			expect(details.filter((d) => d.level === "error" && d.code.includes("REQUIRES_BROWSER"))).toHaveLength(0);
+		});
+
+		it("passes for valid authRequired values", () => {
+			for (const value of ["required", "not-required", "unknown"]) {
+				const details = validateCommandPackage(makeInput({ manifest: { authRequired: value } }));
+				expect(details.filter((d) => d.level === "error" && d.code === "INVALID_AUTH_REQUIRED")).toHaveLength(0);
+			}
+		});
+
+		it("passes when authRequired is missing", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { authRequired: undefined } }));
+			expect(details.filter((d) => d.level === "error" && d.code === "INVALID_AUTH_REQUIRED")).toHaveLength(0);
+		});
+
+		it("errors on invalid authRequired value", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { authRequired: "maybe" } }));
+			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_AUTH_REQUIRED", level: "error" }));
+		});
+
+		it("errors on non-string authRequired", () => {
+			const details = validateCommandPackage(makeInput({ manifest: { authRequired: true } }));
+			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_AUTH_REQUIRED", level: "error" }));
+		});
 	});
 
 	describe("L2 compliance validation", () => {
@@ -190,7 +262,7 @@ describe("validateCommandPackage", () => {
 		it("passes for playwright-cli runtime with export default", () => {
 			const details = validateCommandPackage(
 				makeInput({
-					manifest: { runtime: "playwright-cli" },
+					manifest: { runtime: "playwright-cli", requiresBrowser: true },
 					code: "export default async (page, params) => { return {}; }",
 				}),
 			);

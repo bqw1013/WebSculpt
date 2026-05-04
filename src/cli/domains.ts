@@ -84,9 +84,16 @@ export function registerDomainCommands(program: Command): void {
 			if (manifestPrereqs && manifestPrereqs.length > 0) {
 				allPrereqs.push(...manifestPrereqs);
 			}
+			const helpLines: string[] = [];
 			if (allPrereqs.length > 0) {
-				const text = allPrereqs.map((p) => `  ${p}`).join("\n");
-				actionCmd.addHelpText("after", `\nPrerequisites:\n${text}`);
+				helpLines.push("Prerequisites:", ...allPrereqs.map((p) => `  ${p}`));
+			}
+			helpLines.push(`Browser: ${c.manifest.requiresBrowser ? "yes" : "no"}`);
+			if (c.manifest.authRequired !== undefined) {
+				helpLines.push(`Login: ${c.manifest.authRequired}`);
+			}
+			if (helpLines.length > 0) {
+				actionCmd.addHelpText("after", `\n${helpLines.join("\n")}`);
 			}
 		}
 	}

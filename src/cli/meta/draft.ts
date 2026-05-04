@@ -283,6 +283,8 @@ export async function handleCommandDraft(
 			runtime,
 			description: "",
 			parameters: parameters.length > 0 ? parameters : [],
+			requiresBrowser: runtime === "playwright-cli",
+			authRequired: "unknown",
 		};
 
 		// Generate files

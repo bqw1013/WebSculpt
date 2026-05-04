@@ -79,31 +79,3 @@ export class WebSculptHelp extends Help {
 		return `${out.trimEnd()}\n`;
 	}
 }
-
-/** Registers the `help [domain] [action]` routing command on the given program. */
-export function registerHelpCommand(program: Command): void {
-	program
-		.command("help [domain] [action]")
-		.description("Display help for a command or domain")
-		.action((domain?: string, action?: string) => {
-			if (!domain) {
-				program.help();
-				return;
-			}
-			const target = program.commands.find((c) => c.name() === domain);
-			if (!target) {
-				console.error(`Unknown command or domain: ${domain}`);
-				process.exit(1);
-			}
-			if (!action) {
-				target.help();
-				return;
-			}
-			const sub = target.commands.find((c) => c.name() === action);
-			if (!sub) {
-				console.error(`Unknown action: ${action}`);
-				process.exit(1);
-			}
-			sub.help();
-		});
-}

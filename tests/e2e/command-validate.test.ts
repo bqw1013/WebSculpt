@@ -36,6 +36,7 @@ describe("command validate", () => {
 				description: "Partial manifest",
 				parameters: [],
 				runtime: "node",
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(
@@ -91,6 +92,7 @@ describe("command validate", () => {
 				description: "Partial manifest",
 				parameters: [],
 				runtime: "node",
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(
@@ -126,6 +128,7 @@ describe("command validate", () => {
 				id: "domain-wrong",
 				parameters: [],
 				runtime: "node",
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(homeDir, "mismatch-id-dir", mismatchedPackage);
@@ -159,6 +162,7 @@ describe("command validate", () => {
 				id: "wrongdomain-action",
 				parameters: [],
 				runtime: "node",
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(homeDir, "mismatch-domain-dir", mismatchedPackage);
@@ -208,6 +212,7 @@ describe("command validate", () => {
 				id: "bad-domain-wrong-id",
 				parameters: [],
 				runtime: "node",
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(homeDir, "multi-error-dir", badPackage);

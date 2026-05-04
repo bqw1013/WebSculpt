@@ -39,8 +39,12 @@ describe("command draft", () => {
 		expect(payload.files).toContain("README.md");
 		expect(payload.files).toContain("context.md");
 
-		const manifest = await readJsonFile<{ runtime: string }>(join(payload.draftPath, "manifest.json"));
+		const manifest = await readJsonFile<{ runtime: string; requiresBrowser: boolean; authRequired: string }>(
+			join(payload.draftPath, "manifest.json"),
+		);
 		expect(manifest.runtime).toBe("node");
+		expect(manifest.requiresBrowser).toBe(false);
+		expect(manifest.authRequired).toBe("unknown");
 
 		const code = await readFile(join(payload.draftPath, "command.js"), "utf-8");
 		expect(code).toContain("export default async function");
@@ -64,8 +68,12 @@ describe("command draft", () => {
 		expect(payload.success).toBe(true);
 		expect(payload.runtime).toBe("playwright-cli");
 
-		const manifest = await readJsonFile<{ runtime: string }>(join(payload.draftPath, "manifest.json"));
+		const manifest = await readJsonFile<{ runtime: string; requiresBrowser: boolean; authRequired: string }>(
+			join(payload.draftPath, "manifest.json"),
+		);
 		expect(manifest.runtime).toBe("playwright-cli");
+		expect(manifest.requiresBrowser).toBe(true);
+		expect(manifest.authRequired).toBe("unknown");
 
 		const code = await readFile(join(payload.draftPath, "command.js"), "utf-8");
 		expect(code).toContain("export default async (page, params)");

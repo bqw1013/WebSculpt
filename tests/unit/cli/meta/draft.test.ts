@@ -72,4 +72,26 @@ describe("handleCommandDraft", () => {
 		await expect(access(readmePath)).resolves.toBeUndefined();
 		await expect(access(contextPath)).resolves.toBeUndefined();
 	});
+
+	it("generates manifest with requiresBrowser and authRequired for node runtime", async () => {
+		const result = await handleCommandDraft("test-domain", "test-action", { force: true });
+		expect(result.success).toBe(true);
+		if (!result.success) return;
+
+		const manifestPath = `${result.draftPath}/manifest.json`;
+		const manifest = JSON.parse(await (await import("node:fs/promises")).readFile(manifestPath, "utf-8"));
+		expect(manifest.requiresBrowser).toBe(false);
+		expect(manifest.authRequired).toBe("unknown");
+	});
+
+	it("generates manifest with requiresBrowser true for playwright-cli runtime", async () => {
+		const result = await handleCommandDraft("test-domain", "test-action", { runtime: "playwright-cli", force: true });
+		expect(result.success).toBe(true);
+		if (!result.success) return;
+
+		const manifestPath = `${result.draftPath}/manifest.json`;
+		const manifest = JSON.parse(await (await import("node:fs/promises")).readFile(manifestPath, "utf-8"));
+		expect(manifest.requiresBrowser).toBe(true);
+		expect(manifest.authRequired).toBe("unknown");
+	});
 });

@@ -5,7 +5,7 @@ import { Command } from "commander";
 import { initStore } from "../infra/store.js";
 import { registerDomainCommands } from "./domains.js";
 import { loadRegistry } from "./engine/registry.js";
-import { registerHelpCommand, WebSculptHelp } from "./help.js";
+import { WebSculptHelp } from "./help.js";
 import { registerMetaCommands } from "./meta/index.js";
 
 const require = createRequire(import.meta.url);
@@ -27,7 +27,6 @@ async function main() {
 	program.option("-f, --format <human|json>", "Output format", "human");
 
 	registerMetaCommands(program);
-	registerHelpCommand(program);
 	await initStore();
 	await loadRegistry();
 	registerDomainCommands(program);

@@ -16,5 +16,7 @@
   ],
   "id": "zhihu-list-activities",
   "domain": "zhihu",
-  "action": "list-activities"
+  "action": "list-activities",
+  "requiresBrowser": true,
+  "authRequired": "unknown"
 }
