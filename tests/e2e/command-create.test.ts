@@ -83,7 +83,7 @@ describe("command create", () => {
 		);
 	});
 
-	it("returns FILE_NOT_FOUND when manifest.json is missing", async () => {
+	it("returns INVALID_PACKAGE when manifest.json is missing", async () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
@@ -100,12 +100,12 @@ describe("command create", () => {
 		expect(payload.success).toBe(false);
 		expect(payload.error).toEqual(
 			expect.objectContaining({
-				code: "FILE_NOT_FOUND",
+				code: "INVALID_PACKAGE",
 			}),
 		);
 	});
 
-	it("returns PARSE_ERROR when manifest.json contains invalid JSON", async () => {
+	it("returns INVALID_PACKAGE when manifest.json contains invalid JSON", async () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
@@ -124,7 +124,7 @@ describe("command create", () => {
 		expect(payload.success).toBe(false);
 		expect(payload.error).toEqual(
 			expect.objectContaining({
-				code: "PARSE_ERROR",
+				code: "INVALID_PACKAGE",
 			}),
 		);
 	});

@@ -1,18 +1,14 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import type { Command } from "commander";
 import { RESERVED_DOMAINS } from "../engine/registry.js";
 import type { MetaCommandResult } from "../output.js";
+import { renderOutput } from "../output.js";
 import { validateCommandPackage } from "./command-validation.js";
+import { isLoadError, loadCommandPackageSource } from "./package-loader.js";
 
-function resolveEntryFile(runtime: string | undefined): string {
-	switch (runtime) {
-		case "shell":
-			return "command.sh";
-		case "python":
-			return "command.py";
-		default:
-			return "command.js";
-	}
+function getCommandMetaGroup(program: Command): Command {
+	const existing = program.commands.find((c) => c.name() === "command");
+	if (existing) return existing;
+	return program.command("command").description("Manage extension command registry");
 }
 
 /**
@@ -36,69 +32,11 @@ export async function handleCommandValidate(
 		};
 	}
 
-	// Read manifest.json
-	let rawManifest: string;
-	try {
-		rawManifest = await readFile(join(fromDir, "manifest.json"), "utf-8");
-	} catch {
-		return {
-			success: false,
-			error: {
-				code: "INVALID_PACKAGE",
-				message: `Cannot read manifest.json from: ${fromDir}`,
-			},
-		};
+	const loaded = await loadCommandPackageSource(fromDir);
+	if (isLoadError(loaded)) {
+		return loaded;
 	}
-
-	let manifest: unknown;
-	try {
-		manifest = JSON.parse(rawManifest) as unknown;
-	} catch {
-		return {
-			success: false,
-			error: {
-				code: "INVALID_PACKAGE",
-				message: "Invalid JSON in manifest.json",
-			},
-		};
-	}
-
-	// Determine runtime and entry file
-	const m = manifest && typeof manifest === "object" ? (manifest as Record<string, unknown>) : {};
-	const runtime = (m.runtime as string | undefined) ?? "node";
-	const entryFile = resolveEntryFile(runtime);
-
-	// Read entry file code
-	let code: string;
-	try {
-		code = await readFile(join(fromDir, entryFile), "utf-8");
-	} catch {
-		return {
-			success: false,
-			error: {
-				code: "INVALID_PACKAGE",
-				message: `Entry file "${entryFile}" not found in source directory`,
-			},
-		};
-	}
-
-	// Check auxiliary file presence
-	let hasReadme = false;
-	let hasContext = false;
-	let readmeContent: string | undefined;
-	let contextContent: string | undefined;
-	try {
-		readmeContent = await readFile(join(fromDir, "README.md"), "utf-8");
-		hasReadme = true;
-	} catch {
-		// README.md not present
-	}
-	try {
-		contextContent = await readFile(join(fromDir, "context.md"), "utf-8");
-		hasContext = true;
-	} catch {
-		// context.md not present
-	}
+	const { manifest, code, hasReadme, hasContext, readmeContent, contextContent } = loaded;
 
 	const details = validateCommandPackage({
 		manifest,
@@ -129,4 +67,18 @@ export async function handleCommandValidate(
 		success: true,
 		warnings: warnings.length > 0 ? warnings : undefined,
 	};
+}
+
+/** Registers the `command validate` sub-command on the given program. */
+export function registerValidateMeta(program: Command): void {
+	const format = (): "human" | "json" => program.opts().format;
+	const cmd = getCommandMetaGroup(program);
+	cmd.command("validate")
+		.description("Validate a command directory without installing")
+		.requiredOption("--from-dir <path>", "Path to the command source directory")
+		.argument("[domain]", "Optional domain to simulate injection")
+		.argument("[action]", "Optional action to simulate injection")
+		.action(async (domain: string | undefined, action: string | undefined, options: { fromDir: string }) => {
+			renderOutput(await handleCommandValidate(options.fromDir, domain, action), format());
+		});
 }

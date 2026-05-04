@@ -1,7 +1,6 @@
 import { builtinModules } from "node:module";
 import type { ValidationDetail } from "../../types/index.js";
-
-const VALID_RUNTIMES = new Set<string>(["node", "shell", "python", "playwright-cli"]);
+import { VALID_RUNTIMES } from "../engine/runtime-meta.js";
 
 const TEMP_REF_REGEX = /\be\d+\b/g;
 const BROWSER_KEYWORDS = ["launch", "connect", "connectOverCDP", "newBrowser", "chrome-remote-interface"];
@@ -69,8 +68,8 @@ function validateL1Structure(
 	expectedAction: string | undefined,
 ): void {
 	const runtime = manifest.runtime ?? "node";
-	if (typeof runtime !== "string" || !VALID_RUNTIMES.has(runtime)) {
-		addError(details, "INVALID_RUNTIME", `Runtime must be one of: ${[...VALID_RUNTIMES].join(", ")}`);
+	if (typeof runtime !== "string" || !(VALID_RUNTIMES as readonly string[]).includes(runtime)) {
+		addError(details, "INVALID_RUNTIME", `Runtime must be one of: ${VALID_RUNTIMES.join(", ")}`);
 	}
 
 	const id = manifest.id;

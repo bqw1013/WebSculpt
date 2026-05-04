@@ -1,21 +1,20 @@
-import { access, copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { Command } from "commander";
 import { USER_COMMANDS_DIR } from "../../infra/paths.js";
 import { appendAuditLog } from "../../infra/store.js";
 import type { CommandManifest } from "../../types/index.js";
 import { RESERVED_DOMAINS, rebuildIndex } from "../engine/registry.js";
+import { resolveEntryFile } from "../engine/runtime-meta.js";
 import type { MetaCommandResult } from "../output.js";
+import { renderOutput } from "../output.js";
 import { validateCommandPackage } from "./command-validation.js";
+import { isLoadError, loadCommandPackageSource } from "./package-loader.js";
 
-function resolveEntryFile(runtime: string | undefined): string {
-	switch (runtime) {
-		case "shell":
-			return "command.sh";
-		case "python":
-			return "command.py";
-		default:
-			return "command.js";
-	}
+function getCommandMetaGroup(program: Command): Command {
+	const existing = program.commands.find((c) => c.name() === "command");
+	if (existing) return existing;
+	return program.command("command").description("Manage extension command registry");
 }
 
 /**
@@ -42,60 +41,16 @@ export async function handleCommandCreate(
 
 		const sourceDir = options.fromDir;
 
-		// Read manifest.json from source directory
-		let rawManifest: string;
-		try {
-			rawManifest = await readFile(join(sourceDir, "manifest.json"), "utf-8");
-		} catch {
-			return {
-				success: false,
-				error: { code: "FILE_NOT_FOUND", message: `Cannot read manifest.json from: ${sourceDir}` },
-			};
+		const loaded = await loadCommandPackageSource(sourceDir);
+		if (isLoadError(loaded)) {
+			return loaded;
 		}
-
-		let manifest: CommandManifest;
-		try {
-			manifest = JSON.parse(rawManifest) as CommandManifest;
-		} catch {
-			return {
-				success: false,
-				error: { code: "PARSE_ERROR", message: "Invalid JSON in manifest.json" },
-			};
-		}
+		const { manifest: rawManifest, code, hasReadme, hasContext, readmeContent, contextContent } = loaded;
+		const manifest = rawManifest as CommandManifest;
 
 		// Determine entry file and verify it exists
 		const normalizedRuntime = manifest.runtime || "node";
 		const entryFile = resolveEntryFile(normalizedRuntime);
-		let code: string;
-		try {
-			code = await readFile(join(sourceDir, entryFile), "utf-8");
-		} catch {
-			return {
-				success: false,
-				error: {
-					code: "INVALID_PACKAGE",
-					message: `Entry file "${entryFile}" not found in source directory`,
-				},
-			};
-		}
-
-		// Check auxiliary file presence
-		let hasReadme = false;
-		let hasContext = false;
-		let readmeContent: string | undefined;
-		let contextContent: string | undefined;
-		try {
-			readmeContent = await readFile(join(sourceDir, "README.md"), "utf-8");
-			hasReadme = true;
-		} catch {
-			// README.md not present
-		}
-		try {
-			contextContent = await readFile(join(sourceDir, "context.md"), "utf-8");
-			hasContext = true;
-		} catch {
-			// context.md not present
-		}
 
 		// Run shared validation layer
 		const details = validateCommandPackage({
@@ -166,8 +121,7 @@ export async function handleCommandCreate(
 		}
 
 		// Copy context.md if present
-		if (hasContext) {
-			const contextContent = await readFile(join(sourceDir, "context.md"), "utf-8");
+		if (hasContext && contextContent !== undefined) {
 			await writeFile(join(commandDir, "context.md"), contextContent);
 		}
 
@@ -207,4 +161,20 @@ export async function handleCommandCreate(
 			error: { code: "CREATE_ERROR", message },
 		};
 	}
+}
+
+/** Registers the `command create` sub-command on the given program. */
+export function registerCreateMeta(program: Command): void {
+	const format = (): "human" | "json" => program.opts().format;
+	const cmd = getCommandMetaGroup(program);
+	cmd.command("create <domain> <action>")
+		.description("Create a user command from a directory")
+		.requiredOption(
+			"--from-dir <path>",
+			"Path to the command source directory. Must contain manifest.json and the runtime-specific entry file.",
+		)
+		.option("--force", "Overwrite an existing command")
+		.action(async (domain: string, action: string, options: { fromDir: string; force?: boolean }) => {
+			renderOutput(await handleCommandCreate(domain, action, options), format());
+		});
 }

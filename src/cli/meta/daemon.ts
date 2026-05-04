@@ -1,4 +1,5 @@
 import { readFile, unlink } from "node:fs/promises";
+import type { Command } from "commander";
 import { getDaemonLogPath } from "../daemon/paths.js";
 import { ensureDaemonClient } from "../engine/daemon/client.js";
 import { DAEMON_JSON, isProcessAlive, readDaemonState } from "../engine/daemon/state.js";
@@ -11,6 +12,7 @@ import type {
 	DaemonStopResult,
 	MetaCommandError,
 } from "../output.js";
+import { renderOutput } from "../output.js";
 
 const STOP_POLL_INTERVAL_MS = 200;
 const STOP_POLL_MAX_WAIT_MS = 6000;
@@ -160,4 +162,54 @@ export async function handleDaemonLogs(options: { lines?: number } = {}): Promis
 			error: { code: "NO_LOGS_AVAILABLE", message: "No daemon logs are available" },
 		};
 	}
+}
+
+/** Registers daemon sub-commands on the given program. */
+export function registerDaemonMeta(program: Command): void {
+	const format = (): "human" | "json" => program.opts().format;
+	const daemon = program.command("daemon").description("Manage the background browser daemon");
+
+	daemon
+		.command("status")
+		.description("Show daemon health and resource status")
+		.action(async () => {
+			const result = await handleDaemonStatus();
+			renderOutput(result, format());
+			if (!result.success) {
+				process.exitCode = 1;
+			}
+		});
+
+	daemon
+		.command("logs")
+		.description("Show recent daemon log entries")
+		.option("--lines <n>", "Number of lines to show", (val) => Number.parseInt(val, 10))
+		.action(async (options: { lines?: number }) => {
+			const result = await handleDaemonLogs({ lines: options.lines });
+			renderOutput(result, format());
+			if (!result.success) {
+				process.exitCode = 1;
+			}
+		});
+
+	daemon
+		.command("start")
+		.description("Start the background daemon if not already running")
+		.action(async () => {
+			renderOutput(await handleDaemonStart(), format());
+		});
+
+	daemon
+		.command("restart")
+		.description("Restart the background daemon")
+		.action(async () => {
+			renderOutput(await handleDaemonRestart(), format());
+		});
+
+	daemon
+		.command("stop")
+		.description("Stop the running daemon process")
+		.action(async () => {
+			renderOutput(await handleDaemonStop(), format());
+		});
 }

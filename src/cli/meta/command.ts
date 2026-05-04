@@ -1,8 +1,10 @@
 import { access, readdir, readFile, rm, rmdir } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
+import type { Command } from "commander";
 import { findCommand, listAllCommands, rebuildIndex } from "../engine/registry.js";
 import { RUNTIME_SYSTEM_PREREQUISITES } from "../engine/runtime-meta.js";
 import type { CommandShowResult, MetaCommandResult } from "../output.js";
+import { renderOutput } from "../output.js";
 
 /** Lists all registered commands and returns them as a normalized result. */
 export function handleCommandList(): MetaCommandResult {
@@ -145,4 +147,29 @@ export async function handleCommandRemove(domain: string, action: string): Promi
 			error: { code: "REMOVE_ERROR", message },
 		};
 	}
+}
+
+/** Registers command sub-commands (list, show, remove) on the given program. */
+export function registerCommandMeta(program: Command): void {
+	const format = (): "human" | "json" => program.opts().format;
+	const cmd = program.command("command").description("Manage extension command registry");
+
+	cmd.command("list")
+		.description("List all extension commands")
+		.action(async () => {
+			renderOutput(await handleCommandList(), format());
+		});
+
+	cmd.command("show <domain> <action>")
+		.description("Show extension command details")
+		.option("--include-readme", "Include README.md content in the output")
+		.action(async (domain: string, action: string, options: { includeReadme?: boolean }) => {
+			renderOutput(await handleCommandShow(domain, action, options.includeReadme), format());
+		});
+
+	cmd.command("remove <domain> <action>")
+		.description("Remove a user command")
+		.action(async (domain: string, action: string) => {
+			renderOutput(await handleCommandRemove(domain, action), format());
+		});
 }
