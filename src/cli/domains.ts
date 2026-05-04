@@ -1,15 +1,85 @@
 import type { Command } from "commander";
-import type { CommandRuntime } from "../types/index.js";
+import type { CommandParameter, CommandRuntime } from "../types/index.js";
 import { executeCommand } from "./engine/executor.js";
 import { listAllCommands, type ResolvedCommand } from "./engine/registry.js";
 import { RUNTIME_SYSTEM_PREREQUISITES } from "./engine/runtime-meta.js";
 import { printJson } from "./output.js";
 
-// Extend Commander's Command type to attach domain-source metadata for custom help formatting.
-declare module "commander" {
-	interface Command {
-		_domainSource?: string;
+/** Groups resolved commands by their manifest domain. */
+function groupCommandsByDomain(commands: ResolvedCommand[]): Map<string, ResolvedCommand[]> {
+	const map = new Map<string, ResolvedCommand[]>();
+	for (const c of commands) {
+		const list = map.get(c.manifest.domain) ?? [];
+		list.push(c);
+		map.set(c.manifest.domain, list);
 	}
+	return map;
+}
+
+/** Determines the domain source. If any command is user-defined, the whole domain is treated as user. */
+function resolveDomainSource(commands: ResolvedCommand[]): "user" | "builtin" {
+	return commands.some((c) => c.source === "user") ? "user" : "builtin";
+}
+
+/** Deduplicates actions within a domain; user commands take precedence over built-ins. */
+function deduplicateActions(commands: ResolvedCommand[]): Map<string, ResolvedCommand> {
+	const actionMap = new Map<string, ResolvedCommand>();
+	for (const c of commands) {
+		if (!actionMap.has(c.manifest.action) || c.source === "user") {
+			actionMap.set(c.manifest.action, c);
+		}
+	}
+	return actionMap;
+}
+
+/** Collects only the arguments declared in the manifest parameters. */
+function collectArgs(
+	options: Record<string, string | undefined>,
+	parameters: CommandParameter[] | undefined,
+): Record<string, string> {
+	const args: Record<string, string> = {};
+	for (const param of parameters || []) {
+		const value = options[param.name];
+		if (value !== undefined) {
+			args[param.name] = value;
+		}
+	}
+	return args;
+}
+
+/** Resolves the effective output format. Domain commands default to JSON unless the user explicitly passes --format. */
+function resolveEffectiveFormat(program: Command): "human" | "json" {
+	const format = program.opts().format as "human" | "json";
+	const formatSource = program.getOptionValueSource("format");
+	return formatSource !== "default" ? format : "json";
+}
+
+/** Builds the extra help text for a command (prerequisites, browser requirement, login requirement). */
+function buildHelpText(command: ResolvedCommand): string {
+	const systemPrereqs = RUNTIME_SYSTEM_PREREQUISITES[command.runtime as CommandRuntime];
+	const manifestPrereqs = command.manifest.prerequisites;
+
+	const allPrereqs = new Set<string>();
+	if (systemPrereqs) {
+		for (const p of systemPrereqs) {
+			allPrereqs.add(p);
+		}
+	}
+	if (manifestPrereqs) {
+		for (const p of manifestPrereqs) {
+			allPrereqs.add(p);
+		}
+	}
+
+	const lines: string[] = [];
+	if (allPrereqs.size > 0) {
+		lines.push("Prerequisites:", ...[...allPrereqs].map((p) => `  ${p}`));
+	}
+	lines.push(`Browser: ${command.manifest.requiresBrowser ? "yes" : "no"}`);
+	if (command.manifest.authRequired !== undefined) {
+		lines.push(`Login: ${command.manifest.authRequired}`);
+	}
+	return `\n${lines.join("\n")}`;
 }
 
 /**
@@ -19,55 +89,37 @@ declare module "commander" {
  */
 export function registerDomainCommands(program: Command): void {
 	const commands = listAllCommands();
-	const domainMap = new Map<string, ResolvedCommand[]>();
-	for (const c of commands) {
-		const list = domainMap.get(c.manifest.domain) ?? [];
-		list.push(c);
-		domainMap.set(c.manifest.domain, list);
-	}
+	const domainMap = groupCommandsByDomain(commands);
 
 	for (const [domain, domainCommands] of domainMap) {
-		// If any command in the domain is user-defined, treat the whole domain as user so it overrides built-ins.
-		const source = domainCommands.some((c) => c.source === "user") ? "user" : "builtin";
+		const source = resolveDomainSource(domainCommands);
 		const domainCmd = program.command(domain).description(`${domain} commands`);
 		// Attach metadata for the custom help formatter to categorize domains correctly.
 		domainCmd._domainSource = source;
 
-		// Deduplicate by action; user commands take precedence over built-ins.
-		const actionMap = new Map<string, ResolvedCommand>();
-		for (const c of domainCommands) {
-			if (!actionMap.has(c.manifest.action) || c.source === "user") {
-				actionMap.set(c.manifest.action, c);
-			}
-		}
+		const actionMap = deduplicateActions(domainCommands);
 
-		for (const c of actionMap.values()) {
-			const actionCmd = domainCmd.command(c.manifest.action).description(c.manifest.description);
-			for (const param of c.manifest.parameters || []) {
-				const name = param.name;
-				const description = param.description;
-				const flags = `--${name} <value>`;
-				const actionOption = actionCmd.createOption(flags, description);
+		for (const command of actionMap.values()) {
+			const { action, description, parameters } = command.manifest;
+			const actionCmd = domainCmd.command(action).description(description);
+
+			for (const param of parameters || []) {
+				const flags = `--${param.name} <value>`;
+				const option = actionCmd.createOption(flags, param.description);
 				if (param.required) {
-					actionOption.makeOptionMandatory();
+					option.makeOptionMandatory();
 				}
 				if (param.default !== undefined) {
-					actionOption.default(String(param.default));
+					option.default(String(param.default));
 				}
-				actionCmd.addOption(actionOption);
+				actionCmd.addOption(option);
 			}
+
 			actionCmd.action(async (options: Record<string, string | undefined>) => {
-				const args: Record<string, string> = {};
-				for (const param of c.manifest.parameters || []) {
-					const name = param.name;
-					if (options[name] !== undefined) {
-						args[name] = options[name];
-					}
-				}
-				const result = await executeCommand(c, args);
-				const format = program.opts().format as "human" | "json";
-				const formatSource = program.getOptionValueSource("format");
-				const effectiveFormat = formatSource !== "default" ? format : "json";
+				const args = collectArgs(options, parameters);
+				const result = await executeCommand(command, args);
+				const effectiveFormat = resolveEffectiveFormat(program);
+
 				if (!result.success && effectiveFormat === "human") {
 					console.error(`${result.error.code}: ${result.error.message}`);
 				} else {
@@ -75,26 +127,7 @@ export function registerDomainCommands(program: Command): void {
 				}
 			});
 
-			const systemPrereqs = RUNTIME_SYSTEM_PREREQUISITES[c.runtime as CommandRuntime];
-			const manifestPrereqs = c.manifest.prerequisites;
-			const allPrereqs: string[] = [];
-			if (systemPrereqs && systemPrereqs.length > 0) {
-				allPrereqs.push(...systemPrereqs);
-			}
-			if (manifestPrereqs && manifestPrereqs.length > 0) {
-				allPrereqs.push(...manifestPrereqs);
-			}
-			const helpLines: string[] = [];
-			if (allPrereqs.length > 0) {
-				helpLines.push("Prerequisites:", ...allPrereqs.map((p) => `  ${p}`));
-			}
-			helpLines.push(`Browser: ${c.manifest.requiresBrowser ? "yes" : "no"}`);
-			if (c.manifest.authRequired !== undefined) {
-				helpLines.push(`Login: ${c.manifest.authRequired}`);
-			}
-			if (helpLines.length > 0) {
-				actionCmd.addHelpText("after", `\n${helpLines.join("\n")}`);
-			}
+			actionCmd.addHelpText("after", buildHelpText(command));
 		}
 	}
 }

@@ -1,12 +1,5 @@
 import { type Command, Help } from "commander";
 
-// Extend Commander's Command type to attach domain-source metadata for custom help formatting.
-declare module "commander" {
-	interface Command {
-		_domainSource?: string;
-	}
-}
-
 /** Custom help formatter that categorizes commands into Meta, Built-in, and User domains. */
 export class WebSculptHelp extends Help {
 	formatHelp(cmd: Command, helper: Help): string {
