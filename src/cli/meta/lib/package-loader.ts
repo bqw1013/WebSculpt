@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { resolveEntryFile } from "../engine/runtime-meta.js";
+import { resolveEntryFile } from "../../engine/runtime-meta.js";
 
 /**
  * Represents the loaded contents of a command package source directory.

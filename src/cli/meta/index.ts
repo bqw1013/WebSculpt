@@ -1,18 +1,15 @@
 import type { Command } from "commander";
-import { registerCommandMeta } from "./command.js";
+import { registerCommandMeta } from "./command/index.js";
 import { registerConfigMeta } from "./config.js";
-import { registerCreateMeta } from "./create.js";
 import { registerDaemonMeta } from "./daemon.js";
-import { registerDraftMeta } from "./draft.js";
 import { registerSkillMeta } from "./skill.js";
-import { registerValidateMeta } from "./validate.js";
 
-/** Registers all meta commands (command, config, skill) on the given program. */
+/** Set of all meta command names registered by this module. */
+export const META_COMMAND_NAMES = new Set(["command", "config", "daemon", "skill"]);
+
+/** Registers all meta commands (command, config, daemon, skill) on the given program. */
 export function registerMetaCommands(program: Command): void {
 	registerCommandMeta(program);
-	registerCreateMeta(program);
-	registerValidateMeta(program);
-	registerDraftMeta(program);
 	registerConfigMeta(program);
 	registerDaemonMeta(program);
 	registerSkillMeta(program);

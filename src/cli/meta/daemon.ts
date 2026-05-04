@@ -13,6 +13,7 @@ import type {
 	MetaCommandError,
 } from "../output.js";
 import { renderOutput } from "../output.js";
+import { getFormat } from "./shared.js";
 
 const STOP_POLL_INTERVAL_MS = 200;
 const STOP_POLL_MAX_WAIT_MS = 6000;
@@ -166,7 +167,7 @@ export async function handleDaemonLogs(options: { lines?: number } = {}): Promis
 
 /** Registers daemon sub-commands on the given program. */
 export function registerDaemonMeta(program: Command): void {
-	const format = (): "human" | "json" => program.opts().format;
+	const format = (): "human" | "json" => getFormat(program);
 	const daemon = program.command("daemon").description("Manage the background browser daemon");
 
 	daemon

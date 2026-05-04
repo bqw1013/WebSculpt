@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateCommandPackage } from "../../../../src/cli/meta/command-validation.js";
+import { validateCommandPackage } from "../../../../src/cli/meta/lib/command-validation.js";
 
 function makeInput(overrides: Record<string, unknown> = {}) {
 	const manifest: Record<string, unknown> = {

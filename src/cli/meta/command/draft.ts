@@ -1,27 +1,21 @@
 import { access, mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { Command } from "commander";
-import type { CommandParameter, CommandRuntime, ValidationDetail } from "../../types/index.js";
-import { RESERVED_DOMAINS } from "../engine/registry.js";
-import { resolveEntryFile, VALID_RUNTIMES } from "../engine/runtime-meta.js";
-import type { MetaCommandResult } from "../output.js";
-import { renderOutput } from "../output.js";
-import type { ParsedParam } from "./draft-templates.js";
+import type { CommandParameter, CommandRuntime, ValidationDetail } from "../../../types/index.js";
+import { RESERVED_DOMAINS } from "../../engine/registry.js";
+import { resolveEntryFile, VALID_RUNTIMES } from "../../engine/runtime-meta.js";
+import type { MetaCommandResult } from "../../output.js";
+import { renderOutput } from "../../output.js";
+import type { ParsedParam } from "../lib/draft-templates.js";
 import {
 	generateCommandTemplate,
 	generateContextTemplate,
 	generateNextSteps,
 	generateReadmeTemplate,
-} from "./draft-templates.js";
+} from "../lib/draft-templates.js";
 
 function collectOption(value: string, previous: string[]): string[] {
 	return previous.concat([value]);
-}
-
-function getCommandMetaGroup(program: Command): Command {
-	const existing = program.commands.find((c) => c.name() === "command");
-	if (existing) return existing;
-	return program.command("command").description("Manage extension command registry");
 }
 
 export interface DraftOptions {
@@ -176,11 +170,9 @@ export async function handleCommandDraft(
 	}
 }
 
-/** Registers the `command draft` sub-command on the given program. */
-export function registerDraftMeta(program: Command): void {
-	const format = (): "human" | "json" => program.opts().format;
-	const cmd = getCommandMetaGroup(program);
-	cmd.command("draft <domain> <action>")
+/** Registers the `draft` sub-command on the given command group. */
+export function registerDraft(group: Command, format: () => "human" | "json"): void {
+	group.command("draft <domain> <action>")
 		.description("Generate a command skeleton directory")
 		.option("--runtime <runtime>", "Runtime: node, playwright-cli, shell, python (default: node)")
 		.option("--to <path>", "Custom output directory")

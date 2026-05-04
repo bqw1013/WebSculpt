@@ -1,15 +1,9 @@
 import type { Command } from "commander";
-import { RESERVED_DOMAINS } from "../engine/registry.js";
-import type { MetaCommandResult } from "../output.js";
-import { renderOutput } from "../output.js";
-import { validateCommandPackage } from "./command-validation.js";
-import { isLoadError, loadCommandPackageSource } from "./package-loader.js";
-
-function getCommandMetaGroup(program: Command): Command {
-	const existing = program.commands.find((c) => c.name() === "command");
-	if (existing) return existing;
-	return program.command("command").description("Manage extension command registry");
-}
+import { RESERVED_DOMAINS } from "../../engine/registry.js";
+import type { MetaCommandResult } from "../../output.js";
+import { renderOutput } from "../../output.js";
+import { validateCommandPackage } from "../lib/command-validation.js";
+import { isLoadError, loadCommandPackageSource } from "../lib/package-loader.js";
 
 /**
  * Validates a command directory without installing it.
@@ -69,11 +63,9 @@ export async function handleCommandValidate(
 	};
 }
 
-/** Registers the `command validate` sub-command on the given program. */
-export function registerValidateMeta(program: Command): void {
-	const format = (): "human" | "json" => program.opts().format;
-	const cmd = getCommandMetaGroup(program);
-	cmd.command("validate")
+/** Registers the `validate` sub-command on the given command group. */
+export function registerValidate(group: Command, format: () => "human" | "json"): void {
+	group.command("validate")
 		.description("Validate a command directory without installing")
 		.requiredOption("--from-dir <path>", "Path to the command source directory")
 		.argument("[domain]", "Optional domain to simulate injection")

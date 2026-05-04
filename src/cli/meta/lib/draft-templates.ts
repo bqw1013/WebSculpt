@@ -1,4 +1,4 @@
-import { resolveEntryFile } from "../engine/runtime-meta.js";
+import { resolveEntryFile } from "../../engine/runtime-meta.js";
 
 /**
  * Represents a parsed parameter specification from the --param CLI option.

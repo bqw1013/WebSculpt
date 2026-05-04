@@ -1,6 +1,6 @@
 import { builtinModules } from "node:module";
-import type { ValidationDetail } from "../../types/index.js";
-import { VALID_RUNTIMES } from "../engine/runtime-meta.js";
+import type { ValidationDetail } from "../../../types/index.js";
+import { VALID_RUNTIMES } from "../../engine/runtime-meta.js";
 
 const TEMP_REF_REGEX = /\be\d+\b/g;
 const BROWSER_KEYWORDS = ["launch", "connect", "connectOverCDP", "newBrowser", "chrome-remote-interface"];

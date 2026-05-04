@@ -1,21 +1,15 @@
 import { access, copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
-import { USER_COMMANDS_DIR } from "../../infra/paths.js";
-import { appendAuditLog } from "../../infra/store.js";
-import type { CommandManifest } from "../../types/index.js";
-import { RESERVED_DOMAINS, rebuildIndex } from "../engine/registry.js";
-import { resolveEntryFile } from "../engine/runtime-meta.js";
-import type { MetaCommandResult } from "../output.js";
-import { renderOutput } from "../output.js";
-import { validateCommandPackage } from "./command-validation.js";
-import { isLoadError, loadCommandPackageSource } from "./package-loader.js";
-
-function getCommandMetaGroup(program: Command): Command {
-	const existing = program.commands.find((c) => c.name() === "command");
-	if (existing) return existing;
-	return program.command("command").description("Manage extension command registry");
-}
+import { USER_COMMANDS_DIR } from "../../../infra/paths.js";
+import { appendAuditLog } from "../../../infra/store.js";
+import type { CommandManifest } from "../../../types/index.js";
+import { RESERVED_DOMAINS, rebuildIndex } from "../../engine/registry.js";
+import { resolveEntryFile } from "../../engine/runtime-meta.js";
+import type { MetaCommandResult } from "../../output.js";
+import { renderOutput } from "../../output.js";
+import { validateCommandPackage } from "../lib/command-validation.js";
+import { isLoadError, loadCommandPackageSource } from "../lib/package-loader.js";
 
 /**
  * Creates a new user-defined command from a source directory.
@@ -163,11 +157,9 @@ export async function handleCommandCreate(
 	}
 }
 
-/** Registers the `command create` sub-command on the given program. */
-export function registerCreateMeta(program: Command): void {
-	const format = (): "human" | "json" => program.opts().format;
-	const cmd = getCommandMetaGroup(program);
-	cmd.command("create <domain> <action>")
+/** Registers the `create` sub-command on the given command group. */
+export function registerCreate(group: Command, format: () => "human" | "json"): void {
+	group.command("create <domain> <action>")
 		.description("Create a user command from a directory")
 		.requiredOption(
 			"--from-dir <path>",

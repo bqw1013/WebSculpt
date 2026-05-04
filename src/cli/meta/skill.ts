@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import type { Command } from "commander";
 import type { MetaCommandResult, SkillUninstallResult } from "../output.js";
 import { renderOutput } from "../output.js";
+import { getFormat } from "./shared.js";
 
 const AGENTS = ["claude", "codex", "agents"] as const;
 type Agent = (typeof AGENTS)[number];
@@ -189,7 +190,7 @@ export function handleSkillStatus(): MetaCommandResult {
 
 /** Registers skill sub-commands on the given program. */
 export function registerSkillMeta(program: Command): void {
-	const format = (): "human" | "json" => program.opts().format;
+	const format = (): "human" | "json" => getFormat(program);
 	const skill = program.command("skill").description("Install strategy docs to AI agent directories");
 
 	skill

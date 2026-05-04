@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { handleCommandValidate } from "../../../../src/cli/meta/validate.js";
+import { handleCommandValidate } from "../../../../src/cli/meta/command/validate.js";
 
 async function createTempDir(): Promise<string> {
 	const dir = join(

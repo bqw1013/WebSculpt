@@ -1,4 +1,5 @@
 import { type Command, Help } from "commander";
+import { META_COMMAND_NAMES } from "./meta/index.js";
 
 /** Custom help formatter that categorizes commands into Meta, Built-in, and User domains. */
 export class WebSculptHelp extends Help {
@@ -23,9 +24,8 @@ export class WebSculptHelp extends Help {
 		}
 
 		const visibleCommands = helper.visibleCommands(cmd);
-		const metaNames = new Set(["command", "config", "daemon", "skill"]);
-		const meta = visibleCommands.filter((c) => metaNames.has(c.name()));
-		const domains = visibleCommands.filter((c) => !metaNames.has(c.name()) && !c.name().startsWith("help"));
+		const meta = visibleCommands.filter((c) => META_COMMAND_NAMES.has(c.name()));
+		const domains = visibleCommands.filter((c) => !META_COMMAND_NAMES.has(c.name()) && !c.name().startsWith("help"));
 		const builtinDomains = domains.filter((c) => c._domainSource === "builtin");
 		const userDomains = domains.filter((c) => c._domainSource === "user");
 

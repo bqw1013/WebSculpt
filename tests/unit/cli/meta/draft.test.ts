@@ -1,6 +1,6 @@
 import { access } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { handleCommandDraft, parseParamSpec } from "../../../../src/cli/meta/draft.js";
+import { handleCommandDraft, parseParamSpec } from "../../../../src/cli/meta/command/draft.js";
 
 describe("parseParamSpec", () => {
 	it("parses a plain name as optional parameter without default", () => {

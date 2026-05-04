@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { handleCommandShow } from "../../../../src/cli/meta/command.js";
+import { handleCommandShow } from "../../../../src/cli/meta/command/show.js";
 
 vi.mock("../../../../src/cli/engine/registry.js", () => ({
 	findCommand: vi.fn(),
