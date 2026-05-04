@@ -1,11 +1,15 @@
 import { unlinkSync } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { getOpenPageCount } from "./browser-manager.js";
-import { closeBrowser } from "./browser-manager.js";
+import { closeBrowser, getOpenPageCount } from "./browser-manager.js";
 import { closeLogger, initLogger, logEvent } from "./logger.js";
-import { DAEMON_LIMITS } from "./limits.js";
-import { degraded, restartPending, setRestartPending, startMemoryMonitoring, stopMemoryMonitoring } from "./memory-monitor.js";
+import {
+	degraded,
+	restartPending,
+	setRestartPending,
+	startMemoryMonitoring,
+	stopMemoryMonitoring,
+} from "./memory-monitor.js";
 import { flushMetrics, recordPeakPages, recordPeakRss } from "./metrics.js";
 import { getDaemonStateDir, getSocketPath } from "./paths.js";
 import { createSocketServer, getExecutionCount } from "./socket-server.js";

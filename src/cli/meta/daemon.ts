@@ -3,7 +3,14 @@ import { getDaemonLogPath } from "../daemon/paths.js";
 import { ensureDaemonClient } from "../engine/daemon/client.js";
 import { DAEMON_JSON, isProcessAlive, readDaemonState } from "../engine/daemon/state.js";
 import { sendRequest } from "../engine/daemon/transport.js";
-import type { DaemonLogsResult, DaemonRestartResult, DaemonStartResult, DaemonStatusResult, DaemonStopResult, MetaCommandError } from "../output.js";
+import type {
+	DaemonLogsResult,
+	DaemonRestartResult,
+	DaemonStartResult,
+	DaemonStatusResult,
+	DaemonStopResult,
+	MetaCommandError,
+} from "../output.js";
 
 const STOP_POLL_INTERVAL_MS = 200;
 const STOP_POLL_MAX_WAIT_MS = 6000;
@@ -101,7 +108,10 @@ export async function handleDaemonRestart(): Promise<DaemonRestartResult | MetaC
 	} catch (err) {
 		return {
 			success: false,
-			error: { code: "DAEMON_START_FAILED", message: `Daemon stopped but failed to start: ${(err as Error).message}` },
+			error: {
+				code: "DAEMON_START_FAILED",
+				message: `Daemon stopped but failed to start: ${(err as Error).message}`,
+			},
 		};
 	}
 }

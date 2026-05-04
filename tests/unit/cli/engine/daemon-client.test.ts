@@ -18,11 +18,9 @@ vi.mock("node:net", () => ({
 	createConnection: vi.fn(),
 }));
 
-
-
 import { readFile, unlink } from "node:fs/promises";
 import { createConnection } from "node:net";
-import { createClient, type DaemonClient } from "../../../../src/cli/engine/daemon/client.js";
+import { createClient } from "../../../../src/cli/engine/daemon/client.js";
 
 describe("createClient PID ownership", () => {
 	beforeEach(() => {

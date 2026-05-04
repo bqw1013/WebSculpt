@@ -12,7 +12,6 @@ vi.mock("../../../../src/cli/daemon/paths.js", async () => {
 	};
 });
 
-import { getDaemonStateDir } from "../../../../src/cli/daemon/paths.js";
 import {
 	flushMetrics,
 	recordExecutionEnd,
@@ -21,6 +20,7 @@ import {
 	recordPeakRss,
 	resetMetrics,
 } from "../../../../src/cli/daemon/metrics.js";
+import { getDaemonStateDir } from "../../../../src/cli/daemon/paths.js";
 
 describe("metrics tracking and serialization", () => {
 	let metricsDir: string;

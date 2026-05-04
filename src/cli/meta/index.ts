@@ -4,7 +4,13 @@ import { renderOutput } from "../output.js";
 import { handleCommandList, handleCommandRemove, handleCommandShow } from "./command.js";
 import { handleConfigInit } from "./config.js";
 import { handleCommandCreate } from "./create.js";
-import { handleDaemonLogs, handleDaemonRestart, handleDaemonStart, handleDaemonStatus, handleDaemonStop } from "./daemon.js";
+import {
+	handleDaemonLogs,
+	handleDaemonRestart,
+	handleDaemonStart,
+	handleDaemonStatus,
+	handleDaemonStop,
+} from "./daemon.js";
 import { handleCommandDraft } from "./draft.js";
 import { handleSkillInstall, handleSkillStatus, handleSkillUninstall } from "./skill.js";
 import { handleCommandValidate } from "./validate.js";

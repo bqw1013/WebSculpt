@@ -32,7 +32,13 @@ import { getDaemonLogPath } from "../../../../src/cli/daemon/paths.js";
 import { ensureDaemonClient } from "../../../../src/cli/engine/daemon/client.js";
 import { isProcessAlive, readDaemonState } from "../../../../src/cli/engine/daemon/state.js";
 import { sendRequest } from "../../../../src/cli/engine/daemon/transport.js";
-import { handleDaemonLogs, handleDaemonRestart, handleDaemonStart, handleDaemonStatus, handleDaemonStop } from "../../../../src/cli/meta/daemon.js";
+import {
+	handleDaemonLogs,
+	handleDaemonRestart,
+	handleDaemonStart,
+	handleDaemonStatus,
+	handleDaemonStop,
+} from "../../../../src/cli/meta/daemon.js";
 
 describe("handleDaemonStop", () => {
 	beforeEach(() => {
