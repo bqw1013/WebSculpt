@@ -1,8 +1,7 @@
 import { createHash } from "node:crypto";
-import { homedir, userInfo } from "node:os";
+import { userInfo } from "node:os";
 import { join } from "node:path";
-
-const STATE_DIR = join(homedir(), ".websculpt");
+import { WEBSCULPT_DIR } from "../../infra/paths.js";
 
 /**
  * Returns a safe, deterministic identifier for the current user.
@@ -32,12 +31,12 @@ export function getSocketPath(): string {
  * Returns the path to the daemon log file.
  */
 export function getDaemonLogPath(): string {
-	return join(STATE_DIR, "daemon.log");
+	return join(WEBSCULPT_DIR, "daemon.log");
 }
 
 /**
  * Returns the path to the daemon state directory.
  */
 export function getDaemonStateDir(): string {
-	return STATE_DIR;
+	return WEBSCULPT_DIR;
 }

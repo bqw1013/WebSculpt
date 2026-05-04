@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { access, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { USER_COMMANDS_DIR, WEBSCULPT_DIR } from "../../infra/paths.js";
+import { INDEX_PATH, USER_COMMANDS_DIR } from "../../infra/paths.js";
 import type { CommandManifest } from "../../types/index.js";
 import { getBuiltinCommandsDir } from "./paths.js";
 
@@ -30,9 +30,6 @@ export interface RegistryIndex {
 		runtime: string;
 	}>;
 }
-
-/** Path to the persistent registry index file. */
-export const INDEX_PATH = join(WEBSCULPT_DIR, "registry-index.json");
 
 let cachedCommands: ResolvedCommand[] | null = null;
 

@@ -16,8 +16,5 @@ export const LOG_FILE = join(WEBSCULPT_DIR, "log.jsonl");
 /** Path to the append-only audit log file. */
 export const AUDIT_FILE = join(WEBSCULPT_DIR, "audit.jsonl");
 
-/** Directory for long-lived runtime logs managed by WebSculpt. */
-export const LOGS_DIR = join(WEBSCULPT_DIR, "logs");
-
-/** Path to the detached CDP proxy log file. */
-export const CDP_PROXY_LOG_FILE = join(LOGS_DIR, "cdp-proxy.log");
+/** Path to the persistent registry index file. */
+export const INDEX_PATH = join(WEBSCULPT_DIR, "registry-index.json");
