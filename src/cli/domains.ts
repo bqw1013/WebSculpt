@@ -16,8 +16,8 @@ function groupCommandsByDomain(commands: ResolvedCommand[]): Map<string, Resolve
 	return map;
 }
 
-/** Determines the domain source. If any command is user-defined, the whole domain is treated as user. */
-function resolveDomainSource(commands: ResolvedCommand[]): "user" | "builtin" {
+/** Determines which help section the domain belongs to. If any command is user-defined, the whole domain is shown under User Domains. */
+function resolveHelpSection(commands: ResolvedCommand[]): "user" | "builtin" {
 	return commands.some((c) => c.source === "user") ? "user" : "builtin";
 }
 
@@ -92,7 +92,7 @@ export function registerDomainCommands(program: Command): void {
 	const domainMap = groupCommandsByDomain(commands);
 
 	for (const [domain, domainCommands] of domainMap) {
-		const source = resolveDomainSource(domainCommands);
+		const source = resolveHelpSection(domainCommands);
 		const domainCmd = program.command(domain).description(`${domain} commands`);
 		// Attach metadata for the custom help formatter to categorize domains correctly.
 		domainCmd._domainSource = source;
