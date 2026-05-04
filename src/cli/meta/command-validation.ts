@@ -22,8 +22,9 @@ function checkJsSyntax(code: string, runtime: string): ValidationDetail | null {
 		return null;
 	}
 	let trial: string;
-	if (/^export\s+default\s+/s.test(code)) {
-		const expr = code.replace(/^export\s+default\s+/s, "").replace(/;\s*$/s, "");
+	const exportDefaultMatch = code.match(/export\s+default\s+/s);
+	if (exportDefaultMatch && exportDefaultMatch.index !== undefined) {
+		const expr = code.slice(exportDefaultMatch.index + exportDefaultMatch[0].length).replace(/;\s*$/s, "");
 		trial = `return (${expr})`;
 	} else if (runtime === "node" && /^export\s+(?:const|let|var)\s+command\s*=\s*/s.test(code)) {
 		const expr = code.replace(/^export\s+(?:const|let|var)\s+command\s*=\s*/s, "").replace(/;\s*$/s, "");
