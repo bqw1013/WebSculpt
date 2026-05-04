@@ -199,19 +199,287 @@ export type MetaCommandResult =
 	| CommandShowResult
 	| MetaCommandError;
 
-/** Prints a value as pretty-printed JSON to stdout. */
-export function printJson(data: unknown): void {
-	console.log(JSON.stringify(data, null, 2));
-}
+// ---------------------------------------------------------------------------
+// Internal formatting helpers
+// ---------------------------------------------------------------------------
 
+/** Formats uptime in full precision (e.g. "1h 59m 59s", "5m 3s", "42s"). */
 function formatUptime(seconds: number): string {
 	const h = Math.floor(seconds / 3600);
 	const m = Math.floor((seconds % 3600) / 60);
 	const s = seconds % 60;
-	if (h > 0) return `${h}h ${m}m`;
-	if (m > 0) return `${m}m ${s}s`;
-	return `${s}s`;
+	const parts: string[] = [];
+	if (h > 0) parts.push(`${h}h`);
+	if (m > 0) parts.push(`${m}m`);
+	if (s > 0 || parts.length === 0) parts.push(`${s}s`);
+	return parts.join(" ");
 }
+
+/** Joins string values padded to fixed column widths. */
+function formatRow(values: string[], widths: number[], padding = 2): string {
+	return values.map((v, i) => v.padEnd((widths[i] ?? 0) + padding)).join("");
+}
+
+/** Prints a label-value pair with the label padded to 12 characters. */
+function printKeyValue(label: string, value: string): void {
+	console.log(`${label.padEnd(12)}${value}`);
+}
+
+/** Prints a list of validation warnings. */
+function printWarnings(warnings: ValidationDetail[]): void {
+	console.log("Warnings:");
+	for (const w of warnings) {
+		console.log(`  [${w.level.toUpperCase()}] ${w.code}: ${w.message}`);
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Public utilities
+// ---------------------------------------------------------------------------
+
+/** Prints a value as pretty-printed JSON to stdout. */
+export function printJson(data: unknown): void {
+	try {
+		console.log(JSON.stringify(data, null, 2));
+	} catch (err) {
+		console.error("Failed to serialize output:", err instanceof Error ? err.message : String(err));
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Type guards for discriminating MetaCommandResult members
+// ---------------------------------------------------------------------------
+
+function isMetaCommandError(r: MetaCommandResult): r is MetaCommandError | ValidationErrorResult {
+	return !r.success;
+}
+
+function isCommandDraftResult(r: MetaCommandResult): r is CommandDraftResult {
+	return r.success && "draftPath" in r;
+}
+
+function isCommandCreateResult(r: MetaCommandResult): r is CommandCreateResult {
+	return r.success && "path" in r && typeof (r as CommandCreateResult).command === "string";
+}
+
+function isCommandListResult(r: MetaCommandResult): r is CommandListResult {
+	return r.success && "commands" in r && Array.isArray((r as CommandListResult).commands);
+}
+
+function isDaemonStatusResult(r: MetaCommandResult): r is DaemonStatusResult {
+	return r.success && "status" in r && typeof (r as DaemonStatusResult).status === "object";
+}
+
+function isLinesResult(r: MetaCommandResult): r is DaemonLogsResult | SkillStatusResult {
+	return r.success && "lines" in r && Array.isArray((r as DaemonLogsResult).lines);
+}
+
+function isSkillResults(r: MetaCommandResult): r is SkillInstallResult | SkillUninstallResult {
+	return r.success && "results" in r && Array.isArray((r as SkillInstallResult).results);
+}
+
+function isMessageResult(
+	r: MetaCommandResult,
+): r is ConfigInitResult | DaemonStopResult | DaemonStartResult | DaemonRestartResult {
+	return r.success && "message" in r && typeof (r as ConfigInitResult).message === "string";
+}
+
+function isCommandValidateResult(r: MetaCommandResult): r is CommandValidateResult {
+	return r.success && "warnings" in r && !("path" in r) && !("draftPath" in r);
+}
+
+function isCommandShowResult(r: MetaCommandResult): r is CommandShowResult {
+	return r.success && "command" in r && typeof (r as CommandShowResult).command === "object";
+}
+
+function isCommandRemoveResult(r: MetaCommandResult): r is CommandRemoveResult {
+	return r.success && "command" in r && typeof (r as CommandRemoveResult).command === "string" && !("path" in r);
+}
+
+// ---------------------------------------------------------------------------
+// Individual human-format renderers
+// ---------------------------------------------------------------------------
+
+function renderError(result: MetaCommandError | ValidationErrorResult): void {
+	console.log(`${result.error.code}: ${result.error.message}`);
+	if ("details" in result.error && Array.isArray(result.error.details)) {
+		for (const detail of result.error.details) {
+			console.log(`  [${detail.level.toUpperCase()}] ${detail.code}: ${detail.message}`);
+		}
+	}
+}
+
+function renderDraftResult(result: CommandDraftResult): void {
+	console.log(`Draft created at ${result.draftPath}`);
+	console.log("");
+	console.log("Files:");
+	for (const file of result.files) {
+		console.log(`  ${file}`);
+	}
+	if (result.warnings && result.warnings.length > 0) {
+		console.log("");
+		printWarnings(result.warnings);
+	}
+	console.log("");
+	console.log("Next steps:");
+	for (const step of result.nextSteps) {
+		if (step.file) {
+			console.log(`  - ${step.action} (${step.file})`);
+		} else if (step.command) {
+			console.log(`  - ${step.action}: ${step.command}`);
+		} else {
+			console.log(`  - ${step.action}`);
+		}
+	}
+}
+
+function renderCreateResult(result: CommandCreateResult): void {
+	console.log(`Created command ${result.command} at ${result.path}`);
+	if (result.warnings && result.warnings.length > 0) {
+		console.log("");
+		printWarnings(result.warnings);
+	}
+}
+
+function renderListResult(result: CommandListResult): void {
+	if (result.commands.length === 0) {
+		console.log("No commands available.");
+		return;
+	}
+
+	const rows = result.commands.map((cmd) => ({
+		command: `websculpt ${cmd.domain} ${cmd.action}`,
+		source: cmd.type,
+		browser: cmd.requiresBrowser ? "yes" : "no",
+		login: cmd.authRequired === "required" ? "yes" : cmd.authRequired === "not-required" ? "no" : "",
+		description: cmd.description,
+	}));
+
+	const commandMaxWidth = Math.max("Command".length, ...rows.map((r) => r.command.length));
+	const sourceMaxWidth = Math.max("Source".length, ...rows.map((r) => r.source.length));
+	const browserMaxWidth = Math.max("Browser".length, ...rows.map((r) => r.browser.length));
+	const loginMaxWidth = Math.max("Login".length, ...rows.map((r) => r.login.length));
+	const widths = [commandMaxWidth, sourceMaxWidth, browserMaxWidth, loginMaxWidth];
+
+	console.log(formatRow(["Command", "Source", "Browser", "Login", "Description"], widths));
+	for (const row of rows) {
+		console.log(formatRow([row.command, row.source, row.browser, row.login, row.description], widths));
+	}
+}
+
+function renderShowResult(result: CommandShowResult): void {
+	const cmd = result.command;
+	printKeyValue("id:", cmd.id);
+	printKeyValue("domain:", cmd.domain);
+	printKeyValue("action:", cmd.action);
+	printKeyValue("description:", cmd.description);
+	printKeyValue("runtime:", cmd.runtime);
+	printKeyValue("source:", cmd.source);
+	printKeyValue("path:", cmd.path);
+	printKeyValue("entryFile:", cmd.entryFile);
+	printKeyValue("requiresBrowser:", cmd.requiresBrowser ? "yes" : "no");
+	if (cmd.authRequired !== undefined) {
+		printKeyValue("authRequired:", cmd.authRequired);
+	}
+	console.log("");
+	if (cmd.parameters.length > 0) {
+		console.log("parameters:");
+		const nameWidth = Math.max(10, ...cmd.parameters.map((p) => p.name.length));
+		const reqWidth = Math.max(8, ...cmd.parameters.map((p) => (p.required ? "required" : "optional").length));
+		for (const p of cmd.parameters) {
+			const req = p.required ? "required" : "optional";
+			const def = p.default !== undefined ? String(p.default) : "-";
+			console.log(`  ${p.name.padEnd(nameWidth)} ${req.padEnd(reqWidth)} ${def.padEnd(10)} ${p.description ?? ""}`);
+		}
+		console.log("");
+	}
+	if (cmd.prerequisites.length > 0) {
+		console.log("prerequisites:");
+		for (const p of cmd.prerequisites) {
+			console.log(`  ${p}`);
+		}
+		console.log("");
+	}
+	console.log("assets:");
+	const assetWidth = Math.max(10, ...Object.keys(cmd.assets).map((k) => k.length));
+	for (const [key, value] of Object.entries(cmd.assets)) {
+		console.log(`  ${key.padEnd(assetWidth)} ${value ? "yes" : "no"}`);
+	}
+	if (result.readmeContent) {
+		console.log("");
+		console.log("--- README ---");
+		console.log(result.readmeContent);
+	}
+}
+
+function renderDaemonStatus(result: DaemonStatusResult): void {
+	const s = result.status;
+	console.log("Daemon Status");
+	console.log("=============");
+	printKeyValue("PID:", String(s.pid));
+	printKeyValue("Uptime:", formatUptime(s.uptime));
+	printKeyValue("Healthy:", s.healthy ? "yes" : "no");
+	printKeyValue("Degraded:", s.degraded ? "yes" : "no");
+	console.log("");
+	console.log("Browser");
+	printKeyValue("  Connected:", s.browser.connected ? "yes" : "no");
+	printKeyValue("  Pages:", String(s.browser.pages));
+	console.log("");
+	console.log("Sessions");
+	printKeyValue("  Active:", `${s.sessions.active} / ${s.sessions.max}`);
+	printKeyValue("  Total:", String(s.sessions.total));
+	console.log("");
+	console.log("Resources");
+	printKeyValue("  RSS:", `${s.resources.rssMB} MB`);
+	printKeyValue("  Heap:", `${s.resources.heapUsedMB} / ${s.resources.heapTotalMB} MB`);
+	console.log("");
+	console.log("Limits");
+	printKeyValue("  Command timeout:", `${Math.floor(s.limits.commandTimeoutSec / 60)} min`);
+	printKeyValue("  Max sessions:", String(s.limits.maxConcurrentSessions));
+	printKeyValue("  Max pages:", String(s.limits.maxTotalPages));
+	printKeyValue("  Restart after:", `${s.limits.restartAfterExecutions} executions`);
+	if (s.degraded) {
+		console.log("");
+		console.log("WARNING: Daemon is degraded");
+	}
+}
+
+function renderLines(lines: string[]): void {
+	for (const line of lines) {
+		console.log(line);
+	}
+}
+
+function renderSkillResults(result: SkillInstallResult | SkillUninstallResult): void {
+	for (const r of result.results) {
+		console.log(`${r.agent}: ${r.status}`);
+	}
+}
+
+function renderMessageResult(
+	result: ConfigInitResult | DaemonStopResult | DaemonStartResult | DaemonRestartResult,
+): void {
+	console.log(result.message);
+}
+
+function renderValidationResult(result: CommandValidateResult): void {
+	if (result.warnings && result.warnings.length > 0) {
+		console.log("Validation passed with warnings:");
+		for (const w of result.warnings) {
+			console.log(`  [WARNING] ${w.code}: ${w.message}`);
+		}
+	} else {
+		console.log("Validation passed");
+	}
+}
+
+function renderRemoveResult(result: CommandRemoveResult): void {
+	console.log(`Removed command ${result.command}`);
+}
+
+// ---------------------------------------------------------------------------
+// Main dispatcher
+// ---------------------------------------------------------------------------
 
 /** Renders a meta command result as either human-readable text or JSON. */
 export function renderOutput(result: MetaCommandResult, format: OutputFormat): void {
@@ -220,210 +488,61 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		return;
 	}
 
-	if (!result.success) {
-		console.log(`${result.error.code}: ${result.error.message}`);
-		if ("details" in result.error && Array.isArray(result.error.details)) {
-			for (const detail of result.error.details) {
-				console.log(`  [${detail.level.toUpperCase()}] ${detail.code}: ${detail.message}`);
-			}
-		}
+	if (isMetaCommandError(result)) {
+		renderError(result);
 		return;
 	}
 
-	if ("draftPath" in result) {
-		console.log(`Draft created at ${result.draftPath}`);
-		console.log("");
-		console.log("Files:");
-		for (const file of result.files) {
-			console.log(`  ${file}`);
-		}
-		if (result.warnings && result.warnings.length > 0) {
-			console.log("");
-			console.log("Warnings:");
-			for (const w of result.warnings) {
-				console.log(`  [WARNING] ${w.code}: ${w.message}`);
-			}
-		}
-		console.log("");
-		console.log("Next steps:");
-		for (const step of result.nextSteps) {
-			if (step.file) {
-				console.log(`  - ${step.action} (${step.file})`);
-			} else if (step.command) {
-				console.log(`  - ${step.action}: ${step.command}`);
-			} else {
-				console.log(`  - ${step.action}`);
-			}
-		}
+	if (isCommandDraftResult(result)) {
+		renderDraftResult(result);
 		return;
 	}
 
-	if ("path" in result) {
-		console.log(`Created command ${result.command} at ${result.path}`);
-		if (result.warnings && result.warnings.length > 0) {
-			console.log("");
-			console.log("Warnings:");
-			for (const w of result.warnings) {
-				console.log(`  [WARNING] ${w.code}: ${w.message}`);
-			}
-		}
+	if (isCommandCreateResult(result)) {
+		renderCreateResult(result);
 		return;
 	}
 
-	if ("commands" in result) {
-		if (result.commands.length === 0) {
-			console.log("No commands available.");
-			return;
-		}
-
-		const rows = result.commands.map((cmd) => ({
-			command: `websculpt ${cmd.domain} ${cmd.action}`,
-			source: cmd.type,
-			browser: cmd.requiresBrowser ? "yes" : "no",
-			login: cmd.authRequired === "required" ? "yes" : cmd.authRequired === "not-required" ? "no" : "",
-			description: cmd.description,
-		}));
-
-		const commandMaxWidth = Math.max("Command".length, ...rows.map((r) => r.command.length));
-		const sourceMaxWidth = Math.max("Source".length, ...rows.map((r) => r.source.length));
-		const browserMaxWidth = Math.max("Browser".length, ...rows.map((r) => r.browser.length));
-		const loginMaxWidth = Math.max("Login".length, ...rows.map((r) => r.login.length));
-
-		const pad = (s: string, width: number) => s.padEnd(width + 2);
-
-		console.log(
-			`${pad("Command", commandMaxWidth)}${pad("Source", sourceMaxWidth)}${pad("Browser", browserMaxWidth)}${pad("Login", loginMaxWidth)}Description`,
-		);
-		for (const row of rows) {
-			console.log(
-				`${pad(row.command, commandMaxWidth)}${pad(row.source, sourceMaxWidth)}${pad(row.browser, browserMaxWidth)}${pad(row.login, loginMaxWidth)}${row.description}`,
-			);
-		}
+	if (isCommandListResult(result)) {
+		renderListResult(result);
 		return;
 	}
 
-	if ("status" in result) {
-		const s = result.status;
-		const pad = (label: string, value: string) => {
-			console.log(`${label.padEnd(12)}${value}`);
-		};
-		console.log("Daemon Status");
-		console.log("=============");
-		pad("PID:", String(s.pid));
-		pad("Uptime:", formatUptime(s.uptime));
-		pad("Healthy:", s.healthy ? "yes" : "no");
-		pad("Degraded:", s.degraded ? "yes" : "no");
-		console.log("");
-		console.log("Browser");
-		pad("  Connected:", s.browser.connected ? "yes" : "no");
-		pad("  Pages:", String(s.browser.pages));
-		console.log("");
-		console.log("Sessions");
-		pad("  Active:", `${s.sessions.active} / ${s.sessions.max}`);
-		pad("  Total:", String(s.sessions.total));
-		console.log("");
-		console.log("Resources");
-		pad("  RSS:", `${s.resources.rssMB} MB`);
-		pad("  Heap:", `${s.resources.heapUsedMB} / ${s.resources.heapTotalMB} MB`);
-		console.log("");
-		console.log("Limits");
-		pad("  Command timeout:", `${Math.floor(s.limits.commandTimeoutSec / 60)} min`);
-		pad("  Max sessions:", String(s.limits.maxConcurrentSessions));
-		pad("  Max pages:", String(s.limits.maxTotalPages));
-		pad("  Restart after:", `${s.limits.restartAfterExecutions} executions`);
-		if (s.degraded) {
-			console.log("");
-			console.log("WARNING: Daemon is degraded");
-		}
+	if (isDaemonStatusResult(result)) {
+		renderDaemonStatus(result);
 		return;
 	}
 
-	if ("lines" in result && Array.isArray(result.lines)) {
-		for (const line of result.lines) {
-			console.log(line);
-		}
+	if (isLinesResult(result)) {
+		renderLines(result.lines);
 		return;
 	}
 
-	if ("results" in result && Array.isArray(result.results) && result.results.length > 0) {
-		const firstResult = result.results[0];
-		if (firstResult && "agent" in firstResult && "status" in firstResult) {
-			for (const r of result.results) {
-				console.log(`${r.agent}: ${r.status}`);
-			}
-			return;
-		}
-	}
-
-	if ("message" in result) {
-		console.log(result.message);
+	if (isSkillResults(result)) {
+		renderSkillResults(result);
 		return;
 	}
 
-	if ("warnings" in result && !("path" in result)) {
-		if (result.warnings && result.warnings.length > 0) {
-			console.log("Validation passed with warnings:");
-			for (const w of result.warnings) {
-				console.log(`  [WARNING] ${w.code}: ${w.message}`);
-			}
-		} else {
-			console.log("Validation passed");
-		}
+	if (isMessageResult(result)) {
+		renderMessageResult(result);
 		return;
 	}
 
-	if ("command" in result && typeof result.command === "object") {
-		const cmd = result.command;
-		const labelWidth = 12;
-		const pad = (s: string) => s.padEnd(labelWidth);
-		console.log(`${pad("id:")}${cmd.id}`);
-		console.log(`${pad("domain:")}${cmd.domain}`);
-		console.log(`${pad("action:")}${cmd.action}`);
-		console.log(`${pad("description:")}${cmd.description}`);
-		console.log(`${pad("runtime:")}${cmd.runtime}`);
-		console.log(`${pad("source:")}${cmd.source}`);
-		console.log(`${pad("path:")}${cmd.path}`);
-		console.log(`${pad("entryFile:")}${cmd.entryFile}`);
-		console.log(`${pad("requiresBrowser:")}${cmd.requiresBrowser ? "yes" : "no"}`);
-		if (cmd.authRequired !== undefined) {
-			console.log(`${pad("authRequired:")}${cmd.authRequired}`);
-		}
-		console.log("");
-		if (cmd.parameters.length > 0) {
-			console.log("parameters:");
-			const nameWidth = Math.max(10, ...cmd.parameters.map((p) => p.name.length));
-			const reqWidth = Math.max(8, ...cmd.parameters.map((p) => (p.required ? "required" : "optional").length));
-			for (const p of cmd.parameters) {
-				const req = p.required ? "required" : "optional";
-				const def = p.default !== undefined ? String(p.default) : "-";
-				console.log(
-					`  ${p.name.padEnd(nameWidth)} ${req.padEnd(reqWidth)} ${def.padEnd(10)} ${p.description ?? ""}`,
-				);
-			}
-			console.log("");
-		}
-		if (cmd.prerequisites.length > 0) {
-			console.log("prerequisites:");
-			for (const p of cmd.prerequisites) {
-				console.log(`  ${p}`);
-			}
-			console.log("");
-		}
-		console.log("assets:");
-		const assetWidth = Math.max(10, ...Object.keys(cmd.assets).map((k) => k.length));
-		for (const [key, value] of Object.entries(cmd.assets)) {
-			console.log(`  ${key.padEnd(assetWidth)} ${value ? "yes" : "no"}`);
-		}
-		if ("readmeContent" in result && result.readmeContent) {
-			console.log("");
-			console.log("--- README ---");
-			console.log(result.readmeContent);
-		}
+	if (isCommandValidateResult(result)) {
+		renderValidationResult(result);
 		return;
 	}
 
-	if ("command" in result) {
-		console.log(`Removed command ${result.command}`);
+	if (isCommandShowResult(result)) {
+		renderShowResult(result);
 		return;
 	}
+
+	if (isCommandRemoveResult(result)) {
+		renderRemoveResult(result);
+		return;
+	}
+
+	console.warn("[renderOutput] Unhandled result type:");
+	printJson(result);
 }
