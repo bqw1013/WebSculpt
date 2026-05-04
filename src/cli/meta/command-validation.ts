@@ -1,3 +1,4 @@
+import { builtinModules } from "node:module";
 import type { ValidationDetail } from "../../types/index.js";
 
 const VALID_RUNTIMES = new Set<string>(["node", "shell", "python", "playwright-cli"]);
@@ -8,6 +9,17 @@ const INLINE_IMPORT_REGEX = /await\s+import\s*\(/;
 const EXPORT_DEFAULT_REGEX = /export\s+default/;
 const EXPORT_COMMAND_REGEX = /export\s+(?:(?:const|let|var)\s+command|(?:async\s+)?function\s+command)\b/;
 const PARAM_ACCESS_REGEX = /params\.([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+const IMPORT_FROM_REGEX = /import\s+.*?from\s+['"]([^'"]+)['"]/g;
+const IMPORT_SIDE_EFFECT_REGEX = /import\s+['"]([^'"]+)['"]/g;
+
+// Build whitelist of allowed import sources: built-in modules with and without node: prefix.
+const ALLOWED_IMPORTS = new Set<string>();
+for (const mod of builtinModules) {
+	ALLOWED_IMPORTS.add(mod);
+	if (!mod.startsWith("node:")) {
+		ALLOWED_IMPORTS.add(`node:${mod}`);
+	}
+}
 
 function addError(details: ValidationDetail[], code: string, message: string): void {
 	details.push({ code, message, level: "error" });
@@ -22,7 +34,7 @@ function checkJsSyntax(code: string, runtime: string): ValidationDetail | null {
 		return null;
 	}
 	let trial: string;
-	const exportDefaultMatch = code.match(/export\s+default\s+/s);
+	const exportDefaultMatch = code.match(/^\s*export\s+default\s+/m);
 	if (exportDefaultMatch && exportDefaultMatch.index !== undefined) {
 		const expr = code.slice(exportDefaultMatch.index + exportDefaultMatch[0].length).replace(/;\s*$/s, "");
 		trial = `return (${expr})`;
@@ -189,6 +201,25 @@ function validateL2Compliance(code: string, details: ValidationDetail[]): void {
 	if (INLINE_IMPORT_REGEX.test(code)) {
 		addError(details, "INLINE_IMPORT_FORBIDDEN", "Command code contains inline dynamic import (`await import(...)`)");
 	}
+
+	const importMatches = code.matchAll(IMPORT_FROM_REGEX);
+	const sideEffectMatches = code.matchAll(IMPORT_SIDE_EFFECT_REGEX);
+	const allSources = new Set<string>();
+	for (const match of importMatches) {
+		if (match[1]) allSources.add(match[1]);
+	}
+	for (const match of sideEffectMatches) {
+		if (match[1]) allSources.add(match[1]);
+	}
+	for (const source of allSources) {
+		if (!ALLOWED_IMPORTS.has(source)) {
+			addError(
+				details,
+				"ILLEGAL_IMPORT_FORBIDDEN",
+				`Import from "${source}" is not allowed. Only Node.js built-in modules are permitted.`,
+			);
+		}
+	}
 }
 
 function validateL3Contract(manifest: Record<string, unknown>, code: string, details: ValidationDetail[]): void {
@@ -237,12 +268,21 @@ function validateL3Contract(manifest: Record<string, unknown>, code: string, det
 	}
 	for (const name of usedNames) {
 		if (!declaredNames.has(name)) {
-			addWarning(
+			addError(
 				details,
 				"UNDECLARED_PARAM",
 				`Code accesses params.${name} but it is not declared in manifest.parameters`,
 			);
 		}
+	}
+
+	const lineCount = code.split("\n").length;
+	if (lineCount > 1000) {
+		addError(
+			details,
+			"CODE_TOO_LONG",
+			`Command entry file has ${lineCount} lines, exceeding the maximum of 1000 lines`,
+		);
 	}
 }
 

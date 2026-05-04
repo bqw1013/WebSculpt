@@ -197,13 +197,13 @@ describe("validateCommandPackage", () => {
 			expect(details.filter((d) => d.level === "error")).toHaveLength(0);
 		});
 
-		it("warns on undeclared parameter usage", () => {
+		it("errors on undeclared parameter usage", () => {
 			const details = validateCommandPackage(
 				makeInput({
 					code: "export default async function(params) { return { x: params.undeclared }; }",
 				}),
 			);
-			expect(details).toContainEqual(expect.objectContaining({ code: "UNDECLARED_PARAM", level: "warning" }));
+			expect(details).toContainEqual(expect.objectContaining({ code: "UNDECLARED_PARAM", level: "error" }));
 		});
 	});
 

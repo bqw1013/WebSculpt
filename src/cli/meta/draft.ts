@@ -84,7 +84,8 @@ function generateNodeTemplate(params: ParsedParam[]): string {
 		return `\tconst ${p.name} = params.${p.name};`;
 	});
 
-	return `export default async function(params) {
+	return `// Helper functions can be defined above export default
+export default async function(params) {
 ${paramLines.join("\n")}
 	// TODO: implement command logic
 	return { ok: true };
@@ -100,7 +101,8 @@ function generatePlaywrightCliTemplate(params: ParsedParam[]): string {
 		return `\tconst ${p.name} = params.${p.name};`;
 	});
 
-	return `export default async (page, params) => {
+	return `// Helper functions can be defined above export default
+export default async (page, params) => {
 ${paramLines.join("\n")}
 	// TODO: implement command logic using page
 	return { ok: true };
