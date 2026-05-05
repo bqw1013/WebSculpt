@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { readFile, unlink } from "node:fs/promises";
 import type { Command } from "commander";
 import { getDaemonLogPath } from "../daemon/paths.js";
@@ -16,7 +17,25 @@ import { renderOutput } from "../output.js";
 import { getFormat } from "./shared.js";
 
 const STOP_POLL_INTERVAL_MS = 200;
-const STOP_POLL_MAX_WAIT_MS = 6000;
+const STOP_POLL_MAX_WAIT_MS = 10000;
+const SIGKILL_CONFIRM_MAX_WAIT_MS = 3000;
+const RESTART_COOLDOWN_MS = 500;
+
+/**
+ * Forcefully terminates a process.
+ * On Windows, uses `taskkill /F /T` to terminate the entire process tree.
+ * On Unix/macOS, falls back to `SIGKILL`.
+ */
+function forceKill(pid: number): void {
+	if (process.platform === "win32") {
+		const result = spawnSync("taskkill", ["/F", "/T", "/PID", String(pid)], { stdio: "ignore" });
+		if (result.status === 0) {
+			return;
+		}
+		// taskkill failed (e.g., process already gone); fall through to process.kill.
+	}
+	process.kill(pid, "SIGKILL");
+}
 
 /**
  * Sends a graceful stop request to the daemon, polls for process termination,
@@ -50,13 +69,20 @@ export async function handleDaemonStop(): Promise<DaemonStopResult | MetaCommand
 
 	// Process is still alive after polling timeout — force kill.
 	try {
-		process.kill(state.pid, "SIGKILL");
+		forceKill(state.pid);
 	} catch {
 		// Ignore if the process disappeared between the last poll and the kill.
 	}
 
-	// Wait a brief moment for the OS to clean up the process.
-	await new Promise((r) => setTimeout(r, STOP_POLL_INTERVAL_MS));
+	// Poll until the process exits or the SIGKILL confirmation timeout expires.
+	const sigkillStart = Date.now();
+	while (Date.now() - sigkillStart < SIGKILL_CONFIRM_MAX_WAIT_MS) {
+		if (!isProcessAlive(state.pid)) {
+			await unlink(DAEMON_JSON).catch(() => {});
+			return { success: true, message: "Daemon killed forcefully" };
+		}
+		await new Promise((r) => setTimeout(r, STOP_POLL_INTERVAL_MS));
+	}
 
 	await unlink(DAEMON_JSON).catch(() => {});
 
@@ -104,6 +130,9 @@ export async function handleDaemonRestart(): Promise<DaemonRestartResult | MetaC
 	if (!stopResult.success) {
 		return stopResult as MetaCommandError;
 	}
+
+	// Cooldown to allow the OS to release sockets and other resources.
+	await new Promise((r) => setTimeout(r, RESTART_COOLDOWN_MS));
 
 	try {
 		await ensureDaemonClient();
