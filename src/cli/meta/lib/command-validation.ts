@@ -355,7 +355,7 @@ function validateDocumentContent(
 	}
 }
 
-export interface ValidateCommandPackageInput {
+export interface ValidateCommandSourceInput {
 	/** Raw parsed manifest (may be any JSON value). */
 	manifest: unknown;
 	/** Command source code as a string. */
@@ -385,7 +385,7 @@ export interface ValidateCommandPackageInput {
  * Returns a flat array of validation details. Callers determine success/failure
  * by checking for any "error"-level detail.
  */
-export function validateCommandPackage(input: ValidateCommandPackageInput): ValidationDetail[] {
+export function validateCommandSource(input: ValidateCommandSourceInput): ValidationDetail[] {
 	const details: ValidationDetail[] = [];
 
 	if (input.manifest === null || typeof input.manifest !== "object") {

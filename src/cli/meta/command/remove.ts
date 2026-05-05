@@ -1,4 +1,4 @@
-import { readdir, rmdir, rm } from "node:fs/promises";
+import { readdir, rm, rmdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { Command } from "commander";
 import { findCommand, rebuildIndex } from "../../engine/registry.js";
@@ -61,7 +61,8 @@ export async function handleCommandRemove(domain: string, action: string): Promi
 
 /** Registers the `remove` sub-command on the given command group. */
 export function registerRemove(group: Command, format: () => "human" | "json"): void {
-	group.command("remove <domain> <action>")
+	group
+		.command("remove <domain> <action>")
 		.description("Remove a user command")
 		.action(async (domain: string, action: string) => {
 			renderOutput(await handleCommandRemove(domain, action), format());

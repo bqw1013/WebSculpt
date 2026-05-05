@@ -2,8 +2,8 @@ import type { Command } from "commander";
 import { RESERVED_DOMAINS } from "../../engine/registry.js";
 import type { MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
-import { validateCommandPackage } from "../lib/command-validation.js";
-import { isLoadError, loadCommandPackageSource } from "../lib/package-loader.js";
+import { isLoadError, loadCommandSource } from "../lib/command-source-loader.js";
+import { validateCommandSource } from "../lib/command-validation.js";
 
 /**
  * Validates a command directory without installing it.
@@ -26,13 +26,13 @@ export async function handleCommandValidate(
 		};
 	}
 
-	const loaded = await loadCommandPackageSource(fromDir);
+	const loaded = await loadCommandSource(fromDir);
 	if (isLoadError(loaded)) {
 		return loaded;
 	}
 	const { manifest, code, hasReadme, hasContext, readmeContent, contextContent } = loaded;
 
-	const details = validateCommandPackage({
+	const details = validateCommandSource({
 		manifest,
 		code,
 		hasReadme,
@@ -65,7 +65,8 @@ export async function handleCommandValidate(
 
 /** Registers the `validate` sub-command on the given command group. */
 export function registerValidate(group: Command, format: () => "human" | "json"): void {
-	group.command("validate")
+	group
+		.command("validate")
 		.description("Validate a command directory without installing")
 		.requiredOption("--from-dir <path>", "Path to the command source directory")
 		.argument("[domain]", "Optional domain to simulate injection")

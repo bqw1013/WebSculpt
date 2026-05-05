@@ -22,7 +22,8 @@ export function handleCommandList(): MetaCommandResult {
 
 /** Registers the `list` sub-command on the given command group. */
 export function registerList(group: Command, format: () => "human" | "json"): void {
-	group.command("list")
+	group
+		.command("list")
 		.description("List all extension commands")
 		.action(async () => {
 			renderOutput(await handleCommandList(), format());

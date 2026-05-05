@@ -8,8 +8,8 @@ import { RESERVED_DOMAINS, rebuildIndex } from "../../engine/registry.js";
 import { resolveEntryFile } from "../../engine/runtime-meta.js";
 import type { MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
-import { validateCommandPackage } from "../lib/command-validation.js";
-import { isLoadError, loadCommandPackageSource } from "../lib/package-loader.js";
+import { isLoadError, loadCommandSource } from "../lib/command-source-loader.js";
+import { validateCommandSource } from "../lib/command-validation.js";
 
 /**
  * Creates a new user-defined command from a source directory.
@@ -35,7 +35,7 @@ export async function handleCommandCreate(
 
 		const sourceDir = options.fromDir;
 
-		const loaded = await loadCommandPackageSource(sourceDir);
+		const loaded = await loadCommandSource(sourceDir);
 		if (isLoadError(loaded)) {
 			return loaded;
 		}
@@ -47,7 +47,7 @@ export async function handleCommandCreate(
 		const entryFile = resolveEntryFile(normalizedRuntime);
 
 		// Run shared validation layer
-		const details = validateCommandPackage({
+		const details = validateCommandSource({
 			manifest,
 			code,
 			hasReadme,
@@ -159,7 +159,8 @@ export async function handleCommandCreate(
 
 /** Registers the `create` sub-command on the given command group. */
 export function registerCreate(group: Command, format: () => "human" | "json"): void {
-	group.command("create <domain> <action>")
+	group
+		.command("create <domain> <action>")
 		.description("Create a user command from a directory")
 		.requiredOption(
 			"--from-dir <path>",

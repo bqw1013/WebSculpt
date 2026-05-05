@@ -172,7 +172,8 @@ export async function handleCommandDraft(
 
 /** Registers the `draft` sub-command on the given command group. */
 export function registerDraft(group: Command, format: () => "human" | "json"): void {
-	group.command("draft <domain> <action>")
+	group
+		.command("draft <domain> <action>")
 		.description("Generate a command skeleton directory")
 		.option("--runtime <runtime>", "Runtime: node, playwright-cli, shell, python (default: node)")
 		.option("--to <path>", "Custom output directory")

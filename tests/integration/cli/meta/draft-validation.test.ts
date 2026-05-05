@@ -1,8 +1,8 @@
 import { readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { validateCommandPackage } from "../../../../src/cli/meta/lib/command-validation.js";
 import { handleCommandDraft } from "../../../../src/cli/meta/command/draft.js";
+import { validateCommandSource } from "../../../../src/cli/meta/lib/command-validation.js";
 
 async function readDraftFile(dir: string, fileName: string): Promise<string> {
 	return await readFile(join(dir, fileName), "utf-8");
@@ -16,7 +16,7 @@ async function cleanup(dir: string): Promise<void> {
 	}
 }
 
-describe("draft output passes validateCommandPackage L1-L3", () => {
+describe("draft output passes validateCommandSource L1-L3", () => {
 	it("node runtime draft passes validation without errors", async () => {
 		const result = await handleCommandDraft("test", "nodecmd", {
 			runtime: "node",
@@ -29,7 +29,7 @@ describe("draft output passes validateCommandPackage L1-L3", () => {
 		manifest.description = "A test command description";
 		const code = await readDraftFile(result.draftPath, "command.js");
 
-		const details = validateCommandPackage({
+		const details = validateCommandSource({
 			manifest,
 			code,
 			hasReadme: true,
@@ -53,7 +53,7 @@ describe("draft output passes validateCommandPackage L1-L3", () => {
 		manifest.description = "A test command description";
 		const code = await readDraftFile(result.draftPath, "command.js");
 
-		const details = validateCommandPackage({
+		const details = validateCommandSource({
 			manifest,
 			code,
 			hasReadme: true,
@@ -77,7 +77,7 @@ describe("draft output passes validateCommandPackage L1-L3", () => {
 		manifest.description = "A test command description";
 		const code = await readDraftFile(result.draftPath, "command.sh");
 
-		const details = validateCommandPackage({
+		const details = validateCommandSource({
 			manifest,
 			code,
 			hasReadme: true,
@@ -101,7 +101,7 @@ describe("draft output passes validateCommandPackage L1-L3", () => {
 		manifest.description = "A test command description";
 		const code = await readDraftFile(result.draftPath, "command.py");
 
-		const details = validateCommandPackage({
+		const details = validateCommandSource({
 			manifest,
 			code,
 			hasReadme: true,
@@ -126,7 +126,7 @@ describe("draft output passes validateCommandPackage L1-L3", () => {
 		manifest.description = "A test command description";
 		const code = await readDraftFile(result.draftPath, "command.js");
 
-		const details = validateCommandPackage({
+		const details = validateCommandSource({
 			manifest,
 			code,
 			hasReadme: true,

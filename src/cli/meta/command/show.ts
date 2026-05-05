@@ -80,7 +80,8 @@ export async function handleCommandShow(
 
 /** Registers the `show` sub-command on the given command group. */
 export function registerShow(group: Command, format: () => "human" | "json"): void {
-	group.command("show <domain> <action>")
+	group
+		.command("show <domain> <action>")
 		.description("Show extension command details")
 		.option("--include-readme", "Include README.md content in the output")
 		.action(async (domain: string, action: string, options: { includeReadme?: boolean }) => {
