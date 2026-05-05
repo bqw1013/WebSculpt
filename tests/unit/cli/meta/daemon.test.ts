@@ -94,12 +94,13 @@ describe("handleDaemonStop", () => {
 		let callCount = 0;
 		vi.mocked(isProcessAlive).mockImplementation(() => {
 			callCount++;
-			// Simulate process dying after ~30 poll cycles (6s / 200ms = 30).
-			return callCount <= 31;
+			// Keep alive through initial check + graceful polling (10000ms / 200ms = 50),
+			// then die during the first SIGKILL confirmation poll.
+			return callCount <= 51;
 		});
 
 		const promise = handleDaemonStop();
-		await vi.advanceTimersByTimeAsync(7000);
+		await vi.advanceTimersByTimeAsync(11000);
 		const result = await promise;
 
 		expect(result).toEqual({ success: true, message: "Daemon killed forcefully" });
@@ -131,7 +132,7 @@ describe("handleDaemonStop", () => {
 		vi.mocked(isProcessAlive).mockReturnValue(true);
 
 		const promise = handleDaemonStop();
-		await vi.advanceTimersByTimeAsync(7000);
+		await vi.advanceTimersByTimeAsync(14000);
 		const result = await promise;
 
 		expect(result.success).toBe(false);
@@ -330,7 +331,7 @@ describe("handleDaemonRestart", () => {
 		vi.mocked(isProcessAlive).mockReturnValue(true);
 
 		const promise = handleDaemonRestart();
-		await vi.advanceTimersByTimeAsync(7000);
+		await vi.advanceTimersByTimeAsync(14000);
 		const result = await promise;
 
 		expect(result.success).toBe(false);
