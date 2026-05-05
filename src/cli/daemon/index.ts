@@ -19,38 +19,48 @@ export { DAEMON_LIMITS } from "./config/limits.js";
 const MAX_EXECUTIONS_BEFORE_RESTART = 200;
 
 let server: ReturnType<typeof createSocketServer>;
+let isShuttingDown = false;
 
 export async function gracefulShutdown(reason: string = "stop"): Promise<void> {
-	stopMemoryMonitoring();
-
-	logEvent("INFO", "daemon_shutdown", { reason });
-
-	// Flush metrics before cleanup so the session summary is persisted.
-	await flushMetrics(reason);
-
-	// Delete state file first so stale PID is never left on disk,
-	// regardless of which subsequent step hangs or fails.
-	try {
-		await unlink(join(getDaemonStateDir(), "daemon.json"));
-	} catch {
-		// Ignore if the state file does not exist or is not writable.
+	if (isShuttingDown) {
+		return;
 	}
+	isShuttingDown = true;
 
 	try {
-		await closeBrowser();
-	} catch {
-		// Ignore browser close errors during shutdown.
+		stopMemoryMonitoring();
+
+		logEvent("INFO", "daemon_shutdown", { reason });
+
+		// Flush metrics before cleanup so the session summary is persisted.
+		await flushMetrics(reason);
+
+		// Delete state file first so stale PID is never left on disk,
+		// regardless of which subsequent step hangs or fails.
+		try {
+			await unlink(join(getDaemonStateDir(), "daemon.json"));
+		} catch {
+			// Ignore if the state file does not exist or is not writable.
+		}
+
+		try {
+			await closeBrowser();
+		} catch {
+			// Ignore browser close errors during shutdown.
+		}
+		try {
+			server?.close(() => {
+				process.exit(0);
+			});
+		} catch {
+			// Ignore server close errors.
+		}
+		closeLogger();
+		// Force exit if server close hangs.
+		setTimeout(() => process.exit(0), 5000);
+	} finally {
+		isShuttingDown = false;
 	}
-	try {
-		server?.close(() => {
-			process.exit(0);
-		});
-	} catch {
-		// Ignore server close errors.
-	}
-	closeLogger();
-	// Force exit if server close hangs.
-	setTimeout(() => process.exit(0), 5000);
 }
 
 async function main(): Promise<void> {
@@ -85,6 +95,11 @@ async function main(): Promise<void> {
 	});
 
 	startMemoryMonitoring(() => {
+		if (isShuttingDown) {
+			return;
+		}
+		isShuttingDown = true;
+
 		try {
 			unlinkSync(join(getDaemonStateDir(), "daemon.json"));
 		} catch {
