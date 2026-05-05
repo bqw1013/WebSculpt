@@ -1,6 +1,6 @@
 import { chromium } from "playwright-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { closeBrowser, withBrowser } from "../../../../src/cli/daemon/browser-manager.js";
+import { closeBrowser, withBrowser } from "../../../../src/cli/daemon/runtime/browser-manager.js";
 
 vi.mock("playwright-core", () => ({
 	chromium: {

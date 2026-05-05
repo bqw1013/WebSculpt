@@ -1,5 +1,5 @@
 import { createWriteStream } from "node:fs";
-import { getDaemonLogPath } from "./paths.js";
+import { getDaemonLogPath } from "../config/paths.js";
 
 export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
 export type LogEvent =

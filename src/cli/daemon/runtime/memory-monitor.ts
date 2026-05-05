@@ -1,7 +1,7 @@
+import { DAEMON_LIMITS } from "../config/limits.js";
+import { logEvent } from "../observability/logger.js";
+import { recordPeakPages, recordPeakRss } from "../observability/metrics.js";
 import { getOpenPageCount } from "./browser-manager.js";
-import { DAEMON_LIMITS } from "./limits.js";
-import { logEvent } from "./logger.js";
-import { recordPeakPages, recordPeakRss } from "./metrics.js";
 
 const MEMORY_CHECK_INTERVAL_MS = 60_000;
 

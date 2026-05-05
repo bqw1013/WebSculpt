@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { readFile, unlink } from "node:fs/promises";
 import type { Command } from "commander";
-import { getDaemonLogPath } from "../daemon/paths.js";
+import { getDaemonLogPath } from "../daemon/config/paths.js";
 import { ensureDaemonClient } from "../engine/daemon/client.js";
 import { DAEMON_JSON, isProcessAlive, readDaemonState } from "../engine/daemon/state.js";
 import { sendRequest } from "../engine/daemon/transport.js";

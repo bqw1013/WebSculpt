@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { userInfo } from "node:os";
 import { join } from "node:path";
-import { WEBSCULPT_DIR } from "../../infra/paths.js";
+import { WEBSCULPT_DIR } from "../../../infra/paths.js";
 
 /**
  * Returns a safe, deterministic identifier for the current user.

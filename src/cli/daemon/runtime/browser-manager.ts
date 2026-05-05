@@ -1,5 +1,5 @@
 import { type Browser, chromium } from "playwright-core";
-import { logEvent } from "./logger.js";
+import { logEvent } from "../observability/logger.js";
 
 let cachedBrowser: Browser | null = null;
 let connectingPromise: Promise<Browser> | null = null;

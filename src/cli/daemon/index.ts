@@ -1,20 +1,20 @@
 import { unlinkSync } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { closeBrowser, getOpenPageCount } from "./browser-manager.js";
-import { closeLogger, initLogger, logEvent } from "./logger.js";
+import { getDaemonStateDir, getSocketPath } from "./config/paths.js";
+import { closeLogger, initLogger, logEvent } from "./observability/logger.js";
+import { flushMetrics, recordPeakPages, recordPeakRss } from "./observability/metrics.js";
+import { closeBrowser, getOpenPageCount } from "./runtime/browser-manager.js";
 import {
 	degraded,
 	restartPending,
 	setRestartPending,
 	startMemoryMonitoring,
 	stopMemoryMonitoring,
-} from "./memory-monitor.js";
-import { flushMetrics, recordPeakPages, recordPeakRss } from "./metrics.js";
-import { getDaemonStateDir, getSocketPath } from "./paths.js";
-import { createSocketServer, getExecutionCount } from "./socket-server.js";
+} from "./runtime/memory-monitor.js";
+import { createSocketServer, getExecutionCount } from "./runtime/socket-server.js";
 
-export { DAEMON_LIMITS } from "./limits.js";
+export { DAEMON_LIMITS } from "./config/limits.js";
 
 const MAX_EXECUTIONS_BEFORE_RESTART = 200;
 

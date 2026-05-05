@@ -1,10 +1,10 @@
 import { createServer, type Server, type Socket } from "node:net";
+import { DAEMON_LIMITS } from "../config/limits.js";
+import { type SocketRequest, type SocketResponse, splitLines } from "../config/protocol.js";
+import { logEvent } from "../observability/logger.js";
+import { recordExecutionEnd, recordExecutionStart } from "../observability/metrics.js";
 import { getOpenPageCount, isBrowserConnected, isBrowserLazy } from "./browser-manager.js";
 import { executeCommand } from "./executor.js";
-import { DAEMON_LIMITS } from "./limits.js";
-import { logEvent } from "./logger.js";
-import { recordExecutionEnd, recordExecutionStart } from "./metrics.js";
-import { type SocketRequest, type SocketResponse, splitLines } from "./protocol.js";
 
 export interface SocketServerOptions {
 	onStop?: () => void;
@@ -42,6 +42,71 @@ function scheduleShutdown(options: SocketServerOptions, drainState: DrainState):
 	});
 }
 
+async function handleRunRequest(
+	req: SocketRequest,
+	options: SocketServerOptions,
+	drainState: DrainState,
+	requestId: number,
+): Promise<SocketResponse> {
+	const commandPath = req.params?.commandPath as string | undefined;
+	const params = (req.params?.params as Record<string, string>) ?? {};
+
+	if (!commandPath || typeof commandPath !== "string") {
+		return {
+			id: requestId,
+			error: { message: "Missing or invalid 'commandPath' in params", code: "INVALID_PARAMS" },
+		};
+	}
+
+	if (options.isRestartPending?.()) {
+		if (activeSessions === 0) {
+			scheduleShutdown(options, drainState);
+		}
+		return {
+			id: requestId,
+			error: { message: "Daemon is restarting", code: "DAEMON_RESTARTING" },
+		};
+	}
+
+	if (getOpenPageCount() >= DAEMON_LIMITS.maxTotalPages) {
+		return {
+			id: requestId,
+			error: { message: "Daemon page limit reached", code: "DAEMON_PAGE_LIMIT" },
+		};
+	}
+
+	if (activeSessions >= DAEMON_LIMITS.maxConcurrentSessions) {
+		return {
+			id: requestId,
+			error: { message: "Daemon is at capacity", code: "DAEMON_BUSY" },
+		};
+	}
+
+	const startTime = Date.now();
+	logEvent("INFO", "req_start", { method: "run", commandPath });
+	executionCount++;
+	activeSessions++;
+	recordExecutionStart(activeSessions);
+	let executionSuccess = false;
+	try {
+		const data = await executeCommand(commandPath, params);
+		executionSuccess = true;
+		logEvent("INFO", "req_end", { method: "run", duration_ms: Date.now() - startTime, success: true });
+		return { id: requestId, result: { success: true, data } };
+	} catch (err) {
+		const code = (err as Error & { code?: string }).code ?? "COMMAND_EXECUTION_ERROR";
+		logEvent("ERROR", "req_error", { method: "run", error_code: code, error_message: (err as Error).message });
+		logEvent("INFO", "req_end", { method: "run", duration_ms: Date.now() - startTime, success: false });
+		return { id: requestId, error: { message: (err as Error).message, code } };
+	} finally {
+		activeSessions--;
+		recordExecutionEnd(executionSuccess);
+		if (options.isRestartPending?.() && activeSessions === 0) {
+			scheduleShutdown(options, drainState);
+		}
+	}
+}
+
 async function handleRequest(
 	req: SocketRequest,
 	options: SocketServerOptions,
@@ -53,63 +118,7 @@ async function handleRequest(
 
 	switch (req.method) {
 		case "run": {
-			const commandPath = req.params?.commandPath as string | undefined;
-			const params = (req.params?.params as Record<string, string>) ?? {};
-
-			if (!commandPath || typeof commandPath !== "string") {
-				return {
-					id: requestId,
-					error: { message: "Missing or invalid 'commandPath' in params", code: "INVALID_PARAMS" },
-				};
-			}
-
-			if (options.isRestartPending?.()) {
-				if (activeSessions === 0) {
-					scheduleShutdown(options, drainState);
-				}
-				return {
-					id: requestId,
-					error: { message: "Daemon is restarting", code: "DAEMON_RESTARTING" },
-				};
-			}
-
-			if (getOpenPageCount() >= DAEMON_LIMITS.maxTotalPages) {
-				return {
-					id: requestId,
-					error: { message: "Daemon page limit reached", code: "DAEMON_PAGE_LIMIT" },
-				};
-			}
-
-			if (activeSessions >= DAEMON_LIMITS.maxConcurrentSessions) {
-				return {
-					id: requestId,
-					error: { message: "Daemon is at capacity", code: "DAEMON_BUSY" },
-				};
-			}
-
-			const startTime = Date.now();
-			logEvent("INFO", "req_start", { method: "run", commandPath });
-			executionCount++;
-			activeSessions++;
-			recordExecutionStart(activeSessions);
-			let executionSuccess = false;
-			try {
-				const data = await executeCommand(commandPath, params);
-				executionSuccess = true;
-				logEvent("INFO", "req_end", { method: "run", duration_ms: Date.now() - startTime, success: true });
-				return { id: requestId, result: { success: true, data } };
-			} catch (err) {
-				const code = (err as Error & { code?: string }).code ?? "COMMAND_EXECUTION_ERROR";
-				logEvent("ERROR", "req_error", { method: "run", error_code: code, error_message: (err as Error).message });
-				logEvent("INFO", "req_end", { method: "run", duration_ms: Date.now() - startTime, success: false });
-				return { id: requestId, error: { message: (err as Error).message, code } };
-			} finally {
-				activeSessions--;
-				recordExecutionEnd(executionSuccess);
-				if (options.isRestartPending?.() && activeSessions === 0) {
-					scheduleShutdown(options, drainState);
-				}
-			}
+			return handleRunRequest(req, options, drainState, requestId);
 		}
 
 		case "health": {

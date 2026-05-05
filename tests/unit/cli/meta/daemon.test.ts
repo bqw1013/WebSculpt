@@ -19,7 +19,7 @@ vi.mock("../../../../src/cli/engine/daemon/transport.js", () => ({
 	sendRequest: vi.fn().mockResolvedValue({ shuttingDown: true }),
 }));
 
-vi.mock("../../../../src/cli/daemon/paths.js", () => ({
+vi.mock("../../../../src/cli/daemon/config/paths.js", () => ({
 	getDaemonLogPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.log"),
 }));
 
@@ -28,7 +28,7 @@ vi.mock("../../../../src/cli/engine/daemon/client.js", () => ({
 }));
 
 import { readFile, unlink } from "node:fs/promises";
-import { getDaemonLogPath } from "../../../../src/cli/daemon/paths.js";
+import { getDaemonLogPath } from "../../../../src/cli/daemon/config/paths.js";
 import { ensureDaemonClient } from "../../../../src/cli/engine/daemon/client.js";
 import { isProcessAlive, readDaemonState } from "../../../../src/cli/engine/daemon/state.js";
 import { sendRequest } from "../../../../src/cli/engine/daemon/transport.js";

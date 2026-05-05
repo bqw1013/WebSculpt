@@ -26,19 +26,19 @@ vi.mock("node:fs/promises", async () => {
 	};
 });
 
-vi.mock("../../../../src/cli/daemon/browser-manager.js", () => ({
+vi.mock("../../../../src/cli/daemon/runtime/browser-manager.js", () => ({
 	closeBrowser: mockCloseBrowser,
 	isBrowserConnected: vi.fn().mockReturnValue(false),
 	withBrowser: vi.fn(),
 }));
 
-vi.mock("../../../../src/cli/daemon/paths.js", () => ({
+vi.mock("../../../../src/cli/daemon/config/paths.js", () => ({
 	getDaemonLogPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.log"),
 	getDaemonStateDir: vi.fn().mockReturnValue("/tmp/.websculpt"),
 	getSocketPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.sock"),
 }));
 
-vi.mock("../../../../src/cli/daemon/socket-server.js", () => ({
+vi.mock("../../../../src/cli/daemon/runtime/socket-server.js", () => ({
 	createSocketServer: vi.fn().mockReturnValue({
 		close: mockServerClose,
 		on: mockServerOn,

@@ -1,26 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../../src/cli/daemon/logger.js", () => ({
+vi.mock("../../../../src/cli/daemon/observability/logger.js", () => ({
 	logEvent: vi.fn(),
 }));
 
-vi.mock("../../../../src/cli/daemon/metrics.js", () => ({
+vi.mock("../../../../src/cli/daemon/observability/metrics.js", () => ({
 	recordPeakRss: vi.fn(),
 	recordPeakPages: vi.fn(),
 }));
 
-vi.mock("../../../../src/cli/daemon/browser-manager.js", () => ({
+vi.mock("../../../../src/cli/daemon/runtime/browser-manager.js", () => ({
 	getOpenPageCount: vi.fn().mockReturnValue(0),
 }));
 
-import { logEvent } from "../../../../src/cli/daemon/logger.js";
+import { logEvent } from "../../../../src/cli/daemon/observability/logger.js";
 import {
 	degraded,
 	resetMonitorState,
 	restartPending,
 	startMemoryMonitoring,
 	stopMemoryMonitoring,
-} from "../../../../src/cli/daemon/memory-monitor.js";
+} from "../../../../src/cli/daemon/runtime/memory-monitor.js";
 
 describe("memory monitor state transitions", () => {
 	beforeEach(() => {

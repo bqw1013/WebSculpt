@@ -11,12 +11,12 @@ vi.mock("node:fs", () => {
 	};
 });
 
-vi.mock("../../../../src/cli/daemon/paths.js", () => ({
+vi.mock("../../../../src/cli/daemon/config/paths.js", () => ({
 	getDaemonLogPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.log"),
 }));
 
 import { createWriteStream } from "node:fs";
-import { closeLogger, initLogger, logEvent } from "../../../../src/cli/daemon/logger.js";
+import { closeLogger, initLogger, logEvent } from "../../../../src/cli/daemon/observability/logger.js";
 
 describe("daemon logger", () => {
 	const mockWrite = vi.fn().mockReturnValue(true);
