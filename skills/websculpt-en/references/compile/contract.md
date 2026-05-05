@@ -131,6 +131,19 @@ Facing command fixers, answering "why this command is implemented this way, and 
 
 **Must not contain**: parameter usage descriptions, usage examples, general suggestions.
 
+context.md contains the following sections:
+
+| Section | Purpose |
+|------|------|
+| `## Precipitation Background` | Precipitation history of the command: why it was created, what problem it solves |
+| `## Value Assessment` | Reuse value assessment: generality, reuse frequency, time saved, from the precipitation proposal card's `valueAssessment` |
+| `## Page Structure` | Key URLs, selectors, or interaction sequences |
+| `## Environment Dependencies` | Login state, browser config, **anti-crawl strategies, stability notes** |
+| `## Failure Signals` | Failure manifestations when the page changes (e.g., selector returns null, throws DRIFT_DETECTED) |
+| `## Repair Clues` | Backup plans, alternative entry points |
+
+> `## Environment Dependencies` explicitly covers anti-crawl strategies and stability notes. The `antiCrawlAssessment` and `stabilityAssessment` fields from the precipitation proposal card should be summarized here.
+
 ---
 
 ## 4. Business Error Code Reference
@@ -158,7 +171,7 @@ If runner cannot match a known business error code, it is categorized as `COMMAN
 ### Asset Quality (warning when missing)
 
 - [ ] If `README.md` exists, contains `## Description`, `## Parameters`, `## Return Value`, `## Usage`, `## Common Error Codes` sections
-- [ ] If `context.md` exists, contains `## Precipitation Background`, `## Page Structure`, `## Environment Dependencies`, `## Failure Signals`, `## Repair Clues` sections
+- [ ] If `context.md` exists, contains `## Precipitation Background`, `## Value Assessment`, `## Page Structure`, `## Environment Dependencies`, `## Failure Signals`, `## Repair Clues` sections
 
 ### L2 Compliance (prohibited patterns and documentation red lines)
 

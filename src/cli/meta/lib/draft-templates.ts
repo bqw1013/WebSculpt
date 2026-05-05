@@ -80,9 +80,13 @@ TODO: list common business error codes (e.g., AUTH_REQUIRED, NOT_FOUND, EMPTY_RE
 
 const CONTEXT_TEMPLATE = `# Context
 
-## Precipitation Background
+## Precipitation Background (Why This Command Exists)
 
 TODO: when and why this command was precipitated.
+
+## Value Assessment
+
+TODO: describe the reuse value of this command (generality, reuse frequency, time saved).
 
 ## Page Structure
 
@@ -90,7 +94,7 @@ TODO: key URLs, selectors, or interaction sequences.
 
 ## Environment Dependencies
 
-TODO: login state, browser config, anti-crawl strategy.
+TODO: login state, browser config, anti-crawl strategy, stability notes.
 
 ## Failure Signals
 

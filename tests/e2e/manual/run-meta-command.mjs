@@ -74,6 +74,34 @@ async function run() {
 	if (draftResult.exitCode !== 0) stepFail(`exit ${draftResult.exitCode}`);
 	stepOk();
 
+	printSection("validate freshly drafted command");
+	// Draft manifest has no description by design; inject one so we can verify
+	// the template-generated README/context sections do not produce unexpected warnings.
+	const draftManifestPath = `${TMP_DIR}/draft-cmd/manifest.json`;
+	const draftManifest = JSON.parse(await readFile(draftManifestPath, "utf8"));
+	draftManifest.description = "Smoke-test draft command";
+	await writeFile(draftManifestPath, JSON.stringify(draftManifest, null, 2));
+
+	const draftValidateResult = await runSourceCli([
+		"command", "validate", "--from-dir", `${TMP_DIR}/draft-cmd`, "--format", "json",
+	]);
+	console.log(draftValidateResult.stdout);
+	stepsTotal++;
+	const draftValidatePayload = parseJsonOutput(draftValidateResult.stdout);
+	if (draftValidatePayload.success === false) {
+		console.log("Result: FAIL — draft validate returned success=false");
+		process.exit(1);
+	}
+	const unexpectedWarnings = (draftValidatePayload.warnings || []).filter(
+		(w) => w.code === "MISSING_CONTEXT_SECTION" || w.code === "MISSING_README_SECTION",
+	);
+	if (unexpectedWarnings.length > 0) {
+		console.log("Result: FAIL — unexpected section warnings from draft template:", JSON.stringify(unexpectedWarnings));
+		process.exit(1);
+	}
+	stepsPassed++;
+	console.log("Result: OK");
+
 	printSection("verify draft files exist");
 	try {
 		await readFile(`${TMP_DIR}/draft-cmd/manifest.json`);

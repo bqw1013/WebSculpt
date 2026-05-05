@@ -105,6 +105,19 @@ npm install -g @playwright/cli websculpt
 - 预期失效：用户不存在时返回空列表；API 限流时返回 403。
 ```
 
+### 4.5 提案卡字段与命令资产映射
+
+沉淀提案卡中的字段应映射到命令资产的具体章节：
+
+| 提案卡字段 | 目标文档 | 目标章节 |
+|-----------|---------|---------|
+| `description` | `manifest.json` | `description` |
+| `ioExamples` | `README.md` | `## Usage`、`## Return Value` |
+| `valueAssessment` | `context.md` | `## Value Assessment` |
+| `stabilityAssessment` | `context.md` | `## Environment Dependencies`（稳定性说明部分） |
+| `antiCrawlAssessment` | `context.md` | `## Environment Dependencies`（反爬策略部分） |
+| `expectedFailures` | `README.md` / `context.md` | `## Common Error Codes`（调用者视角） / `## Failure Signals`（修复者视角） |
+
 ### 5. 执行沉淀
 
 用户确认沉淀提案卡后，按 [references/compile/contract.md](references/compile/contract.md) 中的完整流程执行。

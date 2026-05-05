@@ -105,6 +105,19 @@ Example:
 - Expected Failure: Returns empty list when user does not exist; returns 403 when API is rate-limited.
 ```
 
+### 4.5 Proposal Card Fields to Command Asset Mapping
+
+Fields from the precipitation proposal card should map to specific sections in the command assets:
+
+| Proposal Card Field | Target Document | Target Section |
+|-----------|---------|---------|
+| `description` | `manifest.json` | `description` |
+| `ioExamples` | `README.md` | `## Usage`, `## Return Value` |
+| `valueAssessment` | `context.md` | `## Value Assessment` |
+| `stabilityAssessment` | `context.md` | `## Environment Dependencies` (stability notes portion) |
+| `antiCrawlAssessment` | `context.md` | `## Environment Dependencies` (anti-crawl strategy portion) |
+| `expectedFailures` | `README.md` / `context.md` | `## Common Error Codes` (caller perspective) / `## Failure Signals` (fixer perspective) |
+
 ### 5. Execute Precipitation
 
 After user confirms the precipitation proposal card, execute according to the complete flow in [references/compile/contract.md](references/compile/contract.md).

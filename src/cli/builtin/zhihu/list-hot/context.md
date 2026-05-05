@@ -4,6 +4,10 @@
 
 This command captures the Zhihu Hot List (https://www.zhihu.com/hot), which is client-side rendered and requires browser automation to extract data reliably.
 
+## Value Assessment
+
+Medium to high. The Zhihu Hot List is a frequently referenced source for trending topics in Chinese-speaking communities. The `limit` parameter allows flexible reuse without modification.
+
 ## Page Structure / Data Source Characteristics
 
 - **Target URL**: `https://www.zhihu.com/hot`

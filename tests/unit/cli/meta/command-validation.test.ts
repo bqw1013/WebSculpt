@@ -29,7 +29,7 @@ function makeInput(overrides: Record<string, unknown> = {}) {
 		readmeContent: overrides.readmeContent ?? "## Description\n## Parameters\n## Usage",
 		contextContent:
 			overrides.contextContent ??
-			"## Precipitation Background\n## Page Structure\n## Environment Dependencies\n## Failure Signals",
+			"## Precipitation Background\n## Value Assessment\n## Page Structure\n## Environment Dependencies\n## Failure Signals\n## Repair Clues",
 		expectedDomain: overrides.expectedDomain ?? "test-domain",
 		expectedAction: overrides.expectedAction ?? "test-action",
 	};
@@ -300,6 +300,22 @@ describe("validateCommandSource", () => {
 		it("warns on missing context sections", () => {
 			const details = validateCommandSource(makeInput({ contextContent: "# Title only" }));
 			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_CONTEXT_SECTION", level: "warning" }));
+		});
+
+		it("warns on missing Value Assessment section in context", () => {
+			const details = validateCommandSource(
+				makeInput({
+					contextContent:
+						"## Precipitation Background\n## Page Structure\n## Environment Dependencies\n## Failure Signals\n## Repair Clues",
+				}),
+			);
+			expect(details).toContainEqual(
+				expect.objectContaining({
+					code: "MISSING_CONTEXT_SECTION",
+					level: "warning",
+					message: expect.stringContaining("Value Assessment"),
+				}),
+			);
 		});
 	});
 });

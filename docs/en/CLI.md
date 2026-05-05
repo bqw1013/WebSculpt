@@ -38,7 +38,7 @@ An extension command consists of the following files:
 | `manifest.json` | Metadata: describes command purpose, runtime, parameter list, etc. | Yes |
 | `command.js` (or runtime-specific entry) | Execution logic: actual information acquisition code | Yes |
 | `README.md` | Caller-facing documentation: parameter descriptions, return values, usage examples | No (warning if missing) |
-| `context.md` | Fixer-facing context: precipitation background, page structure, failure signals | No (warning if missing) |
+| `context.md` | Fixer-facing context: precipitation background, reuse value, page structure, failure signals | No (warning if missing) |
 
 **Directory Structure**:
 

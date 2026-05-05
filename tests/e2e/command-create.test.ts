@@ -187,7 +187,7 @@ describe("command create", () => {
 		);
 		await writeFile(
 			join(commandDirPath, "context.md"),
-			"## Precipitation Background\n\n## Page Structure\n\n## Environment Dependencies\n\n## Failure Signals\n\n## Repair Clues\n",
+			"## Precipitation Background\n\n## Value Assessment\n\n## Page Structure\n\n## Environment Dependencies\n\n## Failure Signals\n\n## Repair Clues\n",
 			"utf8",
 		);
 

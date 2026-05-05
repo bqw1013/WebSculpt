@@ -4,6 +4,10 @@
 
 This command was captured to address the need of extracting full content from Zhihu column articles (zhuanlan.zhihu.com), which are client-side rendered and not suitable for static scraping.
 
+## Value Assessment
+
+Medium. Zhihu column articles are a common information source for Chinese-language content. The command is reusable for any article URL by changing the `url` parameter.
+
 ## Page Structure / Data Source Characteristics
 
 - **Target URL**: Any `https://zhuanlan.zhihu.com/p/{id}` article URL

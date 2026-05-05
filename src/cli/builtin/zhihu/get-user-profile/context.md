@@ -4,6 +4,10 @@
 
 This command was captured to extract structured profile data from Zhihu user pages (www.zhihu.com/people/{userId}), which are client-side rendered and require browser automation.
 
+## Value Assessment
+
+Medium. User profile extraction is a recurring sub-task when researching individuals or influencers on Zhihu. Reusable for any public user by changing the `userId` parameter.
+
 ## Page Structure / Data Source Characteristics
 
 - **Target URL**: `https://www.zhihu.com/people/{userId}`

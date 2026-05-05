@@ -4,6 +4,10 @@
 
 This command was captured to extract article lists from Zhihu user post pages, which are client-side rendered and require browser automation.
 
+## Value Assessment
+
+Medium. Extracting a user's published articles is a common sub-task for content research. Reusable for any public user by changing the `userId` parameter.
+
 ## Page Structure / Data Source Characteristics
 
 - **Target URL**: `https://www.zhihu.com/people/{userId}/posts`
