@@ -1,6 +1,12 @@
 import { builtinModules } from "node:module";
 import type { ValidationDetail } from "../../../types/index.js";
-import { VALID_RUNTIMES } from "../../engine/runtime-meta.js";
+import {
+	getExportContract,
+	isJsBased,
+	normalizeRuntime,
+	runtimeRequiresBrowser,
+	VALID_RUNTIMES,
+} from "../../runtime/index.js";
 
 const TEMP_REF_REGEX = /\be\d+\b/g;
 const BROWSER_KEYWORDS = ["launch", "connect", "connectOverCDP", "newBrowser", "chrome-remote-interface"];
@@ -29,7 +35,7 @@ function addWarning(details: ValidationDetail[], code: string, message: string):
 }
 
 function checkJsSyntax(code: string, runtime: string): ValidationDetail | null {
-	if (runtime !== "node" && runtime !== "playwright-cli") {
+	if (!isJsBased(runtime)) {
 		return null;
 	}
 	let trial: string;
@@ -67,8 +73,9 @@ function validateL1Structure(
 	expectedDomain: string | undefined,
 	expectedAction: string | undefined,
 ): void {
-	const runtime = manifest.runtime ?? "node";
-	if (typeof runtime !== "string" || !(VALID_RUNTIMES as readonly string[]).includes(runtime)) {
+	const rawRuntime = manifest.runtime;
+	const runtime = normalizeRuntime(rawRuntime as string | undefined);
+	if (typeof rawRuntime === "string" && !(VALID_RUNTIMES as readonly string[]).includes(rawRuntime)) {
 		addError(details, "INVALID_RUNTIME", `Runtime must be one of: ${VALID_RUNTIMES.join(", ")}`);
 	}
 
@@ -131,12 +138,11 @@ function validateL1Structure(
 	} else if (typeof manifest.requiresBrowser !== "boolean") {
 		addError(details, "INVALID_REQUIRES_BROWSER", "Manifest 'requiresBrowser' must be a boolean");
 	} else {
-		const effectiveRuntime = typeof runtime === "string" ? runtime : "node";
-		if (effectiveRuntime === "playwright-cli" && manifest.requiresBrowser !== true) {
+		if (runtimeRequiresBrowser(runtime) && manifest.requiresBrowser !== true) {
 			addError(details, "RUNTIME_BROWSER_MISMATCH", "playwright-cli runtime requires requiresBrowser: true");
 		}
-		if (effectiveRuntime !== "playwright-cli" && manifest.requiresBrowser !== false) {
-			addError(details, "RUNTIME_BROWSER_MISMATCH", `${effectiveRuntime} runtime requires requiresBrowser: false`);
+		if (!runtimeRequiresBrowser(runtime) && manifest.requiresBrowser !== false) {
+			addError(details, "RUNTIME_BROWSER_MISMATCH", `${runtime} runtime requires requiresBrowser: false`);
 		}
 	}
 
@@ -249,7 +255,7 @@ function validateL2Compliance(code: string, details: ValidationDetail[]): void {
 }
 
 function validateL3Contract(manifest: Record<string, unknown>, code: string, details: ValidationDetail[]): void {
-	const runtime = (manifest.runtime ?? "node") as string;
+	const runtime = normalizeRuntime(manifest.runtime as string | undefined);
 
 	// Syntax check for JS-based runtimes.
 	const syntaxError = checkJsSyntax(code, runtime);
@@ -257,22 +263,22 @@ function validateL3Contract(manifest: Record<string, unknown>, code: string, det
 		details.push(syntaxError);
 	}
 
-	if (runtime === "node") {
+	const contract = getExportContract(runtime);
+	if (contract.requireDefault && !EXPORT_DEFAULT_REGEX.test(code)) {
+		addError(
+			details,
+			"MISSING_EXPORT_DEFAULT",
+			`${runtime === "playwright-cli" ? "Playwright-cli" : runtime} runtime command must contain \`export default\`${runtime === "playwright-cli" ? " async function" : ""}`,
+		);
+	}
+	if (!contract.requireDefault && !contract.allowNamedCommand) {
+		// Non-JS runtimes have no export contract requirements.
+	} else if (!contract.requireDefault && contract.allowNamedCommand) {
 		if (!EXPORT_DEFAULT_REGEX.test(code) && !EXPORT_COMMAND_REGEX.test(code)) {
 			addError(
 				details,
 				"MISSING_EXPORT_DEFAULT",
 				"Node runtime command must contain `export default` or `export const command` / `export function command`",
-			);
-		}
-	}
-
-	if (runtime === "playwright-cli") {
-		if (!EXPORT_DEFAULT_REGEX.test(code)) {
-			addError(
-				details,
-				"MISSING_EXPORT_DEFAULT",
-				"Playwright-cli runtime command must contain `export default` async function",
 			);
 		}
 	}

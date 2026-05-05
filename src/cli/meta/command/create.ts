@@ -4,10 +4,11 @@ import type { Command } from "commander";
 import { USER_COMMANDS_DIR } from "../../../infra/paths.js";
 import { appendAuditLog } from "../../../infra/store.js";
 import type { CommandManifest } from "../../../types/index.js";
-import { RESERVED_DOMAINS, rebuildIndex } from "../../engine/registry.js";
-import { resolveEntryFile } from "../../engine/runtime-meta.js";
+import { RESERVED_DOMAINS } from "../../engine/command-discovery/contract.js";
+import { rebuildIndex } from "../../engine/command-discovery/index-persistence.js";
 import type { MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
+import { normalizeRuntime, resolveEntryFile } from "../../runtime/index.js";
 import { isLoadError, loadCommandSource } from "../lib/command-source-loader.js";
 import { validateCommandSource } from "../lib/command-validation.js";
 
@@ -43,7 +44,7 @@ export async function handleCommandCreate(
 		const manifest = rawManifest as CommandManifest;
 
 		// Determine entry file and verify it exists
-		const normalizedRuntime = manifest.runtime || "node";
+		const normalizedRuntime = normalizeRuntime(manifest.runtime);
 		const entryFile = resolveEntryFile(normalizedRuntime);
 
 		// Run shared validation layer

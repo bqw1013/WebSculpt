@@ -1,11 +1,11 @@
 import { access, constants, mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { Command } from "commander";
-import type { CommandParameter, CommandRuntime, ValidationDetail } from "../../../types/index.js";
-import { RESERVED_DOMAINS } from "../../engine/registry.js";
-import { resolveEntryFile, VALID_RUNTIMES } from "../../engine/runtime-meta.js";
+import type { CommandParameter, ValidationDetail } from "../../../types/index.js";
+import { RESERVED_DOMAINS } from "../../engine/command-discovery/contract.js";
 import type { MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
+import { isExecutable, normalizeRuntime, resolveEntryFile, runtimeRequiresBrowser } from "../../runtime/index.js";
 import type { ParsedParam } from "../lib/draft-templates.js";
 import {
 	generateCommandTemplate,
@@ -91,10 +91,7 @@ export async function handleCommandDraft(
 			};
 		}
 
-		const runtime: CommandRuntime =
-			options.runtime && VALID_RUNTIMES.includes(options.runtime as CommandRuntime)
-				? (options.runtime as CommandRuntime)
-				: "node";
+		const runtime = normalizeRuntime(options.runtime);
 
 		const draftDir = options.to ? resolve(options.to) : resolve(".websculpt-drafts", `${domain}-${action}`);
 
@@ -135,7 +132,7 @@ export async function handleCommandDraft(
 			runtime,
 			description: "",
 			parameters: parameters.length > 0 ? parameters : [],
-			requiresBrowser: runtime === "playwright-cli",
+			requiresBrowser: runtimeRequiresBrowser(runtime),
 			authRequired: "unknown",
 		};
 
@@ -153,7 +150,7 @@ export async function handleCommandDraft(
 		const files = ["manifest.json", entryFile, "README.md", "context.md"];
 		const nextSteps = generateNextSteps(domain, action, draftDir, runtime);
 		const warnings: ValidationDetail[] = [];
-		if (runtime === "shell" || runtime === "python") {
+		if (!isExecutable(runtime)) {
 			warnings.push({
 				code: "RUNTIME_NOT_EXECUTABLE",
 				message: `The "${runtime}" runtime is not yet executable by the CLI. Only "node" and "playwright-cli" commands can be run at this time.`,

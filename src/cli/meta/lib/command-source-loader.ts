@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { resolveEntryFile } from "../../engine/runtime-meta.js";
+import { normalizeRuntime, resolveEntryFile } from "../../runtime/index.js";
 
 /**
  * Represents the loaded contents of a command source directory.
@@ -65,7 +65,7 @@ export async function loadCommandSource(fromDir: string): Promise<CommandSource 
 	}
 
 	const m = manifest && typeof manifest === "object" ? (manifest as Record<string, unknown>) : {};
-	const runtime = (m.runtime as string | undefined) ?? "node";
+	const runtime = normalizeRuntime(m.runtime as string | undefined);
 	const entryFile = resolveEntryFile(runtime);
 
 	let code: string;

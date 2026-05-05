@@ -1,7 +1,8 @@
 import { readdir, rm, rmdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { Command } from "commander";
-import { findCommand, rebuildIndex } from "../../engine/registry.js";
+import { rebuildIndex } from "../../engine/command-discovery/index-persistence.js";
+import { findCommand } from "../../engine/registry.js";
 import type { MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
 

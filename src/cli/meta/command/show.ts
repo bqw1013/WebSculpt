@@ -2,9 +2,9 @@ import { access, readFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import type { Command } from "commander";
 import { findCommand } from "../../engine/registry.js";
-import { RUNTIME_SYSTEM_PREREQUISITES } from "../../engine/runtime-meta.js";
 import type { CommandShowResult, MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
+import { RUNTIME_SYSTEM_PREREQUISITES } from "../../runtime/index.js";
 
 /** Displays details for a specific command. */
 export async function handleCommandShow(

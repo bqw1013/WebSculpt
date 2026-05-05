@@ -1,9 +1,10 @@
 import type { Command } from "commander";
 import type { CommandParameter, CommandRuntime } from "../types/index.js";
-import { executeCommand } from "./engine/executor.js";
-import { listAllCommands, type ResolvedCommand } from "./engine/registry.js";
-import { RUNTIME_SYSTEM_PREREQUISITES } from "./engine/runtime-meta.js";
+import type { ResolvedCommand } from "./engine/command-discovery/contract.js";
+import { executeCommand } from "./engine/execution/orchestrator.js";
+import { listAllCommands } from "./engine/registry.js";
 import { printJson } from "./output.js";
+import { RUNTIME_SYSTEM_PREREQUISITES } from "./runtime/index.js";
 
 /** Groups resolved commands by their manifest domain. */
 function groupCommandsByDomain(commands: ResolvedCommand[]): Map<string, ResolvedCommand[]> {

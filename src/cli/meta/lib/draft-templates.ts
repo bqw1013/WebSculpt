@@ -1,4 +1,4 @@
-import { resolveEntryFile } from "../../engine/runtime-meta.js";
+import { isExecutable, resolveEntryFile } from "../../runtime/index.js";
 
 /**
  * Represents a parsed parameter specification from the --param CLI option.
@@ -179,7 +179,7 @@ export function generateNextSteps(
 			command: `websculpt command create ${domain} ${action} --from-dir "${draftPath}"`,
 		},
 	];
-	if (runtime === "shell" || runtime === "python") {
+	if (!isExecutable(runtime)) {
 		steps.push({
 			action: `Note: the "${runtime}" runtime is not yet executable by the CLI; only "node" and "playwright-cli" commands can be run`,
 		});

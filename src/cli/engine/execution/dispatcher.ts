@@ -1,6 +1,7 @@
 import { pathToFileURL } from "node:url";
-import type { CommandManifest } from "../../types/index.js";
-import { ensureDaemonClient } from "./daemon-client.js";
+import type { CommandManifest } from "../../../types/index.js";
+import { normalizeRuntime } from "../../runtime/index.js";
+import { ensureDaemonClient } from "../daemon/index.js";
 
 function buildParams(manifest: CommandManifest, args: Record<string, string>): Record<string, string> {
 	const params: Record<string, string> = {};
@@ -79,7 +80,7 @@ export async function runCommand(
 	commandPath: string,
 	args: Record<string, string>,
 ): Promise<unknown> {
-	const runtime = manifest.runtime || "node";
+	const runtime = normalizeRuntime(manifest.runtime);
 	const params = buildParams(manifest, args);
 
 	switch (runtime) {

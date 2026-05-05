@@ -23,13 +23,13 @@ vi.mock("../../../../src/cli/daemon/config/paths.js", () => ({
 	getDaemonLogPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.log"),
 }));
 
-vi.mock("../../../../src/cli/engine/daemon/client.js", () => ({
+vi.mock("../../../../src/cli/engine/daemon/lifecycle.js", () => ({
 	ensureDaemonClient: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { readFile, unlink } from "node:fs/promises";
 import { getDaemonLogPath } from "../../../../src/cli/daemon/config/paths.js";
-import { ensureDaemonClient } from "../../../../src/cli/engine/daemon/client.js";
+import { ensureDaemonClient } from "../../../../src/cli/engine/daemon/lifecycle.js";
 import { isProcessAlive, readDaemonState } from "../../../../src/cli/engine/daemon/state.js";
 import { sendRequest } from "../../../../src/cli/engine/daemon/transport.js";
 import {
