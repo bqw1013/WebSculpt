@@ -1,4 +1,4 @@
-import { access, mkdir, rm, writeFile } from "node:fs/promises";
+import { access, constants, mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { Command } from "commander";
 import type { CommandParameter, CommandRuntime, ValidationDetail } from "../../../types/index.js";
@@ -100,7 +100,7 @@ export async function handleCommandDraft(
 
 		// Check if directory already exists
 		try {
-			await access(draftDir);
+			await access(draftDir, constants.F_OK);
 			if (!options.force) {
 				return {
 					success: false,
@@ -111,7 +111,11 @@ export async function handleCommandDraft(
 				};
 			}
 			await rm(draftDir, { recursive: true, force: true });
-		} catch {
+		} catch (err: unknown) {
+			const code = (err as NodeJS.ErrnoException).code;
+			if (code !== "ENOENT") {
+				throw err;
+			}
 			// Directory does not exist, proceed.
 		}
 
@@ -120,7 +124,11 @@ export async function handleCommandDraft(
 		// Parse parameters
 		const rawParams = options.param ?? [];
 		const parsedParams: ParsedParam[] = rawParams.map(parseParamSpec);
-		const parameters: CommandParameter[] = parsedParams;
+		const parameters: CommandParameter[] = parsedParams.map((p) => ({
+			name: p.name,
+			required: p.required,
+			default: p.default,
+		}));
 
 		// Generate manifest (without identity fields)
 		const manifest: Record<string, unknown> = {

@@ -9,49 +9,32 @@ export interface ParsedParam {
 	default?: string | number | boolean;
 }
 
-export function generateNodeTemplate(params: ParsedParam[]): string {
-	const paramLines = params.map((p) => {
-		if (p.default !== undefined && typeof p.default === "number") {
-			return `\tconst ${p.name} = parseInt(params.${p.name}, 10);`;
-		}
-		return `\tconst ${p.name} = params.${p.name};`;
-	});
+/* ============================================================================
+ * Command code templates
+ * ============================================================================ */
 
-	return `// Helper functions can be defined above export default
+const NODE_COMMAND_TEMPLATE = `// Helper functions can be defined above export default
 export default async function(params) {
-${paramLines.join("\n")}
+{{PARAM_LINES}}
 	// TODO: implement command logic
 	return { ok: true };
 }
 `;
-}
 
-export function generatePlaywrightCliTemplate(params: ParsedParam[]): string {
-	const paramLines = params.map((p) => {
-		if (p.default !== undefined && typeof p.default === "number") {
-			return `\tconst ${p.name} = parseInt(params.${p.name}, 10);`;
-		}
-		return `\tconst ${p.name} = params.${p.name};`;
-	});
-
-	return `// Helper functions can be defined above export default
+const PLAYWRIGHT_COMMAND_TEMPLATE = `// Helper functions can be defined above export default
 export default async (page, params) => {
-${paramLines.join("\n")}
+{{PARAM_LINES}}
 	// TODO: implement command logic using page
 	return { ok: true };
 };
 `;
-}
 
-export function generateShellTemplate(_params: ParsedParam[]): string {
-	return `#!/bin/sh
+const SHELL_COMMAND_TEMPLATE = `#!/bin/sh
 # TODO: implement command logic
 exit 0
 `;
-}
 
-export function generatePythonTemplate(_params: ParsedParam[]): string {
-	return `import sys
+const PYTHON_COMMAND_TEMPLATE = `import sys
 
 def run(params):
     # TODO: implement command logic
@@ -63,25 +46,14 @@ if __name__ == "__main__":
     result = run(params)
     print(json.dumps(result))
 `;
-}
 
-export function generateCommandTemplate(runtime: string, params: ParsedParam[]): string {
-	switch (runtime) {
-		case "playwright-cli":
-			return generatePlaywrightCliTemplate(params);
-		case "shell":
-			return generateShellTemplate(params);
-		case "python":
-			return generatePythonTemplate(params);
-		default:
-			return generateNodeTemplate(params);
-	}
-}
+/* ============================================================================
+ * Document templates
+ * ============================================================================ */
 
-export function generateReadmeTemplate(domain: string, action: string, runtime: string): string {
-	return `# ${domain}/${action}
+const README_TEMPLATE = `# {{DOMAIN}}/{{ACTION}}
 
-Generated draft for a \`${runtime}\` runtime command.
+Generated draft for a \`{{RUNTIME}}\` runtime command.
 
 ## Description
 
@@ -98,17 +70,15 @@ TODO: describe the return value structure.
 ## Usage
 
 \`\`\`
-websculpt ${domain} ${action}
+websculpt {{DOMAIN}} {{ACTION}}
 \`\`\`
 
 ## Common Error Codes
 
 TODO: list common business error codes (e.g., AUTH_REQUIRED, NOT_FOUND, EMPTY_RESULT).
 `;
-}
 
-export function generateContextTemplate(_domain: string, _action: string): string {
-	return `# Context
+const CONTEXT_TEMPLATE = `# Context
 
 ## Precipitation Background
 
@@ -130,6 +100,59 @@ TODO: how the page behaves when it changes (e.g., selector returns null, throws 
 
 TODO: backup plans, alternative entry points.
 `;
+
+/* ============================================================================
+ * Template generators
+ * ============================================================================ */
+
+function buildParamLines(params: ParsedParam[]): string {
+	return params
+		.map((p) => {
+			if (p.default !== undefined && typeof p.default === "number") {
+				return `\tconst ${p.name} = parseInt(params.${p.name}, 10);`;
+			}
+			return `\tconst ${p.name} = params.${p.name};`;
+		})
+		.join("\n");
+}
+
+export function generateNodeTemplate(params: ParsedParam[]): string {
+	return NODE_COMMAND_TEMPLATE.replace("{{PARAM_LINES}}", buildParamLines(params));
+}
+
+export function generatePlaywrightCliTemplate(params: ParsedParam[]): string {
+	return PLAYWRIGHT_COMMAND_TEMPLATE.replace("{{PARAM_LINES}}", buildParamLines(params));
+}
+
+export function generateShellTemplate(_params: ParsedParam[]): string {
+	return SHELL_COMMAND_TEMPLATE;
+}
+
+export function generatePythonTemplate(_params: ParsedParam[]): string {
+	return PYTHON_COMMAND_TEMPLATE;
+}
+
+export function generateCommandTemplate(runtime: string, params: ParsedParam[]): string {
+	switch (runtime) {
+		case "playwright-cli":
+			return generatePlaywrightCliTemplate(params);
+		case "shell":
+			return generateShellTemplate(params);
+		case "python":
+			return generatePythonTemplate(params);
+		default:
+			return generateNodeTemplate(params);
+	}
+}
+
+export function generateReadmeTemplate(domain: string, action: string, runtime: string): string {
+	return README_TEMPLATE.replaceAll("{{DOMAIN}}", domain)
+		.replaceAll("{{ACTION}}", action)
+		.replaceAll("{{RUNTIME}}", runtime);
+}
+
+export function generateContextTemplate(_domain: string, _action: string): string {
+	return CONTEXT_TEMPLATE;
 }
 
 export function generateNextSteps(

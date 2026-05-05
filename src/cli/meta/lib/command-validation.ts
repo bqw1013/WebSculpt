@@ -327,6 +327,7 @@ const EXPECTED_CONTEXT_SECTIONS = [
 	"## Page Structure",
 	"## Environment Dependencies",
 	"## Failure Signals",
+	"## Repair Clues",
 ];
 
 function validateDocumentContent(
