@@ -21,14 +21,14 @@ const HEALTH_TIMEOUT_MS = 5000;
  * from compiled dist (production) or source (development).
  */
 export function resolveDaemonEntrypoint(): [string, ...string[]] {
-	const distPath = join(__dirname, "..", "..", "..", "daemon", "index.js");
+	const distPath = join(__dirname, "..", "server", "index.js");
 	if (existsSync(distPath)) {
 		return [process.execPath, distPath];
 	}
 
 	// Development mode: use tsx to run TypeScript source.
 	const tsxPath = require.resolve("tsx/cli");
-	const srcPath = join(__dirname, "..", "..", "..", "..", "src", "cli", "daemon", "index.ts");
+	const srcPath = join(__dirname, "..", "server", "index.ts");
 	return [process.execPath, tsxPath, srcPath];
 }
 

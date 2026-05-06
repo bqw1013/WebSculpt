@@ -4,14 +4,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../../src/cli/daemon/runtime/executor.js", () => ({
+vi.mock("../../../../src/daemon/server/executor/executor.js", () => ({
 	executeCommand: vi.fn().mockImplementation(async () => {
 		await new Promise((resolve) => setTimeout(resolve, 200));
 		return "ok";
 	}),
 }));
 
-import { createSocketServer, getExecutionCount } from "../../../../src/cli/daemon/runtime/socket-server.js";
+import { createSocketServer, getExecutionCount } from "../../../../src/daemon/server/executor/socket-server.js";
 
 async function createTestSocketPath(): Promise<string> {
 	if (process.platform === "win32") {

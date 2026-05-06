@@ -9,29 +9,29 @@ vi.mock("node:fs/promises", async () => {
 	};
 });
 
-vi.mock("../../../../src/cli/engine/daemon/state.js", () => ({
+vi.mock("../../../../src/daemon/client/state.js", () => ({
 	DAEMON_JSON: "/tmp/.websculpt/daemon.json",
 	readDaemonState: vi.fn().mockResolvedValue(null),
 	isProcessAlive: vi.fn().mockReturnValue(false),
 }));
 
-vi.mock("../../../../src/cli/engine/daemon/transport.js", () => ({
+vi.mock("../../../../src/daemon/client/transport.js", () => ({
 	sendRequest: vi.fn().mockResolvedValue({ shuttingDown: true }),
 }));
 
-vi.mock("../../../../src/cli/daemon/config/paths.js", () => ({
+vi.mock("../../../../src/daemon/server/config/paths.js", () => ({
 	getDaemonLogPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.log"),
 }));
 
-vi.mock("../../../../src/cli/engine/daemon/lifecycle.js", () => ({
+vi.mock("../../../../src/daemon/client/lifecycle.js", () => ({
 	ensureDaemonClient: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { readFile, unlink } from "node:fs/promises";
-import { getDaemonLogPath } from "../../../../src/cli/daemon/config/paths.js";
-import { ensureDaemonClient } from "../../../../src/cli/engine/daemon/lifecycle.js";
-import { isProcessAlive, readDaemonState } from "../../../../src/cli/engine/daemon/state.js";
-import { sendRequest } from "../../../../src/cli/engine/daemon/transport.js";
+import { getDaemonLogPath } from "../../../../src/daemon/server/config/paths.js";
+import { ensureDaemonClient } from "../../../../src/daemon/client/lifecycle.js";
+import { isProcessAlive, readDaemonState } from "../../../../src/daemon/client/state.js";
+import { sendRequest } from "../../../../src/daemon/client/transport.js";
 import {
 	handleDaemonLogs,
 	handleDaemonRestart,

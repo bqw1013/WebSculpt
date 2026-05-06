@@ -20,7 +20,7 @@ vi.mock("node:net", () => ({
 
 import { readFile, unlink } from "node:fs/promises";
 import { createConnection } from "node:net";
-import { createClient } from "../../../../src/cli/engine/daemon/connection.js";
+import { createClient } from "../../../src/daemon/client/connection.js";
 
 describe("createClient PID ownership", () => {
 	beforeEach(() => {

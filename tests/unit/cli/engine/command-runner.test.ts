@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { runCommand } from "../../../../src/cli/engine/execution/dispatcher.js";
 
-vi.mock("../../../../src/cli/engine/daemon/index.js", () => ({
+vi.mock("../../../../src/daemon/client/index.js", () => ({
 	ensureDaemonClient: vi.fn(),
 }));
 
-import { ensureDaemonClient } from "../../../../src/cli/engine/daemon/index.js";
+import { ensureDaemonClient } from "../../../../src/daemon/client/index.js";
 
 const mockManifest = (runtime: string) => ({
 	id: "test-command",

@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
 import type { CommandManifest } from "../../../types/index.js";
 import { normalizeRuntime } from "../../runtime/index.js";
-import { ensureDaemonClient } from "../daemon/index.js";
+import { ensureDaemonClient } from "../../../daemon/client/index.js";
 
 function buildParams(manifest: CommandManifest, args: Record<string, string>): Record<string, string> {
 	const params: Record<string, string> = {};

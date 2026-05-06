@@ -4,17 +4,17 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../../src/cli/daemon/runtime/executor.js", () => ({
+vi.mock("../../../../src/daemon/server/executor/executor.js", () => ({
 	executeCommand: vi.fn().mockResolvedValue("ok"),
 }));
 
-vi.mock("../../../../src/cli/daemon/observability/logger.js", () => ({
+vi.mock("../../../../src/daemon/server/observability/logger.js", () => ({
 	initLogger: vi.fn(),
 	logEvent: vi.fn(),
 	closeLogger: vi.fn(),
 }));
 
-vi.mock("../../../../src/cli/daemon/observability/metrics.js", () => ({
+vi.mock("../../../../src/daemon/server/observability/metrics.js", () => ({
 	recordExecutionStart: vi.fn(),
 	recordExecutionEnd: vi.fn(),
 	recordPeakPages: vi.fn(),
@@ -24,9 +24,9 @@ vi.mock("../../../../src/cli/daemon/observability/metrics.js", () => ({
 
 let mockPageCount = 0;
 
-vi.mock("../../../../src/cli/daemon/runtime/browser-manager.js", async () => {
-	const actual = await vi.importActual<typeof import("../../../../src/cli/daemon/runtime/browser-manager.js")>(
-		"../../../../src/cli/daemon/runtime/browser-manager.js",
+vi.mock("../../../../src/daemon/server/executor/browser-manager.js", async () => {
+	const actual = await vi.importActual<typeof import("../../../../src/daemon/server/executor/browser-manager.js")>(
+		"../../../../src/daemon/server/executor/browser-manager.js",
 	);
 	return {
 		...actual,
@@ -36,7 +36,7 @@ vi.mock("../../../../src/cli/daemon/runtime/browser-manager.js", async () => {
 	};
 });
 
-import { createSocketServer } from "../../../../src/cli/daemon/runtime/socket-server.js";
+import { createSocketServer } from "../../../../src/daemon/server/executor/socket-server.js";
 
 async function createTestSocketPath(): Promise<string> {
 	if (process.platform === "win32") {

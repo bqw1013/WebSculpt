@@ -2,7 +2,7 @@ import { mkdir, readFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../../src/cli/daemon/config/paths.js", async () => {
+vi.mock("../../../../src/daemon/server/config/paths.js", async () => {
 	const { tmpdir } = await import("node:os");
 	const { join } = await import("node:path");
 	const dir = join(tmpdir(), "websculpt-metrics-test-fixed");
@@ -12,7 +12,7 @@ vi.mock("../../../../src/cli/daemon/config/paths.js", async () => {
 	};
 });
 
-import { getDaemonStateDir } from "../../../../src/cli/daemon/config/paths.js";
+import { getDaemonStateDir } from "../../../../src/daemon/server/config/paths.js";
 import {
 	flushMetrics,
 	recordExecutionEnd,
@@ -20,7 +20,7 @@ import {
 	recordPeakPages,
 	recordPeakRss,
 	resetMetrics,
-} from "../../../../src/cli/daemon/observability/metrics.js";
+} from "../../../../src/daemon/server/observability/metrics.js";
 
 describe("metrics tracking and serialization", () => {
 	let metricsDir: string;

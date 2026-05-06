@@ -26,19 +26,19 @@ vi.mock("node:fs/promises", async () => {
 	};
 });
 
-vi.mock("../../../../src/cli/daemon/runtime/browser-manager.js", () => ({
+vi.mock("../../../../src/daemon/server/executor/browser-manager.js", () => ({
 	closeBrowser: mockCloseBrowser,
 	isBrowserConnected: vi.fn().mockReturnValue(false),
 	withBrowser: vi.fn(),
 }));
 
-vi.mock("../../../../src/cli/daemon/config/paths.js", () => ({
+vi.mock("../../../../src/daemon/server/config/paths.js", () => ({
 	getDaemonLogPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.log"),
 	getDaemonStateDir: vi.fn().mockReturnValue("/tmp/.websculpt"),
 	getSocketPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.sock"),
 }));
 
-vi.mock("../../../../src/cli/daemon/runtime/socket-server.js", () => ({
+vi.mock("../../../../src/daemon/server/executor/socket-server.js", () => ({
 	createSocketServer: vi.fn().mockReturnValue({
 		close: mockServerClose,
 		on: mockServerOn,
@@ -52,7 +52,7 @@ describe("daemon gracefulShutdown", () => {
 
 	beforeAll(async () => {
 		exitSpy = vi.spyOn(process, "exit").mockImplementation(() => undefined as never);
-		const mod = await import("../../../../src/cli/daemon/index.js");
+		const mod = await import("../../../../src/daemon/server/index.js");
 		gracefulShutdown = mod.gracefulShutdown;
 	});
 

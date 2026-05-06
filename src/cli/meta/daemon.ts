@@ -1,10 +1,10 @@
 import { spawnSync } from "node:child_process";
 import { readFile, unlink } from "node:fs/promises";
 import type { Command } from "commander";
-import { getDaemonLogPath } from "../daemon/config/paths.js";
-import { ensureDaemonClient } from "../engine/daemon/lifecycle.js";
-import { DAEMON_JSON, isProcessAlive, readDaemonState } from "../engine/daemon/state.js";
-import { sendRequest } from "../engine/daemon/transport.js";
+import { getDaemonLogPath } from "../../daemon/server/config/paths.js";
+import { ensureDaemonClient } from "../../daemon/client/lifecycle.js";
+import { DAEMON_JSON, isProcessAlive, readDaemonState } from "../../daemon/client/state.js";
+import { sendRequest } from "../../daemon/client/transport.js";
 import type {
 	DaemonLogsResult,
 	DaemonRestartResult,
@@ -67,7 +67,7 @@ export async function handleDaemonStop(): Promise<DaemonStopResult | MetaCommand
 		await new Promise((r) => setTimeout(r, STOP_POLL_INTERVAL_MS));
 	}
 
-	// Process is still alive after polling timeout — force kill.
+	// Process is still alive after polling timeout �?force kill.
 	try {
 		forceKill(state.pid);
 	} catch {

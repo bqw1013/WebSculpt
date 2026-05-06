@@ -4,16 +4,16 @@ import { join } from "node:path";
 import type { Browser, BrowserContext, Page } from "playwright-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../../src/cli/daemon/runtime/browser-manager.js", () => ({
+vi.mock("../../../../src/daemon/server/executor/browser-manager.js", () => ({
 	withBrowser: vi.fn(),
 }));
 
-import { withBrowser } from "../../../../src/cli/daemon/runtime/browser-manager.js";
+import { withBrowser } from "../../../../src/daemon/server/executor/browser-manager.js";
 
 describe("executeCommand timeout", () => {
 	let tempDir: string;
 	let rejectEvaluate: ((reason: Error) => void) | null = null;
-	let executeCommand: typeof import("../../../../src/cli/daemon/runtime/executor.js").executeCommand;
+	let executeCommand: typeof import("../../../../src/daemon/server/executor/executor.js").executeCommand;
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
@@ -50,7 +50,7 @@ describe("executeCommand timeout", () => {
 		});
 
 		vi.resetModules();
-		const mod = await import("../../../../src/cli/daemon/runtime/executor.js");
+		const mod = await import("../../../../src/daemon/server/executor/executor.js");
 		executeCommand = mod.executeCommand;
 	});
 
