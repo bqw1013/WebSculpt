@@ -1,3 +1,0 @@
-// Backward-compatibility re-exports from the modular daemon client.
-export { createClient, type DaemonClient } from "./connection.js";
-export { ensureDaemonClient } from "./lifecycle.js";

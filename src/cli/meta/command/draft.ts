@@ -2,7 +2,7 @@ import { access, constants, mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { Command } from "commander";
 import type { CommandParameter, ValidationDetail } from "../../../types/index.js";
-import { RESERVED_DOMAINS } from "../../engine/command-discovery/contract.js";
+import { RESERVED_DOMAINS } from "../../engine/contract.js";
 import type { MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
 import { isExecutable, normalizeRuntime, resolveEntryFile, runtimeRequiresBrowser } from "../../runtime/index.js";

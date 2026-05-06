@@ -1,7 +1,7 @@
 import { open, unlink } from "node:fs/promises";
 import { join } from "node:path";
-import { getDaemonStateDir } from "../../daemon/config/paths.js";
 import { createClient, type DaemonClient } from "./connection.js";
+import { getDaemonStateDir } from "./daemon-paths.js";
 import { startDaemonWithRetry, waitForDaemonReady } from "./spawn.js";
 import { isProcessAlive, readDaemonState } from "./state.js";
 

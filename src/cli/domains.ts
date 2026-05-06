@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import type { CommandParameter, CommandRuntime } from "../types/index.js";
-import type { ResolvedCommand } from "./engine/command-discovery/contract.js";
+import type { ResolvedCommand } from "./engine/contract.js";
 import { executeCommand } from "./engine/execution/orchestrator.js";
 import { listAllCommands } from "./engine/registry.js";
 import { printJson } from "./output.js";

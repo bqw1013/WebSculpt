@@ -1,8 +1,8 @@
 import { join } from "node:path";
-import { USER_COMMANDS_DIR } from "../../../infra/paths.js";
-import type { CommandManifest } from "../../../types/index.js";
-import { resolveEntryFile } from "../../runtime/index.js";
-import { getBuiltinCommandsDir } from "../paths.js";
+import { USER_COMMANDS_DIR } from "../../infra/paths.js";
+import type { CommandManifest } from "../../types/index.js";
+import { resolveEntryFile } from "../runtime/index.js";
+import { getBuiltinCommandsDir } from "./paths.js";
 
 /** Domains reserved for meta commands; user-defined commands in these domains are ignored. */
 export const RESERVED_DOMAINS = new Set(["command", "config", "skill", "daemon"]);

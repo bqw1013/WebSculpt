@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
-import { type ResolvedCommand, toResolvedCommand } from "./command-discovery/contract.js";
 import { getAppVersion, readIndex, rebuildIndex } from "./command-discovery/index-persistence.js";
 import { scanAllCommands, scanCommands } from "./command-discovery/scanner.js";
+import { type ResolvedCommand, toResolvedCommand } from "./contract.js";
 import { getBuiltinCommandsDir } from "./paths.js";
 
 let cachedCommands: ResolvedCommand[] | null = null;

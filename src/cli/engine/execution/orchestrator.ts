@@ -1,5 +1,5 @@
 import { appendLog } from "../../../infra/store.js";
-import type { ResolvedCommand } from "../command-discovery/contract.js";
+import type { ResolvedCommand } from "../contract.js";
 import { runCommand } from "./dispatcher.js";
 
 /** Successful command execution result. */

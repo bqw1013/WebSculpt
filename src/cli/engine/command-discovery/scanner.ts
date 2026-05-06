@@ -3,8 +3,8 @@ import { join } from "node:path";
 import { USER_COMMANDS_DIR } from "../../../infra/paths.js";
 import type { CommandManifest } from "../../../types/index.js";
 import { normalizeRuntime, resolveEntryFile } from "../../runtime/index.js";
+import { RESERVED_DOMAINS, type ResolvedCommand } from "../contract.js";
 import { getBuiltinCommandsDir } from "../paths.js";
-import { RESERVED_DOMAINS, type ResolvedCommand } from "./contract.js";
 
 /** Scans a single directory tree for commands. */
 export async function scanCommands(baseDir: string, source: "user" | "builtin"): Promise<ResolvedCommand[]> {

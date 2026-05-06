@@ -1,5 +1,5 @@
 import { createConnection } from "node:net";
-import { type SocketResponse, splitLines } from "../../daemon/config/protocol.js";
+import { type SocketResponse, splitLines } from "./protocol.js";
 
 const REQUEST_TIMEOUT_MS = 60000;
 

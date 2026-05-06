@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { RESERVED_DOMAINS } from "../../engine/command-discovery/contract.js";
+import { RESERVED_DOMAINS } from "../../engine/contract.js";
 import type { MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
 import { isLoadError, loadCommandSource } from "../lib/command-source-loader.js";

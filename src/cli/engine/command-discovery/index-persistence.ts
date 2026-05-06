@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { INDEX_PATH } from "../../../infra/paths.js";
-import type { RegistryIndex } from "./contract.js";
+import type { RegistryIndex } from "../contract.js";
 import { scanAllCommands } from "./scanner.js";
 
 /** Reads the app version from package.json. */

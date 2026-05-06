@@ -5,7 +5,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getSocketPath } from "../../daemon/config/paths.js";
+import { getSocketPath } from "./daemon-paths.js";
 import { isProcessAlive, readDaemonState, writeDaemonState } from "./state.js";
 import { sendRequest } from "./transport.js";
 

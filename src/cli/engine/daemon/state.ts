@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { getDaemonStateDir } from "../../daemon/config/paths.js";
+import { getDaemonStateDir } from "./daemon-paths.js";
 
 export const DAEMON_JSON = join(getDaemonStateDir(), "daemon.json");
 
