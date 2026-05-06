@@ -124,4 +124,4 @@ Fields from the precipitation proposal card should map to specific sections in t
 
 After user confirms the precipitation proposal card, execute according to the complete flow in [references/compile/contract.md](references/compile/contract.md).
 
-> **Prerequisite**: Before execution, you must read contract.md and the corresponding runtime contract document (`node-contract.md` or `playwright-cli-contract.md`) in full. All technical details such as manifest specifications, README/context documentation section requirements, L1-L3 validation rules, runtime signatures and limitations are governed by the contract documents.
+> **Prerequisite**: Before execution, you must read contract.md and the corresponding runtime contract document (`node-contract.md` or `browser-contract.md`) in full. All technical details such as manifest specifications, README/context documentation section requirements, L1-L3 validation rules, runtime signatures and limitations are governed by the contract documents.

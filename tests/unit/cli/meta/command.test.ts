@@ -61,19 +61,19 @@ describe("handleCommandShow", () => {
 		});
 	});
 
-	it("merges system prerequisites for playwright-cli runtime", async () => {
+	it("merges system prerequisites for browser runtime", async () => {
 		vi.mocked(findCommand).mockReturnValue({
 			manifest: {
 				id: "github-list-trending",
 				domain: "github",
 				action: "list-trending",
 				description: "Fetch trending",
-				runtime: "playwright-cli",
+				runtime: "browser",
 				requiresBrowser: true,
 			},
 			commandPath: "/tmp/commands/github/list-trending/command.js",
 			source: "builtin",
-			runtime: "playwright-cli",
+			runtime: "browser",
 		});
 		vi.mocked(access).mockResolvedValue(undefined);
 

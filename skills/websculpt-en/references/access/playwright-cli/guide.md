@@ -1,8 +1,8 @@
-# Playwright CLI Access Module
+# @playwright/cli Access Module
 
 ## 1. Overview
 
-Playwright CLI (`@playwright/cli`) is a command-line browser automation tool that wraps Playwright's high-level APIs (auto-waiting, smart locators, session management), enabling page navigation, element interaction, and code execution through concise CLI commands.
+`@playwright/cli` package is a command-line browser automation tool that wraps Playwright's high-level APIs (auto-waiting, smart locators, session management), enabling page navigation, element interaction, and code execution through concise CLI commands.
 
 ### Core Mechanisms
 
@@ -276,7 +276,7 @@ Current observation: GitHub Trending and other public pages have **low** anti-cr
 
 **Browser Fingerprint Advantage**
 
-CDP attach reuses the user's real browser, User-Agent, Cookie, LocalStorage are all real. This is harder to detect than `launch`ing a new browser, and is the core advantage of playwright-cli in anti-crawling scenarios.
+CDP attach reuses the user's real browser, User-Agent, Cookie, LocalStorage are all real. This is harder to detect than `launch`ing a new browser, and is the core advantage of `@playwright/cli` in anti-crawling scenarios.
 
 ### Media Resource Extraction
 
@@ -320,7 +320,7 @@ Playwright CLI reuses the user browser via CDP attach, and the session persists 
 
 When command execution fails, locate problems in the following layered order:
 
-1. **Infrastructure layer**: `PLAYWRIGHT_CLI_ATTACH_REQUIRED` → Check whether CDP is attached, whether session name is `default`
+1. **Infrastructure layer**: `BROWSER_ATTACH_REQUIRED` → Check whether CDP is attached, whether session name is `default`
 2. **Syntax layer**: `SyntaxError` → Check whether code has illegal characters, or whether `export default` is missing
 3. **Runtime layer**: `EMPTY_RESULT`, `DRIFT_DETECTED` → Check selectors, page loading strategy
 4. **Network layer**: `net::ERR_ABORTED`, `TIMEOUT` → Retry once, may be transient

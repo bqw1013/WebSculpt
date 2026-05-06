@@ -19,7 +19,7 @@ Division of responsibilities between CLI and daemon:
 
 ### 2.1 Auto-Spawning
 
-When a `playwright-cli` command is first executed, the CLI automatically detects and spawns the daemon via `ensureDaemonClient()`:
+When a `browser` command is first executed, the CLI automatically detects and spawns the daemon via `ensureDaemonClient()`:
 
 1. Read the daemon state file (`daemon.json`) to check for an existing daemon state
 2. If the PID is alive and the socket is reachable, reuse the existing instance
@@ -127,7 +127,7 @@ The connection has the following fault tolerance mechanisms:
 
 - **Lazy connection**: CDP connection is only established when a command is first executed.
 - **Concurrent deduplication**: Multiple simultaneous requests share the same connection attempt, avoiding multiple browser windows popping up.
-- **Auto-reconnect**: The `withBrowser` wrapper detects disconnections (`TargetClosedError`, `ECONNRESET`, `ECONNREFUSED`, `EPIPE`, etc.) and attempts to reconnect once. If the browser is not started, throws `PLAYWRIGHT_CLI_ATTACH_REQUIRED`.
+- **Auto-reconnect**: The `withBrowser` wrapper detects disconnections (`TargetClosedError`, `ECONNRESET`, `ECONNREFUSED`, `EPIPE`, etc.) and attempts to reconnect once. If the browser is not started, throws `BROWSER_ATTACH_REQUIRED`.
 
 ### 4.2 Page Isolation
 
@@ -199,7 +199,7 @@ After accumulating 200 command executions, the daemon marks itself as `restartPe
 | `DAEMON_PAGE_LIMIT` | Total page limit reached |
 | `DAEMON_RESTARTING` | Daemon is in restartPending drain state |
 | `COMMAND_TIMEOUT` | Command execution timed out (20 minutes) |
-| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | Need to attach to an existing CDP session |
+| `BROWSER_ATTACH_REQUIRED` | Need to attach to an existing CDP session |
 
 ### Client and Communication Layer
 

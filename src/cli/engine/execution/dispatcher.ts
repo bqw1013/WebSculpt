@@ -34,10 +34,10 @@ async function runNodeCommand(commandPath: string, params: Record<string, string
 /**
  * Infrastructure error codes that should be surfaced to the user as-is.
  */
-const INFRASTRUCTURE_CODES = new Set(["DAEMON_START_FAILED", "DAEMON_UNREACHABLE", "PLAYWRIGHT_CLI_ATTACH_REQUIRED"]);
+const INFRASTRUCTURE_CODES = new Set(["DAEMON_START_FAILED", "DAEMON_UNREACHABLE", "BROWSER_ATTACH_REQUIRED"]);
 
 /**
- * Executes a playwright-cli runtime command via the websculpt-daemon.
+ * Executes a browser runtime command via the websculpt-daemon.
  */
 async function runPlaywrightDaemonCommand(commandPath: string, params: Record<string, string>): Promise<unknown> {
 	try {
@@ -86,7 +86,7 @@ export async function runCommand(
 	switch (runtime) {
 		case "node":
 			return await runNodeCommand(commandPath, params);
-		case "playwright-cli":
+		case "browser":
 			return await runPlaywrightDaemonCommand(commandPath, params);
 		// Future runtimes can be plugged in below:
 		// case "shell": return await runShellCommand(commandPath, params);

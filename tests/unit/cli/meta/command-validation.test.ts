@@ -147,10 +147,8 @@ describe("validateCommandSource", () => {
 			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_REQUIRES_BROWSER", level: "error" }));
 		});
 
-		it("errors on playwright-cli runtime with requiresBrowser false", () => {
-			const details = validateCommandSource(
-				makeInput({ manifest: { runtime: "playwright-cli", requiresBrowser: false } }),
-			);
+		it("errors on browser runtime with requiresBrowser false", () => {
+			const details = validateCommandSource(makeInput({ manifest: { runtime: "browser", requiresBrowser: false } }));
 			expect(details).toContainEqual(expect.objectContaining({ code: "RUNTIME_BROWSER_MISMATCH", level: "error" }));
 		});
 
@@ -159,10 +157,8 @@ describe("validateCommandSource", () => {
 			expect(details).toContainEqual(expect.objectContaining({ code: "RUNTIME_BROWSER_MISMATCH", level: "error" }));
 		});
 
-		it("passes for valid requiresBrowser with playwright-cli runtime", () => {
-			const details = validateCommandSource(
-				makeInput({ manifest: { runtime: "playwright-cli", requiresBrowser: true } }),
-			);
+		it("passes for valid requiresBrowser with browser runtime", () => {
+			const details = validateCommandSource(makeInput({ manifest: { runtime: "browser", requiresBrowser: true } }));
 			expect(details.filter((d) => d.level === "error")).toHaveLength(0);
 		});
 
@@ -249,20 +245,20 @@ describe("validateCommandSource", () => {
 			expect(details).toContainEqual(expect.objectContaining({ code: "INVALID_JS_SYNTAX", level: "error" }));
 		});
 
-		it("errors on playwright-cli runtime missing export default", () => {
+		it("errors on browser runtime missing export default", () => {
 			const details = validateCommandSource(
 				makeInput({
-					manifest: { runtime: "playwright-cli" },
+					manifest: { runtime: "browser" },
 					code: "async (page) => { return {}; }",
 				}),
 			);
 			expect(details).toContainEqual(expect.objectContaining({ code: "MISSING_EXPORT_DEFAULT", level: "error" }));
 		});
 
-		it("passes for playwright-cli runtime with export default", () => {
+		it("passes for browser runtime with export default", () => {
 			const details = validateCommandSource(
 				makeInput({
-					manifest: { runtime: "playwright-cli", requiresBrowser: true },
+					manifest: { runtime: "browser", requiresBrowser: true },
 					code: "export default async (page, params) => { return {}; }",
 				}),
 			);

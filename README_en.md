@@ -90,7 +90,7 @@ The Agent will automatically check whether a distilled command is available in t
 |---------|-------------|
 | **Command Library** | Locally reusable information retrieval commands for the Agent, named in `domain/action` format (e.g. `github/list-trending`). Divided into Builtin (project built-in) and User (Agent distilled). |
 | **Skill** | A set of conventions the Agent automatically follows after installation, including tool selection strategy, exploration workflow, and distillation contract. |
-| **Runtime** | `node` (HTTP requests, data cleansing) or `playwright-cli` (browser automation, reusable login state). A command can declare only one runtime. |
+| **Runtime** | `node` (HTTP requests, data cleansing) or `browser` (browser automation, reusable login state). A command can declare only one runtime. |
 
 ---
 
@@ -108,7 +108,7 @@ A successful exploration is distilled into a parameterizable command package sto
 
 It is essentially the Agent's experience of "how I scraped data from this web page" turned into a maintainable, version-controllable, reusable local asset.
 
-> Since commands run locally and may reuse your browser session via `playwright-cli`, it is recommended to periodically review the logic in your command library to avoid unintended page operations.
+> Since commands run locally and may reuse your browser session via `browser`, it is recommended to periodically review the logic in your command library to avoid unintended page operations.
 
 ---
 

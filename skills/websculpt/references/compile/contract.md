@@ -4,7 +4,7 @@
 >
 > **如果你已确定运行时，直接阅读对应契约：**
 > - `node` → [`./node-contract.md`](./node-contract.md)
-> - `playwright-cli` → [`./playwright-cli-contract.md`](./playwright-cli-contract.md)
+> - `browser` → [`./browser-contract.md`](./browser-contract.md)
 
 ---
 
@@ -14,45 +14,45 @@
 
 | 你的需求 | 推荐 runtime | 关键限制 |
 |---------|-------------|---------|
-| 需要浏览器 API（DOM 操作、页面导航、截图、复用登录态） | `playwright-cli` | 无 Node.js API（`fs`、`path`、`require` 不可用）；`console.log` 不可见；必须通过 `page` 操作浏览器 |
+| 需要浏览器 API（DOM 操作、页面导航、截图、复用登录态） | `browser` | 无 Node.js API（`fs`、`path`、`require` 不可用）；`console.log` 不可见；必须通过 `page` 操作浏览器 |
 | 纯 Node.js 逻辑（HTTP 请求、文件读写、数据清洗、调用子进程） | `node` | 无浏览器 API；无法访问已打开的浏览器页面 |
-| 同时需要 HTTP 请求和浏览器操作 | 拆分为两个命令（`node` 处理 HTTP + `playwright-cli` 处理浏览器），或由调用方串联 | 一个命令只能声明一种 runtime，不可混合 |
+| 同时需要 HTTP 请求和浏览器操作 | 拆分为两个命令（`node` 处理 HTTP + `browser` 处理浏览器），或由调用方串联 | 一个命令只能声明一种 runtime，不可混合 |
 
 ### 反向排除
 
 以下情况会直接导致某个 runtime 不可用：
 
-- **需要读写本地文件** → 不能用 `playwright-cli`（隔离上下文，无 `fs`/`path`）。
-- **需要 `console.log` 调试输出** → 优先 `node`；`playwright-cli` 中调试信息只能通过 `return` 带出。
-- **需要操作已打开的浏览器标签页（截图、点击、提取 DOM）** → 不能用 `node`；必须用 `playwright-cli`。
-- **需要调用 `require` 或 `import` 外部模块** → 不能用 `playwright-cli`。
+- **需要读写本地文件** → 不能用 `browser`（隔离上下文，无 `fs`/`path`）。
+- **需要 `console.log` 调试输出** → 优先 `node`；`browser` 中调试信息只能通过 `return` 带出。
+- **需要操作已打开的浏览器标签页（截图、点击、提取 DOM）** → 不能用 `node`；必须用 `browser`。
+- **需要调用 `require` 或 `import` 外部模块** → 不能用 `browser`。
 
 ### 命令不可混合时的处理策略
 
 一个命令只能声明一种 runtime。如果业务逻辑同时需要浏览器和文件系统：
 
-1. **优先拆分**：把浏览器操作沉淀为 `playwright-cli` 命令，把数据处理沉淀为 `node` 命令，由调用方串联。
-2. **次选妥协**：若拆分成本过高，在 `playwright-cli` 命令中用 `page.evaluate(() => fetch(...))` 发起请求（受浏览器 CORS 和 Cookie 策略约束），或把文件操作移到命令外部由调用方处理。
+1. **优先拆分**：把浏览器操作沉淀为 `browser` 命令，把数据处理沉淀为 `node` 命令，由调用方串联。
+2. **次选妥协**：若拆分成本过高，在 `browser` 命令中用 `page.evaluate(() => fetch(...))` 发起请求（受浏览器 CORS 和 Cookie 策略约束），或把文件操作移到命令外部由调用方处理。
 
 ### 运行时差异速查
 
-| 维度 | `node` | `playwright-cli` |
+| 维度 | `node` | `browser` |
 |------|--------|------------------|
-| 入口文件要求 | 标准 ESM 模块，通过 `export default` 导出异步函数 | 函数体片段；整个文件内容被 `()` 包裹后在 VM 中执行 |
-| 入口签名 | `export default async (params) => {...}` | `async function (page) { /* PARAMS_INJECT */ ... }` |
-| 参数方式 | Runner 直接作为函数参数传入 | Runner 将 `/* PARAMS_INJECT */` 替换为 `const params = {...}` |
+| 入口文件要求 | 标准 ESM 模块，通过 `export default` 导出异步函数 | 标准 ESM 模块，通过 `export default` 导出异步函数 |
+| 入口签名 | `export default async (params) => {...}` | `export default async (page, params) => {...}` |
+| 参数方式 | Runner 直接作为函数参数传入 | Runner 直接作为函数参数传入 |
 | 运行环境 | 完整 Node.js（`fs`、`fetch`、`console` 可用） | 隔离上下文（无 Node.js API，`console.log` 不可见） |
 | 浏览器 API | 不可用 | 通过 `page` 参数可用 |
-| 返回值传递 | Runner 消费函数返回值 | Runner 从 stdout 解析 `### Result\n` 后的 JSON |
+| 返回值传递 | Runner 消费函数返回值 | Runner 消费函数返回值 |
 | 调试方式 | `console.log` 输出到 stderr/stdout | `console.log` 不可见，调试数据通过 `return` 带出 |
 | 页面隔离 | 不适用 | 必须创建隔离页面并在 `finally` 中关闭 |
-| 错误码传递 | `error.code = "NOT_FOUND"` | 消息文本中包含 `[NOT_FOUND] ...` |
+| 错误码传递 | `error.code = "NOT_FOUND"` | `error.code = "NOT_FOUND"` |
 
 以下仅为快速对比。实现细节必须遵循你已选定的运行时契约文档。
 
-> 沉淀命令必须是 `node` 或 `playwright-cli` runtime。探索中若发现其他语言（如 Python、Shell）路径更优，评估重写为 Node.js 的等价实现；若重写成本过高或不可行，该路径不进入命令库，作为一次性探索成果处理。
+> 沉淀命令必须是 `node` 或 `browser` runtime。探索中若发现其他语言（如 Python、Shell）路径更优，评估重写为 Node.js 的等价实现；若重写成本过高或不可行，该路径不进入命令库，作为一次性探索成果处理。
 
-**选定 runtime 后，必须阅读对应的运行时契约文档。** `node` 运行时见 [`./node-contract.md`](./node-contract.md)；`playwright-cli` 运行时见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md)。本文档后续章节（命令资产规范、错误码）为两种运行时的通用约束，仍需阅读。
+**选定 runtime 后，必须阅读对应的运行时契约文档。** `node` 运行时见 [`./node-contract.md`](./node-contract.md)；`browser` 运行时见 [`./browser-contract.md`](./browser-contract.md)。本文档后续章节（命令资产规范、错误码）为两种运行时的通用约束，仍需阅读。
 
 ---
 
@@ -102,10 +102,10 @@ websculpt command create <domain> <action> --from-dir <path>
 | `domain` | `string` | 系统注入 | 命令所属领域，create 时以 CLI 参数强制覆盖 |
 | `action` | `string` | 系统注入 | 命令操作名，create 时以 CLI 参数强制覆盖 |
 | `description` | `string` | 是 | 命令用途，**不能为空字符串或仅含空白字符** |
-| `runtime` | `string` | 是 | `node` 或 `playwright-cli`。`shell`、`python` 为 CLI 预留类型，但沉淀到命令库时必须重写为 `node` 或 `playwright-cli` 的等价实现 |
+| `runtime` | `string` | 是 | `node` 或 `browser`。`shell`、`python` 为 CLI 预留类型，但沉淀到命令库时必须重写为 `node` 或 `browser` 的等价实现 |
 | `parameters` | `array` | 否 | 参数列表，元素为 `{ name, required?, default?, description? }` |
 | `prerequisites` | `string[]` | 否 | 命令特定的前置条件说明（如 `"Requires user login"`） |
-| `requiresBrowser` | `boolean` | **是** | 是否依赖浏览器环境。`playwright-cli` 必须为 `true`，`node` 必须为 `false`。`command draft` 会根据 runtime 自动填充 |
+| `requiresBrowser` | `boolean` | **是** | 是否依赖浏览器环境。`browser` 必须为 `true`，`node` 必须为 `false`。`command draft` 会根据 runtime 自动填充 |
 | `authRequired` | `string` | 否 | `"required"` / `"not-required"` / `"unknown"`。命令是否需要用户登录，默认 `"unknown"` |
 | `entryFile` | `string` | 否 | 入口文件名，默认 `command.js` |
 
@@ -115,7 +115,7 @@ websculpt command create <domain> <action> --from-dir <path>
 
 详见对应运行时契约文档：
 - `node` → [`./node-contract.md`](./node-contract.md)
-- `playwright-cli` → [`./playwright-cli-contract.md`](./playwright-cli-contract.md)
+- `browser` → [`./browser-contract.md`](./browser-contract.md)
 
 ### 3.3 README.md
 
@@ -188,7 +188,7 @@ context.md 包含以下章节：
 - [ ] 错误消息中包含了预期的业务错误码（如 `[NOT_FOUND] ...`）
 - [ ] 返回值为可序列化的纯数据对象
 
-`playwright-cli` 专用：见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md)
+`browser` 专用：见 [`./browser-contract.md`](./browser-contract.md)
 - [ ] 入口文件通过 `export default` 导出异步函数
 - [ ] 签名为 `async (page, params) => unknown`
 

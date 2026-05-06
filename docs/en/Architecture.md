@@ -125,7 +125,7 @@ The design division between `command draft` and `command create` is based on one
 WebSculpt currently supports two execution paths:
 
 - **`node`**: The CLI process dynamically imports the command module and executes it within the same process.
-- **`playwright-cli`**: Executed by a background daemon process; the CLI forwards tasks via IPC. The daemon is automatically spawned on first invocation, and can also be manually managed through the `daemon` meta command.
+- **`browser`**: Executed by a background daemon process; the CLI forwards tasks via IPC. The daemon is automatically spawned on first invocation, and can also be manually managed through the `daemon` meta command.
 
 The daemon centrally manages browser resources, handling memory monitoring, automatic restart triggered by execution count thresholds, metrics, and log persistence.
 

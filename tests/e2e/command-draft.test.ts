@@ -50,12 +50,12 @@ describe("command draft", () => {
 		expect(code).toContain("export default async function");
 	});
 
-	it("produces ESM module syntax with export default for playwright-cli runtime", async () => {
+	it("produces ESM module syntax with export default for browser runtime", async () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
 		const result = await runSourceCli(
-			["command", "draft", "zhihu", "articles", "--runtime", "playwright-cli", "--format", "json"],
+			["command", "draft", "zhihu", "articles", "--runtime", "browser", "--format", "json"],
 			homeDir,
 		);
 		const payload = parseJsonOutput<{
@@ -66,12 +66,12 @@ describe("command draft", () => {
 
 		expect(result.exitCode).toBe(0);
 		expect(payload.success).toBe(true);
-		expect(payload.runtime).toBe("playwright-cli");
+		expect(payload.runtime).toBe("browser");
 
 		const manifest = await readJsonFile<{ runtime: string; requiresBrowser: boolean; authRequired: string }>(
 			join(payload.draftPath, "manifest.json"),
 		);
-		expect(manifest.runtime).toBe("playwright-cli");
+		expect(manifest.runtime).toBe("browser");
 		expect(manifest.requiresBrowser).toBe(true);
 		expect(manifest.authRequired).toBe("unknown");
 
@@ -91,7 +91,7 @@ describe("command draft", () => {
 				"paramtest",
 				"cmd",
 				"--runtime",
-				"playwright-cli",
+				"browser",
 				"--param",
 				"author:required",
 				"--param",

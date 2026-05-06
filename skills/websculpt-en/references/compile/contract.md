@@ -4,7 +4,7 @@
 >
 > **If you have already determined the runtime, read the corresponding contract directly:**
 > - `node` → [`./node-contract.md`](./node-contract.md)
-> - `playwright-cli` → [`./playwright-cli-contract.md`](./playwright-cli-contract.md)
+> - `browser` → [`./browser-contract.md`](./browser-contract.md)
 
 ---
 
@@ -14,45 +14,45 @@
 
 | Your Need | Recommended Runtime | Key Limitation |
 |---------|-------------|---------|
-| Need browser APIs (DOM manipulation, page navigation, screenshots, reuse login state) | `playwright-cli` | No Node.js APIs (`fs`, `path`, `require` unavailable); `console.log` invisible; must operate browser through `page` |
+| Need browser APIs (DOM manipulation, page navigation, screenshots, reuse login state) | `browser` | No Node.js APIs (`fs`, `path`, `require` unavailable); `console.log` invisible; must operate browser through `page` |
 | Pure Node.js logic (HTTP requests, file I/O, data cleaning, child process calls) | `node` | No browser APIs; cannot access already opened browser pages |
-| Need both HTTP requests and browser operations | Split into two commands (`node` handles HTTP + `playwright-cli` handles browser), or chain by caller | One command can only declare one runtime, cannot mix |
+| Need both HTTP requests and browser operations | Split into two commands (`node` handles HTTP + `browser` handles browser), or chain by caller | One command can only declare one runtime, cannot mix |
 
 ### Reverse Exclusion
 
 The following situations will directly render a runtime unavailable:
 
-- **Need to read/write local files** → Cannot use `playwright-cli` (isolated context, no `fs`/`path`).
-- **Need `console.log` debug output** → Prioritize `node`; in `playwright-cli` debug info can only be brought out through `return`.
-- **Need to operate already opened browser tabs (screenshots, clicks, extract DOM)** → Cannot use `node`; must use `playwright-cli`.
-- **Need to call `require` or `import` external modules** → Cannot use `playwright-cli`.
+- **Need to read/write local files** → Cannot use `browser` (isolated context, no `fs`/`path`).
+- **Need `console.log` debug output** → Prioritize `node`; in `browser` debug info can only be brought out through `return`.
+- **Need to operate already opened browser tabs (screenshots, clicks, extract DOM)** → Cannot use `node`; must use `browser`.
+- **Need to call `require` or `import` external modules** → Cannot use `browser`.
 
 ### Handling Strategy When Commands Cannot Be Mixed
 
 One command can only declare one runtime. If business logic needs both browser and file system:
 
-1. **Priority split**: Precipitate browser operations as a `playwright-cli` command, and data processing as a `node` command, chained by the caller.
-2. **Secondary compromise**: If splitting cost is too high, use `page.evaluate(() => fetch(...))` to initiate requests in the `playwright-cli` command (constrained by browser CORS and Cookie policies), or move file operations outside the command for the caller to handle.
+1. **Priority split**: Precipitate browser operations as a `browser` command, and data processing as a `node` command, chained by the caller.
+2. **Secondary compromise**: If splitting cost is too high, use `page.evaluate(() => fetch(...))` to initiate requests in the `browser` command (constrained by browser CORS and Cookie policies), or move file operations outside the command for the caller to handle.
 
 ### Runtime Differences Quick Reference
 
-| Dimension | `node` | `playwright-cli` |
+| Dimension | `node` | `browser` |
 |------|--------|------------------|
-| Entry file requirement | Standard ESM module, exports default async function via `export default` | Function body fragment; entire file content is wrapped in `()` and executed in VM |
-| Entry signature | `export default async (params) => {...}` | `async function (page) { /* PARAMS_INJECT */ ... }` |
-| Parameter method | Runner directly passes as function argument | Runner replaces `/* PARAMS_INJECT */` with `const params = {...}` |
+| Entry file requirement | Standard ESM module, exports default async function via `export default` | Standard ESM module, exports default async function via `export default` |
+| Entry signature | `export default async (params) => {...}` | `export default async (page, params) => {...}` |
+| Parameter method | Runner directly passes as function argument | Runner directly passes as function argument |
 | Runtime environment | Full Node.js (`fs`, `fetch`, `console` available) | Isolated context (no Node.js API, `console.log` invisible) |
 | Browser API | Unavailable | Available through `page` parameter |
-| Return value passing | Runner consumes function return value | Runner parses JSON after `### Result\n` from stdout |
+| Return value passing | Runner consumes function return value | Runner consumes function return value |
 | Debug method | `console.log` outputs to stderr/stdout | `console.log` invisible, debug data brought out through `return` |
 | Page isolation | Not applicable | Must create isolated page and close in `finally` |
-| Error code passing | `error.code = "NOT_FOUND"` | Message text contains `[NOT_FOUND] ...` |
+| Error code passing | `error.code = "NOT_FOUND"` | `error.code = "NOT_FOUND"` |
 
 The following is only for quick comparison. Implementation details must follow your selected runtime contract document.
 
-> Precipitated commands must be `node` or `playwright-cli` runtime. If during exploration other languages (such as Python, Shell) prove superior, evaluate rewriting as a Node.js equivalent implementation; if rewriting cost is too high or infeasible, this path does not enter the command library, and is treated as a one-time exploration result.
+> Precipitated commands must be `node` or `browser` runtime. If during exploration other languages (such as Python, Shell) prove superior, evaluate rewriting as a Node.js equivalent implementation; if rewriting cost is too high or infeasible, this path does not enter the command library, and is treated as a one-time exploration result.
 
-**After selecting the runtime, you must read the corresponding runtime contract document.** For `node` runtime see [`./node-contract.md`](./node-contract.md); for `playwright-cli` runtime see [`./playwright-cli-contract.md`](./playwright-cli-contract.md). Subsequent sections of this document (command asset specifications, error codes) are general constraints for both runtimes and still need to be read.
+**After selecting the runtime, you must read the corresponding runtime contract document.** For `node` runtime see [`./node-contract.md`](./node-contract.md); for `browser` runtime see [`./browser-contract.md`](./browser-contract.md). Subsequent sections of this document (command asset specifications, error codes) are general constraints for both runtimes and still need to be read.
 
 ---
 
@@ -102,10 +102,10 @@ A complete command package consists of the following files. When precipitating t
 | `domain` | `string` | System injected | Command domain, forcibly overridden by CLI parameter at create |
 | `action` | `string` | System injected | Command action name, forcibly overridden by CLI parameter at create |
 | `description` | `string` | Yes | Command purpose, **cannot be empty string or whitespace only** |
-| `runtime` | `string` | Yes | `node` or `playwright-cli`. `shell`, `python` are CLI reserved types, but when precipitating to command library must be rewritten as `node` or `playwright-cli` equivalent implementation |
+| `runtime` | `string` | Yes | `node` or `browser`. `shell`, `python` are CLI reserved types, but when precipitating to command library must be rewritten as `node` or `browser` equivalent implementation |
 | `parameters` | `array` | No | Parameter list, elements are `{ name, required?, default?, description? }` |
 | `prerequisites` | `string[]` | No | Command-specific prerequisite descriptions (e.g., `"Requires user login"`) |
-| `requiresBrowser` | `boolean` | **Yes** | Whether the command depends on browser environment. `playwright-cli` must be `true`, `node` must be `false`. `command draft` auto-fills according to runtime |
+| `requiresBrowser` | `boolean` | **Yes** | Whether the command depends on browser environment. `browser` must be `true`, `node` must be `false`. `command draft` auto-fills according to runtime |
 | `authRequired` | `string` | No | `"required"` / `"not-required"` / `"unknown"`. Whether the command requires user login, default `"unknown"` |
 | `entryFile` | `string` | No | Entry file name, default `command.js` |
 
@@ -115,7 +115,7 @@ A complete command package consists of the following files. When precipitating t
 
 See corresponding runtime contract document for details:
 - `node` → [`./node-contract.md`](./node-contract.md)
-- `playwright-cli` → [`./playwright-cli-contract.md`](./playwright-cli-contract.md)
+- `browser` → [`./browser-contract.md`](./browser-contract.md)
 
 ### 3.3 README.md
 
@@ -188,7 +188,7 @@ All runtimes:
 - [ ] Error messages contain expected business error codes (e.g., `[NOT_FOUND] ...`)
 - [ ] Return value is serializable pure data object
 
-`playwright-cli` specific: see [`./playwright-cli-contract.md`](./playwright-cli-contract.md)
+`browser` specific: see [`./browser-contract.md`](./browser-contract.md)
 - [ ] Entry file exports async function via `export default`
 - [ ] Signature is `async (page, params) => unknown`
 

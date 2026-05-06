@@ -124,4 +124,4 @@ npm install -g @playwright/cli websculpt
 
 用户确认沉淀提案卡后，按 [references/compile/contract.md](references/compile/contract.md) 中的完整流程执行。
 
-> **前置要求**：执行前必须完整阅读 contract.md 及对应运行时契约文档（`node-contract.md` 或 `playwright-cli-contract.md`）。manifest 规范、README/context 文档章节要求、L1-L3 校验规则、运行时签名与限制等所有技术细节均以契约文档为准。
+> **前置要求**：执行前必须完整阅读 contract.md 及对应运行时契约文档（`node-contract.md` 或 `browser-contract.md`）。manifest 规范、README/context 文档章节要求、L1-L3 校验规则、运行时签名与限制等所有技术细节均以契约文档为准。

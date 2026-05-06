@@ -13,13 +13,15 @@ CLI 与 daemon 的分工：
 - **CLI**：命令的发现、解析、调度；按需拉起 daemon；通过 IPC 发送执行请求。
 - **daemon**：维护浏览器 CDP 连接；为每个命令创建隔离页面并执行；管理内存、会话和日志。
 
+> **与 `@playwright/cli` 的关系**：`@playwright/cli` 是 Agent 在**探索阶段**使用的独立 CLI 工具（提供 `attach`、`eval`、`snapshot` 等命令）。WebSculpt daemon 在**执行阶段**直接通过 `playwright-core` 的 `connectOverCDP` 连接浏览器，不依赖 `@playwright/cli` 包的任何进程或会话管理。
+
 ---
 
 ## 2. 进程模型
 
 ### 2.1 自动拉起
 
-首次执行 `playwright-cli` 命令时，CLI 通过 `ensureDaemonClient()` 自动检测并拉起 daemon：
+首次执行 `runtime: "browser"` 的扩展命令时，CLI 通过 `ensureDaemonClient()` 自动检测并拉起 daemon：
 
 1. 读取 daemon 状态文件（`daemon.json`）检查已有 daemon 状态
 2. 若 PID 存活且 socket 可达，复用现有实例
@@ -127,7 +129,7 @@ daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium
 
 - **惰性连接**：首次执行命令时才建立 CDP 连接。
 - **并发去重**：多个同时到达的请求共享同一次连接尝试，避免弹出多个浏览器窗口。
-- **自动重连**：`withBrowser` 包装器检测到连接断开（`TargetClosedError`、`ECONNRESET`、`ECONNREFUSED`、`EPIPE` 等）时，会关闭旧连接并重新连接一次。若浏览器未启动，则抛出 `PLAYWRIGHT_CLI_ATTACH_REQUIRED`。
+- **自动重连**：`withBrowser` 包装器检测到连接断开（`TargetClosedError`、`ECONNRESET`、`ECONNREFUSED`、`EPIPE` 等）时，会关闭旧连接并重新连接一次。若浏览器未启动，则抛出 `BROWSER_ATTACH_REQUIRED`。
 
 ### 4.2 页面隔离
 
@@ -199,7 +201,7 @@ daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium
 | `DAEMON_PAGE_LIMIT` | 总页面数达到上限 |
 | `DAEMON_RESTARTING` | daemon 处于 restartPending  drain 状态 |
 | `COMMAND_TIMEOUT` | 命令执行超时（20 分钟） |
-| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | 需要附加到现有 CDP 会话 |
+| `BROWSER_ATTACH_REQUIRED` | 需要附加到现有 CDP 会话 |
 
 ### 客户端与通信层
 

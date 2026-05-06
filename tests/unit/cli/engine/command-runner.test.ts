@@ -16,7 +16,7 @@ const mockManifest = (runtime: string) => ({
 	parameters: [],
 });
 
-describe("runCommand playwright-cli timeout classification", () => {
+describe("runCommand browser timeout classification", () => {
 	it("classifies SOCKET_TIMEOUT as TIMEOUT", async () => {
 		const timeoutError = new Error("Socket request timed out");
 		(timeoutError as Error & { code: string }).code = "SOCKET_TIMEOUT";
@@ -25,7 +25,7 @@ describe("runCommand playwright-cli timeout classification", () => {
 			run: vi.fn().mockRejectedValue(timeoutError),
 		});
 
-		await expect(runCommand(mockManifest("playwright-cli") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
+		await expect(runCommand(mockManifest("browser") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
 			(err: Error & { code?: string }) => err.code === "TIMEOUT",
 		);
 	});
@@ -38,7 +38,7 @@ describe("runCommand playwright-cli timeout classification", () => {
 			run: vi.fn().mockRejectedValue(businessError),
 		});
 
-		await expect(runCommand(mockManifest("playwright-cli") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
+		await expect(runCommand(mockManifest("browser") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
 			(err: Error & { code?: string }) => err.code === "AUTH_REQUIRED",
 		);
 	});
@@ -50,7 +50,7 @@ describe("runCommand playwright-cli timeout classification", () => {
 			run: vi.fn().mockRejectedValue(genericError),
 		});
 
-		await expect(runCommand(mockManifest("playwright-cli") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
+		await expect(runCommand(mockManifest("browser") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
 			(err: Error & { code?: string }) => err.code === "COMMAND_EXECUTION_ERROR",
 		);
 	});
@@ -62,7 +62,7 @@ describe("runCommand playwright-cli timeout classification", () => {
 			run: vi.fn().mockRejectedValue(inferredError),
 		});
 
-		await expect(runCommand(mockManifest("playwright-cli") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
+		await expect(runCommand(mockManifest("browser") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
 			(err: Error & { code?: string }) =>
 				err.code === "COMMAND_EXECUTION_ERROR" && err.message === "NOT_FOUND in module foo",
 		);
@@ -76,7 +76,7 @@ describe("runCommand playwright-cli timeout classification", () => {
 			run: vi.fn().mockRejectedValue(businessError),
 		});
 
-		await expect(runCommand(mockManifest("playwright-cli") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
+		await expect(runCommand(mockManifest("browser") as never, "/tmp/cmd.js", {})).rejects.toSatisfy(
 			(err: Error & { code?: string }) => err.code === "AUTH_REQUIRED" && err.message === "Please log in to Zhihu",
 		);
 	});

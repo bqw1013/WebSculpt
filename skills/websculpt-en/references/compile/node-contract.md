@@ -9,7 +9,7 @@
 
 - Entry file: `command.js`
 - Standard ESM module, supports one of the following three export forms:
-  - `export default async function (params) {...}` (recommended, consistent with `playwright-cli` runtime)
+  - `export default async function (params) {...}` (recommended, consistent with `browser` runtime)
   - `export const command = async function (params) {...}`
   - `export async function command (params) {...}`
 - Signature: `async (params: Record<string, string>) => unknown`

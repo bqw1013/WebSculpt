@@ -66,7 +66,7 @@ websculpt command show <domain> <action> --include-readme
 
 **再确认约束**
 
-当前浏览器自动化仅支持 `playwright-cli`。在使用前，你必须先阅读 `../access/playwright-cli/guide.md`，确认连接方式、可用命令与行为约束后再执行。
+当前浏览器自动化仅支持 `browser` 运行时。在使用前，你必须先阅读 `../access/playwright-cli/guide.md`，确认连接方式、可用命令与行为约束后再执行。
 
 其他工具（WebSearch、WebFetch、curl 等）按你自身能力直接使用，无需查阅 access 层。
 

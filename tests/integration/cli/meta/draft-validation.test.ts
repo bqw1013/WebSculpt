@@ -41,9 +41,9 @@ describe("draft output passes validateCommandSource L1-L3", () => {
 		await cleanup(result.draftPath);
 	});
 
-	it("playwright-cli runtime draft passes validation without errors", async () => {
+	it("browser runtime draft passes validation without errors", async () => {
 		const result = await handleCommandDraft("test", "pwlcmd", {
-			runtime: "playwright-cli",
+			runtime: "browser",
 			to: ".tmp-drafts/test-pwlcmd",
 		});
 		expect(result.success).toBe(true);

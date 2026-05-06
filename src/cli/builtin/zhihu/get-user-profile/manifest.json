@@ -1,5 +1,5 @@
 {
-  "runtime": "playwright-cli",
+  "runtime": "browser",
   "description": "Fetch detailed profile information of a Zhihu user, including name, bio, education, follower count, voteup count, and content statistics.",
   "parameters": [
     {

@@ -124,7 +124,9 @@ CLI 是命令的发现、管理与生命周期入口，面向人类用户和 AI 
 WebSculpt 当前支持两种执行路径：
 
 - **`node`**：CLI 进程直接动态导入命令模块，在同进程内完成执行。
-- **`playwright-cli`**：由后台 daemon 进程执行，CLI 通过 IPC 转发任务。daemon 随首次调用自动拉起，也可通过 `daemon` 元命令手动管理。
+- **`browser`**：由 WebSculpt 自建的后台 daemon 进程执行，CLI 通过 IPC 转发任务。daemon 随首次调用自动拉起，也可通过 `daemon` 元命令手动管理。
+
+> **注意**：`browser` 在这里是**运行时名称**，表示命令需要浏览器环境；它与 `@playwright/cli` npm 包（Agent 探索阶段使用的 CLI 工具）在架构上完全独立。daemon 内部直接使用 `playwright-core` 连接浏览器，不依赖 `@playwright/cli` 包的进程或会话管理。
 
 daemon 集中管理浏览器资源，负责内存监控、执行次数阈值触发自动重启、metrics 与日志持久化。
 

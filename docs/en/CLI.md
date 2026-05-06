@@ -67,7 +67,7 @@ When `websculpt <domain> <action>` is entered, the system finds the correspondin
 | Field | Type | Description |
 |------|------|------|
 | `description` | `string` | Command purpose, required and cannot be empty string |
-| `runtime` | `string` | `node` (default), `playwright-cli`, `shell`, `python` |
+| `runtime` | `string` | `node` (default), `browser`, `shell`, `python` |
 | `parameters` | `array` | Parameter list, elements are `{ name, required?, default?, description? }` |
 | `prerequisites` | `string[]` | Optional, command-specific prerequisite descriptions |
 
@@ -107,7 +107,7 @@ websculpt config init
 
 ### 4.2 `daemon`
 
-Manage the background browser daemon process. `playwright-cli` runtime extension commands are actually executed by this daemon.
+Manage the background browser daemon process. `browser` runtime extension commands are actually executed by this daemon.
 
 #### `daemon status`
 
@@ -218,7 +218,7 @@ websculpt command draft <domain> <action> [options]
 
 | Option | Description |
 |------|------|
-| `--runtime <rt>` | `node` (default), `playwright-cli`, `shell`, `python` |
+| `--runtime <rt>` | `node` (default), `browser`, `shell`, `python` |
 | `--to <path>` | Output directory (default `.websculpt-drafts/<domain>-<action>/`) |
 | `--param <spec>` | Pre-declare parameters (repeatable), e.g., `name:required`, `limit:default=10` |
 | `--force` | Override existing draft directory |
@@ -408,7 +408,7 @@ Complete flow from generating skeleton to uninstalling a custom command:
 websculpt config init
 
 # 2. Generate skeleton
-websculpt command draft mysite fetch --runtime playwright-cli --param url:required
+websculpt command draft mysite fetch --runtime browser --param url:required
 
 # 3. Edit business logic under .websculpt-drafts/mysite-fetch/
 

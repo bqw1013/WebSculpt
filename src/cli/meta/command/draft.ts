@@ -153,7 +153,7 @@ export async function handleCommandDraft(
 		if (!isExecutable(runtime)) {
 			warnings.push({
 				code: "RUNTIME_NOT_EXECUTABLE",
-				message: `The "${runtime}" runtime is not yet executable by the CLI. Only "node" and "playwright-cli" commands can be run at this time.`,
+				message: `The "${runtime}" runtime is not yet executable by the CLI. Only "node" and "browser" commands can be run at this time.`,
 				level: "warning",
 			});
 		}
@@ -180,7 +180,7 @@ export function registerDraft(group: Command, format: () => "human" | "json"): v
 	group
 		.command("draft <domain> <action>")
 		.description("Generate a command skeleton directory")
-		.option("--runtime <runtime>", "Runtime: node, playwright-cli, shell, python (default: node)")
+		.option("--runtime <runtime>", "Runtime: node, browser, shell, python (default: node)")
 		.option("--to <path>", "Custom output directory")
 		.option("--param <spec>", "Declare a parameter (repeatable)", collectOption, [])
 		.option("--force", "Overwrite existing draft directory")

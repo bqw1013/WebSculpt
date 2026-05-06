@@ -18,7 +18,7 @@ This command requires a live browser automation session via `playwright-cli`. Be
    ```
 4. Then you can call this command
 
-> If the browser session is not attached, you will see the `PLAYWRIGHT_CLI_ATTACH_REQUIRED` error.
+> If the browser session is not attached, you will see the `BROWSER_ATTACH_REQUIRED` error.
 
 ## Parameters
 
@@ -56,4 +56,4 @@ websculpt zhihu get-post --url https://zhuanlan.zhihu.com/p/123456789
 |------------|-------------|
 | `MISSING_PARAM` | The `url` parameter is required. |
 | `EMPTY_RESULT` | Could not extract article content. The page structure may have changed or the article is not accessible. |
-| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | Browser CDP session is not attached. |
+| `BROWSER_ATTACH_REQUIRED` | Browser CDP session is not attached. |

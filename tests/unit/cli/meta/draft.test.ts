@@ -84,8 +84,8 @@ describe("handleCommandDraft", () => {
 		expect(manifest.authRequired).toBe("unknown");
 	});
 
-	it("generates manifest with requiresBrowser true for playwright-cli runtime", async () => {
-		const result = await handleCommandDraft("test-domain", "test-action", { runtime: "playwright-cli", force: true });
+	it("generates manifest with requiresBrowser true for browser runtime", async () => {
+		const result = await handleCommandDraft("test-domain", "test-action", { runtime: "browser", force: true });
 		expect(result.success).toBe(true);
 		if (!result.success) return;
 

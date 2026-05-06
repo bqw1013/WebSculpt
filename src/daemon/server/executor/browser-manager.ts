@@ -37,21 +37,9 @@ export async function getBrowser(): Promise<Browser> {
 						"   - Go to: chrome://inspect/#remote-debugging\n" +
 						'   - Check "Allow this browser instance to be remotely debugged"\n' +
 						"   - Leave the browser open\n\n" +
-						"3. Attach playwright-cli:\n" +
-						"   playwright-cli attach --cdp=chrome --session=default\n" +
-						"   (For Edge, use: playwright-cli attach --cdp=msedge --session=default)\n\n" +
-						"4. Verify the session is active:\n" +
-						"   playwright-cli list\n" +
-						"   Expected output includes: default: status: open\n\n" +
-						"5. If other sessions are listed but 'default' is not:\n" +
-						"   playwright-cli close-all\n" +
-						"   playwright-cli attach --cdp=chrome --session=default\n\n" +
-						"6. On Windows, if attach still fails (background daemon processes may linger):\n" +
-						"   playwright-cli kill-all\n" +
-						"   playwright-cli close-all\n" +
-						"   playwright-cli attach --cdp=chrome --session=default",
+						"3. Try the command again.",
 				);
-				(error as Error & { code: string }).code = "PLAYWRIGHT_CLI_ATTACH_REQUIRED";
+				(error as Error & { code: string }).code = "BROWSER_ATTACH_REQUIRED";
 				throw error;
 			}
 		})();
@@ -120,7 +108,7 @@ export async function withBrowser<T>(fn: (browser: Browser) => Promise<T>): Prom
 		const message = (err as Error).message ?? "";
 
 		// Do not retry on CDP attach failures; the browser simply isn't available.
-		if (code === "PLAYWRIGHT_CLI_ATTACH_REQUIRED") {
+		if (code === "BROWSER_ATTACH_REQUIRED") {
 			throw err;
 		}
 

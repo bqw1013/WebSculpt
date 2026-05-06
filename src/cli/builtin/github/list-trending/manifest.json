@@ -1,5 +1,5 @@
 {
-  "runtime": "playwright-cli",
+  "runtime": "browser",
   "description": "Fetch trending repositories from GitHub Trending page",
   "parameters": [
     {

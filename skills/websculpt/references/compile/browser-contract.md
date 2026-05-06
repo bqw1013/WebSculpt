@@ -1,6 +1,6 @@
-# playwright-cli 运行时契约
+# browser 运行时契约
 
-> 本文档定义了 `playwright-cli` 运行时扩展命令的编写规范。
+> 本文档定义了 `browser` 运行时扩展命令的编写规范。
 > 适用于所有运行时的通用约束，请参见 [`./contract.md`](./contract.md)。
 
 ---
@@ -69,14 +69,14 @@ return { debug: { url: page.url(), title: await page.title() }, items: [] };
 
 ### 运行前依赖
 
-- `playwright-cli` 命令需要浏览器环境（CDP 连接）。如果用户未开启远程调试，runner 会返回 `PLAYWRIGHT_CLI_ATTACH_REQUIRED` 结构化错误。
+- `browser` 命令需要浏览器环境（CDP 连接）。如果用户未开启远程调试，runner 会返回 `BROWSER_ATTACH_REQUIRED` 结构化错误。
 - 用户完成设置后，再次调用命令即可继续测试，无需重新创建命令。
 
 ---
 
 ## 6. 最小可工作模板
 
-沉淀 `playwright-cli` 命令时，可直接复用以下结构：
+沉淀 `browser` 命令时，可直接复用以下结构：
 
 ```js
 // command.js
@@ -110,7 +110,7 @@ export default async (page, params) => {
 ```json
 // manifest.json
 {
-  "runtime": "playwright-cli",
+  "runtime": "browser",
   "description": "Fetch items from example.com",
   "parameters": [
     {
@@ -198,9 +198,9 @@ await page.waitForSelector("article.Box-row", { timeout: 15000 });
 
 ### Tab Isolation
 
-`playwright-cli` daemon 在所有并发执行之间共享同一个注入的 `page` 对象。直接在共享 `page` 上操作会导致导航竞争、DOM 污染和跨命令数据串扰。
+`browser` runtime daemon 在所有并发执行之间共享同一个注入的 `page` 对象。直接在共享 `page` 上操作会导致导航竞争、DOM 污染和跨命令数据串扰。
 
-**所有 `playwright-cli` 命令必须**在函数开头创建隔离页面，并在 `finally` 中关闭：
+**所有 `browser` 命令必须**在函数开头创建隔离页面，并在 `finally` 中关闭：
 
 ```js
 export default async (page, params) => {
@@ -238,7 +238,7 @@ export default async (page, params) => {
 |--------|------|
 | `TIMEOUT` | 命令执行超时（60 秒 socket 超时） |
 | `COMMAND_TIMEOUT` | 命令执行超过 20 分钟安全限制 |
-| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | 浏览器 CDP 会话未 attach。确认远程调试已开启；若确认已开启但仍报错，可能是后台进程残留，尝试 `playwright-cli kill-all` 和 `playwright-cli close-all` 后重新 attach |
+| `BROWSER_ATTACH_REQUIRED` | 浏览器 CDP 会话未 attach。确认远程调试已开启；若确认已开启但仍报错，可能是后台进程残留，尝试 `playwright-cli kill-all` 和 `playwright-cli close-all` 后重新 attach |
 | `DAEMON_START_FAILED` | daemon 启动失败 |
 | `DAEMON_UNREACHABLE` | daemon 已启动但无法连接 |
 | `DAEMON_BUSY` | daemon 并发会话数达到上限 |

@@ -18,7 +18,7 @@ This command requires a live browser automation session via `playwright-cli`. Be
    ```
 4. Then you can call this command
 
-> If the browser session is not attached, you will see the `PLAYWRIGHT_CLI_ATTACH_REQUIRED` error.
+> If the browser session is not attached, you will see the `BROWSER_ATTACH_REQUIRED` error.
 
 ## Parameters
 
@@ -66,4 +66,4 @@ websculpt zhihu list-posts --user example-zhihu-user --limit 5
 | `AUTH_REQUIRED` | Zhihu requires login to view this page. |
 | `DRIFT_DETECTED` | Article list selector not found. Page structure may have changed. |
 | `EMPTY_RESULT` | No articles found for the user. |
-| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | Browser CDP session is not attached. |
+| `BROWSER_ATTACH_REQUIRED` | Browser CDP session is not attached. |

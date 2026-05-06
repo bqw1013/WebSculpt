@@ -8,7 +8,7 @@ export const RUNTIME_SYSTEM_PREREQUISITES: Record<CommandRuntime, string[] | und
 	node: undefined,
 	shell: undefined,
 	python: undefined,
-	"playwright-cli": ["Requires `playwright-cli attach --cdp=chrome|msedge --session=default`"],
+	browser: ["Requires `playwright-cli attach --cdp=chrome|msedge --session=default`"],
 };
 
 /**
@@ -18,13 +18,13 @@ export const RUNTIME_ENTRY_FILES: Record<CommandRuntime, string> = {
 	node: "command.js",
 	shell: "command.sh",
 	python: "command.py",
-	"playwright-cli": "command.js",
+	browser: "command.js",
 };
 
 /**
  * Ordered list of all supported command runtimes.
  */
-export const VALID_RUNTIMES: CommandRuntime[] = ["node", "playwright-cli", "shell", "python"];
+export const VALID_RUNTIMES: CommandRuntime[] = ["node", "browser", "shell", "python"];
 
 /**
  * Converts any runtime string to a valid CommandRuntime.
@@ -41,14 +41,14 @@ export function normalizeRuntime(runtime: string | undefined): CommandRuntime {
  * Determines whether a given runtime requires a browser environment.
  */
 export function runtimeRequiresBrowser(runtime: string): boolean {
-	return runtime === "playwright-cli";
+	return runtime === "browser";
 }
 
 /**
  * Reports whether a runtime is currently executable by the CLI.
  */
 export function isExecutable(runtime: string): boolean {
-	return runtime === "node" || runtime === "playwright-cli";
+	return runtime === "node" || runtime === "browser";
 }
 
 /**
@@ -56,7 +56,7 @@ export function isExecutable(runtime: string): boolean {
  * require syntax checking and export validation.
  */
 export function isJsBased(runtime: string): boolean {
-	return runtime === "node" || runtime === "playwright-cli";
+	return runtime === "node" || runtime === "browser";
 }
 
 /**
@@ -77,7 +77,7 @@ export function getExportContract(runtime: string): ExportContract {
 	switch (runtime) {
 		case "node":
 			return { requireDefault: false, allowNamedCommand: true };
-		case "playwright-cli":
+		case "browser":
 			return { requireDefault: true, allowNamedCommand: false };
 		default:
 			return { requireDefault: false, allowNamedCommand: false };

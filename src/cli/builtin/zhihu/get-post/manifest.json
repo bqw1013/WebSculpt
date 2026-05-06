@@ -1,5 +1,5 @@
 {
-  "runtime": "playwright-cli",
+  "runtime": "browser",
   "description": "Fetch the full content and metadata of a single Zhihu column article (zhuanlan.zhihu.com)",
   "parameters": [
     {

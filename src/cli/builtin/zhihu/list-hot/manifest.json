@@ -1,5 +1,5 @@
 {
-  "runtime": "playwright-cli",
+  "runtime": "browser",
   "description": "Fetch current top N entries from Zhihu Hot List, including rank, title, heat value, and link",
   "parameters": [
     {

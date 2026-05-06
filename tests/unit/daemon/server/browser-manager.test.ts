@@ -71,9 +71,9 @@ describe("withBrowser stale connection detection", () => {
 		expect(fnCallCount).toBe(2);
 	});
 
-	it("does not retry on PLAYWRIGHT_CLI_ATTACH_REQUIRED", async () => {
+	it("does not retry on BROWSER_ATTACH_REQUIRED", async () => {
 		const error = new Error("No active browser CDP session found.") as Error & { code: string };
-		error.code = "PLAYWRIGHT_CLI_ATTACH_REQUIRED";
+		error.code = "BROWSER_ATTACH_REQUIRED";
 
 		await expect(
 			withBrowser(async () => {

@@ -21,7 +21,7 @@ export default async function(params) {
 }
 `;
 
-const PLAYWRIGHT_COMMAND_TEMPLATE = `// Helper functions can be defined above export default
+const BROWSER_COMMAND_TEMPLATE = `// Helper functions can be defined above export default
 export default async (page, params) => {
 {{PARAM_LINES}}
 	// TODO: implement command logic using page
@@ -124,8 +124,8 @@ export function generateNodeTemplate(params: ParsedParam[]): string {
 	return NODE_COMMAND_TEMPLATE.replace("{{PARAM_LINES}}", buildParamLines(params));
 }
 
-export function generatePlaywrightCliTemplate(params: ParsedParam[]): string {
-	return PLAYWRIGHT_COMMAND_TEMPLATE.replace("{{PARAM_LINES}}", buildParamLines(params));
+export function generateBrowserTemplate(params: ParsedParam[]): string {
+	return BROWSER_COMMAND_TEMPLATE.replace("{{PARAM_LINES}}", buildParamLines(params));
 }
 
 export function generateShellTemplate(_params: ParsedParam[]): string {
@@ -138,8 +138,8 @@ export function generatePythonTemplate(_params: ParsedParam[]): string {
 
 export function generateCommandTemplate(runtime: string, params: ParsedParam[]): string {
 	switch (runtime) {
-		case "playwright-cli":
-			return generatePlaywrightCliTemplate(params);
+		case "browser":
+			return generateBrowserTemplate(params);
 		case "shell":
 			return generateShellTemplate(params);
 		case "python":
@@ -181,7 +181,7 @@ export function generateNextSteps(
 	];
 	if (!isExecutable(runtime)) {
 		steps.push({
-			action: `Note: the "${runtime}" runtime is not yet executable by the CLI; only "node" and "playwright-cli" commands can be run`,
+			action: `Note: the "${runtime}" runtime is not yet executable by the CLI; only "node" and "browser" commands can be run`,
 		});
 	}
 	return steps;

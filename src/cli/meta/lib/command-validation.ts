@@ -139,7 +139,7 @@ function validateL1Structure(
 		addError(details, "INVALID_REQUIRES_BROWSER", "Manifest 'requiresBrowser' must be a boolean");
 	} else {
 		if (runtimeRequiresBrowser(runtime) && manifest.requiresBrowser !== true) {
-			addError(details, "RUNTIME_BROWSER_MISMATCH", "playwright-cli runtime requires requiresBrowser: true");
+			addError(details, "RUNTIME_BROWSER_MISMATCH", "browser runtime requires requiresBrowser: true");
 		}
 		if (!runtimeRequiresBrowser(runtime) && manifest.requiresBrowser !== false) {
 			addError(details, "RUNTIME_BROWSER_MISMATCH", `${runtime} runtime requires requiresBrowser: false`);
@@ -268,7 +268,7 @@ function validateL3Contract(manifest: Record<string, unknown>, code: string, det
 		addError(
 			details,
 			"MISSING_EXPORT_DEFAULT",
-			`${runtime === "playwright-cli" ? "Playwright-cli" : runtime} runtime command must contain \`export default\`${runtime === "playwright-cli" ? " async function" : ""}`,
+			`${runtime === "browser" ? "Browser" : runtime} runtime command must contain \`export default\`${runtime === "browser" ? " async function" : ""}`,
 		);
 	}
 	if (!contract.requireDefault && !contract.allowNamedCommand) {

@@ -28,7 +28,11 @@ export async function loadRegistry(): Promise<void> {
 				const indexed = builtinInIndex.find(
 					(i) => i.manifest.domain === s.manifest.domain && i.manifest.action === s.manifest.action,
 				);
-				return !indexed || indexed.manifest.requiresBrowser !== s.manifest.requiresBrowser;
+				return (
+					!indexed ||
+					indexed.manifest.requiresBrowser !== s.manifest.requiresBrowser ||
+					indexed.runtime !== s.runtime
+				);
 			});
 		if (!builtinChanged) {
 			cachedCommands = index.commands.map(toResolvedCommand);

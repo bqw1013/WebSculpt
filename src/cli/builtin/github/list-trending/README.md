@@ -18,7 +18,7 @@ This command requires a live browser automation session via `playwright-cli`. Be
    ```
 4. Then you can call this command
 
-> If the browser session is not attached, you will see the `PLAYWRIGHT_CLI_ATTACH_REQUIRED` error.
+> If the browser session is not attached, you will see the `BROWSER_ATTACH_REQUIRED` error.
 
 ## Parameters
 
@@ -67,4 +67,4 @@ websculpt github list-trending --language typescript --since weekly --limit 8
 | `MISSING_PARAM` | Invalid `since` value provided. Must be `daily`, `weekly`, or `monthly`. |
 | `EMPTY_RESULT` | No repositories were found on the page. |
 | `DRIFT_DETECTED` | Page structure may have changed, unable to extract data. |
-| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | Browser CDP session is not attached. Please follow the Prerequisites section above. |
+| `BROWSER_ATTACH_REQUIRED` | Browser CDP session is not attached. Please follow the Prerequisites section above. |

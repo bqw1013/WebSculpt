@@ -9,7 +9,7 @@
 
 - 入口文件：`command.js`
 - 标准 ESM 模块，支持以下三种导出形式之一：
-  - `export default async function (params) {...}`（推荐，与 `playwright-cli` 运行时保持一致）
+  - `export default async function (params) {...}`（推荐，与 `browser` 运行时保持一致）
   - `export const command = async function (params) {...}`
   - `export async function command (params) {...}`
 - 签名：`async (params: Record<string, string>) => unknown`

@@ -1,5 +1,5 @@
 {
-  "runtime": "playwright-cli",
+  "runtime": "browser",
   "description": "Fetch the latest articles from a Zhihu user's posts page",
   "parameters": [
     {
