@@ -1,5 +1,5 @@
 {
-  "runtime": "playwright-cli",
+  "runtime": "browser",
   "description": "Fetch the latest activities (pins, answers, articles) from a Zhihu user's activities page",
   "parameters": [
     {
@@ -16,5 +16,7 @@
   ],
   "id": "zhihu-list-activities",
   "domain": "zhihu",
-  "action": "list-activities"
+  "action": "list-activities",
+  "requiresBrowser": true,
+  "authRequired": "unknown"
 }

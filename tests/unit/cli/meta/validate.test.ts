@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { handleCommandValidate } from "../../../../src/cli/meta/validate.js";
+import { handleCommandValidate } from "../../../../src/cli/meta/command/validate.js";
 
 async function createTempDir(): Promise<string> {
 	const dir = join(
@@ -31,6 +31,7 @@ describe("handleCommandValidate", () => {
 			action: "my-action",
 			description: "Test command",
 			runtime: "node",
+			requiresBrowser: false,
 		});
 		await writeCode(dir, "export default async function(params) { return {}; }");
 		await writeFile(join(dir, "README.md"), "# Test\n\n## Description\n\n## Parameters\n\n## Usage\n", "utf-8");
@@ -47,7 +48,7 @@ describe("handleCommandValidate", () => {
 
 	it("returns warnings for missing identity fields when no domain/action given", async () => {
 		const dir = await createTempDir();
-		await writeManifest(dir, { runtime: "node", description: "Test command" });
+		await writeManifest(dir, { runtime: "node", description: "Test command", requiresBrowser: false });
 		await writeCode(dir, "export default async function(params) { return {}; }");
 		await writeFile(join(dir, "README.md"), "# Test", "utf-8");
 		await writeFile(join(dir, "context.md"), "Context", "utf-8");
@@ -69,6 +70,7 @@ describe("handleCommandValidate", () => {
 			domain: "my-domain",
 			action: "my-action",
 			runtime: "invalid-runtime",
+			requiresBrowser: false,
 		});
 		await writeCode(dir, "export default async function(params) { return {}; }");
 
@@ -90,6 +92,7 @@ describe("handleCommandValidate", () => {
 			domain: "command",
 			action: "foo",
 			runtime: "node",
+			requiresBrowser: false,
 		});
 		await writeCode(dir, "export default async function(params) { return {}; }");
 
@@ -118,6 +121,7 @@ describe("handleCommandValidate", () => {
 			domain: "wrong-domain",
 			action: "wrong-action",
 			runtime: "node",
+			requiresBrowser: false,
 		});
 		await writeCode(dir, "export default async function(params) { return {}; }");
 

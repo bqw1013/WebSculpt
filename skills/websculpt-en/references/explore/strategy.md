@@ -66,7 +66,7 @@ Scenario reference:
 
 **Then confirm constraints**
 
-Current browser automation only supports `playwright-cli`. Before using, you must first read `../access/playwright-cli/guide.md`, confirm connection method, available commands, and behavioral constraints before executing.
+Current browser automation only supports the `browser` runtime. Before using, you must first read `../access/playwright-cli/guide.md`, confirm connection method, available commands, and behavioral constraints before executing.
 
 Other tools (WebSearch, WebFetch, curl, etc.) can be directly used according to your own capabilities, no need to consult the access layer.
 

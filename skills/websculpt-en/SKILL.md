@@ -90,6 +90,7 @@ The proposal card must contain the following fields:
 | `valueAssessment` | Yes | Why it's worth precipitating (generality, reuse frequency, time saved) |
 | `stabilityAssessment` | Yes | Structural stability assessment of target site/interface |
 | `antiCrawlAssessment` | Yes | Anti-crawling risk and current circumvention strategy |
+| `authRequired` | Yes | Whether the command requires user login: `required`, `not-required`, `unknown` |
 | `expectedFailures` | Yes | Known conditions under which it may fail and expected behavior |
 
 Example:
@@ -105,8 +106,22 @@ Example:
 - Expected Failure: Returns empty list when user does not exist; returns 403 when API is rate-limited.
 ```
 
+### 4.5 Proposal Card Fields to Command Asset Mapping
+
+Fields from the precipitation proposal card should map to specific sections in the command assets:
+
+| Proposal Card Field | Target Document | Target Section |
+|-----------|---------|---------|
+| `description` | `manifest.json` | `description` |
+| `ioExamples` | `README.md` | `## Usage`, `## Return Value` |
+| `valueAssessment` | `context.md` | `## Value Assessment` |
+| `stabilityAssessment` | `context.md` | `## Environment Dependencies` (stability notes portion) |
+| `antiCrawlAssessment` | `context.md` | `## Environment Dependencies` (anti-crawl strategy portion) |
+| `authRequired` | `manifest.json` | `authRequired` |
+| `expectedFailures` | `README.md` / `context.md` | `## Common Error Codes` (caller perspective) / `## Failure Signals` (fixer perspective) |
+
 ### 5. Execute Precipitation
 
 After user confirms the precipitation proposal card, execute according to the complete flow in [references/compile/contract.md](references/compile/contract.md).
 
-> **Prerequisite**: Before execution, you must read contract.md and the corresponding runtime contract document (`node-contract.md` or `playwright-cli-contract.md`) in full. All technical details such as manifest specifications, README/context documentation section requirements, L1-L3 validation rules, runtime signatures and limitations are governed by the contract documents.
+> **Prerequisite**: Before execution, you must read contract.md and the corresponding runtime contract document (`node-contract.md` or `browser-contract.md`) in full. All technical details such as manifest specifications, README/context documentation section requirements, L1-L3 validation rules, runtime signatures and limitations are governed by the contract documents.

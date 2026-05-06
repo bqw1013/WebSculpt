@@ -4,6 +4,10 @@
 
 This command was captured on 2026-04-28 to address the issue that the GitHub Trending page is client-side rendered (CSR) and cannot be fetched via static scraping. It reuses the user's browser CDP session and extracts the repository list from the DOM using `page.evaluate()`.
 
+## Value Assessment
+
+High. GitHub Trending is a frequently requested data source across many domains. Changing `language` and `since` parameters enables reuse for diverse scenarios without re-implementation.
+
 ## Page Structure / Data Source Characteristics
 
 - **Target URLs**:

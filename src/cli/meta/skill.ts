@@ -2,7 +2,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { MetaCommandResult } from "../output.js";
+import type { Command } from "commander";
+import type { MetaCommandResult, SkillUninstallResult } from "../output.js";
+import { renderOutput } from "../output.js";
+import { getFormat } from "./shared.js";
 
 const AGENTS = ["claude", "codex", "agents"] as const;
 type Agent = (typeof AGENTS)[number];
@@ -183,4 +186,42 @@ export function handleSkillStatus(): MetaCommandResult {
 	}
 
 	return { success: true, lines };
+}
+
+/** Registers skill sub-commands on the given program. */
+export function registerSkillMeta(program: Command): void {
+	const format = (): "human" | "json" => getFormat(program);
+	const skill = program.command("skill").description("Install strategy docs to AI agent directories");
+
+	skill
+		.command("install")
+		.description("Install the WebSculpt skill to agent directories")
+		.option("-g, --global", "Install to global agent directories")
+		.option("-a, --agents <agents>", "Target specific agents (claude,codex,agents,all)")
+		.option("--from <path>", "Explicit skill source path")
+		.option("--lang <lang>", "Language: en (default) or zh")
+		.option("--force", "Replace existing installation")
+		.action(async (options: { global?: boolean; agents?: string; from?: string; force?: boolean; lang?: string }) => {
+			renderOutput(handleSkillInstall(options), format());
+		});
+
+	skill
+		.command("uninstall")
+		.description("Uninstall the WebSculpt skill from agent directories")
+		.option("-g, --global", "Uninstall from global agent directories")
+		.option("-a, --agents <agents>", "Target specific agents")
+		.action(async (options: { global?: boolean; agents?: string }) => {
+			const result = handleSkillUninstall(options);
+			renderOutput(result, format());
+			if (result.success && (result as SkillUninstallResult).results.every((r) => r.status === "not_found")) {
+				process.exitCode = 1;
+			}
+		});
+
+	skill
+		.command("status")
+		.description("Show skill installation status")
+		.action(async () => {
+			renderOutput(handleSkillStatus(), format());
+		});
 }

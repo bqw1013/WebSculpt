@@ -17,6 +17,8 @@ export interface CommandManifest {
 	id: string;
 	parameters?: CommandParameter[];
 	runtime?: "node";
+	requiresBrowser: boolean;
+	authRequired?: "required" | "not-required" | "unknown";
 }
 
 export interface CommandPackageBody {
@@ -70,6 +72,7 @@ export const notesSavePackage: CommandPackageBody = {
 		id: "notes-save",
 		parameters: [{ name: "title", description: "Note title" }],
 		runtime: "node",
+		requiresBrowser: false,
 	},
 };
 
@@ -82,6 +85,7 @@ export const notesDeletePackage: CommandPackageBody = {
 		id: "notes-delete",
 		parameters: [],
 		runtime: "node",
+		requiresBrowser: false,
 	},
 };
 
@@ -94,6 +98,7 @@ export const reservedSyncPackage: CommandPackageBody = {
 		id: "command-sync",
 		parameters: [],
 		runtime: "node",
+		requiresBrowser: false,
 	},
 };
 

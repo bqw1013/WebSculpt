@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking**: Renamed the browser automation runtime identifier from `playwright-cli` to `browser` across the entire framework. The `playwright-cli` shell binary and `@playwright/cli` npm package names remain unchanged.
+
+### Fixed
+
+- Registry index now correctly rebuilds when a builtin command's `runtime` field changes, preventing stale cached values from causing runtime mis-dispatch.
+
 ## [0.1.0] - 2026-05-01
 
 ### Added

@@ -1,6 +1,6 @@
-import { appendLog } from "../../infra/store.js";
-import { runCommand } from "./command-runner.js";
-import type { ResolvedCommand } from "./registry.js";
+import { appendLog } from "../../../infra/store.js";
+import type { ResolvedCommand } from "../contract.js";
+import { runCommand } from "./dispatcher.js";
 
 /** Successful command execution result. */
 export interface ExecutionSuccess {

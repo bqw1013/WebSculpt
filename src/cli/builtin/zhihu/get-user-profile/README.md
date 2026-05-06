@@ -18,7 +18,7 @@ This command requires a live browser automation session via `playwright-cli`. Be
    ```
 4. Then you can call this command
 
-> If the browser session is not attached, you will see the `PLAYWRIGHT_CLI_ATTACH_REQUIRED` error.
+> If the browser session is not attached, you will see the `BROWSER_ATTACH_REQUIRED` error.
 
 ## Parameters
 
@@ -78,4 +78,4 @@ websculpt zhihu get-user-profile --user https://www.zhihu.com/people/example-zhi
 | `MISSING_PARAM` | The `user` parameter is required. |
 | `NOT_FOUND` | User not found or the page returned 404. |
 | `DRIFT_DETECTED` | Could not extract profile data; page structure may have changed. |
-| `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | Browser CDP session is not attached. |
+| `BROWSER_ATTACH_REQUIRED` | Browser CDP session is not attached. |

@@ -163,6 +163,7 @@ describe("command registry", () => {
 					id: "test-defaulttest",
 					parameters: [{ name: "mode", description: "Mode", default: "auto" }],
 					runtime: "node",
+					requiresBrowser: false,
 				},
 			};
 			const { createPayload, createResult } = await registerUserCommand(

@@ -8,8 +8,11 @@
 ## 1. Module Format
 
 - Entry file: `command.js`
-- Standard ESM module, must export a default async function
-- Signature: `export default async (params: Record<string, string>) => unknown`
+- Standard ESM module, supports one of the following three export forms:
+  - `export default async function (params) {...}` (recommended, consistent with `browser` runtime)
+  - `export const command = async function (params) {...}`
+  - `export async function command (params) {...}`
+- Signature: `async (params: Record<string, string>) => unknown`
 
 ---
 

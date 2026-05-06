@@ -39,6 +39,7 @@ coverage/
 .cache/
 tmp/
 .tmp/
+.tmp-drafts/
 .websculpt-drafts/
 
 # Process / seed files
@@ -60,9 +61,7 @@ tmp/
 # OpenSpec working files
 openspec/
 
-# Skill build artifacts
-skills/websculpt/references/
-skills/websculpt/version.json
+
 
 docs/Design.md
 docs/Roadmap.md

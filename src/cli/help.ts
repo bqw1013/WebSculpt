@@ -1,11 +1,5 @@
 import { type Command, Help } from "commander";
-
-// Extend Commander's Command type to attach domain-source metadata for custom help formatting.
-declare module "commander" {
-	interface Command {
-		_domainSource?: string;
-	}
-}
+import { META_COMMAND_NAMES } from "./meta/index.js";
 
 /** Custom help formatter that categorizes commands into Meta, Built-in, and User domains. */
 export class WebSculptHelp extends Help {
@@ -30,9 +24,8 @@ export class WebSculptHelp extends Help {
 		}
 
 		const visibleCommands = helper.visibleCommands(cmd);
-		const metaNames = new Set(["command", "config", "skill"]);
-		const meta = visibleCommands.filter((c) => metaNames.has(c.name()));
-		const domains = visibleCommands.filter((c) => !metaNames.has(c.name()) && !c.name().startsWith("help"));
+		const meta = visibleCommands.filter((c) => META_COMMAND_NAMES.has(c.name()));
+		const domains = visibleCommands.filter((c) => !META_COMMAND_NAMES.has(c.name()) && !c.name().startsWith("help"));
 		const builtinDomains = domains.filter((c) => c._domainSource === "builtin");
 		const userDomains = domains.filter((c) => c._domainSource === "user");
 
@@ -78,32 +71,4 @@ export class WebSculptHelp extends Help {
 
 		return `${out.trimEnd()}\n`;
 	}
-}
-
-/** Registers the `help [domain] [action]` routing command on the given program. */
-export function registerHelpCommand(program: Command): void {
-	program
-		.command("help [domain] [action]")
-		.description("Display help for a command or domain")
-		.action((domain?: string, action?: string) => {
-			if (!domain) {
-				program.help();
-				return;
-			}
-			const target = program.commands.find((c) => c.name() === domain);
-			if (!target) {
-				console.error(`Unknown command or domain: ${domain}`);
-				process.exit(1);
-			}
-			if (!action) {
-				target.help();
-				return;
-			}
-			const sub = target.commands.find((c) => c.name() === action);
-			if (!sub) {
-				console.error(`Unknown action: ${action}`);
-				process.exit(1);
-			}
-			sub.help();
-		});
 }

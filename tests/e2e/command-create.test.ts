@@ -83,7 +83,7 @@ describe("command create", () => {
 		);
 	});
 
-	it("returns FILE_NOT_FOUND when manifest.json is missing", async () => {
+	it("returns INVALID_PACKAGE when manifest.json is missing", async () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
@@ -100,12 +100,12 @@ describe("command create", () => {
 		expect(payload.success).toBe(false);
 		expect(payload.error).toEqual(
 			expect.objectContaining({
-				code: "FILE_NOT_FOUND",
+				code: "INVALID_PACKAGE",
 			}),
 		);
 	});
 
-	it("returns PARSE_ERROR when manifest.json contains invalid JSON", async () => {
+	it("returns INVALID_PACKAGE when manifest.json contains invalid JSON", async () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
@@ -124,7 +124,7 @@ describe("command create", () => {
 		expect(payload.success).toBe(false);
 		expect(payload.error).toEqual(
 			expect.objectContaining({
-				code: "PARSE_ERROR",
+				code: "INVALID_PACKAGE",
 			}),
 		);
 	});
@@ -143,6 +143,7 @@ describe("command create", () => {
 				domain: "test",
 				id: "test-noentry",
 				runtime: "node",
+				requiresBrowser: false,
 			}),
 			"utf8",
 		);
@@ -175,6 +176,7 @@ describe("command create", () => {
 				id: "test-complete",
 				parameters: [],
 				runtime: "node",
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(homeDir, "complete-package", packageBody);
@@ -185,7 +187,7 @@ describe("command create", () => {
 		);
 		await writeFile(
 			join(commandDirPath, "context.md"),
-			"## Precipitation Background\n\n## Page Structure\n\n## Environment Dependencies\n\n## Failure Signals\n\n## Repair Clues\n",
+			"## Precipitation Background\n\n## Value Assessment\n\n## Page Structure\n\n## Environment Dependencies\n\n## Failure Signals\n\n## Repair Clues\n",
 			"utf8",
 		);
 
@@ -209,6 +211,7 @@ describe("command create", () => {
 			manifest: {
 				description: "Minimal command",
 				parameters: [],
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(
@@ -248,6 +251,7 @@ describe("command create", () => {
 				id: "config-sync",
 				parameters: [],
 				runtime: "node",
+				requiresBrowser: false,
 			},
 		};
 		const commandDirPath = await writeCommandDir(homeDir, "config-dir", configPackage);

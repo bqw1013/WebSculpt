@@ -4,6 +4,10 @@
 
 This command was captured to extract recent activities from Zhihu user pages, which aggregates pins, answers, and articles in a single timeline.
 
+## Value Assessment
+
+Medium. Activity timeline extraction is useful for monitoring user engagement and content output. Reusable for any public user by changing the `userId` parameter.
+
 ## Page Structure / Data Source Characteristics
 
 - **Target URL**: `https://www.zhihu.com/people/{userId}/activities`

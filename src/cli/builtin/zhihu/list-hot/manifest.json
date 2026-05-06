@@ -1,5 +1,5 @@
 {
-  "runtime": "playwright-cli",
+  "runtime": "browser",
   "description": "Fetch current top N entries from Zhihu Hot List, including rank, title, heat value, and link",
   "parameters": [
     {
@@ -11,5 +11,7 @@
   ],
   "id": "zhihu-list-hot",
   "domain": "zhihu",
-  "action": "list-hot"
+  "action": "list-hot",
+  "requiresBrowser": true,
+  "authRequired": "unknown"
 }

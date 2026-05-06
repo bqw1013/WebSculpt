@@ -90,6 +90,7 @@ npm install -g @playwright/cli websculpt
 | `valueAssessment` | 是 | 为什么值得沉淀（通用性、复用频率、节省时间） |
 | `stabilityAssessment` | 是 | 目标站点/接口的结构稳定性判断 |
 | `antiCrawlAssessment` | 是 | 反爬风险与当前规避策略 |
+| `authRequired` | 是 | 命令是否需要用户登录：`required`、`not-required`、`unknown` |
 | `expectedFailures` | 是 | 已知可能失效的条件和预期表现 |
 
 示例：
@@ -105,8 +106,22 @@ npm install -g @playwright/cli websculpt
 - 预期失效：用户不存在时返回空列表；API 限流时返回 403。
 ```
 
+### 4.5 提案卡字段与命令资产映射
+
+沉淀提案卡中的字段应映射到命令资产的具体章节：
+
+| 提案卡字段 | 目标文档 | 目标章节 |
+|-----------|---------|---------|
+| `description` | `manifest.json` | `description` |
+| `ioExamples` | `README.md` | `## Usage`、`## Return Value` |
+| `valueAssessment` | `context.md` | `## Value Assessment` |
+| `stabilityAssessment` | `context.md` | `## Environment Dependencies`（稳定性说明部分） |
+| `antiCrawlAssessment` | `context.md` | `## Environment Dependencies`（反爬策略部分） |
+| `authRequired` | `manifest.json` | `authRequired` |
+| `expectedFailures` | `README.md` / `context.md` | `## Common Error Codes`（调用者视角） / `## Failure Signals`（修复者视角） |
+
 ### 5. 执行沉淀
 
 用户确认沉淀提案卡后，按 [references/compile/contract.md](references/compile/contract.md) 中的完整流程执行。
 
-> **前置要求**：执行前必须完整阅读 contract.md 及对应运行时契约文档（`node-contract.md` 或 `playwright-cli-contract.md`）。manifest 规范、README/context 文档章节要求、L1-L3 校验规则、运行时签名与限制等所有技术细节均以契约文档为准。
+> **前置要求**：执行前必须完整阅读 contract.md 及对应运行时契约文档（`node-contract.md` 或 `browser-contract.md`）。manifest 规范、README/context 文档章节要求、L1-L3 校验规则、运行时签名与限制等所有技术细节均以契约文档为准。

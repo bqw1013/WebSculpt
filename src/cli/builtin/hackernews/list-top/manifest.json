@@ -17,5 +17,7 @@
   ],
   "id": "hackernews-list-top",
   "domain": "hackernews",
-  "action": "list-top"
+  "action": "list-top",
+  "requiresBrowser": false,
+  "authRequired": "unknown"
 }

@@ -1,5 +1,5 @@
 /** Supported execution runtimes for a command entry. */
-export type CommandRuntime = "node" | "shell" | "python" | "playwright-cli";
+export type CommandRuntime = "node" | "shell" | "python" | "browser";
 
 /** Defines a single parameter for an extension command. */
 export interface CommandParameter {
@@ -20,6 +20,10 @@ export interface CommandManifest {
 	runtime?: CommandRuntime;
 	/** Optional command-specific prerequisites (e.g., "Requires user login"). */
 	prerequisites?: string[];
+	/** Whether this command requires a browser environment. */
+	requiresBrowser: boolean;
+	/** Whether this command requires user authentication. */
+	authRequired?: "required" | "not-required" | "unknown";
 }
 
 /** A single validation detail emitted by the layered validation system. */

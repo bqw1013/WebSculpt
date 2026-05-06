@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { handleCommandShow } from "../../../../src/cli/meta/command.js";
+import { handleCommandShow } from "../../../../src/cli/meta/command/show.js";
 
 vi.mock("../../../../src/cli/engine/registry.js", () => ({
 	findCommand: vi.fn(),
@@ -40,6 +40,7 @@ describe("handleCommandShow", () => {
 				runtime: "node",
 				parameters: [{ name: "name", required: false, description: "Name to greet" }],
 				prerequisites: ["Requires user login"],
+				requiresBrowser: false,
 			},
 			commandPath: "/tmp/commands/example/hello/command.js",
 			source: "builtin",
@@ -60,18 +61,19 @@ describe("handleCommandShow", () => {
 		});
 	});
 
-	it("merges system prerequisites for playwright-cli runtime", async () => {
+	it("merges system prerequisites for browser runtime", async () => {
 		vi.mocked(findCommand).mockReturnValue({
 			manifest: {
 				id: "github-list-trending",
 				domain: "github",
 				action: "list-trending",
 				description: "Fetch trending",
-				runtime: "playwright-cli",
+				runtime: "browser",
+				requiresBrowser: true,
 			},
 			commandPath: "/tmp/commands/github/list-trending/command.js",
 			source: "builtin",
-			runtime: "playwright-cli",
+			runtime: "browser",
 		});
 		vi.mocked(access).mockResolvedValue(undefined);
 
@@ -91,6 +93,7 @@ describe("handleCommandShow", () => {
 				action: "hello",
 				description: "Say hello",
 				runtime: "node",
+				requiresBrowser: false,
 			},
 			commandPath: "/tmp/commands/example/hello/command.js",
 			source: "builtin",
@@ -118,6 +121,7 @@ describe("handleCommandShow", () => {
 				action: "hello",
 				description: "Say hello",
 				runtime: "node",
+				requiresBrowser: false,
 			},
 			commandPath: "/tmp/commands/example/hello/command.js",
 			source: "builtin",

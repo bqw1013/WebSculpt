@@ -1,14 +1,30 @@
-import type { ValidationDetail } from "../../types/index.js";
-
-const VALID_RUNTIMES = new Set<string>(["node", "shell", "python", "playwright-cli"]);
+import { builtinModules } from "node:module";
+import type { ValidationDetail } from "../../../types/index.js";
+import {
+	getExportContract,
+	isJsBased,
+	normalizeRuntime,
+	runtimeRequiresBrowser,
+	VALID_RUNTIMES,
+} from "../../runtime/index.js";
 
 const TEMP_REF_REGEX = /\be\d+\b/g;
 const BROWSER_KEYWORDS = ["launch", "connect", "connectOverCDP", "newBrowser", "chrome-remote-interface"];
 const INLINE_IMPORT_REGEX = /await\s+import\s*\(/;
 const EXPORT_DEFAULT_REGEX = /export\s+default/;
 const EXPORT_COMMAND_REGEX = /export\s+(?:(?:const|let|var)\s+command|(?:async\s+)?function\s+command)\b/;
-const PARAMS_INJECT_MARKER = "/* PARAMS_INJECT */";
 const PARAM_ACCESS_REGEX = /params\.([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+const IMPORT_FROM_REGEX = /import\s+.*?from\s+['"]([^'"]+)['"]/g;
+const IMPORT_SIDE_EFFECT_REGEX = /import\s+['"]([^'"]+)['"]/g;
+
+// Build whitelist of allowed import sources: built-in modules with and without node: prefix.
+const ALLOWED_IMPORTS = new Set<string>();
+for (const mod of builtinModules) {
+	ALLOWED_IMPORTS.add(mod);
+	if (!mod.startsWith("node:")) {
+		ALLOWED_IMPORTS.add(`node:${mod}`);
+	}
+}
 
 function addError(details: ValidationDetail[], code: string, message: string): void {
 	details.push({ code, message, level: "error" });
@@ -19,21 +35,19 @@ function addWarning(details: ValidationDetail[], code: string, message: string):
 }
 
 function checkJsSyntax(code: string, runtime: string): ValidationDetail | null {
-	if (runtime !== "node" && runtime !== "playwright-cli") {
+	if (!isJsBased(runtime)) {
 		return null;
 	}
 	let trial: string;
-	if (runtime === "node") {
-		if (/^export\s+default\s+/s.test(code)) {
-			trial = `return (${code.replace(/^export\s+default\s+/s, "")})`;
-		} else if (/^export\s+(?:const|let|var)\s+command\s*=\s*/s.test(code)) {
-			const expr = code.replace(/^export\s+(?:const|let|var)\s+command\s*=\s*/s, "").replace(/;\s*$/s, "");
-			trial = `return (${expr})`;
-		} else if (/^export\s+(?:async\s+)?function\s+command\s*\(/s.test(code)) {
-			trial = `return (${code.replace(/^export\s+/s, "")})`;
-		} else {
-			trial = `return (${code})`;
-		}
+	const exportDefaultMatch = code.match(/^\s*export\s+default\s+/m);
+	if (exportDefaultMatch && exportDefaultMatch.index !== undefined) {
+		const expr = code.slice(exportDefaultMatch.index + exportDefaultMatch[0].length).replace(/;\s*$/s, "");
+		trial = `return (${expr})`;
+	} else if (runtime === "node" && /^export\s+(?:const|let|var)\s+command\s*=\s*/s.test(code)) {
+		const expr = code.replace(/^export\s+(?:const|let|var)\s+command\s*=\s*/s, "").replace(/;\s*$/s, "");
+		trial = `return (${expr})`;
+	} else if (runtime === "node" && /^export\s+(?:async\s+)?function\s+command\s*\(/s.test(code)) {
+		trial = `return (${code.replace(/^export\s+/s, "")})`;
 	} else {
 		trial = `return (${code})`;
 	}
@@ -59,9 +73,10 @@ function validateL1Structure(
 	expectedDomain: string | undefined,
 	expectedAction: string | undefined,
 ): void {
-	const runtime = manifest.runtime ?? "node";
-	if (typeof runtime !== "string" || !VALID_RUNTIMES.has(runtime)) {
-		addError(details, "INVALID_RUNTIME", `Runtime must be one of: ${[...VALID_RUNTIMES].join(", ")}`);
+	const rawRuntime = manifest.runtime;
+	const runtime = normalizeRuntime(rawRuntime as string | undefined);
+	if (typeof rawRuntime === "string" && !(VALID_RUNTIMES as readonly string[]).includes(rawRuntime)) {
+		addError(details, "INVALID_RUNTIME", `Runtime must be one of: ${VALID_RUNTIMES.join(", ")}`);
 	}
 
 	const id = manifest.id;
@@ -115,6 +130,32 @@ function validateL1Structure(
 	// Description validation
 	if (typeof manifest.description !== "string" || manifest.description.trim().length === 0) {
 		addError(details, "MISSING_DESCRIPTION", "Manifest 'description' must be a non-empty string");
+	}
+
+	// requiresBrowser validation
+	if (!Object.hasOwn(manifest, "requiresBrowser")) {
+		addError(details, "MISSING_REQUIRES_BROWSER", "Manifest 'requiresBrowser' is required");
+	} else if (typeof manifest.requiresBrowser !== "boolean") {
+		addError(details, "INVALID_REQUIRES_BROWSER", "Manifest 'requiresBrowser' must be a boolean");
+	} else {
+		if (runtimeRequiresBrowser(runtime) && manifest.requiresBrowser !== true) {
+			addError(details, "RUNTIME_BROWSER_MISMATCH", "browser runtime requires requiresBrowser: true");
+		}
+		if (!runtimeRequiresBrowser(runtime) && manifest.requiresBrowser !== false) {
+			addError(details, "RUNTIME_BROWSER_MISMATCH", `${runtime} runtime requires requiresBrowser: false`);
+		}
+	}
+
+	// authRequired validation
+	if (Object.hasOwn(manifest, "authRequired")) {
+		const auth = manifest.authRequired;
+		if (typeof auth !== "string" || !["required", "not-required", "unknown"].includes(auth)) {
+			addError(
+				details,
+				"INVALID_AUTH_REQUIRED",
+				'Manifest \'authRequired\' must be one of: "required", "not-required", "unknown"',
+			);
+		}
 	}
 
 	// Prerequisites validation
@@ -192,10 +233,29 @@ function validateL2Compliance(code: string, details: ValidationDetail[]): void {
 	if (INLINE_IMPORT_REGEX.test(code)) {
 		addError(details, "INLINE_IMPORT_FORBIDDEN", "Command code contains inline dynamic import (`await import(...)`)");
 	}
+
+	const importMatches = code.matchAll(IMPORT_FROM_REGEX);
+	const sideEffectMatches = code.matchAll(IMPORT_SIDE_EFFECT_REGEX);
+	const allSources = new Set<string>();
+	for (const match of importMatches) {
+		if (match[1]) allSources.add(match[1]);
+	}
+	for (const match of sideEffectMatches) {
+		if (match[1]) allSources.add(match[1]);
+	}
+	for (const source of allSources) {
+		if (!ALLOWED_IMPORTS.has(source)) {
+			addError(
+				details,
+				"ILLEGAL_IMPORT_FORBIDDEN",
+				`Import from "${source}" is not allowed. Only Node.js built-in modules are permitted.`,
+			);
+		}
+	}
 }
 
 function validateL3Contract(manifest: Record<string, unknown>, code: string, details: ValidationDetail[]): void {
-	const runtime = (manifest.runtime ?? "node") as string;
+	const runtime = normalizeRuntime(manifest.runtime as string | undefined);
 
 	// Syntax check for JS-based runtimes.
 	const syntaxError = checkJsSyntax(code, runtime);
@@ -203,29 +263,22 @@ function validateL3Contract(manifest: Record<string, unknown>, code: string, det
 		details.push(syntaxError);
 	}
 
-	if (runtime === "node") {
+	const contract = getExportContract(runtime);
+	if (contract.requireDefault && !EXPORT_DEFAULT_REGEX.test(code)) {
+		addError(
+			details,
+			"MISSING_EXPORT_DEFAULT",
+			`${runtime === "browser" ? "Browser" : runtime} runtime command must contain \`export default\`${runtime === "browser" ? " async function" : ""}`,
+		);
+	}
+	if (!contract.requireDefault && !contract.allowNamedCommand) {
+		// Non-JS runtimes have no export contract requirements.
+	} else if (!contract.requireDefault && contract.allowNamedCommand) {
 		if (!EXPORT_DEFAULT_REGEX.test(code) && !EXPORT_COMMAND_REGEX.test(code)) {
 			addError(
 				details,
 				"MISSING_EXPORT_DEFAULT",
 				"Node runtime command must contain `export default` or `export const command` / `export function command`",
-			);
-		}
-	}
-
-	if (runtime === "playwright-cli") {
-		if (!code.includes(PARAMS_INJECT_MARKER)) {
-			addError(
-				details,
-				"MISSING_PARAMS_INJECT",
-				`Playwright-cli runtime command must contain "${PARAMS_INJECT_MARKER}"`,
-			);
-		}
-		if (/\bexport\b/.test(code) || /\bimport\b/.test(code)) {
-			addError(
-				details,
-				"MODULE_SYNTAX_IN_FUNCTION_BODY",
-				"Playwright-cli runtime command must not contain module keywords (`export` or `import`)",
 			);
 		}
 	}
@@ -247,12 +300,21 @@ function validateL3Contract(manifest: Record<string, unknown>, code: string, det
 	}
 	for (const name of usedNames) {
 		if (!declaredNames.has(name)) {
-			addWarning(
+			addError(
 				details,
 				"UNDECLARED_PARAM",
 				`Code accesses params.${name} but it is not declared in manifest.parameters`,
 			);
 		}
+	}
+
+	const lineCount = code.split("\n").length;
+	if (lineCount > 1000) {
+		addError(
+			details,
+			"CODE_TOO_LONG",
+			`Command entry file has ${lineCount} lines, exceeding the maximum of 1000 lines`,
+		);
 	}
 }
 
@@ -271,6 +333,8 @@ const EXPECTED_CONTEXT_SECTIONS = [
 	"## Page Structure",
 	"## Environment Dependencies",
 	"## Failure Signals",
+	"## Repair Clues",
+	"## Value Assessment",
 ];
 
 function validateDocumentContent(
@@ -299,7 +363,7 @@ function validateDocumentContent(
 	}
 }
 
-export interface ValidateCommandPackageInput {
+export interface ValidateCommandSourceInput {
 	/** Raw parsed manifest (may be any JSON value). */
 	manifest: unknown;
 	/** Command source code as a string. */
@@ -329,7 +393,7 @@ export interface ValidateCommandPackageInput {
  * Returns a flat array of validation details. Callers determine success/failure
  * by checking for any "error"-level detail.
  */
-export function validateCommandPackage(input: ValidateCommandPackageInput): ValidationDetail[] {
+export function validateCommandSource(input: ValidateCommandSourceInput): ValidationDetail[] {
 	const details: ValidationDetail[] = [];
 
 	if (input.manifest === null || typeof input.manifest !== "object") {

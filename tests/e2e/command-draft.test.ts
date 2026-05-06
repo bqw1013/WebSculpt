@@ -39,19 +39,23 @@ describe("command draft", () => {
 		expect(payload.files).toContain("README.md");
 		expect(payload.files).toContain("context.md");
 
-		const manifest = await readJsonFile<{ runtime: string }>(join(payload.draftPath, "manifest.json"));
+		const manifest = await readJsonFile<{ runtime: string; requiresBrowser: boolean; authRequired: string }>(
+			join(payload.draftPath, "manifest.json"),
+		);
 		expect(manifest.runtime).toBe("node");
+		expect(manifest.requiresBrowser).toBe(false);
+		expect(manifest.authRequired).toBe("unknown");
 
 		const code = await readFile(join(payload.draftPath, "command.js"), "utf-8");
 		expect(code).toContain("export default async function");
 	});
 
-	it("produces function-body syntax without module keywords for playwright-cli runtime", async () => {
+	it("produces ESM module syntax with export default for browser runtime", async () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);
 
 		const result = await runSourceCli(
-			["command", "draft", "zhihu", "articles", "--runtime", "playwright-cli", "--format", "json"],
+			["command", "draft", "zhihu", "articles", "--runtime", "browser", "--format", "json"],
 			homeDir,
 		);
 		const payload = parseJsonOutput<{
@@ -62,15 +66,17 @@ describe("command draft", () => {
 
 		expect(result.exitCode).toBe(0);
 		expect(payload.success).toBe(true);
-		expect(payload.runtime).toBe("playwright-cli");
+		expect(payload.runtime).toBe("browser");
 
-		const manifest = await readJsonFile<{ runtime: string }>(join(payload.draftPath, "manifest.json"));
-		expect(manifest.runtime).toBe("playwright-cli");
+		const manifest = await readJsonFile<{ runtime: string; requiresBrowser: boolean; authRequired: string }>(
+			join(payload.draftPath, "manifest.json"),
+		);
+		expect(manifest.runtime).toBe("browser");
+		expect(manifest.requiresBrowser).toBe(true);
+		expect(manifest.authRequired).toBe("unknown");
 
 		const code = await readFile(join(payload.draftPath, "command.js"), "utf-8");
-		expect(code).toContain("async function (page)");
-		expect(code).toContain("/* PARAMS_INJECT */");
-		expect(code).not.toContain("export");
+		expect(code).toContain("export default async (page, params)");
 		expect(code).not.toContain("import");
 	});
 
@@ -85,7 +91,7 @@ describe("command draft", () => {
 				"paramtest",
 				"cmd",
 				"--runtime",
-				"playwright-cli",
+				"browser",
 				"--param",
 				"author:required",
 				"--param",
