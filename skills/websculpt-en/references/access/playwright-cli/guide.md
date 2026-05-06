@@ -321,41 +321,26 @@ Playwright CLI reuses the user browser via CDP attach, and the session persists 
 When command execution fails, locate problems in the following layered order:
 
 1. **Infrastructure layer**: `PLAYWRIGHT_CLI_ATTACH_REQUIRED` → Check whether CDP is attached, whether session name is `default`
-2. **Syntax layer**: `SyntaxError` → Check `/* PARAMS_INJECT */` position, whether code has illegal characters
+2. **Syntax layer**: `SyntaxError` → Check whether code has illegal characters, or whether `export default` is missing
 3. **Runtime layer**: `EMPTY_RESULT`, `DRIFT_DETECTED` → Check selectors, page loading strategy
 4. **Network layer**: `net::ERR_ABORTED`, `TIMEOUT` → Retry once, may be transient
 
-### Simulating Runner with Node Script
+### Direct Command Execution for Debugging
 
-When websculpt error messages are unclear, you can use Node to directly simulate the runner's invocation method, bypassing websculpt's wrapper to see raw stdout/stderr:
+When websculpt error messages are unclear, you can directly execute the precipitated command to view the full error output:
 
-```js
-const { execFile } = require('child_process');
-const { promisify } = require('util');
-const fs = require('fs');
-
-const execFileAsync = promisify(execFile);
-
-async function test() {
-  const code = fs.readFileSync('command.js', 'utf-8')
-    .replace('/* PARAMS_INJECT */', 'const params = {"limit":"3"};');
-
-  const entrypoint = '.../playwright-cli.js';
-
-  const { stdout, stderr } = await execFileAsync(
-    process.execPath,
-    [entrypoint, 'run-code', code],
-    { timeout: 60000 }
-  );
-
-  console.log('STDOUT:', stdout);
-  console.log('STDERR:', stderr);
-}
-
-test();
+```bash
+websculpt <domain> <action> --param-key param-value
 ```
 
-This can directly expose raw errors such as "browser 'default' is not open" or `SyntaxError`.
+If the error is still unclear, first execute the following commands to confirm daemon and browser status:
+
+```bash
+websculpt daemon status
+playwright-cli list
+```
+
+Confirm that the `default` session is in `open` status. If the status is abnormal, re-attach according to Section 2 (CDP Connection) of this document.
 
 ---
 
@@ -416,7 +401,7 @@ Then re-attach.
 | `click <target>` | Click specified element |
 | `fill <target> <text>` | Fill text into input box |
 | `type <text>` | Type text on focused element |
-| `press <key>` | Simulate keyboard key (e.g., `Enter`, `ArrowDown`, `Escape`) |
+| `press <key>` | Simulate keyboard key (e.g., `Enter`, `ArrowDown`) |
 | `check <target>` | Check checkbox or radio button |
 | `uncheck <target>` | Uncheck |
 | `select <target> <value>` | Select option in dropdown |

@@ -90,6 +90,7 @@ npm install -g @playwright/cli websculpt
 | `valueAssessment` | 是 | 为什么值得沉淀（通用性、复用频率、节省时间） |
 | `stabilityAssessment` | 是 | 目标站点/接口的结构稳定性判断 |
 | `antiCrawlAssessment` | 是 | 反爬风险与当前规避策略 |
+| `authRequired` | 是 | 命令是否需要用户登录：`required`、`not-required`、`unknown` |
 | `expectedFailures` | 是 | 已知可能失效的条件和预期表现 |
 
 示例：
@@ -116,6 +117,7 @@ npm install -g @playwright/cli websculpt
 | `valueAssessment` | `context.md` | `## Value Assessment` |
 | `stabilityAssessment` | `context.md` | `## Environment Dependencies`（稳定性说明部分） |
 | `antiCrawlAssessment` | `context.md` | `## Environment Dependencies`（反爬策略部分） |
+| `authRequired` | `manifest.json` | `authRequired` |
 | `expectedFailures` | `README.md` / `context.md` | `## Common Error Codes`（调用者视角） / `## Failure Signals`（修复者视角） |
 
 ### 5. 执行沉淀

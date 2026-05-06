@@ -90,6 +90,7 @@ The proposal card must contain the following fields:
 | `valueAssessment` | Yes | Why it's worth precipitating (generality, reuse frequency, time saved) |
 | `stabilityAssessment` | Yes | Structural stability assessment of target site/interface |
 | `antiCrawlAssessment` | Yes | Anti-crawling risk and current circumvention strategy |
+| `authRequired` | Yes | Whether the command requires user login: `required`, `not-required`, `unknown` |
 | `expectedFailures` | Yes | Known conditions under which it may fail and expected behavior |
 
 Example:
@@ -116,6 +117,7 @@ Fields from the precipitation proposal card should map to specific sections in t
 | `valueAssessment` | `context.md` | `## Value Assessment` |
 | `stabilityAssessment` | `context.md` | `## Environment Dependencies` (stability notes portion) |
 | `antiCrawlAssessment` | `context.md` | `## Environment Dependencies` (anti-crawl strategy portion) |
+| `authRequired` | `manifest.json` | `authRequired` |
 | `expectedFailures` | `README.md` / `context.md` | `## Common Error Codes` (caller perspective) / `## Failure Signals` (fixer perspective) |
 
 ### 5. Execute Precipitation

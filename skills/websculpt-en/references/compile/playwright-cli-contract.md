@@ -5,171 +5,63 @@
 
 ---
 
-## 1. Function Signature
+## 1. Function Signature and Module Format
 
-Code executes in the context provided by `playwright-cli run-code`, with direct access to the `page` object (Playwright `Page` instance). Write in the following form:
+- Entry file: `command.js`
+- Standard ESM module, must export an async function via `export default`
+- Signature: `async (page, params) => unknown`
 
-```js
-async function (page) {
-  /* PARAMS_INJECT */
-  // ... your logic
-}
-```
+`page` is a Playwright `Page` instance, `params` is the parameter object passed by the runner.
 
 - **Do not** write executable code outside the function body.
 - Helper functions can be declared inside the function body.
 
 ---
 
-## 2. Parameter Injection
+## 2. Parameter Passing
 
-### Placeholder
-
-Runner will replace `/* PARAMS_INJECT */` in the file with a line of parameter declaration before execution:
-
-```js
-const params = {"limit":"3","author":"demo-author"};
-```
-
-Therefore your code **must retain** this placeholder, and read parameters via `params.key`.
-
-### Why the Placeholder Must Be Inside the Function Body
-
-When `playwright-cli` daemon executes `run-code`, the core logic is roughly:
-
-```js
-const fn = vm.runInContext("(" + code + ")", context);
-const result = await fn(page);
-```
-
-The entire `code` string is wrapped in a pair of parentheses `()`. The valid wrapping result must be an **expression**.
-
-**Wrong writing** (placeholder outside function body):
-
-```js
-/* PARAMS_INJECT */
-async function (page) {
-  // logic
-}
-```
-
-After runner replacement becomes:
-
-```js
-const params = {"limit":"10"};
-async function (page) {
-  // logic
-}
-```
-
-Wrapped by daemon:
-
-```js
-(const params = {"limit":"10"}; async function (page) { ... })
-```
-
-This is illegal in JS syntax — `const` declarations cannot appear in expression context, will report `SyntaxError: Unexpected token 'const'`.
-
-**Correct writing**:
-
-```js
-async function (page) {
-  /* PARAMS_INJECT */
-  // logic
-}
-```
-
-After runner replacement:
-
-```js
-async function (page) {
-  const params = {"limit":"10"};
-  // logic
-}
-```
-
-Wrapped by daemon:
-
-```js
-(async function (page) { const params = {"limit":"10"}; ... })
-```
-
-This is a valid **function expression**.
-
-### Another Valid Form
-
-Arrow functions are also valid:
-
-```js
-async (page) => {
-  /* PARAMS_INJECT */
-  // logic
-}
-```
-
-Both forms pass validation, but function declaration style is more consistent with this document's example style.
-
-### Types and Default Values
-
-- **All parameter values are strings**. Even if manifest declares `"default": 3`, what is injected is `"3"`.
-- If parameter is a number, you need to convert yourself: `parseInt(params.limit, 10)` or `parseFloat(params.ratio)`.
-- If parameter is boolean, need to judge yourself: `params.someFlag === "true"`.
-- **Parameters with declared `default`**: runner will automatically fill default values for missing parameters, do not write fallback in code (e.g., `params.limit || 3`), avoiding `--limit 0` being misjudged as falsy and overridden.
-- **Parameters without declared `default`**: Code handles missing logic itself, not constrained by this rule.
+- Parameters are directly passed by the runner as the **second argument** of the function
+- All parameter values are strings, numbers need to be converted via `parseInt` / `parseFloat`
+- Runner has already filled default values according to manifest. Parameters with declared `default` should not have fallback in code (e.g., `params.limit || 3`), parameters without declared `default` handle missing logic themselves
+- Boolean values need to be judged yourself: `params.someFlag === "true"`
 
 ---
 
 ## 3. Return Value
 
-Command result is returned via `return`. Runner captures JSON after `### Result\n` from stdout and parses it before returning to the caller.
-
-```js
-return { articles: [{ title: "...", url: "..." }] };
-```
-
-- Returned object must be **serializable pure data**.
-- **Do not** return functions, circular references, `undefined` values, or class instances.
-- If returning an array is needed, recommend wrapping in object: `return { items: [...] }`.
+- Directly `return result`, consumed by the daemon and passed back to the CLI
+- Returned object must be serializable pure data
+- Do not return functions, circular references, `undefined` values, or class instances
+- If returning an array is needed, recommend wrapping in object: `return { items: [...] }`
 
 ---
 
 ## 4. Error Handling
 
-### Basic Method
+Directly throw `Error`.
 
-For business errors, directly throw `Error`:
-
-```js
-throw new Error("Something went wrong");
-```
-
-### Error Code Passing (Key)
-
-`playwright-cli` execution environment **does not preserve** `Error.code` property. Runner can only identify business error codes through **keywords in error message text**.
-
-Therefore, if you want runner to return a specific business error code, **it must be included in the message text**.
-
-Recommended format:
+Business error codes are passed via `error.code` property, runner will read and pass through. Recommend including error code in error message for readability:
 
 ```js
-throw new Error("[AUTH_REQUIRED] Login required");
+const error = new Error("[NOT_FOUND] User not found");
+error.code = "NOT_FOUND";
+throw error;
 ```
 
-> `playwright-cli` execution environment does not preserve `Error.code` property, even if you set `error.code` in code, runner cannot read it. Ensure error code appears in message text.
-
-If message does not contain known business error code keywords, runner will categorize the error as `COMMAND_EXECUTION_ERROR`. Complete semantic definition of business error codes see Section 6 of [`./contract.md`](./contract.md).
+For complete semantic list of business error codes, see [`./contract.md`](./contract.md).
 
 ---
 
-## 5. Environment Limitations
+## 5. Environment Notes
 
-`playwright-cli` executes your code in an **isolated context**:
+Code is executed via `import()` in the daemon's Node.js process, not an isolated VM.
 
-- **Unavailable**: `process`, `require`, `fs`, `path`, `console.log` (may have no output or be invisible) and other Node.js global variables.
-- **Available**: Standard JavaScript built-in objects (`JSON`, `Math`, `Date`, `RegExp`, etc.) and Playwright API (through `page` parameter).
-- **Do not** attempt to read/write local file system.
+- **Available**: Standard Node.js built-in modules (`fs`, `path`, etc.) and Playwright API (via `page` parameter)
+- **Limitation**: L2 validation only allows importing Node.js built-in modules, third-party modules will be intercepted
+- **`console.log`**: Outputs to daemon's stdout. The daemon is a background process, users usually cannot see it. Debug information should be brought out through `return` first
+- **Do not** read/write the local file system in commands — commands should only operate the browser
 
-`run-code` executes in an isolated VM, `console.log` will not appear in stdout. The only outlet for debug info is `return`. If you need to observe intermediate state, return debug data together:
+If you need to observe intermediate state, return debug data together:
 
 ```js
 return { debug: { url: page.url(), title: await page.title() }, items: [] };
@@ -177,18 +69,8 @@ return { debug: { url: page.url(), title: await page.title() }, items: [] };
 
 ### Pre-runtime Dependencies
 
-- `playwright-cli` commands need a browser environment (CDP connection). If user has not enabled remote debugging, `command-runner.ts` returns `PLAYWRIGHT_CLI_ATTACH_REQUIRED` structured error.
-- After user completes setup, call the command again to continue testing, no need to recreate the command.
-
-### PowerShell Manual Testing Trap
-
-If you directly manually call `playwright-cli run-code "<code>"` in PowerShell to test commands, spaces, curly braces, semicolons in the code string may be split by PowerShell into multiple tokens, causing `SyntaxError` or `too many arguments`. This is a **shell argument passing issue, not a command itself issue**.
-
-websculpt runner uses `execFile` array parameter passing, unaffected by shell splitting. Therefore:
-
-- When manually testing, prioritize using `eval` to verify if selectors work
-- Leave complete runner chain testing to websculpt itself
-- Do not modify command code because of PowerShell manual testing failure
+- `playwright-cli` commands need a browser environment (CDP connection). If the user has not enabled remote debugging, the runner returns a `PLAYWRIGHT_CLI_ATTACH_REQUIRED` structured error.
+- After the user completes setup, call the command again to continue testing, no need to recreate the command.
 
 ---
 
@@ -198,8 +80,7 @@ When precipitating `playwright-cli` commands, you can directly reuse the followi
 
 ```js
 // command.js
-async function (page) {
-  /* PARAMS_INJECT */
+export default async (page, params) => {
   const limit = parseInt(params.limit, 10);
 
   // The injected page is shared across concurrent executions.
@@ -223,7 +104,7 @@ async function (page) {
   } finally {
     await page.close();
   }
-}
+};
 ```
 
 ```json
@@ -247,8 +128,7 @@ async function (page) {
 ## 7. Complete Example
 
 ```js
-async function (page) {
-  /* PARAMS_INJECT */
+export default async (page, params) => {
   const author = params.author;
   const limit = parseInt(params.limit, 10);
 
@@ -285,7 +165,7 @@ async function (page) {
   } finally {
     await page.close();
   }
-}
+};
 ```
 
 ---
@@ -323,15 +203,14 @@ High-frequency DOM operations or rapid page turning easily trigger risk control.
 **All `playwright-cli` commands must** create an isolated page at the function start, and close it in `finally`:
 
 ```js
-async function (page) {
-  /* PARAMS_INJECT */
+export default async (page, params) => {
   page = await page.context().newPage();
   try {
     // ... command logic ...
   } finally {
     await page.close();
   }
-}
+};
 ```
 
 - Reduce risk of accidentally operating on the original shared page in subsequent edits by **reassigning `page`** (rather than introducing new variables like `isolatedPage`).
@@ -344,21 +223,25 @@ async function (page) {
 
 General checklist items see Section 5 of [`./contract.md`](./contract.md).
 
-- [ ] Function signature is `async function (page)`, and contains `/* PARAMS_INJECT */`
-- [ ] `/* PARAMS_INJECT */` is inside function body, not outside function body
+- [ ] Entry file exports async function via `export default`
+- [ ] Signature is `async (page, params) => unknown`
 - [ ] Boolean parameters judged via `=== "true"`
-- [ ] No use of `process`, `require`, file I/O, and other Node.js APIs
+- [ ] No import of non-Node.js built-in modules
 
 ---
 
-## 10. Runner Error Code Reference
+## 10. Infrastructure Error Code Reference
 
-The following error codes are automatically generated by the runner, **do not need** to be thrown in `command.js`:
+The following error codes are automatically generated by the runner / daemon, **do not need** to be thrown in command files:
 
 | Error Code | Meaning |
 |--------|------|
-| `MISSING_PARAMS_INJECT` | Command file missing `/* PARAMS_INJECT */` placeholder |
-| `MISSING_RESULT_MARKER` | Command output missing `### Result` marker |
-| `MALFORMED_RESULT_JSON` | Content after `### Result` is not valid JSON |
-| `RUNTIME_NOT_FOUND` | `playwright-cli` not installed |
+| `TIMEOUT` | Command execution timeout (60-second socket timeout) |
+| `COMMAND_TIMEOUT` | Command execution exceeds 20-minute safety limit |
 | `PLAYWRIGHT_CLI_ATTACH_REQUIRED` | Browser CDP session not attached. Confirm remote debugging is enabled; if confirmed enabled but still errors, may be background process residue, try `playwright-cli kill-all` and `playwright-cli close-all` then re-attach |
+| `DAEMON_START_FAILED` | Daemon startup failed |
+| `DAEMON_UNREACHABLE` | Daemon started but cannot connect |
+| `DAEMON_BUSY` | Daemon concurrent session limit reached |
+| `DAEMON_PAGE_LIMIT` | Daemon page count limit reached |
+| `DAEMON_RESTARTING` | Daemon is restarting |
+| `COMMAND_EXECUTION_ERROR` | Unclassified command execution error |

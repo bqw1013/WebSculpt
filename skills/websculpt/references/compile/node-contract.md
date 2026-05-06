@@ -8,8 +8,11 @@
 ## 1. 模块格式
 
 - 入口文件：`command.js`
-- 标准 ESM 模块，必须导出默认的异步函数
-- 签名：`export default async (params: Record<string, string>) => unknown`
+- 标准 ESM 模块，支持以下三种导出形式之一：
+  - `export default async function (params) {...}`（推荐，与 `playwright-cli` 运行时保持一致）
+  - `export const command = async function (params) {...}`
+  - `export async function command (params) {...}`
+- 签名：`async (params: Record<string, string>) => unknown`
 
 ---
 
@@ -98,6 +101,6 @@ export default async function (params) {
 
 通用检查项见 [`./contract.md`](./contract.md) 第 5 节。
 
-- [ ] 入口文件通过 `export default` 导出异步函数
+- [ ] 入口文件通过 `export default` 或 `export const/function command` 导出异步函数
 - [ ] 签名为 `async (params: Record<string, string>) => unknown`
 - [ ] 代码中不存在 `/* PARAMS_INJECT */` 占位符

@@ -105,9 +105,11 @@ websculpt command create <domain> <action> --from-dir <path>
 | `runtime` | `string` | 是 | `node` 或 `playwright-cli`。`shell`、`python` 为 CLI 预留类型，但沉淀到命令库时必须重写为 `node` 或 `playwright-cli` 的等价实现 |
 | `parameters` | `array` | 否 | 参数列表，元素为 `{ name, required?, default?, description? }` |
 | `prerequisites` | `string[]` | 否 | 命令特定的前置条件说明（如 `"Requires user login"`） |
+| `requiresBrowser` | `boolean` | **是** | 是否依赖浏览器环境。`playwright-cli` 必须为 `true`，`node` 必须为 `false`。`command draft` 会根据 runtime 自动填充 |
+| `authRequired` | `string` | 否 | `"required"` / `"not-required"` / `"unknown"`。命令是否需要用户登录，默认 `"unknown"` |
 | `entryFile` | `string` | 否 | 入口文件名，默认 `command.js` |
 
-**保留域**：`command`、`config`、`skill` 为系统保留，使用会触发 `RESERVED_DOMAIN` 错误。
+**保留域**：`command`、`config`、`skill`、`daemon` 为系统保留，使用会触发 `RESERVED_DOMAIN` 错误。
 
 ### 3.2 入口文件
 
@@ -187,10 +189,11 @@ context.md 包含以下章节：
 - [ ] 返回值为可序列化的纯数据对象
 
 `playwright-cli` 专用：见 [`./playwright-cli-contract.md`](./playwright-cli-contract.md)
-- [ ] 函数签名为 `async function (page)`，且包含 `/* PARAMS_INJECT */`
+- [ ] 入口文件通过 `export default` 导出异步函数
+- [ ] 签名为 `async (page, params) => unknown`
 
 `node` 专用：见 [`./node-contract.md`](./node-contract.md)
-- [ ] 入口文件通过 `export default` 导出异步函数
+- [ ] 入口文件通过 `export default` 或 `export const/function command` 导出异步函数
 - [ ] 签名为 `async (params: Record<string, string>) => unknown`
 
 ---
