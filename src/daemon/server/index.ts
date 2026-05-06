@@ -1,9 +1,7 @@
 import { unlinkSync } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { getDaemonStateDir, getSocketPath } from "./config/paths.js";
-import { closeLogger, initLogger, logEvent } from "./observability/logger.js";
-import { flushMetrics, recordPeakPages, recordPeakRss } from "./observability/metrics.js";
+import { getDaemonStateDir, getSocketPath } from "../shared/paths.js";
 import { closeBrowser, getOpenPageCount } from "./executor/browser-manager.js";
 import {
 	degraded,
@@ -13,6 +11,8 @@ import {
 	stopMemoryMonitoring,
 } from "./executor/memory-monitor.js";
 import { createSocketServer, getExecutionCount } from "./executor/socket-server.js";
+import { closeLogger, initLogger, logEvent } from "./observability/logger.js";
+import { flushMetrics, recordPeakPages, recordPeakRss } from "./observability/metrics.js";
 
 export { DAEMON_LIMITS } from "./config/limits.js";
 

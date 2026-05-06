@@ -19,8 +19,8 @@ vi.mock("../../../../src/daemon/client/transport.js", () => ({
 	sendRequest: vi.fn().mockResolvedValue({ shuttingDown: true }),
 }));
 
-vi.mock("../../../../src/daemon/server/config/paths.js", () => ({
-	getDaemonLogPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.log"),
+vi.mock("../../../../src/infra/paths.js", () => ({
+	DAEMON_LOG_FILE: "/tmp/.websculpt/daemon.log",
 }));
 
 vi.mock("../../../../src/daemon/client/lifecycle.js", () => ({
@@ -28,10 +28,6 @@ vi.mock("../../../../src/daemon/client/lifecycle.js", () => ({
 }));
 
 import { readFile, unlink } from "node:fs/promises";
-import { getDaemonLogPath } from "../../../../src/daemon/server/config/paths.js";
-import { ensureDaemonClient } from "../../../../src/daemon/client/lifecycle.js";
-import { isProcessAlive, readDaemonState } from "../../../../src/daemon/client/state.js";
-import { sendRequest } from "../../../../src/daemon/client/transport.js";
 import {
 	handleDaemonLogs,
 	handleDaemonRestart,
@@ -39,6 +35,9 @@ import {
 	handleDaemonStatus,
 	handleDaemonStop,
 } from "../../../../src/cli/meta/daemon.js";
+import { ensureDaemonClient } from "../../../../src/daemon/client/lifecycle.js";
+import { isProcessAlive, readDaemonState } from "../../../../src/daemon/client/state.js";
+import { sendRequest } from "../../../../src/daemon/client/transport.js";
 
 describe("handleDaemonStop", () => {
 	beforeEach(() => {
@@ -253,7 +252,6 @@ describe("handleDaemonLogs", () => {
 
 		await handleDaemonLogs();
 
-		expect(getDaemonLogPath).toHaveBeenCalled();
 		expect(readFile).toHaveBeenCalledWith("/tmp/.websculpt/daemon.log", "utf-8");
 	});
 });

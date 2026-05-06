@@ -16,5 +16,8 @@ export const LOG_FILE = join(WEBSCULPT_DIR, "log.jsonl");
 /** Path to the append-only audit log file. */
 export const AUDIT_FILE = join(WEBSCULPT_DIR, "audit.jsonl");
 
+/** Path to the daemon log file. */
+export const DAEMON_LOG_FILE = join(WEBSCULPT_DIR, "daemon.log");
+
 /** Path to the persistent registry index file. */
 export const INDEX_PATH = join(WEBSCULPT_DIR, "registry-index.json");

@@ -1,6 +1,6 @@
 import { createServer, type Server, type Socket } from "node:net";
+import { type SocketRequest, type SocketResponse, splitLines } from "../../shared/protocol.js";
 import { DAEMON_LIMITS } from "../config/limits.js";
-import { type SocketRequest, type SocketResponse, splitLines } from "../config/protocol.js";
 import { logEvent } from "../observability/logger.js";
 import { recordExecutionEnd, recordExecutionStart } from "../observability/metrics.js";
 import { getOpenPageCount, isBrowserConnected, isBrowserLazy } from "./browser-manager.js";

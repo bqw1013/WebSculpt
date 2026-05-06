@@ -1,10 +1,10 @@
 import { spawnSync } from "node:child_process";
 import { readFile, unlink } from "node:fs/promises";
 import type { Command } from "commander";
-import { getDaemonLogPath } from "../../daemon/server/config/paths.js";
 import { ensureDaemonClient } from "../../daemon/client/lifecycle.js";
 import { DAEMON_JSON, isProcessAlive, readDaemonState } from "../../daemon/client/state.js";
 import { sendRequest } from "../../daemon/client/transport.js";
+import { DAEMON_LOG_FILE } from "../../infra/paths.js";
 import type {
 	DaemonLogsResult,
 	DaemonRestartResult,
@@ -179,7 +179,7 @@ export async function handleDaemonStatus(): Promise<DaemonStatusResult | MetaCom
  * Reads and returns recent entries from the daemon log file.
  */
 export async function handleDaemonLogs(options: { lines?: number } = {}): Promise<DaemonLogsResult | MetaCommandError> {
-	const logPath = getDaemonLogPath();
+	const logPath = DAEMON_LOG_FILE;
 	const lineCount = options.lines ?? 50;
 
 	try {

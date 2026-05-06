@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { userInfo } from "node:os";
-import { join } from "node:path";
-import { WEBSCULPT_DIR } from "../../../infra/paths.js";
+import { WEBSCULPT_DIR } from "../../infra/paths.js";
 
 /**
  * Returns a safe, deterministic identifier for the current user.
@@ -25,13 +24,6 @@ export function getSocketPath(): string {
 	}
 	const uid = process.getuid?.() ?? 0;
 	return `/tmp/websculpt-daemon-${uid}.sock`;
-}
-
-/**
- * Returns the path to the daemon log file.
- */
-export function getDaemonLogPath(): string {
-	return join(WEBSCULPT_DIR, "daemon.log");
 }
 
 /**

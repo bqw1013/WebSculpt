@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { getDaemonStateDir } from "../config/paths.js";
+import { getDaemonStateDir } from "../../shared/paths.js";
 
 interface MetricsSnapshot {
 	session: {

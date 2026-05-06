@@ -11,8 +11,8 @@ vi.mock("node:fs", () => {
 	};
 });
 
-vi.mock("../../../../src/daemon/server/config/paths.js", () => ({
-	getDaemonLogPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.log"),
+vi.mock("../../../../src/infra/paths.js", () => ({
+	DAEMON_LOG_FILE: "/tmp/.websculpt/daemon.log",
 }));
 
 import { createWriteStream } from "node:fs";

@@ -1,5 +1,5 @@
 import { createWriteStream } from "node:fs";
-import { getDaemonLogPath } from "../config/paths.js";
+import { DAEMON_LOG_FILE } from "../../../infra/paths.js";
 
 export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
 export type LogEvent =
@@ -25,7 +25,7 @@ let logStream: ReturnType<typeof createWriteStream> | null = null;
  * Initializes the structured NDJSON logger, truncating the log file on start.
  */
 export function initLogger(): void {
-	const logPath = getDaemonLogPath();
+	const logPath = DAEMON_LOG_FILE;
 	logStream = createWriteStream(logPath, { flags: "w" });
 }
 

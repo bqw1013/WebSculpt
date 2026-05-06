@@ -13,7 +13,6 @@ vi.mock("../../../../src/daemon/server/executor/browser-manager.js", () => ({
 	getOpenPageCount: vi.fn().mockReturnValue(0),
 }));
 
-import { logEvent } from "../../../../src/daemon/server/observability/logger.js";
 import {
 	degraded,
 	resetMonitorState,
@@ -21,6 +20,7 @@ import {
 	startMemoryMonitoring,
 	stopMemoryMonitoring,
 } from "../../../../src/daemon/server/executor/memory-monitor.js";
+import { logEvent } from "../../../../src/daemon/server/observability/logger.js";
 
 describe("memory monitor state transitions", () => {
 	beforeEach(() => {

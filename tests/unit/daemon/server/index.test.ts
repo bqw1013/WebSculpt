@@ -32,8 +32,7 @@ vi.mock("../../../../src/daemon/server/executor/browser-manager.js", () => ({
 	withBrowser: vi.fn(),
 }));
 
-vi.mock("../../../../src/daemon/server/config/paths.js", () => ({
-	getDaemonLogPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.log"),
+vi.mock("../../../../src/daemon/shared/paths.js", () => ({
 	getDaemonStateDir: vi.fn().mockReturnValue("/tmp/.websculpt"),
 	getSocketPath: vi.fn().mockReturnValue("/tmp/.websculpt/daemon.sock"),
 }));
