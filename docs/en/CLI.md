@@ -26,7 +26,7 @@ When `websculpt <domain> <action>` is entered, the system resolves in the follow
 
 **Key Rules**:
 
-- Meta commands (`command`, `config`, `skill`) are registered directly at the system level and do not participate in extension command scanning, so they cannot be overridden by User or Builtin.
+- Meta commands (`command`, `config`, `daemon`, `skill`) are registered directly at the system level and do not participate in extension command scanning, so they cannot be overridden by User or Builtin.
 - User and Builtin conflicts are resolved in favor of User.
 
 ## 2. Extension Command Structure
@@ -91,7 +91,9 @@ websculpt --format json <meta-command>    # or -f json
 
 ## 4. Meta Command Reference
 
-### `config init`
+### 4.1 `config`
+
+#### `config init`
 
 Initialize the `~/.websculpt` directory structure, including configuration, command library, and log files.
 
@@ -103,7 +105,100 @@ websculpt config init
 
 ---
 
-### `command list`
+### 4.2 `daemon`
+
+Manage the background browser daemon process. `playwright-cli` runtime extension commands are actually executed by this daemon.
+
+#### `daemon status`
+
+Query daemon health and resource status.
+
+```bash
+websculpt daemon status
+```
+
+**Output Fields**
+
+| Field | Description |
+|------|------|
+| `pid` | Process ID |
+| `uptime` | Uptime in seconds |
+| `healthy` | Overall health status |
+| `degraded` | Whether in degraded mode (set to true when memory warning or restart threshold reached) |
+| `browser.connected` | Whether browser is connected |
+| `browser.pages` | Current number of open pages |
+| `sessions.active` | Current number of active sessions |
+| `sessions.max` | Maximum concurrent sessions |
+| `resources.rssMB` | Process RSS memory in MB |
+
+In human mode, currently effective resource limit configuration is also formatted and output.
+
+**Key Behaviors**
+
+- Errors with `DAEMON_NOT_RUNNING` when daemon is not running
+- Errors with `DAEMON_UNREACHABLE` when daemon is running but health endpoint is unreachable
+
+---
+
+#### `daemon logs [--lines <n>]`
+
+Display recent entries from the daemon log file.
+
+```bash
+websculpt daemon logs [--lines <n>]
+```
+
+| Option | Description |
+|------|------|
+| `--lines <n>` | Number of lines to display, default 50 |
+
+Errors with `NO_LOGS_AVAILABLE` when logs do not exist or cannot be read.
+
+---
+
+#### `daemon start`
+
+Start the background daemon (if not already running).
+
+```bash
+websculpt daemon start
+```
+
+Returns a prompt when already running and healthy, does not spawn duplicate instances.
+
+---
+
+#### `daemon restart`
+
+Restart the background daemon. Performs graceful stop first, waits 500ms, then starts a new instance to ensure the OS releases socket and other resources.
+
+```bash
+websculpt daemon restart
+```
+
+---
+
+#### `daemon stop`
+
+Stop the running daemon process.
+
+```bash
+websculpt daemon stop
+```
+
+**Key Behaviors**
+
+- Sends graceful stop request to daemon and waits for process exit
+- If process does not respond, performs force termination and cleans up state files
+- Returns "Daemon was not running" when target process does not exist
+
+Returns `DAEMON_STOP_FAILED` on failure (only when process resists force termination).
+
+---
+
+### 4.3 `command`
+
+#### `command list`
 
 List all available extension commands in the current environment, and annotate their source (builtin / user).
 
@@ -113,7 +208,7 @@ websculpt command list
 
 ---
 
-### `command draft <domain> <action>`
+#### `command draft`
 
 Generate a compliant command skeleton directory.
 
@@ -138,7 +233,7 @@ websculpt command draft <domain> <action> [options]
 
 ---
 
-### `command create <domain> <action>`
+#### `command create`
 
 Create a user-defined command from a directory, installing to `~/.websculpt/commands/<domain>/<action>/`.
 
@@ -161,7 +256,7 @@ websculpt command create <domain> <action> --from-dir <path> [options]
 
 ---
 
-### `command validate --from-dir <path> [domain] [action]`
+#### `command validate`
 
 Pre-check command package compliance, validates only, no disk write.
 
@@ -177,7 +272,7 @@ websculpt command validate --from-dir <path> [domain] [action]
 
 ---
 
-### `command show <domain> <action>`
+#### `command show`
 
 View the full contract card of an extension command, including metadata, parameters, runtime prerequisites, and asset completeness.
 
@@ -197,24 +292,18 @@ websculpt command show <domain> <action> [options]
 | `description` | Command purpose |
 | `runtime` | Execution runtime |
 | `source` | Source (`builtin` / `user`) |
-| `path` | Absolute path of command directory |
-| `entryFile` | Entry file name |
 | `parameters` | Full parameter contract (including `required`, `default`, `description`) |
 | `prerequisites` | Merged prerequisites (system-level + command-level) |
-| `assets` | Asset existence (`manifest`, `readme`, `context`, `entryFile`) |
-| `readmeContent` | Only returned when `--include-readme` is used and `README.md` exists, raw string |
 
 **Key Behaviors**
 
-- Non-existent command errors with `NOT_FOUND`
-- `prerequisites` automatically merges runtime system prerequisites (e.g., `playwright-cli`'s CDP session requirement) with `manifest.prerequisites`
-- Supports `--format json` for structured JSON output
-- `--include-readme` is opt-in: default does not read `README.md`, avoiding unnecessary I/O and payload bloat
-- If `--include-readme` is requested but `README.md` is missing, standard contract output remains unchanged; in JSON mode `readmeContent` field does not appear, in human mode no README section is appended
+- Errors with `NOT_FOUND` when command does not exist
+- `prerequisites` automatically merges runtime system prerequisites with `manifest.prerequisites`
+- `--include-readme` is opt-in: default does not read `README.md`
 
 ---
 
-### `command remove <domain> <action>`
+#### `command remove`
 
 Uninstall a user-defined command, deleting the `<domain>/<action>/` directory, and automatically cleaning up the parent directory when the domain is empty.
 
@@ -230,7 +319,9 @@ websculpt command remove <domain> <action>
 
 ---
 
-### `skill install`
+### 4.4 `skill`
+
+#### `skill install`
 
 Install the built-in WebSculpt skill to the agent directory.
 
@@ -254,7 +345,7 @@ websculpt skill install [options]
 
 ---
 
-### `skill uninstall`
+#### `skill uninstall`
 
 Remove the WebSculpt skill from the agent directory.
 
@@ -275,7 +366,7 @@ websculpt skill uninstall [options]
 
 ---
 
-### `skill status`
+#### `skill status`
 
 View the skill installation status of each agent.
 
@@ -296,19 +387,19 @@ websculpt skill status
 websculpt github list-trending
 ```
 
-### `help [domain] [action]`
+### 5.2 View help
 
-Display help for a command or domain. Without arguments, shows global help.
+Use `--help` to view global help or help for a specific command.
 
 ```bash
-websculpt help
-websculpt help github
-websculpt help github list-trending
+websculpt --help
+websculpt github --help
+websculpt github list-trending --help
 ```
 
 ---
 
-### 5.2 Full lifecycle: from creation to uninstallation
+### 5.3 Full lifecycle: from creation to uninstallation
 
 Complete flow from generating skeleton to uninstalling a custom command:
 
@@ -321,7 +412,7 @@ websculpt command draft mysite fetch --runtime playwright-cli --param url:requir
 
 # 3. Edit business logic under .websculpt-drafts/mysite-fetch/
 
-# 4. Pre-check compliance (standard usage, without domain/action)
+# 4. Pre-check compliance
 websculpt command validate --from-dir .websculpt-drafts/mysite-fetch/
 
 # 5. Install to command library

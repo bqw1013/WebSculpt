@@ -26,7 +26,7 @@ WebSculpt CLI 是命令的发现、执行与管理入口。它面向人类用户
 
 **关键规则**：
 
-- Meta 命令（`command`、`config`、`skill`）在系统层面直接注册，不参与扩展命令扫描，因此不会被 User 或 Builtin 覆盖。
+- Meta 命令（`command`、`config`、`daemon`、`skill`）在系统层面直接注册，不参与扩展命令扫描，因此不会被 User 或 Builtin 覆盖。
 - User 与 Builtin 的冲突以 User 为准。
 
 ## 2. 扩展命令结构
@@ -91,7 +91,9 @@ websculpt --format json <meta-command>    # 或 -f json
 
 ## 4. 元命令一览
 
-### `config init`
+### 4.1 `config`
+
+#### `config init`
 
 初始化 `~/.websculpt` 目录结构，包含配置、命令库和日志文件。
 
@@ -103,7 +105,100 @@ websculpt config init
 
 ---
 
-### `command list`
+### 4.2 `daemon`
+
+管理后台浏览器 daemon 进程。`playwright-cli` 运行时的扩展命令实际由该 daemon 执行。
+
+#### `daemon status`
+
+查询 daemon 健康与资源状态。
+
+```bash
+websculpt daemon status
+```
+
+**输出字段**
+
+| 字段 | 说明 |
+|------|------|
+| `pid` | 进程 ID |
+| `uptime` | 运行时长（秒） |
+| `healthy` | 整体健康状态 |
+| `degraded` | 是否处于降级模式（内存告警或达到重启阈值时置为 true） |
+| `browser.connected` | 浏览器是否已连接 |
+| `browser.pages` | 当前打开页签数 |
+| `sessions.active` | 当前活跃会话数 |
+| `sessions.max` | 最大并发会话数 |
+| `resources.rssMB` | 进程 RSS 内存（MB） |
+
+human 模式下会同时格式化输出当前生效的资源限制配置。
+
+**关键行为**
+
+- daemon 未运行时报错 `DAEMON_NOT_RUNNING`
+- daemon 在运行但健康端点不可达时报错 `DAEMON_UNREACHABLE`
+
+---
+
+#### `daemon logs [--lines <n>]`
+
+显示 daemon 日志文件最近条目。
+
+```bash
+websculpt daemon logs [--lines <n>]
+```
+
+| 选项 | 说明 |
+|------|------|
+| `--lines <n>` | 显示行数，默认 50 |
+
+日志不存在或无法读取时报错 `NO_LOGS_AVAILABLE`。
+
+---
+
+#### `daemon start`
+
+启动后台 daemon（如尚未运行）。
+
+```bash
+websculpt daemon start
+```
+
+已运行且健康时返回提示，不会重复启动。
+
+---
+
+#### `daemon restart`
+
+重启后台 daemon。先执行优雅停止，等待 500ms 后启动新实例，确保操作系统释放 socket 等资源。
+
+```bash
+websculpt daemon restart
+```
+
+---
+
+#### `daemon stop`
+
+停止运行中的 daemon 进程。
+
+```bash
+websculpt daemon stop
+```
+
+**关键行为**
+
+- 向 daemon 发送优雅停止请求，并等待进程退出
+- 若进程未响应，执行强制终止并清理状态文件
+- 目标进程不存在时返回"Daemon was not running"
+
+失败时返回 `DAEMON_STOP_FAILED`（仅当进程抵抗强制终止时）。
+
+---
+
+### 4.3 `command`
+
+#### `command list`
 
 列出当前环境中所有可用的扩展命令，并标注来源（builtin / user）。
 
@@ -113,7 +208,7 @@ websculpt command list
 
 ---
 
-### `command draft <domain> <action>`
+#### `command draft`
 
 生成合规的命令骨架目录。
 
@@ -138,7 +233,7 @@ websculpt command draft <domain> <action> [options]
 
 ---
 
-### `command create <domain> <action>`
+#### `command create`
 
 从目录创建用户自定义命令，安装到 `~/.websculpt/commands/<domain>/<action>/`。
 
@@ -161,7 +256,7 @@ websculpt command create <domain> <action> --from-dir <path> [options]
 
 ---
 
-### `command validate --from-dir <path> [domain] [action]`
+#### `command validate`
 
 预检命令包合规性，只校验不落盘。
 
@@ -177,7 +272,7 @@ websculpt command validate --from-dir <path> [domain] [action]
 
 ---
 
-### `command show <domain> <action>`
+#### `command show`
 
 查看某个扩展命令的完整契约卡片，包含元数据、参数、运行时前置条件和资产完整性。
 
@@ -197,24 +292,18 @@ websculpt command show <domain> <action> [options]
 | `description` | 命令用途 |
 | `runtime` | 执行运行时 |
 | `source` | 来源（`builtin` / `user`） |
-| `path` | 命令目录绝对路径 |
-| `entryFile` | 入口文件名 |
 | `parameters` | 完整参数契约（含 `required`、`default`、`description`） |
 | `prerequisites` | 合并后的前置条件（系统级 + 命令级） |
-| `assets` | 资产存在性（`manifest`、`readme`、`context`、`entryFile`） |
-| `readmeContent` | 仅当使用 `--include-readme` 且 `README.md` 存在时返回，原文字符串 |
 
 **关键行为**
 
 - 命令不存在时报错 `NOT_FOUND`
-- `prerequisites` 自动合并运行时系统前置条件（如 `playwright-cli` 的 CDP 会话要求）与 `manifest.prerequisites`
-- 支持 `--format json` 输出结构化 JSON
-- `--include-readme` 为 opt-in：默认不读取 `README.md`，避免不必要的 I/O 和 payload 膨胀
-- 若 `--include-readme` 请求但 `README.md` 缺失，标准契约输出保持不变；JSON 模式下 `readmeContent` 字段不出现，human 模式下不追加 README 区块
+- `prerequisites` 自动合并运行时系统前置条件与 `manifest.prerequisites`
+- `--include-readme` 为 opt-in：默认不读取 `README.md`
 
 ---
 
-### `command remove <domain> <action>`
+#### `command remove`
 
 卸载用户自定义命令，删除 `<domain>/<action>/` 目录，并在 domain 为空时自动清理父目录。
 
@@ -230,7 +319,9 @@ websculpt command remove <domain> <action>
 
 ---
 
-### `skill install`
+### 4.4 `skill`
+
+#### `skill install`
 
 将内置的 WebSculpt skill 安装到 agent 目录。
 
@@ -254,7 +345,7 @@ websculpt skill install [options]
 
 ---
 
-### `skill uninstall`
+#### `skill uninstall`
 
 从 agent 目录移除 WebSculpt skill。
 
@@ -275,7 +366,7 @@ websculpt skill uninstall [options]
 
 ---
 
-### `skill status`
+#### `skill status`
 
 查看各 agent 的 skill 安装状态。
 
@@ -296,19 +387,19 @@ websculpt skill status
 websculpt github list-trending
 ```
 
-### `help [domain] [action]`
+### 5.2 查看帮助
 
-显示命令或域的帮助信息。不带参数时显示全局帮助。
+使用 `--help` 查看全局帮助或指定命令的帮助。
 
 ```bash
-websculpt help
-websculpt help github
-websculpt help github list-trending
+websculpt --help
+websculpt github --help
+websculpt github list-trending --help
 ```
 
 ---
 
-### 5.2 完整生命周期：从创建到卸载
+### 5.3 完整生命周期：从创建到卸载
 
 从生成骨架到卸载一个自定义命令的完整流程：
 

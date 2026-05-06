@@ -11,7 +11,7 @@
 
 ### Comment Standards
 
-- **All comments must be in English.**
+- **All code comments must be in English.**
 - **Prefer self-explanatory types and names; avoid pointless comments.** Do not write uninformative comments like `// create a variable`.
 - **Complex or non-obvious logic must have inline comments explaining "why", not "what".**
 - **`export`ed public functions / interfaces / types should include JSDoc**, describing their responsibilities and key parameters.
