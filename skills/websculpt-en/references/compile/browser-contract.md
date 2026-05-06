@@ -11,10 +11,11 @@
 - Standard ESM module, must export an async function via `export default`
 - Signature: `async (page, params) => unknown`
 
-`page` is a Playwright `Page` instance, `params` is the parameter object passed by the runner.
+`page` is a Playwright `Page` instance created by the daemon for the current execution. `params` is the parameter object passed by the runner.
 
 - **Do not** write executable code outside the function body.
 - Helper functions can be declared inside the function body.
+- Do not close the injected `page`; the daemon closes it after the command finishes.
 
 ---
 
@@ -83,27 +84,20 @@ When precipitating `browser` commands, you can directly reuse the following stru
 export default async (page, params) => {
   const limit = parseInt(params.limit, 10);
 
-  // The injected page is shared across concurrent executions.
-  // Always create an isolated page and close it in finally.
-  page = await page.context().newPage();
-  try {
-    await page.goto("https://example.com", { waitUntil: "networkidle" });
-    await page.waitForSelector(".item", { timeout: 15000 });
+  await page.goto("https://example.com", { waitUntil: "networkidle" });
+  await page.waitForSelector(".item", { timeout: 15000 });
 
-    const items = await page.evaluate(() => {
-      return Array.from(document.querySelectorAll(".item")).map((el) => ({
-        title: el.querySelector("h2")?.textContent?.trim() || "",
-      }));
-    });
+  const items = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll(".item")).map((el) => ({
+      title: el.querySelector("h2")?.textContent?.trim() || "",
+    }));
+  });
 
-    if (items.length === 0) {
-      throw new Error("[EMPTY_RESULT] No items found");
-    }
-
-    return { items: items.slice(0, limit) };
-  } finally {
-    await page.close();
+  if (items.length === 0) {
+    throw new Error("[EMPTY_RESULT] No items found");
   }
+
+  return { items: items.slice(0, limit) };
 };
 ```
 
@@ -132,39 +126,32 @@ export default async (page, params) => {
   const author = params.author;
   const limit = parseInt(params.limit, 10);
 
-  // The injected page is shared across concurrent executions.
-  // Always create an isolated page and close it in finally.
-  page = await page.context().newPage();
-  try {
-    // Validate parameters
-    if (!author) {
-      throw new Error('[MISSING_PARAM] Parameter "author" is required.');
-    }
-
-    // Navigate and extract data
-    await page.goto(
-      "https://example.com/search?q=" + encodeURIComponent(author),
-      { waitUntil: "networkidle" }
-    );
-
-    const data = await page.evaluate(() => {
-      const nodes = document.querySelectorAll(".result-item");
-      return Array.from(nodes).map((n) => ({
-        title: n.querySelector(".title")?.innerText?.trim(),
-        url: n.querySelector("a")?.href,
-      }));
-    });
-
-    // Business error: empty result
-    if (data.length === 0) {
-      throw new Error("[EMPTY_RESULT] No relevant content found");
-    }
-
-    // Return success result
-    return { items: data.slice(0, limit) };
-  } finally {
-    await page.close();
+  // Validate parameters
+  if (!author) {
+    throw new Error('[MISSING_PARAM] Parameter "author" is required.');
   }
+
+  // Navigate and extract data
+  await page.goto(
+    "https://example.com/search?q=" + encodeURIComponent(author),
+    { waitUntil: "networkidle" }
+  );
+
+  const data = await page.evaluate(() => {
+    const nodes = document.querySelectorAll(".result-item");
+    return Array.from(nodes).map((n) => ({
+      title: n.querySelector(".title")?.innerText?.trim(),
+      url: n.querySelector("a")?.href,
+    }));
+  });
+
+  // Business error: empty result
+  if (data.length === 0) {
+    throw new Error("[EMPTY_RESULT] No relevant content found");
+  }
+
+  // Return success result
+  return { items: data.slice(0, limit) };
 };
 ```
 
@@ -198,24 +185,20 @@ High-frequency DOM operations or rapid page turning easily trigger risk control.
 
 ### Tab Isolation
 
-The `browser` runtime daemon shares the same injected `page` object across all concurrent executions. Directly operating on the shared `page` will cause navigation races, DOM pollution, and cross-command data crosstalk.
+The `browser` runtime daemon creates a dedicated page for each command execution and closes it in the executor's `finally` block. Command code can directly navigate and read from the injected `page` without creating another page.
 
-**All `browser` commands must** create an isolated page at the function start, and close it in `finally`:
+Do not close the injected `page` yourself:
 
 ```js
 export default async (page, params) => {
-  page = await page.context().newPage();
-  try {
-    // ... command logic ...
-  } finally {
-    await page.close();
-  }
+  await page.goto("https://example.com");
+  return { title: await page.title() };
 };
 ```
 
-- Reduce risk of accidentally operating on the original shared page in subsequent edits by **reassigning `page`** (rather than introducing new variables like `isolatedPage`).
-- `finally` block is mandatory; omitting `page.close()` will cause orphan tabs to accumulate in the daemon, causing memory leaks and polluting `tab-list`.
-- Do not close the original injected `page`, otherwise it will break the daemon's current tab state.
+- Create additional pages only when the command genuinely needs multi-page behavior.
+- If you create additional pages, close those additional pages in your own `finally` block.
+- Closing the injected `page` is the daemon executor's responsibility; doing it inside command code can interfere with timeout and cleanup handling.
 
 ---
 

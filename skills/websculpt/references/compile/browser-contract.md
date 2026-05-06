@@ -11,10 +11,11 @@
 - 标准 ESM 模块，必须 `export default` 导出异步函数
 - 签名：`async (page, params) => unknown`
 
-`page` 为 Playwright `Page` 实例，`params` 为 runner 传入的参数对象。
+`page` 为 daemon 为本次执行创建的 Playwright `Page` 实例，`params` 为 runner 传入的参数对象。
 
 - **不要**在函数体外写可执行代码。
 - 函数体内部可以声明辅助函数。
+- 不要关闭注入的 `page`；daemon 会在命令完成后统一关闭。
 
 ---
 
@@ -83,27 +84,20 @@ return { debug: { url: page.url(), title: await page.title() }, items: [] };
 export default async (page, params) => {
   const limit = parseInt(params.limit, 10);
 
-  // The injected page is shared across concurrent executions.
-  // Always create an isolated page and close it in finally.
-  page = await page.context().newPage();
-  try {
-    await page.goto("https://example.com", { waitUntil: "networkidle" });
-    await page.waitForSelector(".item", { timeout: 15000 });
+  await page.goto("https://example.com", { waitUntil: "networkidle" });
+  await page.waitForSelector(".item", { timeout: 15000 });
 
-    const items = await page.evaluate(() => {
-      return Array.from(document.querySelectorAll(".item")).map((el) => ({
-        title: el.querySelector("h2")?.textContent?.trim() || "",
-      }));
-    });
+  const items = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll(".item")).map((el) => ({
+      title: el.querySelector("h2")?.textContent?.trim() || "",
+    }));
+  });
 
-    if (items.length === 0) {
-      throw new Error("[EMPTY_RESULT] No items found");
-    }
-
-    return { items: items.slice(0, limit) };
-  } finally {
-    await page.close();
+  if (items.length === 0) {
+    throw new Error("[EMPTY_RESULT] No items found");
   }
+
+  return { items: items.slice(0, limit) };
 };
 ```
 
@@ -132,39 +126,32 @@ export default async (page, params) => {
   const author = params.author;
   const limit = parseInt(params.limit, 10);
 
-  // The injected page is shared across concurrent executions.
-  // Always create an isolated page and close it in finally.
-  page = await page.context().newPage();
-  try {
-    // Validate parameters
-    if (!author) {
-      throw new Error('[MISSING_PARAM] Parameter "author" is required.');
-    }
-
-    // Navigate and extract data
-    await page.goto(
-      "https://example.com/search?q=" + encodeURIComponent(author),
-      { waitUntil: "networkidle" }
-    );
-
-    const data = await page.evaluate(() => {
-      const nodes = document.querySelectorAll(".result-item");
-      return Array.from(nodes).map((n) => ({
-        title: n.querySelector(".title")?.innerText?.trim(),
-        url: n.querySelector("a")?.href,
-      }));
-    });
-
-    // Business error: empty result
-    if (data.length === 0) {
-      throw new Error("[EMPTY_RESULT] No relevant content found");
-    }
-
-    // Return success result
-    return { items: data.slice(0, limit) };
-  } finally {
-    await page.close();
+  // Validate parameters
+  if (!author) {
+    throw new Error('[MISSING_PARAM] Parameter "author" is required.');
   }
+
+  // Navigate and extract data
+  await page.goto(
+    "https://example.com/search?q=" + encodeURIComponent(author),
+    { waitUntil: "networkidle" }
+  );
+
+  const data = await page.evaluate(() => {
+    const nodes = document.querySelectorAll(".result-item");
+    return Array.from(nodes).map((n) => ({
+      title: n.querySelector(".title")?.innerText?.trim(),
+      url: n.querySelector("a")?.href,
+    }));
+  });
+
+  // Business error: empty result
+  if (data.length === 0) {
+    throw new Error("[EMPTY_RESULT] No relevant content found");
+  }
+
+  // Return success result
+  return { items: data.slice(0, limit) };
 };
 ```
 
@@ -198,24 +185,20 @@ await page.waitForSelector("article.Box-row", { timeout: 15000 });
 
 ### Tab Isolation
 
-`browser` runtime daemon 在所有并发执行之间共享同一个注入的 `page` 对象。直接在共享 `page` 上操作会导致导航竞争、DOM 污染和跨命令数据串扰。
+`browser` runtime daemon 会为每次命令执行创建专属 `page`，并在 executor 的 `finally` 块中关闭它。命令代码可以直接使用注入的 `page` 导航和读取数据，不需要再创建第二个页面。
 
-**所有 `browser` 命令必须**在函数开头创建隔离页面，并在 `finally` 中关闭：
+不要在命令代码里关闭注入的 `page`：
 
 ```js
 export default async (page, params) => {
-  page = await page.context().newPage();
-  try {
-    // ... command logic ...
-  } finally {
-    await page.close();
-  }
+  await page.goto("https://example.com");
+  return { title: await page.title() };
 };
 ```
 
-- 通过**重新赋值 `page`**（而非引入 `isolatedPage` 等新变量）来降低后续编辑时误操作原始共享页的风险。
-- `finally` 块是强制性的；遗漏 `page.close()` 会导致孤儿标签页在 daemon 中累积，造成内存泄漏并污染 `tab-list`。
-- 不要关闭原始的注入 `page`，否则会破坏 daemon 的当前标签页状态。
+- 只有命令确实需要多页行为时，才额外创建页面。
+- 如果命令额外创建了页面，必须在自己的 `finally` 块中关闭那些额外页面。
+- 关闭注入 `page` 是 daemon executor 的职责；命令代码主动关闭它会干扰超时和清理处理。
 
 ---
 
