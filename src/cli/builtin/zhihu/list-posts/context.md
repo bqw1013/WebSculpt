@@ -19,8 +19,7 @@ Medium. Extracting a user's published articles is a common sub-task for content 
 
 ## Environment Dependencies
 
-- Requires `playwright-cli` installed and attached to the user's Chrome/Edge browser (CDP mode).
-- User must enable remote debugging in the browser beforehand (`chrome://inspect/#remote-debugging`).
+- Requires Chrome or Edge running with remote debugging enabled.
 - Public profiles do not require authentication, but some may be behind a login wall.
 
 ## Failure Signals

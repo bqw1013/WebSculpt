@@ -22,8 +22,7 @@ Medium. Activity timeline extraction is useful for monitoring user engagement an
 
 ## Environment Dependencies
 
-- Requires `playwright-cli` installed and attached to the user's Chrome/Edge browser (CDP mode).
-- User must enable remote debugging in the browser beforehand (`chrome://inspect/#remote-debugging`).
+- Requires Chrome or Edge running with remote debugging enabled.
 - Some user activity pages may require login; public pages of active users are usually accessible.
 
 ## Failure Signals

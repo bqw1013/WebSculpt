@@ -8,17 +8,13 @@ This command navigates to a Zhihu user's profile page and extracts name, headlin
 
 ## Prerequisites
 
-This command requires a live browser automation session via `playwright-cli`. Before using it:
+This command requires a browser environment. Before using it:
 
 1. Open Chrome or Edge and visit `chrome://inspect/#remote-debugging`
 2. Enable **"Allow this browser instance to be remotely debugged"**
-3. In your terminal, run:
-   ```bash
-   playwright-cli attach --cdp=chrome --session=default
-   ```
-4. Then you can call this command
+3. Leave the browser open, then run this command
 
-> If the browser session is not attached, you will see the `BROWSER_ATTACH_REQUIRED` error.
+> If the browser is not running with remote debugging enabled, you will see the `BROWSER_ATTACH_REQUIRED` error.
 
 ## Parameters
 
@@ -78,4 +74,4 @@ websculpt zhihu get-user-profile --user https://www.zhihu.com/people/example-zhi
 | `MISSING_PARAM` | The `user` parameter is required. |
 | `NOT_FOUND` | User not found or the page returned 404. |
 | `DRIFT_DETECTED` | Could not extract profile data; page structure may have changed. |
-| `BROWSER_ATTACH_REQUIRED` | Browser CDP session is not attached. |
+| `BROWSER_ATTACH_REQUIRED` | Browser remote debugging is not enabled. Please follow the Prerequisites section above. |

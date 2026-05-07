@@ -23,8 +23,7 @@ High. GitHub Trending is a frequently requested data source across many domains.
 
 ## Environment Dependencies
 
-- Requires `playwright-cli` installed and attached to the user's Chrome/Edge browser (CDP mode).
-- User must enable remote debugging in the browser beforehand (`chrome://inspect/#remote-debugging`).
+- Requires Chrome or Edge running with remote debugging enabled.
 - The GitHub Trending page is public and **does not require authentication**.
 - Keep access frequency reasonable to avoid triggering GitHub anti-bot measures.
 
