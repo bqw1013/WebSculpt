@@ -55,7 +55,7 @@ Capture 不等于编写命令。Capture 只回答：
 
 - **实际跑通**：本次探索已经成功获取目标信息。
 - **可参数化**：换参数后仍有明确复用价值。
-- **粒度小**：覆盖一个清晰子任务，而不是混合多个站点、多个目标或大工作流。
+- **粒度小**：覆盖一个清晰子任务，而不是混合多个站点、多个目标或大工作流。若访问了多个独立站点或 API，应拆分为多个 capture 分别评估。
 - **来源稳定**：URL、API、DOM 结构或数据字段有可记录的稳定依据。
 - **证据充分**：能提供样例输入、样例输出和关键路径。
 - **风险可描述**：登录、反爬、限流、失效条件可以被明确记录。
@@ -86,7 +86,11 @@ websculpt command show <domain> <action>
 websculpt command show <domain> <action> --include-readme
 ```
 
-若已有命令覆盖当前路径，不创建新 capture。若已有命令只覆盖一部分，说明差异并让用户决定是否继续。
+查重结果判定：
+
+- 若 domain/action 或核心功能已存在，标记为"已覆盖"，不创建新 capture。
+- 若现有命令可覆盖当前子任务，标记为"已覆盖"，不创建新 capture。
+- 若已有命令只覆盖一部分，说明差异并让用户决定是否继续。
 
 `domain` 应表示目标服务、站点或数据源，例如 `github`、`reddit`、`hackernews`。`action` 应表示一个具体操作，例如 `list-trending`、`search-posts`、`fetch-profile`。不要使用 `research`、`analyze`、`scrape-all` 这类过大的 action。
 
