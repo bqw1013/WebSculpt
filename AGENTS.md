@@ -48,6 +48,7 @@
 - Never use `git add -A` or `git add .` — this will commit changes from other agents as well.
 - Always use `git add <specific-file-path>`, listing only the files you modified.
 - Before committing, run `git status` to confirm the staging area contains only your files.
+- Before committing, inspect recent commit messages and follow the repository's existing commit style.
 - Record files created / modified / deleted in this session.
 
 ## Communication Style
