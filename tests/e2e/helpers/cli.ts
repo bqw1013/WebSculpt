@@ -10,6 +10,10 @@ export interface CliRunResult {
 	stdout: string;
 }
 
+export interface CliRunOptions {
+	cwd?: string;
+}
+
 const helperDir = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(helperDir, "..", "..", "..");
 const tsxCliPath = join(repoRoot, "node_modules", "tsx", "dist", "cli.mjs");
@@ -51,7 +55,11 @@ export function websculptPath(homeDir: string, ...parts: string[]): string {
 /**
  * Executes the source-form CLI through tsx and captures its process result.
  */
-export async function runSourceCli(args: string[], homeDir: string): Promise<CliRunResult> {
+export async function runSourceCli(
+	args: string[],
+	homeDir: string,
+	options: CliRunOptions = {},
+): Promise<CliRunResult> {
 	const cliEnv: NodeJS.ProcessEnv = {
 		...process.env,
 		...createHomeEnv(homeDir),
@@ -59,7 +67,7 @@ export async function runSourceCli(args: string[], homeDir: string): Promise<Cli
 
 	return await new Promise<CliRunResult>((resolveResult, reject) => {
 		const child = spawn(process.execPath, [tsxCliPath, sourceCliEntry, ...args], {
-			cwd: repoRoot,
+			cwd: options.cwd ?? repoRoot,
 			env: cliEnv,
 			windowsHide: true,
 		});

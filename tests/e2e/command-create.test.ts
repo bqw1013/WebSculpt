@@ -269,4 +269,36 @@ describe("command create", () => {
 			}),
 		);
 	});
+
+	it("rejects reserved domain 'capture' with RESERVED_DOMAIN", async () => {
+		const homeDir = await createIsolatedHome();
+		tempDirs.push(homeDir);
+
+		const capturePackage = {
+			code: "export default async function() { return { ok: true }; }\n",
+			manifest: {
+				action: "sync",
+				description: "Should not be created",
+				domain: "capture",
+				id: "capture-sync",
+				parameters: [],
+				runtime: "node",
+				requiresBrowser: false,
+			},
+		};
+		const commandDirPath = await writeCommandDir(homeDir, "capture-dir", capturePackage);
+		const result = await runSourceCli(
+			["command", "create", "capture", "sync", "--from-dir", commandDirPath, "--format", "json"],
+			homeDir,
+		);
+		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
+
+		expect(result.exitCode).toBe(0);
+		expect(payload.success).toBe(false);
+		expect(payload.error).toEqual(
+			expect.objectContaining({
+				code: "RESERVED_DOMAIN",
+			}),
+		);
+	});
 });

@@ -5,7 +5,7 @@ import { resolveEntryFile } from "../runtime/index.js";
 import { getBuiltinCommandsDir } from "./paths.js";
 
 /** Domains reserved for meta commands; user-defined commands in these domains are ignored. */
-export const RESERVED_DOMAINS = new Set(["command", "config", "skill", "daemon"]);
+export const RESERVED_DOMAINS = new Set(["command", "config", "skill", "daemon", "capture"]);
 
 /** A command that has been resolved to an on-disk module and its origin. */
 export interface ResolvedCommand {

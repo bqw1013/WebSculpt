@@ -6,6 +6,12 @@ const COMMAND_TIMEOUT_MS = process.env.WEBSCULPT_TEST_COMMAND_TIMEOUT_MS
 	? Number(process.env.WEBSCULPT_TEST_COMMAND_TIMEOUT_MS)
 	: 20 * 60 * 1000; // 20 minutes
 
+function createTimeoutError(): Error & { code: string } {
+	const timeoutErr = new Error("Command execution timed out") as Error & { code: string };
+	timeoutErr.code = "COMMAND_TIMEOUT";
+	return timeoutErr;
+}
+
 /**
  * Dynamically imports a command module and executes its default export
  * inside a new page of the browser's default context.
@@ -38,18 +44,23 @@ export async function executeCommand(commandPath: string, params: Record<string,
 			}, COMMAND_TIMEOUT_MS);
 
 			const module = await import(`${pathToFileURL(commandPath).href}?t=${Date.now()}`);
+			if (timedOut) {
+				throw createTimeoutError();
+			}
 			const handler = module.default;
 
 			if (typeof handler !== "function") {
 				throw new Error(`Command module at ${commandPath} does not export a default function`);
 			}
 
-			return await handler(page, params);
+			const result = await handler(page, params);
+			if (timedOut) {
+				throw createTimeoutError();
+			}
+			return result;
 		} catch (err) {
 			if (timedOut) {
-				const timeoutErr = new Error("Command execution timed out");
-				(timeoutErr as Error & { code: string }).code = "COMMAND_TIMEOUT";
-				throw timeoutErr;
+				throw createTimeoutError();
 			}
 			throw err;
 		} finally {

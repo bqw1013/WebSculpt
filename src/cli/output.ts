@@ -1,4 +1,5 @@
 import type { CommandParameter, ValidationDetail } from "../types/index.js";
+import type { CommandLibrarySnapshot } from "./meta/capture/lib/capture-utils.js";
 
 /** Output format for meta command results. */
 export type OutputFormat = "human" | "json";
@@ -53,6 +54,27 @@ export interface CommandDraftResult {
 		file?: string;
 		command?: string;
 	}>;
+	warnings?: ValidationDetail[];
+}
+
+/** Result shape for a successful capture workspace creation. */
+export interface CaptureNewResult {
+	success: true;
+	capture: {
+		name: string;
+		path: string;
+		domain: string;
+		action: string;
+		runtime: string;
+	};
+	commandLibrarySnapshot: CommandLibrarySnapshot;
+	summary: {
+		domain: string;
+		action: string;
+		duplicateWarning?: string;
+		estimatedSteps: number;
+	};
+	next: string;
 	warnings?: ValidationDetail[];
 }
 
@@ -196,6 +218,7 @@ export type MetaCommandResult =
 	| CommandValidateResult
 	| ValidationErrorResult
 	| CommandDraftResult
+	| CaptureNewResult
 	| CommandShowResult
 	| MetaCommandError;
 
@@ -256,6 +279,10 @@ function isMetaCommandError(r: MetaCommandResult): r is MetaCommandError | Valid
 
 function isCommandDraftResult(r: MetaCommandResult): r is CommandDraftResult {
 	return r.success && "draftPath" in r;
+}
+
+function isCaptureNewResult(r: MetaCommandResult): r is CaptureNewResult {
+	return r.success && "capture" in r && "commandLibrarySnapshot" in r;
 }
 
 function isCommandCreateResult(r: MetaCommandResult): r is CommandCreateResult {
@@ -331,6 +358,30 @@ function renderDraftResult(result: CommandDraftResult): void {
 			console.log(`  - ${step.action}`);
 		}
 	}
+}
+
+function renderCaptureNewResult(result: CaptureNewResult): void {
+	console.log(`Capture workspace created at ${result.capture.path}`);
+	console.log("");
+	printKeyValue("name:", result.capture.name);
+	printKeyValue("domain:", result.capture.domain);
+	printKeyValue("action:", result.capture.action);
+	printKeyValue("runtime:", result.capture.runtime);
+	console.log("");
+	console.log("Command library snapshot:");
+	printKeyValue("  total:", String(result.commandLibrarySnapshot.totalCommands));
+	const sameDomain = result.commandLibrarySnapshot.sameDomainCommands;
+	printKeyValue("  same domain:", sameDomain.length > 0 ? sameDomain.join(", ") : "none");
+	printKeyValue("  name conflict:", result.commandLibrarySnapshot.nameConflict ? "yes" : "no");
+	if (result.commandLibrarySnapshot.conflictSource !== undefined) {
+		printKeyValue("  conflict source:", result.commandLibrarySnapshot.conflictSource);
+	}
+	if (result.warnings && result.warnings.length > 0) {
+		console.log("");
+		printWarnings(result.warnings);
+	}
+	console.log("");
+	console.log(`Next: ${result.next}`);
 }
 
 function renderCreateResult(result: CommandCreateResult): void {
@@ -495,6 +546,11 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 
 	if (isCommandDraftResult(result)) {
 		renderDraftResult(result);
+		return;
+	}
+
+	if (isCaptureNewResult(result)) {
+		renderCaptureNewResult(result);
 		return;
 	}
 
