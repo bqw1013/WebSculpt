@@ -413,6 +413,37 @@ function renderCaptureNewResult(result: CaptureNewResult): void {
 	console.log(`Next: ${result.next}`);
 }
 
+function formatNextHint(result: CaptureStatusResult): string {
+	const { next, artifacts: a } = result;
+	const base = `${next.action}${next.target ? ` (${next.target})` : ""}`;
+
+	switch (next.action) {
+		case "fill-evidence":
+			return a.evidence.reason ? `${base}: ${a.evidence.reason}` : base;
+		case "fill-manifest": {
+			if (a.manifest.reason?.includes("does not match capture")) {
+				return `${base}: ${a.manifest.reason}`;
+			}
+			if (a.manifest.status === "ready") {
+				return `${base}: Add description`;
+			}
+			return a.manifest.reason ? `${base}: ${a.manifest.reason}` : base;
+		}
+		case "fill-command":
+			return a.command.reason ? `${base}: ${a.command.reason}` : base;
+		case "fill-readme":
+			return a.readme.reason ? `${base}: ${a.readme.reason}` : base;
+		case "fill-context":
+			return a.context.reason ? `${base}: ${a.context.reason}` : base;
+		case "validate":
+			return a.validation.reason ? `${base}: ${a.validation.reason}` : base;
+		case "request-user-confirmation":
+			return `finalize: Ready to run "capture finalize"`;
+		default:
+			return base;
+	}
+}
+
 function renderCaptureStatusResult(result: CaptureStatusResult): void {
 	console.log(`Capture status for ${result.capture.name}`);
 	console.log(`Workspace: ${result.capture.path}`);
@@ -437,8 +468,9 @@ function renderCaptureStatusResult(result: CaptureStatusResult): void {
 	console.log("");
 	if (result.readyToFinalize) {
 		console.log("Status: READY TO FINALIZE");
+		console.log(`Next: ${formatNextHint(result)}`);
 	} else {
-		console.log(`Next: ${result.next.action}${result.next.target ? ` (${result.next.target})` : ""}`);
+		console.log(`Next: ${formatNextHint(result)}`);
 	}
 
 	if (result.warnings && result.warnings.length > 0) {
