@@ -3,7 +3,7 @@
  *
  * L1: heading structure (exact match of required H2 headings)
  * L2: content presence under each heading (non-empty, non-comment, non-heading lines)
- * L3: keyword gap warnings (guide-read, verified-urls, command-list-check)
+ * L3: keyword gap warnings (guide-read, verified-urls)
  */
 
 export interface EvidenceAuditResult {
@@ -71,14 +71,6 @@ export function auditEvidence(content: string, runtime: string): EvidenceAuditRe
 	// L3: at least one verified URL should be present
 	if (!/https?:\/\//.test(contentWithoutComments)) {
 		keywordGaps.push("verified-urls");
-	}
-
-	// L3: command library overlap check should be referenced
-	const hasCommandListRef = /command library|library snapshot|sameDomainCommands|nameConflict|overlap check/i.test(
-		contentWithoutComments,
-	);
-	if (!hasCommandListRef) {
-		keywordGaps.push("command-list-check");
 	}
 
 	const passed = missingHeadings.length === 0 && emptyHeadings.length === 0;

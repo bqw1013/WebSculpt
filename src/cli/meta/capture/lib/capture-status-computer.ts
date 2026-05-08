@@ -67,11 +67,22 @@ export async function computeCaptureStatus(name: string, baseDir = process.cwd()
 	const evidenceContent = await readFile(join(workspacePath, "evidence.md"), "utf8");
 	const evidenceAudit = auditEvidence(evidenceContent, runtime);
 
+	const evidenceReason = ((): string | undefined => {
+		const parts: string[] = [];
+		if (evidenceAudit.missingHeadings.length > 0) {
+			parts.push(`Missing headings: ${evidenceAudit.missingHeadings.join(", ")}`);
+		}
+		if (evidenceAudit.emptyHeadings.length > 0) {
+			parts.push(`Empty headings: ${evidenceAudit.emptyHeadings.join(", ")}`);
+		}
+		return parts.length > 0 ? parts.join("; ") : undefined;
+	})();
+
 	const evidenceState: ArtifactState = evidenceAudit.passed
 		? { status: "done", detail: { keywordGaps: evidenceAudit.keywordGaps } }
 		: {
 				status: "blocked",
-				reason: "Evidence audit failed",
+				reason: evidenceReason,
 				detail: {
 					missingHeadings: evidenceAudit.missingHeadings,
 					emptyHeadings: evidenceAudit.emptyHeadings,
