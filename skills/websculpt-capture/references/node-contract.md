@@ -65,7 +65,7 @@ error.code = "NOT_FOUND";
 throw error;
 ```
 
-常用错误码见 `contract.md`。
+
 
 ## 6. 检查清单
 
