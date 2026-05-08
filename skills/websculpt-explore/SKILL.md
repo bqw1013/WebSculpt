@@ -149,10 +149,10 @@ websculpt command show <domain> <action> --include-readme
 
 > **注意**：本节所述"浏览器自动化"指你**直接操作**浏览器进行网页探索。调用命令库中需要浏览器执行的已有命令不属于本节范围，按「查库与选工具」中的说明处理。
 
-浏览器自动化适合登录态、JS 渲染、多步骤交互或静态抓取困难的场景。执行前必须阅读 `references/access/playwright-cli/guide.md`。
+浏览器自动化适合登录态、JS 渲染、多步骤交互或静态抓取困难的场景。执行前必须阅读 `./references/access/playwright-cli-guide.md`。
 
 使用浏览器自动化前，确认 ExploreSession：
-- 若 `guideRead` 不为 `true`，先阅读 `references/access/playwright-cli/guide.md`
+- 若 `guideRead` 不为 `true`，先阅读 `./references/access/playwright-cli-guide.md`
 - 阅读完成后，`guideRead: true`
 - `toolsUsed` 追加 `"browser"`
 
