@@ -212,7 +212,7 @@ supersedes: null
 ### 4.3 `evidence.md`
 
 **核心设计原则**：
-1. **标题结构强制**：6 个二级标题必须存在，不得修改
+1. **标题结构强制**：5 个二级标题必须存在，不得修改
 2. **内容非空检查**：每个标题下必须有实质内容
 3. **关键词辅助检查**：作为补充验证
 
@@ -235,10 +235,6 @@ This document records the research and validation evidence for the `{domain}/{ac
 
 <!-- Record DOM selectors, JSON fields, API shapes, or other structural facts. -->
 
-## Parameters and Samples
-
-<!-- Describe parameterizable fields and include at least one input/output sample. -->
-
 ## Failure Signals
 
 <!-- Describe known failure modes, dependencies, and drift signals. -->
@@ -250,7 +246,7 @@ This document records the research and validation evidence for the `{domain}/{ac
 
 **模板简化理由**：
 
-命令库快照已经存储在 `capture.yaml` 中，不再重复写入 `evidence.md` 的注释块；evidence 模板仅保留 6 个英文 H2 标题和每段的写作提示。这样可以降低 Agent 把机器快照当作待编辑内容的概率，也与代码/注释使用英文的约束保持一致。
+命令库快照已经存储在 `capture.yaml` 中，不再重复写入 `evidence.md` 的注释块；evidence 模板仅保留 5 个英文 H2 标题和每段的写作提示。这样可以降低 Agent 把机器快照当作待编辑内容的概率，也与代码/注释使用英文的约束保持一致。
 
 ### 4.4 `draft/`
 
@@ -292,7 +288,7 @@ context.md       # 模板
 
 | 层级 | 检查什么 | 可靠性 | 实现方式 |
 |------|---------|--------|---------|
-| **结构检查** | 6 个必需标题是否存在 | 高 | Parse Markdown 提取 `## ` 标题，精确匹配 |
+| **结构检查** | 5 个必需标题是否存在 | 高 | Parse Markdown 提取 `## ` 标题，精确匹配 |
 | **内容检查** | 每个标题下是否有实质内容 | 高 | 标题段落到下一个同级标题之间，是否有非注释文本 |
 | **关键词检查** | 关键信息是否提及 | 中 | 字符串匹配（查库、guide、URL、选择器等） |
 
@@ -305,7 +301,6 @@ const REQUIRED_H2 = [
   "Exploration Path",
   "Verified URLs",
   "Structural Evidence",
-  "Parameters and Samples",
   "Failure Signals",
   "Capture Assessment",
 ];

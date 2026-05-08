@@ -116,7 +116,6 @@ describe("capture new", () => {
 		expect(evidence).toContain("## Exploration Path");
 		expect(evidence).toContain("## Verified URLs");
 		expect(evidence).toContain("## Structural Evidence");
-		expect(evidence).toContain("## Parameters and Samples");
 		expect(evidence).toContain("## Failure Signals");
 		expect(evidence).toContain("## Capture Assessment");
 		expect(evidence).toContain("This document records the research and validation evidence");

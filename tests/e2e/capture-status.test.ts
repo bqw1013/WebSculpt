@@ -430,11 +430,6 @@ ${guideLine}
 
 The API returns JSON with a "data" field.
 
-## Parameters and Samples
-
-Input: { "limit": 10 }
-Output: { "items": [] }
-
 ## Failure Signals
 
 Returns EMPTY_RESULT when no data is available.

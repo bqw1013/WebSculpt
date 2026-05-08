@@ -6,21 +6,20 @@
  * L3: keyword gap warnings (guide-read, verified-urls)
  */
 
+const REQUIRED_H2 = [
+	"Exploration Path",
+	"Verified URLs",
+	"Structural Evidence",
+	"Failure Signals",
+	"Capture Assessment",
+];
+
 export interface EvidenceAuditResult {
 	passed: boolean;
 	missingHeadings: string[];
 	emptyHeadings: string[];
 	keywordGaps: string[];
 }
-
-const REQUIRED_H2 = [
-	"Exploration Path",
-	"Verified URLs",
-	"Structural Evidence",
-	"Parameters and Samples",
-	"Failure Signals",
-	"Capture Assessment",
-];
 
 /**
  * Audits an evidence.md document against the three-layer capture evidence rules.

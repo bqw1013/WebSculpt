@@ -48,14 +48,13 @@ validation blocked                 → validate
 
 ## 3. Evidence Audit 规则
 
-**L1 结构**：6 个 H2 标题必须精确存在。
+**L1 结构**：5 个 H2 标题必须精确存在。
 
 ```ts
 const REQUIRED_H2 = [
   "Exploration Path",
   "Verified URLs",
   "Structural Evidence",
-  "Parameters and Samples",
   "Failure Signals",
   "Capture Assessment",
 ];

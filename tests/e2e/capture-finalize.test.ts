@@ -64,7 +64,7 @@ describe("capture finalize", () => {
 		// Break evidence by leaving it empty
 		await writeFile(
 			join(workDir, ".websculpt-captures", "ev-bad", "evidence.md"),
-			"# Evidence: example/collect\n\n## Exploration Path\n\n## Verified URLs\n\n## Structural Evidence\n\n## Parameters and Samples\n\n## Failure Signals\n\n## Capture Assessment\n",
+			"# Evidence: example/collect\n\n## Exploration Path\n\n## Verified URLs\n\n## Structural Evidence\n\n## Failure Signals\n\n## Capture Assessment\n",
 			"utf8",
 		);
 
@@ -287,11 +287,6 @@ ${guideLine}
 ## Structural Evidence
 
 The API returns JSON with a "data" field.
-
-## Parameters and Samples
-
-Input: { "limit": 10 }
-Output: { "items": [] }
 
 ## Failure Signals
 

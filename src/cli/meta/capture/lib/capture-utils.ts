@@ -204,10 +204,6 @@ This document records the research and validation evidence for the \`${metadata.
 
 <!-- Record DOM selectors, JSON fields, API shapes, or other structural facts. -->
 
-## Parameters and Samples
-
-<!-- Describe parameterizable fields and include at least one input/output sample. -->
-
 ## Failure Signals
 
 <!-- Describe known failure modes, dependencies, and drift signals. -->

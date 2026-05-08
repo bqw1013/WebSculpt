@@ -108,7 +108,7 @@ websculpt <domain> <action> --invalid-param value
 **测试失败时**：
 
 1. 分析原因并修改 `.websculpt-captures/<name>/draft/` 中的对应文件（通常是 `command.js` 或 `manifest.json`）。
-2. 若修改涉及输入输出样例或参数行为，同步检查并更新 `evidence.md` 的 **Parameters and Samples** 与 **Failure Signals**，确保 evidence 与实现一致。
+2. 若修改涉及输入输出样例或参数行为，同步检查并更新 `evidence.md` 的 **Structural Evidence** 与 **Failure Signals**，确保 evidence 与实现一致。
 3. 重新执行 `capture status <name>`，按状态机推进；`validation` 通常会回到 `blocked`，必须执行 `capture validate <name>` 重新通过验证。
 4. 执行 `capture finalize <name> --force` 覆盖已安装命令。安装后测试属于循环修复，无需再次请求用户确认。
 5. 再次执行全部 4 组测试，直至通过。
@@ -116,14 +116,13 @@ websculpt <domain> <action> --invalid-param value
 
 ## Evidence 写作规范
 
-`evidence.md` 记录已验证路径的证据，是 capture 阶段的事实来源。全文使用英文撰写，**不得修改 6 个 H2 标题**（`capture new` 生成工作区时已写入模板，打开文件即可见）。
+`evidence.md` 记录已验证路径的证据，是 capture 阶段的事实来源。全文使用英文撰写，**不得修改 5 个 H2 标题**（`capture new` 生成工作区时已写入模板，打开文件即可见）。
 
 | 段落 | 写什么 | 作用 |
 |------|--------|------|
 | Exploration Path | 命令库查重结论、工具选择理由 | 证明路径经过评估而非随意选择 |
 | Verified URLs | 实际访问并用于提取数据的 URL（带协议） | 提供可复现的一手来源 |
 | Structural Evidence | DOM 选择器、API endpoint、响应结构 | 实现 `command.js` 的直接依据 |
-| Parameters and Samples | 关键参数定义和核心样例（简要即可） | 为 README 提供事实依据；详细样例和用法说明由 README.md 承载 |
 | Failure Signals | 已知失败模式和触发条件 | 为 future repair 提供线索 |
 | Capture Assessment | 是否建议沉淀及理由 | capture 阶段的决策依据 |
 
