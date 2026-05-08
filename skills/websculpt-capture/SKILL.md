@@ -45,7 +45,16 @@ websculpt capture new <name> --domain <domain> --action <action> --runtime <runt
 - 生成 `evidence.md` 模板（含命令库快照提示）
 - 生成 `draft/` 骨架（manifest.json、command.js、README.md、context.md）
 
-### 2. 状态驱动循环
+### 2. 立项汇报
+
+根据 `capture new` 返回的 `commandLibrarySnapshot`，向用户汇报：
+- 同 domain 命令列表
+- 命名冲突及来源（user / builtin）
+- 若冲突来源为 user，提示覆盖风险
+
+请求用户确认是否继续推进。若用户拒绝，删除工作区并终止。
+
+### 3. 状态驱动循环
 
 **核心规则：每完成一个动作，必须重新执行 `capture status` 获取最新状态。**
 
@@ -64,7 +73,7 @@ websculpt capture status <name>
 | `validate` | 执行 `capture validate <name>` | - |
 | `request-user-confirmation` | 向用户展示摘要并请求确认 | - |
 
-### 3. 安装
+### 4. 安装
 
 用户确认后：
 

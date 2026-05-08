@@ -215,6 +215,8 @@ Capture Assessment:
   - 发现新路径 → "websculpt-capture（将验证过的路径沉淀为本地可复用命令）"
   - 无匹配也无新路径 → "无"
 
+Agent 在输出 Capture Assessment 后，**必须向用户简要说明沉淀建议并请求确认**，再建议进入 `websculpt-capture`。不要在用户未同意的情况下直接创建 capture 工作区。
+
 ### 状态更新
 
 完成 Capture Assessment 后，必须同步更新 ExploreSession：
