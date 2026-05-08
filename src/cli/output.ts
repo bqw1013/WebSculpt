@@ -1,4 +1,5 @@
 import type { CommandParameter, ValidationDetail } from "../types/index.js";
+import type { ArtifactState } from "./meta/capture/lib/capture-status-computer.js";
 import type { CommandLibrarySnapshot } from "./meta/capture/lib/capture-utils.js";
 
 /** Output format for meta command results. */
@@ -75,6 +76,29 @@ export interface CaptureNewResult {
 		estimatedSteps: number;
 	};
 	next: string;
+	warnings?: ValidationDetail[];
+}
+
+/** Result shape for a successful capture status query. */
+export interface CaptureStatusResult {
+	success: true;
+	capture: {
+		name: string;
+		path: string;
+	};
+	artifacts: {
+		evidence: ArtifactState;
+		command: ArtifactState;
+		manifest: ArtifactState;
+		readme: ArtifactState;
+		context: ArtifactState;
+		validation: ArtifactState;
+	};
+	readyToFinalize: boolean;
+	next: {
+		action: string;
+		target?: string;
+	};
 	warnings?: ValidationDetail[];
 }
 
@@ -219,6 +243,7 @@ export type MetaCommandResult =
 	| ValidationErrorResult
 	| CommandDraftResult
 	| CaptureNewResult
+	| CaptureStatusResult
 	| CommandShowResult
 	| MetaCommandError;
 
@@ -283,6 +308,10 @@ function isCommandDraftResult(r: MetaCommandResult): r is CommandDraftResult {
 
 function isCaptureNewResult(r: MetaCommandResult): r is CaptureNewResult {
 	return r.success && "capture" in r && "commandLibrarySnapshot" in r;
+}
+
+function isCaptureStatusResult(r: MetaCommandResult): r is CaptureStatusResult {
+	return r.success && "artifacts" in r && "readyToFinalize" in r;
 }
 
 function isCommandCreateResult(r: MetaCommandResult): r is CommandCreateResult {
@@ -382,6 +411,40 @@ function renderCaptureNewResult(result: CaptureNewResult): void {
 	}
 	console.log("");
 	console.log(`Next: ${result.next}`);
+}
+
+function renderCaptureStatusResult(result: CaptureStatusResult): void {
+	console.log(`Capture status for ${result.capture.name}`);
+	console.log(`Workspace: ${result.capture.path}`);
+	console.log("");
+
+	const a = result.artifacts;
+	const states = [
+		["evidence", a.evidence],
+		["command", a.command],
+		["manifest", a.manifest],
+		["readme", a.readme],
+		["context", a.context],
+		["validation", a.validation],
+	] as const;
+
+	for (const [name, state] of states) {
+		const statusLabel = state.status.toUpperCase();
+		const reason = state.reason ? ` (${state.reason})` : "";
+		console.log(`  ${name.padEnd(12)} ${statusLabel}${reason}`);
+	}
+
+	console.log("");
+	if (result.readyToFinalize) {
+		console.log("Status: READY TO FINALIZE");
+	} else {
+		console.log(`Next: ${result.next.action}${result.next.target ? ` (${result.next.target})` : ""}`);
+	}
+
+	if (result.warnings && result.warnings.length > 0) {
+		console.log("");
+		printWarnings(result.warnings);
+	}
 }
 
 function renderCreateResult(result: CommandCreateResult): void {
@@ -551,6 +614,11 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 
 	if (isCaptureNewResult(result)) {
 		renderCaptureNewResult(result);
+		return;
+	}
+
+	if (isCaptureStatusResult(result)) {
+		renderCaptureStatusResult(result);
 		return;
 	}
 

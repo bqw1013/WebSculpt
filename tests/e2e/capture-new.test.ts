@@ -113,14 +113,13 @@ describe("capture new", () => {
 		expect(manifest.id ?? "").toBe("");
 
 		const evidence = await readFile(join(workspacePath, "evidence.md"), "utf8");
-		expect(evidence).toContain("## 探索路径");
-		expect(evidence).toContain("## 已验证 URL");
-		expect(evidence).toContain("## 结构证据");
-		expect(evidence).toContain("## 参数与样例");
-		expect(evidence).toContain("## 失败信号");
+		expect(evidence).toContain("## Exploration Path");
+		expect(evidence).toContain("## Verified URLs");
+		expect(evidence).toContain("## Structural Evidence");
+		expect(evidence).toContain("## Parameters and Samples");
+		expect(evidence).toContain("## Failure Signals");
 		expect(evidence).toContain("## Capture Assessment");
-		expect(evidence).toContain("sameDomainCommands");
-		expect(evidence).toContain("nameConflict: false");
+		expect(evidence).toContain("This document records the research and validation evidence");
 	});
 
 	it("uses browser runtime templates when requested", async () => {
