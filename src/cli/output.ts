@@ -36,6 +36,7 @@ export interface ValidationErrorResult {
 export interface CommandValidateResult {
 	success: true;
 	warnings?: ValidationDetail[];
+	message?: string;
 }
 
 /** Result shape for a successful command removal. */
@@ -617,6 +618,9 @@ function renderValidationResult(result: CommandValidateResult): void {
 	} else {
 		console.log("Validation passed");
 	}
+	if (result.message) {
+		console.log(result.message);
+	}
 }
 
 function renderRemoveResult(result: CommandRemoveResult): void {
@@ -679,13 +683,13 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		return;
 	}
 
-	if (isMessageResult(result)) {
-		renderMessageResult(result);
+	if (isCommandValidateResult(result)) {
+		renderValidationResult(result);
 		return;
 	}
 
-	if (isCommandValidateResult(result)) {
-		renderValidationResult(result);
+	if (isMessageResult(result)) {
+		renderMessageResult(result);
 		return;
 	}
 

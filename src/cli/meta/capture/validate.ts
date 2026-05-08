@@ -1,7 +1,7 @@
 import { access, constants, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
-import type { MetaCommandResult } from "../../output.js";
+import type { CommandValidateResult, MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
 import { handleCommandValidate } from "../command/validate.js";
 import {
@@ -53,6 +53,10 @@ export async function handleCaptureValidate(name: string): Promise<MetaCommandRe
 					},
 				}
 			: result;
+
+	if (finalResult.success) {
+		(finalResult as CommandValidateResult).message = "Next: capture finalize";
+	}
 
 	// Persist validation result so capture status can reference it.
 	const validationRecord = {

@@ -110,7 +110,7 @@ describe("capture new", () => {
 		expect(manifest.domain).toBe("example");
 		expect(manifest.action).toBe("collect");
 		expect(manifest.runtime).toBe("node");
-		expect(manifest.id ?? "").toBe("");
+		expect(manifest.id).toBe("example-collect");
 
 		const evidence = await readFile(join(workspacePath, "evidence.md"), "utf8");
 		expect(evidence).toContain("## Exploration Path");

@@ -86,19 +86,19 @@ function validateL1Structure(
 	if (expectedDomain !== undefined && expectedAction !== undefined) {
 		// Full injection simulation mode: missing fields are warnings, mismatches are errors.
 		if (id === undefined || id === null || id === "") {
-			addWarning(details, "MISSING_IDENTITY_FIELDS", "Manifest is missing 'id' (will be injected on create)");
+			addWarning(details, "MISSING_IDENTITY_FIELDS", "Manifest is missing 'id' (will be injected on install)");
 		} else if (typeof id !== "string" || id !== `${expectedDomain}-${expectedAction}`) {
 			addError(details, "ID_MISMATCH", `Manifest id "${id}" does not match "${expectedDomain}-${expectedAction}"`);
 		}
 
 		if (domain === undefined || domain === null || domain === "") {
-			addWarning(details, "MISSING_IDENTITY_FIELDS", "Manifest is missing 'domain' (will be injected on create)");
+			addWarning(details, "MISSING_IDENTITY_FIELDS", "Manifest is missing 'domain' (will be injected on install)");
 		} else if (typeof domain !== "string" || domain !== expectedDomain) {
 			addError(details, "ID_MISMATCH", `Manifest domain "${domain}" does not match expected "${expectedDomain}"`);
 		}
 
 		if (action === undefined || action === null || action === "") {
-			addWarning(details, "MISSING_IDENTITY_FIELDS", "Manifest is missing 'action' (will be injected on create)");
+			addWarning(details, "MISSING_IDENTITY_FIELDS", "Manifest is missing 'action' (will be injected on install)");
 		} else if (typeof action !== "string" || action !== expectedAction) {
 			addError(details, "ID_MISMATCH", `Manifest action "${action}" does not match expected "${expectedAction}"`);
 		}

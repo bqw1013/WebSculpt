@@ -169,7 +169,8 @@ async function writeDraftSkeleton(
 	action: string,
 	runtime: CommandRuntime,
 ): Promise<void> {
-	const manifest: Omit<CommandManifest, "id"> & { id?: string } = {
+	const manifest: CommandManifest = {
+		id: `${domain}-${action}`,
 		domain,
 		action,
 		runtime,
