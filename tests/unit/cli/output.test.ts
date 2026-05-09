@@ -152,7 +152,7 @@ describe("renderOutput", () => {
 		renderOutput(createCaptureNewResult(), "human");
 
 		expect(logSpy).toHaveBeenCalledWith("Capture workspace created at /tmp/.websculpt-captures/github-trending");
-		expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("github/list-trending"));
+		expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("github/get-trending"));
 		expect(logSpy).toHaveBeenCalledWith("Next: websculpt capture status github-trending");
 		logSpy.mockRestore();
 	});
@@ -165,18 +165,18 @@ function createCaptureNewResult(): CaptureNewResult {
 			name: "github-trending",
 			path: "/tmp/.websculpt-captures/github-trending",
 			domain: "github",
-			action: "list-trending",
+			action: "get-trending",
 			runtime: "browser",
 		},
 		commandLibrarySnapshot: {
 			totalCommands: 2,
-			sameDomainCommands: ["github/list-trending"],
+			sameDomainCommands: ["github/get-trending"],
 			nameConflict: true,
 			conflictSource: "builtin",
 		},
 		summary: {
 			domain: "github",
-			action: "list-trending",
+			action: "get-trending",
 			duplicateWarning: "Builtin command exists",
 			estimatedSteps: 5,
 		},

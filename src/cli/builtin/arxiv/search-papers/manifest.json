@@ -1,0 +1,34 @@
+{
+  "id": "arxiv-search-papers",
+  "domain": "arxiv",
+  "action": "search-papers",
+  "runtime": "node",
+  "description": "Search arxiv.org for academic papers by keyword and return structured metadata including title, abstract, authors, categories, and PDF links. Supports boolean query syntax, result pagination, and sorting by submission date or relevance.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search query using arxiv syntax (e.g., 'all:agentic AND all:reinforcement', 'ti:transformer', 'au:smith')",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of results to return (1-50)",
+      "required": false,
+      "default": "10"
+    },
+    {
+      "name": "sortBy",
+      "description": "Field to sort results by",
+      "required": false,
+      "default": "submittedDate"
+    },
+    {
+      "name": "sortOrder",
+      "description": "Sort direction",
+      "required": false,
+      "default": "descending"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

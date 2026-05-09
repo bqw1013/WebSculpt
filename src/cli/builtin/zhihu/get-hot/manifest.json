@@ -1,0 +1,17 @@
+{
+  "id": "zhihu-get-hot",
+  "domain": "zhihu",
+  "action": "get-hot",
+  "runtime": "browser",
+  "description": "Fetch the current Zhihu hot list from the rendered https://www.zhihu.com/hot page using a browser session. Returns ranked items with title, URL, and heat value. Use this when the official API or static HTML is blocked and the browser session can render Zhihu.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of hot list items to return. Defaults to 20. Must be an integer from 1 to 50.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

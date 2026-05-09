@@ -1,0 +1,23 @@
+{
+  "id": "reddit-get-hot",
+  "domain": "reddit",
+  "action": "get-hot",
+  "runtime": "browser",
+  "description": "Fetch trending posts from Reddit's front-page feed using browser automation. Returns a ranked list with title, subreddit, score, comments, author, and links. Supports adjustable result limit and sorting by hot, top, rising, or new. No authentication required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of posts to return (1-100)",
+      "required": false,
+      "default": "5"
+    },
+    {
+      "name": "sort",
+      "description": "Sort order: hot, top, rising, or new",
+      "required": false,
+      "default": "hot"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

@@ -249,7 +249,7 @@ describe("capture new", () => {
 			"--domain",
 			"github",
 			"--action",
-			"list-trending",
+			"get-trending",
 			"--runtime",
 			"browser",
 		]);
@@ -263,7 +263,7 @@ describe("capture new", () => {
 				conflictSource: "builtin",
 			}),
 		);
-		expect(payload.commandLibrarySnapshot?.sameDomainCommands).toContain("github/list-trending");
+		expect(payload.commandLibrarySnapshot?.sameDomainCommands).toContain("github/get-trending");
 		expect(payload.warnings).toContainEqual(
 			expect.objectContaining({
 				code: "BUILTIN_OVERRIDE",

@@ -1,0 +1,17 @@
+{
+  "id": "bilibili-get-hot",
+  "domain": "bilibili",
+  "action": "get-hot",
+  "runtime": "node",
+  "description": "Fetch Bilibili real-time hot search trending topics. Returns ranked items with keyword, display name, heat score, heat layer, and icon. No authentication required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of hot search items to return",
+      "required": false,
+      "default": "10"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

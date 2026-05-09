@@ -1,0 +1,28 @@
+{
+  "id": "github-get-trending",
+  "domain": "github",
+  "action": "get-trending",
+  "runtime": "node",
+  "description": "Fetch trending GitHub repositories based on recent activity and star count. Returns a ranked list of repositories with metadata including name, description, stars, language, and URL. Filters by time period (daily/weekly/monthly) and programming language.",
+  "parameters": [
+    {
+      "name": "period",
+      "description": "Time range for recent activity: daily, weekly, or monthly",
+      "required": false,
+      "default": "weekly"
+    },
+    {
+      "name": "language",
+      "description": "Filter by primary programming language (e.g. python, javascript, rust)",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Number of repositories to return (1-50)",
+      "required": false,
+      "default": "10"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}
