@@ -1,170 +1,291 @@
-# WebSculpt Architecture Deep Dive
+# WebSculpt Architecture
 
-> This document is for developers, describing WebSculpt's architecture design, runtime model, and directory planning.
+> This document is intended for developers. It describes WebSculpt's architecture, runtime model, and directory layout.
 
 ---
 
 ## 1. Architecture Overview
 
-WebSculpt consists of four layers:
+WebSculpt's core design goal is to turn "information acquisition paths" into locally reusable command assets. The entire system revolves around a three-stage closed loop of **explore → capture → command**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         AI Agent                                    │
-│  (reads docs, makes decisions, writes code, invokes CLI)            │
+│  (understand requirements, explore paths, capture assets, invoke    │
+│   commands)                                                         │
 └─────────────────────────────────────────────────────────────────────┘
-    │                    │                    │
-    ▼                    ▼                    ▼
-┌─────────┐      ┌──────────────┐      ┌──────────────┐
-│ access  │      │   explore    │      │   compile    │
-│Constraint│      │  Strategy    │      │  Spec Layer  │
-└─────────┘      └──────────────┘      └──────────────┘
-    │                                         │
-    └─────────────────────┬───────────────────┘
-                          ▼
-                   ┌──────────────┐
-                   │     CLI      │
-                   │Interaction & │
-                   │Execution Layer│
-                   └──────────────┘
+    │                              │
+    ▼                              ▼
+┌──────────────┐           ┌──────────────┐
+│   explore    │  ──────►  │   capture    │
+│  discovery & │  handoff  │  capture &   │
+│  validation  │           │  solidify    │
+└──────────────┘           └──────────────┘
+    ▲                              │
+    │                              ▼
+    │                      ┌──────────────┐
+    └─────────────────────│    command   │
+       reuse existing     │  execute &   │
+       commands           │  reuse       │
+                          └──────────────┘
+                                   │
+                                   ▼
+                          ┌──────────────┐
+                          │     CLI      │
+                          │  interaction │
+                          │  & scheduler │
+                          └──────────────┘
+                                   │
+                    ┌──────────────┼──────────────┐
+                    ▼              ▼              ▼
+                ┌──────┐     ┌────────┐     ┌──────────┐
+                │ node │     │browser │     │shell/py  │
+                └──────┘     │(daemon)│     └──────────┘
+                             └────────┘
 ```
 
-| Layer | Purpose | Consumer |
-|------|------|--------|
-| access | Write `guide.md` for each external tool to constrain the Agent's usage boundaries | AI |
-| explore | Write `strategy.md` to guide multi-tool coordination and reuse of existing commands | AI |
-| compile | Write `contract.md` to define command authoring specifications and validation rules | AI / CLI |
-| CLI | Provide command registration, discovery, execution, and lifecycle management | Human users / AI |
+| Stage   | Responsibility | Corresponding Skill | Output |
+|---------|---------------|---------------------|--------|
+| explore | Complete information acquisition tasks, discover reusable paths; prefer reusing the command library, and use external tools only when necessary | `websculpt-explore` | Exploration results + Capture Assessment |
+| capture | Solidify validated paths into command assets, push them through a state machine and hard-gate validation before installation | `websculpt-capture` | Commands installed into the library as `domain/action` |
+| command | Discovered, scheduled, and executed by the CLI; users and agents invoke through the same interface | — | Structured JSON output |
 
-The following sections elaborate on each layer in order.
+The CLI is the unified entry point for all three stages: it provides the `capture` workflow to manage the capture process, the `command` interface to manage the command library, and serves as the execution engine for extension commands.
 
 ---
 
-## 2. access
+## 2. Explore Stage
 
 ### 2.1 Positioning
 
-The access layer provides a `guide.md` for each external tool, clarifying connection methods, available commands, and risk warnings, constraining the Agent to operate within controlled boundaries.
+Explore is the **discovery and validation layer** for information acquisition. Its core responsibilities are:
 
-The access layer does not replace the tool itself, nor does it make routing decisions or orchestrate operations. It only provides reference documentation on "how to use this tool and what its limitations are"; specific usage decisions are left to the explore layer and the Agent itself.
+- **Prefer reuse**: First check whether the command library already contains a captured information acquisition path to avoid wasting tokens.
+- **Explore on demand**: When no usable path exists, use external tools to explore and validate new paths, preserving failure signals.
+- **Handoff assessment**: When delivering results, evaluate whether the path is worth capturing and hand candidates off to the capture stage.
 
-### 2.2 Directory Structure
+The explore stage **does not create command assets**; it is only responsible for discovery and assessment.
 
-```
-skills/websculpt/references/access/
-  <tool-name>/
-    guide.md             # Tool operation reference
-```
+### 2.2 Skill Deliverables
 
-The English version is located at `skills/websculpt-en/references/access/`.
+`skills/websculpt-explore/` contains:
+
+- `SKILL.md`: exploration protocol, ExploreSession state machine, library lookup and tool selection rules, Capture Assessment format.
+- `references/access/playwright-cli-guide.md`: operational reference for when the agent needs to directly operate a browser during exploration.
+
+### 2.3 Key Mechanisms
+
+- **Mandatory library check**: Every explore session must begin with `websculpt command list`, and the conclusion must be recorded in `ExploreSession.libraryResult`.
+- **Progressive confirmation**: Candidate commands are confirmed from light to heavy (`--help` → `command show` → `command show --include-readme`).
+- **Browser prerequisite check**: If direct browser operation is needed, the agent must first read `playwright-cli-guide.md` and record this in `ExploreSession.guideRead`.
+- **Capture Assessment**: On delivery, the agent must evaluate whether there is a reusable path and provide a candidate `domain/action` along with recommended next steps.
 
 ---
 
-## 3. explore
+## 3. Capture Stage
 
 ### 3.1 Positioning
 
-The explore layer provides orchestration strategies for multi-tool coordination, guiding the Agent on how to combine tools to accomplish complex tasks. As the command library accumulates, the Agent can directly reuse existing builtin or user commands to retrieve information, reducing redundant token consumption.
+Capture is a **lightweight workspace** introduced between "explored paths" and "official command assets". After the agent completes exploration, it does not directly write a command to disk; instead, it enters a checked, recoverable, and auditable capture process.
 
-Exploration results are validated by compile and then persisted as new commands via `command create`, forming a closed loop of "explore → precipitate → reuse". The output of the explore layer is AI-facing decision reference documentation (`strategy.md`), not executable code.
+Core responsibilities:
 
-### 3.2 Directory Structure
+- **Solidify evidence**: `evidence.md` records the explored path, validated URLs, selectors, failure signals, etc.
+- **State-machine driven**: The agent does not need to understand the full process; it only needs to loop `capture status` and advance according to the returned `next.action`.
+- **Hard-gate installation**: Only after evidence, code, documentation, and validation all pass can `capture finalize` install the command into the library.
 
+### 3.2 Workspace Structure
+
+The workspace is located in the **current project directory**:
+
+```text
+.websculpt-captures/
+└── <name>/
+    ├── capture.yaml      # machine-readable metadata + command library snapshot (written on creation, read-only thereafter)
+    ├── evidence.md       # exploration evidence (filled by agent, audited by system)
+    ├── draft/            # command package skeleton
+    │   ├── manifest.json
+    │   ├── command.js
+    │   ├── README.md
+    │   └── context.md
+    └── validation.json   # result of the most recent validate (includes draft fingerprint)
 ```
-skills/websculpt/references/explore/
-  strategy.md          # Exploration strategy documentation
+
+### 3.3 Core Design Concepts
+
+**Six-Artifact Pipeline**
+
+The capture workflow is driven by 6 artifacts in strict layered dependency:
+
+```text
+evidence → command → manifest → readme → context → validation
 ```
 
-The English version is located at `skills/websculpt-en/references/explore/`.
+Each artifact must wait for its predecessors to reach a completed state before it can leave the blocked state; if a predecessor is rolled back, all downstream artifacts are immediately cascaded back.
+
+**Pure Functional State Machine**
+
+Every call to `capture status` re-reads the filesystem, computes the current state and next action from the scan results, and maintains no in-memory persistent state. This allows the agent to modify files arbitrarily, and an unfamiliar agent in a new session can learn the current progress with a single call.
+
+**Evidence Audit**
+
+`evidence.md` undergoes a three-layer Markdown audit: L1/L2 are hard gates, L3 is a soft rule. This prevents the agent from skipping evidence recording and jumping straight to code.
+
+**Validation Fingerprint**
+
+After validation passes, a SHA256 fingerprint of the draft is computed and written to `validation.json`. Subsequent modifications to the draft invalidate the fingerprint and block finalize, preventing the "validate then secretly change code" bypass.
+
+**Finalize Hard Gate**
+
+Installation requires four conditions simultaneously: successful validation, valid fingerprint, passed evidence audit, and all artifacts completed. When any gate is not met, a clear error code is returned; there is no silent degradation.
+
+> For detailed rules, state transition functions, and decision chains of each mechanism, see [`Capture.md`](./Capture.md).
+
+### 3.4 Skill Deliverables
+
+`skills/websculpt-capture/` contains:
+
+- `SKILL.md`: capture protocol, CaptureSession state machine, 4 test requirement groups, fix-loop rules.
+- `references/node-contract.md` / `browser-contract.md`: command authoring contracts by runtime.
 
 ---
 
-## 4. compile
+## 4. Command Stage
 
 ### 4.1 Positioning
 
-The compile layer defines the authoring specifications for extension commands. Unlike access and explore, compile's specifications do not have an independent CLI; they are enforced through CLI commands `command draft`, `command validate`, and `command create`.
+A command is a reusable information acquisition workflow that encapsulates the logic of "how to get information from a specific website or API". First captured through AI exploration, it is directly reused afterward without repeatedly consuming tokens.
 
-Runtime contracts and authoring specifications are in [`skills/websculpt-en/references/compile/contract.md`](../skills/websculpt-en/references/compile/contract.md).
+Commands fall into two categories:
 
-### 4.2 Key Design Decisions
+- **Builtin (built-in extension commands)**: Located in `src/cli/builtin/`, distributed with the project.
+- **User (user-defined commands)**: Located in `~/.websculpt/commands/`, can override builtins, making the system evolvable.
 
-- **Structure enforced, logic free**: Metadata such as manifest format and export signatures are hard constraints of the system; the specific implementation inside commands is written by AI based on exploration results.
+### 4.2 Command Package Structure
 
-- **Validation is a hard gate**: `command create` enforces L1-L3 layered validation before writing to disk; failures unconditionally prevent writing.
+```text
+~/.websculpt/commands/<domain>/<action>/
+  ├── manifest.json    # metadata: description, runtime, parameter list
+  ├── command.js       # execution logic (or runtime-specific entry)
+  ├── README.md        # documentation for callers
+  ├── context.md       # context for maintainers
+  └── evidence.md      # exploration evidence (copied from capture path on finalize; not present for path A)
+```
 
-  | Level | Scope |
-  |------|------|
-  | L1 Structure | Manifest fields and types |
-  | L2 Compliance | Prohibited code patterns |
-  | L3 Contract | Consistency between code structure and manifest |
+Builtin commands physically reside in `src/cli/builtin/<domain>/<action>/`, with the same structure as user commands.
+
+### 4.3 Creation Paths
+
+Extension commands can be created through two paths:
+
+| Path | Command Series | Draft Location | Characteristics |
+|------|---------------|----------------|-----------------|
+| **A: Direct creation** | `command draft / validate / create` | `.websculpt-drafts/` | Manual authoring or scripted scenarios; full process control |
+| **B: Capture workflow** | `capture new / status / validate / finalize` | `.websculpt-captures/<name>/draft/` | Agent-driven; additionally requires `evidence.md` and state-machine progression; internally reuses `command` validation and installation capabilities, adding evidence audit and draft fingerprint anti-tampering |
+
+Path B internally calls the same installation logic as path A during finalize, but with additional pre-gates.
+
+### 4.4 Layered Validation
+
+Regardless of path, both `command create` and `capture finalize` enforce L1–L3 layered validation before writing to disk:
+
+| Level | Scope |
+|-------|-------|
+| L1 Structure | manifest fields and types |
+| L2 Compliance | prohibited code patterns |
+| L3 Contract | consistency between code structure and manifest |
 
 ---
 
-## 5. CLI
+## 5. CLI Layer
 
 ### 5.1 Positioning
 
-The CLI is the entry point for command discovery, management, and lifecycle, providing the same interface to both human users and AI:
+The CLI is the discovery, management, and lifecycle entry point for commands, offering the same interface to both human users and AI.
 
-- **Meta commands**: Manage the CLI itself and the command library, such as `command`, `config`, `skill`, `daemon`.
-- **Extension commands**: Reusable information acquisition workflows, divided into Builtin (project defaults) and User (user-defined). User can override Builtin, making the system evolvable; Meta cannot be overridden, preventing extension commands from breaking core management capabilities.
+- **Meta commands**: Manage the CLI itself and the command library. Includes `command`, `config`, `daemon`, `skill`, `capture`.
+- **Extension commands**: Reusable information acquisition workflows. Meta commands cannot be overridden, preventing extension commands from breaking core management capabilities.
 
-### 5.2 Command Lifecycle
+### 5.2 Lookup Priority
 
-The design division between `command draft` and `command create` is based on one principle: **draft state allows trial and error, formal state enforces compliance**.
+When `websculpt <domain> <action>` is entered:
 
-- `draft` generates compliant skeletons, does not validate, does not write to disk, letting the Agent focus on business logic.
-- `validate` is a pre-check gate, read-only.
-- `create` is the only legitimate entry point, executing L1-L3 hard-gate validation before writing to disk.
+1. **User** — highest priority, allows overriding a builtin with the same name
+2. **Builtin** — project built-in default implementation
+
+Meta commands are registered at the system level and do not participate in extension command scanning.
+
+### 5.3 Skill Management
+
+The CLI provides `skill install / uninstall / status` meta commands to install project built-in skills into each agent's directory (`.claude/skills/`, `.codex/skills/`, `.agents/skills/`, etc.).
+
+- Defaults to local scope, automatically scanning existing agent directories in the current directory.
+- Supports `--global` installation to global agent directories.
+- Supports `--lang en/zh` to switch language versions.
 
 ---
 
 ## 6. Runtimes and Execution Backends
 
-WebSculpt currently supports two execution paths:
+WebSculpt currently supports four runtimes:
 
-- **`node`**: The CLI process dynamically imports the command module and executes it within the same process.
-- **`browser`**: Executed by a background daemon process; the CLI forwards tasks via IPC. The daemon is automatically spawned on first invocation, and can also be manually managed through the `daemon` meta command.
+| Runtime | Execution Method | Status |
+|---------|-----------------|--------|
+| **`node`** | CLI process dynamically imports the command module and executes it in the same process | Fully available |
+| **`browser`** | Executed by WebSculpt's self-hosted background daemon process; CLI forwards tasks via IPC | Fully available |
+| **`shell`** | Command package lifecycle (draft, validate, create) is supported; CLI execution engine not yet connected | Creation/validation only |
+| **`python`** | Same as above | Creation/validation only |
 
-The daemon centrally manages browser resources, handling memory monitoring, automatic restart triggered by execution count thresholds, metrics, and log persistence.
+> **Note**: `browser` here is a **runtime name**, indicating the command requires a browser environment. It is architecturally completely independent from the `@playwright/cli` npm package (the CLI tool used by the agent during the exploration stage). The daemon internally uses `playwright-core` to connect to the browser and does not depend on the process or session management of the `@playwright/cli` package.
 
-`shell` and `python` have completed command package lifecycle support (`draft`, `validate`, `create` can all generate and validate), but the CLI execution engine has not yet been integrated.
+The daemon centrally manages browser resources, responsible for memory monitoring, automatic restart triggered by execution count thresholds, and metrics and log persistence. See [`Daemon.md`](./Daemon.md) for details.
 
 ---
 
-## 7. Directory Planning
+## 7. Directory Layout
 
 ### 7.1 Project Directory
 
 ```
 WebSculpt/
 ├── src/
-│   ├── cli/                    # Entry points, engine, Meta commands, builtins, validators
-│   │   ├── engine/             # Command discovery and execution scheduling
-│   │   ├── meta/               # Meta command implementations and shared logic
-│   │   ├── builtin/            # Built-in extension commands
-│   │   └── runtime/            # Runtime normalization
-│   ├── daemon/                 # Background browser execution process
+│   ├── cli/                    # entry, engine, meta commands, built-in commands, validators
+│   │   ├── engine/             # command discovery and execution scheduling
+│   │   ├── meta/               # meta command implementations and shared logic
+│   │   │   ├── capture/        # capture workflow
+│   │   │   ├── command/        # command management
+│   │   │   └── lib/            # meta command shared logic
+│   │   ├── builtin/            # built-in extension commands
+│   │   ├── runtime/            # runtime normalization
+│   │   └── types/              # CLI internal types
+│   ├── daemon/                 # background browser execution process
 │   │   ├── client/             # IPC client, lifecycle management, state persistence
-│   │   ├── server/             # Browser management and task execution backend
-│   │   └── shared/             # Protocol definitions and cross-process shared paths
-│   ├── types/                  # Cross-layer shared TypeScript type definitions
-│   └── infra/                  # Infrastructure utilities: user directory paths, config and log I/O
-├── skills/websculpt/           # Agent skill deliverables
-├── tests/                      # Test suites (CLI engine, Meta commands, and daemon)
-└── dist/                       # Build output
+│   │   ├── server/             # browser management and task execution backend
+│   │   └── shared/             # protocol definitions and cross-process shared paths
+│   ├── types/                  # cross-layer shared TypeScript type definitions
+│   └── infra/                  # infrastructure utilities: user directory paths, config and log I/O
+├── skills/                     # agent skill deliverables
+│   ├── websculpt-explore/      # explore stage skill (includes access references)
+│   └── websculpt-capture/      # capture stage skill (includes authoring contracts)
+├── openspec/                   # OpenSpec change management
+├── tests/                      # test suite (CLI engine, meta commands, and daemon)
+│   ├── e2e/
+│   ├── integration/
+│   └── unit/
+├── docs/                       # documentation
+└── dist/                       # build output
 ```
 
 ### 7.2 User Directory
 
 ```
 ~/.websculpt/
-├── commands/                # User-defined extension commands
-├── config.json              # User configuration
-├── log.jsonl                # Extension command execution logs
-├── audit.jsonl              # Command installation/override audit logs
-├── registry-index.json      # Persistent registry index (command manifest cache)
-├── daemon.json              # Daemon process state (PID, socket path)
-└── daemon.log               # Daemon runtime logs
+├── commands/                # user-defined extension commands
+├── config.json              # user configuration
+├── log.jsonl                # extension command execution logs
+├── audit.jsonl              # command installation/override audit logs
+├── registry-index.json      # persisted registry index (command manifest cache)
+├── daemon.json              # daemon process state (PID, socket path)
+├── daemon.log               # daemon runtime logs
+└── daemon-metrics.json      # daemon session summary metrics
 ```
