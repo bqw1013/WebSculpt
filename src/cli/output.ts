@@ -213,13 +213,13 @@ export interface DaemonRestartResult {
 /** Result shape for a successful skill install. */
 export interface SkillInstallResult {
 	success: true;
-	results: Array<{ agent: string; status: "installed" | "skipped" | "replaced" }>;
+	results: Array<{ agent: string; skill: string; status: "installed" | "skipped" | "replaced" }>;
 }
 
 /** Result shape for a successful skill uninstall. */
 export interface SkillUninstallResult {
 	success: true;
-	results: Array<{ agent: string; status: "removed" | "not_found" }>;
+	results: Array<{ agent: string; skill: string; status: "removed" | "not_found" }>;
 }
 
 /** Result shape for a successful skill status. */
@@ -598,8 +598,18 @@ function renderLines(lines: string[]): void {
 }
 
 function renderSkillResults(result: SkillInstallResult | SkillUninstallResult): void {
+	const byAgent = new Map<string, Array<{ skill: string; status: string }>>();
 	for (const r of result.results) {
-		console.log(`${r.agent}: ${r.status}`);
+		const list = byAgent.get(r.agent) ?? [];
+		list.push({ skill: r.skill, status: r.status });
+		byAgent.set(r.agent, list);
+	}
+
+	for (const [agent, items] of byAgent) {
+		console.log(`${agent}:`);
+		for (const item of items) {
+			console.log(`  ${item.skill}: ${item.status}`);
+		}
 	}
 }
 

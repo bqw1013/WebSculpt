@@ -323,15 +323,19 @@ websculpt command remove <domain> <action>
 
 #### `skill install`
 
-将内置的 WebSculpt skill 安装到 agent 目录。
+将内置的 WebSculpt skills 安装到 agent 目录。
 
 ```bash
-websculpt skill install [options]
+websculpt skill install [name] [options]
 ```
+
+| 参数 | 说明 |
+|------|------|
+| `name` | 可选，指定单个 skill 名称（如 `capture`、`explore`）；省略则安装所有内置 skills |
 
 | 选项 | 说明 |
 |------|------|
-| `-g, --global` | 安装到全局 agent 目录（`~/.claude/skills/websculpt/` 等） |
+| `-g, --global` | 安装到全局 agent 目录 |
 | `-a, --agents <agents>` | 指定目标 agent，逗号分隔（`claude`、`codex`、`agents`、`all`） |
 | `--from <path>` | 显式指定 skill 源目录，覆盖自动检测 |
 | `--lang <lang>` | 语言版本：`en`（默认）或 `zh` |
@@ -341,17 +345,21 @@ websculpt skill install [options]
 
 - 默认 local scope，自动扫描当前目录下已存在的 agent 目录；若无则报错 `AGENT_DIRS_NOT_FOUND`
 - 未提供 `--force` 时，目标已存在则跳过（`skipped`）
-- 按 agent 逐条报告结果（`installed` / `skipped` / `replaced`）
+- 按 agent + skill 逐条报告结果（`installed` / `skipped` / `replaced`）
 
 ---
 
 #### `skill uninstall`
 
-从 agent 目录移除 WebSculpt skill。
+从 agent 目录移除 WebSculpt skills。
 
 ```bash
-websculpt skill uninstall [options]
+websculpt skill uninstall [name] [options]
 ```
+
+| 参数 | 说明 |
+|------|------|
+| `name` | 可选，指定单个 skill 名称（如 `capture`、`explore`）；省略则移除所有 `websculpt-*` skills |
 
 | 选项 | 说明 |
 |------|------|
@@ -361,7 +369,7 @@ websculpt skill uninstall [options]
 **关键行为**
 
 - 默认 local scope
-- 按 agent 逐条报告结果（`removed` / `not_found`）
+- 按 agent + skill 逐条报告结果（`removed` / `not_found`）
 - 若所有目标均报告 `not_found`，命令以 exit code 1 退出
 
 ---
@@ -376,8 +384,8 @@ websculpt skill status
 
 **关键行为**
 
-- 逐 agent 报告安装状态（`installed` / `not installed`）及生效范围（`local` / `global`）
-- local 安装优先于 global；若 local 存在且 global 也存在，额外标注 `[global present]`
+- 按 agent 分组，逐 skill 报告安装状态（`installed` / `not installed`）及生效范围（`local` / `global`）
+- local 安装优先于 global
 
 ## 5. 使用示例
 
