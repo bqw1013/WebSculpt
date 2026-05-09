@@ -509,8 +509,11 @@ function renderListResult(result: CommandListResult): void {
 	const widths = [commandMaxWidth, sourceMaxWidth, browserMaxWidth, loginMaxWidth];
 
 	console.log(formatRow(["Command", "Source", "Browser", "Login", "Description"], widths));
-	for (const row of rows) {
+	for (const [i, row] of rows.entries()) {
 		console.log(formatRow([row.command, row.source, row.browser, row.login, row.description], widths));
+		if (i < rows.length - 1) {
+			console.log("");
+		}
 	}
 }
 
