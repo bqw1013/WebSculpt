@@ -1,4 +1,4 @@
-import { access, constants, readFile } from "node:fs/promises";
+import { access, constants, copyFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
 import type { MetaCommandResult } from "../../output.js";
@@ -114,10 +114,22 @@ export async function handleCaptureFinalize(
 
 	// Install via command create.
 	const draftPath = getCaptureDraftPath(name);
-	return await handleCommandCreate(captureYaml.domain, captureYaml.action, {
+	const createResult = await handleCommandCreate(captureYaml.domain, captureYaml.action, {
 		fromDir: draftPath,
 		force: options.force ?? captureYaml.commandLibrarySnapshot.conflictSource === "user",
 	});
+
+	// Copy evidence.md into the installed command directory so it is preserved
+	// when the capture workspace is later cleaned up.
+	if (createResult.success && "path" in createResult && typeof createResult.path === "string") {
+		try {
+			await copyFile(join(workspacePath, "evidence.md"), join(createResult.path, "evidence.md"));
+		} catch {
+			// Best-effort copy; the command is already correctly installed.
+		}
+	}
+
+	return createResult;
 }
 
 /** Registers the `capture finalize` sub-command. */

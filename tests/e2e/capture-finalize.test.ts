@@ -45,6 +45,7 @@ describe("capture finalize", () => {
 		const installedPath = websculptPath(homeDir, "commands", "example", "collect");
 		await expect(access(join(installedPath, "command.js"), constants.F_OK)).resolves.toBeUndefined();
 		await expect(access(join(installedPath, "manifest.json"), constants.F_OK)).resolves.toBeUndefined();
+		await expect(access(join(installedPath, "evidence.md"), constants.F_OK)).resolves.toBeUndefined();
 	});
 
 	it("returns EVIDENCE_NOT_READY when evidence audit fails", async () => {
