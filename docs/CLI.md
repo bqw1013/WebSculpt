@@ -39,6 +39,7 @@ WebSculpt CLI 是命令的发现、执行与管理入口。它面向人类用户
 | `command.js`（或 runtime 对应入口） | 执行逻辑：实际的信息获取代码 | 是 |
 | `README.md` | 面向调用者的文档：参数说明、返回值、调用示例 | 否（缺失时 warning） |
 | `context.md` | 面向修复者的上下文：沉淀背景、复用价值、页面结构、失效信号 | 否（缺失时 warning） |
+| `evidence.md` | 探索证据：已验证 URL、选择器、失效信号等（capture 路径 finalize 时复制） | 否（路径 A 无此文件） |
 
 **目录结构**：
 
@@ -47,7 +48,8 @@ WebSculpt CLI 是命令的发现、执行与管理入口。它面向人类用户
   ├── manifest.json
   ├── command.js
   ├── README.md
-  └── context.md
+  ├── context.md
+  └── evidence.md
 ```
 
 Builtin 命令的物理位置在 `src/cli/builtin/<domain>/<action>/`，结构与 User 命令一致。
