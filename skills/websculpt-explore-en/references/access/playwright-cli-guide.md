@@ -151,6 +151,13 @@ After entering the target page, simultaneously complete status judgment and clue
 
 Prioritize using `eval` for small-step validation. `snapshot` is used to understand interactive elements and page structure. During probing, casually record discovered stable clues; do not wait until the task ends to supplement.
 
+### Loading Timeout Troubleshooting
+
+If `goto` results in a page that is unresponsive or times out for a long time, consider the following troubleshooting strategies:
+
+- Try `--wait-until=domcontentloaded` instead of the default strategy, to rule out the possibility of third-party ad/tracking scripts blocking page load.
+- Then use `wait-for <selector>` to explicitly wait for the target element to appear, rather than relying on all resources to finish loading.
+
 ### Execute Task
 
 Choose the fastest and most stable way to complete the user's request:

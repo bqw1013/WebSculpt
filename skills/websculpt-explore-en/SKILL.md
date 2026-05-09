@@ -103,7 +103,7 @@ Select the external tool that can complete the current task and is most conduciv
 
 | Scenario | Tool | Switch Signal |
 |----------|------|---------------|
-| Need to discover information sources or compare multiple candidate sources | WebSearch | After finding an authoritative source, switch to WebFetch, curl, or browser to verify primary content. Note: search results are suitable for locating sources, not as the sole basis for a precipitable path; if you only verified search snippets, you usually should not recommend capture. |
+| Need to discover information sources or compare multiple candidate sources | WebSearch | After finding an authoritative source, switch to WebFetch, curl, or browser to verify primary content. **Note**: Search results can only be used to locate sources; **direct precipitation is strictly prohibited**. If this exploration only verified search snippets without reading primary content via WebFetch/curl/browser, **directly judge as no candidate** and do not give domain/action suggestions. |
 | URL known, need to read page body, document, or already-rendered content | WebFetch | Switch to curl or browser when body is missing, JS rendering, login wall, 403/429. |
 | URL known, need raw HTTP response, headers, raw HTML, or embedded script data | curl | Switch to browser when HTML lacks key data or embedded scripts require interactive verification. |
 | Content depends on login state, JS rendering, multi-step interaction, or static scraping fails / strong anti-bot | Browser automation | Request user intervention when login, authorization, or handling high-risk account operations are needed; slow down and request confirmation when CAPTCHA, abnormal verification, or account risk appears. |
@@ -180,20 +180,27 @@ The explore stage is only responsible for discovering candidate paths; the captu
 
 ### Evaluation Checklist
 
-Explore only makes lightweight judgments and does not replace capture's comprehensive assessment. Answer two core questions:
+Explore only makes lightweight judgments and does not replace capture's comprehensive assessment. **The default conclusion is "no candidate"**.
 
-1. Did this exploration discover a seemingly reusable information acquisition path?
-2. If so, what is the candidate `domain/action`?
+When performing evaluation, **you must first complete Step 1 negative checks**. If any exclusion item is met, directly judge as "no candidate", **and you are forbidden from continuing to answer the core questions in Step 2**.
 
-In the following cases, directly judge as "no candidate":
+**Step 1: Mandatory Exclusion Checks (if any are met, terminate immediately with conclusion "no candidate")**
 
 - This was just a one-time Q&A with no parameterizable path.
 - Only search snippets were verified, and primary sources were not read.
 - The path was not actually executed; it was only theoretically feasible.
+- Output results are unstable; the same input may yield different structures at different times.
+
+**Step 2: Core Questions (only answer when Step 1 has not been triggered)**
+
+1. Did this exploration discover a seemingly reusable information acquisition path?
+2. If so, what is the candidate `domain/action`?
 
 If the path was actually executed and looks reusable, you may give a candidate suggestion. Specific value assessment, deduplication, and granularity judgment are the responsibility of `websculpt-capture`.
 
 ### Capture Assessment Format
+
+Before outputting the Assessment, **you must self-check**: if this exploration mainly relied on WebSearch and did not read primary sources, the `candidate` field must be "None", and you must not fabricate a domain/action.
 
 After completing the evaluation, append the following to the final reply:
 

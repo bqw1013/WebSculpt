@@ -30,7 +30,11 @@ For parameters that already have `default` declared in the manifest, do not writ
 
 ## 3. Environment
 
-Browser runtime executes in the daemon's Node.js process and operates the browser through `page`.
+Browser runtime executes in the daemon's Node.js process. The daemon connects to the user's existing Chrome or Edge instance via `connectOverCDP`; it does not launch a new browser, nor does it use headless mode. The connection is lazy: it is only attempted when a browser runtime command is executed for the first time.
+
+After the command is loaded, the daemon creates a new `page` in the browser's default context and injects it into the command function. This page reuses the user's login state, cookies, and localStorage; after command execution completes, the daemon automatically closes the page, so command code should not close the injected `page`.
+
+The daemon loads command modules via dynamic `import()`, and bypasses ESM cache using a timestamp query parameter, so changes to `command.js` take effect upon re-execution without reinstallation. Command execution timeout is 20 minutes (error code `COMMAND_TIMEOUT`), not 5 seconds; 5 seconds is only the daemon's own graceful shutdown fallback timeout and is unrelated to command execution.
 
 Available capabilities include the Playwright `page` API, Node.js built-in modules, and global `fetch`.
 
@@ -93,6 +97,17 @@ throw error;
 ```
 
 Infrastructure errors such as `BROWSER_ATTACH_REQUIRED`, `DAEMON_BUSY`, and `COMMAND_TIMEOUT` are produced by the runner or daemon; command code does not need to throw them.
+
+## Performance and Stability Recommendations
+
+The following recommendations come from common observations in actual capture and can help reduce timeouts and instability, but please judge applicability based on the actual site characteristics.
+
+### Page Load Timeout
+
+If the command frequently times out during the `page.goto()` phase, consider:
+
+1. Changing `waitUntil` from the default `"load"` to `"domcontentloaded"`, to avoid waiting for third-party ad/tracking scripts.
+2. Using `page.waitForSelector(targetSelector)` to wait for the target element to stably appear, rather than waiting for all resources to finish loading.
 
 ## 7. Checklist
 

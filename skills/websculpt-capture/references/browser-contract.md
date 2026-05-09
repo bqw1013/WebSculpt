@@ -30,7 +30,11 @@ manifest 中已声明 `default` 的参数，不要在代码中写 fallback（如
 
 ## 3. 环境
 
-Browser runtime 在 daemon 的 Node.js 进程中执行，并通过 `page` 操作浏览器。
+Browser runtime 在 daemon 的 Node.js 进程中执行。daemon 通过 `connectOverCDP` 连接用户已有的 Chrome 或 Edge 实例，不会启动新浏览器，也不使用无头模式；连接是惰性的，仅在首次执行 browser runtime 命令时才会尝试建立。
+
+命令加载后，daemon 为其创建一个位于浏览器默认上下文中的新 `page` 并注入命令函数。该页面复用用户的登录态、Cookie 和 LocalStorage；命令执行完成后由 daemon 自动关闭，因此命令代码不应自行关闭 `page`。
+
+daemon 通过动态 `import()` 加载命令模块，并用时间戳查询参数绕过 ESM 缓存，修改 `command.js` 后重新执行即可生效。命令执行超时为 20 分钟（错误码 `COMMAND_TIMEOUT`），不是 5 秒；5 秒仅是 daemon 自身优雅关闭的兜底超时，与命令执行无关。
 
 可用能力包括 Playwright `page` API、Node.js 内置模块和全局 `fetch`。
 
@@ -93,6 +97,17 @@ throw error;
 ```
 
 基础设施错误如 `BROWSER_ATTACH_REQUIRED`、`DAEMON_BUSY`、`COMMAND_TIMEOUT` 由 runner 或 daemon 产生，命令代码不需要抛出。
+
+## 性能与稳定性建议
+
+以下建议来自实际 capture 中的常见观察，可帮助减少超时和不稳定问题，但请根据实际站点特征判断适用性。
+
+### 页面加载超时
+
+若命令在 `page.goto()` 阶段频繁超时，可考虑：
+
+1. 将 `waitUntil` 从默认的 `"load"` 改为 `"domcontentloaded"`，避免等待第三方广告/追踪脚本。
+2. 配合 `page.waitForSelector(targetSelector)` 等待目标元素稳定出现，而非等待全部资源加载完成。
 
 ## 7. 检查清单
 
