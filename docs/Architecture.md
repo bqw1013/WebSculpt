@@ -6,131 +6,235 @@
 
 ## 1. 架构总览
 
-WebSculpt 由四层组成：
+WebSculpt 的核心设计目标是将"信息获取路径"沉淀为本地可复用的命令资产。整个系统围绕 **explore → capture → command** 的三阶段闭环运转：
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         AI Agent                                    │
-│  (reads docs, makes decisions, writes code, invokes CLI)            │
+│  (理解需求、探索路径、沉淀资产、调用命令)                              │
 └─────────────────────────────────────────────────────────────────────┘
-    │                    │                    │
-    ▼                    ▼                    ▼
-┌─────────┐      ┌──────────────┐      ┌──────────────┐
-│ access  │      │   explore    │      │   compile    │
-│  约束层  │      │  策略层       │      │  规范层       │
-└─────────┘      └──────────────┘      └──────────────┘
-    │                                         │
-    └─────────────────────┬───────────────────┘
-                          ▼
-                   ┌──────────────┐
-                   │     CLI      │
-                   │  交互与执行层  │
-                   └──────────────┘
+    │                              │
+    ▼                              ▼
+┌──────────────┐           ┌──────────────┐
+│   explore    │  ──────►  │   capture    │
+│  发现与验证   │  交接    │  沉淀与固化   │
+└──────────────┘           └──────────────┘
+    ▲                              │
+    │                              ▼
+    │                      ┌──────────────┐
+    └─────────────────────│    command   │
+       复用已有命令       │  执行与复用   │
+                          └──────────────┘
+                                   │
+                                   ▼
+                          ┌──────────────┐
+                          │     CLI      │
+                          │  交互与调度层  │
+                          └──────────────┘
+                                   │
+                    ┌──────────────┼──────────────┐
+                    ▼              ▼              ▼
+                ┌──────┐     ┌────────┐     ┌──────────┐
+                │ node │     │browser │     │shell/py  │
+                └──────┘     │(daemon)│     └──────────┘
+                             └────────┘
 ```
 
-| 层级 | 作用 | 消费者 |
-|------|------|--------|
-| access | 为每个外部工具编写 `guide.md`，约束 Agent 的使用边界 | AI |
-| explore | 编写 `strategy.md`，指导多工具配合与已有命令的复用 | AI |
-| compile | 编写 `contract.md`，定义命令编写规范与校验规则 | AI / CLI |
-| CLI | 提供命令的注册、发现、执行和生命周期管理 | 人类用户 / AI |
+| 阶段 | 职责 | 对应 Skill | 产出 |
+|------|------|-----------|------|
+| explore | 完成信息获取任务，发现可复用路径；优先复用命令库，必要时使用外部工具 | `websculpt-explore` | 探索结果 + Capture Assessment |
+| capture | 将验证过的路径固化为命令资产，经状态机推进和硬门槛校验后安装 | `websculpt-capture` | 安装到命令库的 `domain/action` 命令 |
+| command | 被 CLI 发现、调度、执行；用户和 Agent 通过同一界面调用 | — | 结构化 JSON 输出 |
 
-以下按顺序展开每层的设计。
+CLI 是这三个阶段的统一入口：它既提供 `capture` 工作流管理沉淀过程，也提供 `command` 管理命令库，同时作为扩展命令的执行引擎。
 
 ---
 
-## 2. access
+## 2. Explore 阶段
 
 ### 2.1 定位
 
-access 层为每个外部工具提供 `guide.md`，明确连接方式、可用命令和风险提示，约束 Agent 在受控边界内操作。
+explore 是信息获取的**发现与验证层**。其核心职责是：
 
-access 层不替代工具本身，也不做路由决策或操作编排。它只提供"这个工具怎么用、有什么限制"的参考文档，具体使用决策由 explore 层和 Agent 自行判断。
+- **优先复用**：先检查命令库中已沉淀的信息获取路径，避免重复消耗 Token。
+- **按需探索**：无可用路径时，通过外部工具探索并验证新路径，保留失败信号。
+- **交接评估**：交付结果时评估路径是否值得沉淀，将候选交接给 capture 阶段。
 
-### 2.2 目录结构
+explore 阶段**不创建命令资产**，只负责发现和评估。
 
-```
-skills/websculpt/references/access/
-  <tool-name>/
-    guide.md             # 工具操作参考
-```
+### 2.2 Skill 交付物
 
-英文版本位于 `skills/websculpt-en/references/access/`。
+`skills/websculpt-explore/` 包含：
+
+- `SKILL.md`：探索协议、ExploreSession 状态机、查库与选工具规则、Capture Assessment 格式。
+- `references/access/playwright-cli-guide.md`：当 Agent 需要直接操作浏览器进行探索时的操作参考。
+
+### 2.3 关键机制
+
+- **强制查库**：每次进入 explore 必须先执行 `websculpt command list`，将结论写入 `ExploreSession.libraryResult`。
+- **逐步确认**：对候选命令从轻到重逐步确认适用性（`--help` → `command show` → `command show --include-readme`）。
+- **浏览器前置检查**：若需直接操作浏览器，必须先阅读 `playwright-cli-guide.md`，并在 `ExploreSession.guideRead` 中记录。
+- **Capture Assessment**：交付时必须评估是否存在可复用路径，给出候选 `domain/action` 和建议下一步。
 
 ---
 
-## 3. explore
+## 3. Capture 阶段
 
 ### 3.1 定位
 
-explore 层提供多工具配合的编排策略，指导 Agent 如何组合工具完成复杂任务。随着命令库积累，Agent 可以直接复用已有的 builtin 或 user 命令获取信息，减少重复消耗 Token。
+capture 是在"探索路径"与"正式命令资产"之间引入的**轻量工作区**。Agent 完成探索后，不直接落盘为命令，而是进入一个受检查、可恢复、可审计的沉淀过程。
 
-探索结果经 compile 校验后，通过 `command create` 沉淀为新命令，形成"探索 → 沉淀 → 复用"的闭环。explore 层的产出是面向 AI 的决策参考文档（`strategy.md`），不产生可执行代码。
+核心职责：
 
-### 3.2 目录结构
+- **固化证据**：`evidence.md` 记录探索路径、已验证 URL、选择器、失效信号等。
+- **状态机驱动**：Agent 不需要理解完整流程，只需循环执行 `capture status` 并按返回的 `next.action` 推进。
+- **硬门槛安装**：只有证据、代码、文档、校验全部通过后，才能通过 `capture finalize` 进入命令库。
 
+### 3.2 工作区结构
+
+工作区位于**项目当前目录**下：
+
+```text
+.websculpt-captures/
+└── <name>/
+    ├── capture.yaml      # 机器可读元数据 + 命令库快照（创建时写入，后续只读）
+    ├── evidence.md       # 探索证据（Agent 填写，系统审计）
+    ├── draft/            # 命令包骨架
+    │   ├── manifest.json
+    │   ├── command.js
+    │   ├── README.md
+    │   └── context.md
+    └── validation.json   # 最近一次 validate 结果（含 draft 指纹）
 ```
-skills/websculpt/references/explore/
-  strategy.md          # 探索策略文档
+
+### 3.3 核心设计概念
+
+**六 Artifact 流水线**
+
+Capture 工作流由 6 个 artifact 按严格分层依赖推进：
+
+```text
+evidence → command → manifest → readme → context → validation
 ```
 
-英文版本位于 `skills/websculpt-en/references/explore/`。
+每个 artifact 必须等待前序达到完成状态才能离开阻塞态；若前序回退，后续立即连锁回退。
+
+**纯函数式状态机**
+
+`capture status` 每次调用重新读取文件系统，根据扫描结果计算当前状态和下一步动作，不维护任何内存持久状态。这使得 Agent 可以任意修改文件，跨 session 的陌生 Agent 也能通过一次调用获知当前进度。
+
+**Evidence Audit**
+
+对 `evidence.md` 执行三层 Markdown 审核：L1/L2 为硬门槛，L3 为软规则。防止 Agent 跳过证据记录直接写代码。
+
+**Validation Fingerprint**
+
+校验通过后计算 draft 的 SHA256 指纹并写入 `validation.json`，后续修改 draft 会导致指纹失效并阻断 finalize，防止"验证通过后偷改代码"的绕过行为。
+
+**Finalize 硬门槛**
+
+安装必须同时满足 validation 成功、指纹未失效、evidence 审核通过、全部 artifact 完成四个条件。所有门槛不满足时均返回明确错误码，不会静默降级。
+
+> 各机制的详细规则、状态转移函数和判定链见 [`Capture.md`](./Capture.md)。
+
+
+### 3.4 Skill 交付物
+
+`skills/websculpt-capture/` 包含：
+
+- `SKILL.md`：capture 协议、CaptureSession 状态机、4 组测试要求、修复循环规则。
+- `references/node-contract.md` / `browser-contract.md`：按 runtime 的命令编写契约。
 
 ---
 
-## 4. compile
+## 4. Command 阶段
 
 ### 4.1 定位
 
-compile 层定义扩展命令的编写规范。与 access、explore 不同，compile 的规范没有独立 CLI，而是通过 CLI 的 `command draft`、`command validate`、`command create` 命令落地执行。
+command 是可复用的信息获取工作流，封装了"如何从特定网站或 API 获取信息"的逻辑。首次由 AI 探索沉淀，后续直接复用，无需重复消耗 Token。
 
-运行时契约与编写规范见 [`skills/websculpt/references/compile/contract.md`](../skills/websculpt/references/compile/contract.md)。
+命令分为两类：
 
-### 4.2 关键设计决策
+- **Builtin（内置扩展命令）**：位于 `src/cli/builtin/`，随项目分发。
+- **User（用户自定义命令）**：位于 `~/.websculpt/commands/`，可覆盖 builtin，使系统可进化。
 
-- **结构强制、逻辑自由**：manifest 格式、导出签名等元数据由系统硬性约束；命令内部的具体实现由 AI 根据探索结果自行编写。
+### 4.2 命令包结构
 
-- **校验为硬门槛**：`command create` 落盘前强制执行 L1-L3 分层校验，失败一律阻止写入。
+```text
+~/.websculpt/commands/<domain>/<action>/
+  ├── manifest.json    # 元数据：描述、运行时、参数列表
+  ├── command.js       # 执行逻辑（或 runtime 对应入口）
+  ├── README.md        # 面向调用者的文档
+  └── context.md       # 面向修复者的上下文
+```
 
-  | 层级 | 范围 |
-  |------|------|
-  | L1 结构 | manifest 字段与类型 |
-  | L2 合规 | 禁止使用的代码模式 |
-  | L3 契约 | 代码结构与 manifest 的一致性 |
+Builtin 命令的物理位置在 `src/cli/builtin/<domain>/<action>/`，结构与 User 命令一致。
+
+### 4.3 创建路径
+
+扩展命令可通过两条路径创建：
+
+| 路径 | 命令系列 | 草稿位置 | 特点 |
+|------|---------|---------|------|
+| **A：直接创建** | `command draft / validate / create` | `.websculpt-drafts/` | 人工编写或脚本化场景，自主控制流程 |
+| **B：沉淀工作流** | `capture new / status / validate / finalize` | `.websculpt-captures/<name>/draft/` | Agent 驱动，额外要求 `evidence.md` 和状态机推进；底层复用 `command` 的校验与安装能力，增加 evidence 审计和 draft 指纹防篡改 |
+
+路径 B 在 finalize 时底层调用与路径 A 相同的安装逻辑，但增加了前置门槛。
+
+### 4.4 分层校验
+
+无论哪条路径，`command create` 和 `capture finalize` 落盘前均强制执行 L1-L3 分层校验：
+
+| 层级 | 范围 |
+|------|------|
+| L1 结构 | manifest 字段与类型 |
+| L2 合规 | 禁止使用的代码模式 |
+| L3 契约 | 代码结构与 manifest 的一致性 |
 
 ---
 
-## 5. CLI
+## 5. CLI 层
 
 ### 5.1 定位
 
-CLI 是命令的发现、管理与生命周期入口，面向人类用户和 AI 提供同一套界面：
+CLI 是命令的发现、管理与生命周期入口，面向人类用户和 AI 提供同一套界面。
 
-- **Meta 命令**：管理 CLI 本身和命令库，如 `command`、`config`、`skill`、`daemon`。
-- **扩展命令**：可复用的信息获取工作流，分为 Builtin（项目默认）和 User（用户自定义）。User 可覆盖 Builtin，使系统可进化；Meta 不可覆盖，防止扩展命令破坏核心管理能力。
+- **Meta 命令**：管理 CLI 本身和命令库。包括 `command`、`config`、`daemon`、`skill`、`capture`。
+- **扩展命令**：可复用的信息获取工作流。Meta 不可被覆盖，防止扩展命令破坏核心管理能力。
 
-### 5.2 命令生命周期
+### 5.2 查找优先级
 
-`command draft` 与 `command create` 的设计分工基于一个原则：**草稿态允许试错，正式态强制合规**。
+当输入 `websculpt <domain> <action>` 时：
 
-- `draft` 生成合规骨架，不校验、不落盘，让 Agent 专注于业务逻辑。
-- `validate` 是预检闸门，只读。
-- `create` 是唯一合法入口，执行 L1-L3 硬门槛校验后落盘。
+1. **User** — 最高优先级，允许覆盖同名的 builtin 命令
+2. **Builtin** — 项目内置的默认实现
+
+Meta 命令在系统层面直接注册，不参与扩展命令扫描。
+
+### 5.3 Skill 管理
+
+CLI 提供 `skill install / uninstall / status` 元命令，将项目内置的 skills 安装到各 Agent 的目录（`.claude/skills/`、`.codex/skills/`、`.agents/skills/` 等）。
+
+- 默认 local scope，自动扫描当前目录下已存在的 agent 目录。
+- 支持 `--global` 安装到全局 agent 目录。
+- 支持 `--lang en/zh` 切换语言版本。
 
 ---
 
 ## 6. 运行时与执行后端
 
-WebSculpt 当前支持两种执行路径：
+WebSculpt 当前支持四种运行时：
 
-- **`node`**：CLI 进程直接动态导入命令模块，在同进程内完成执行。
-- **`browser`**：由 WebSculpt 自建的后台 daemon 进程执行，CLI 通过 IPC 转发任务。daemon 随首次调用自动拉起，也可通过 `daemon` 元命令手动管理。
+| 运行时 | 执行方式 | 状态 |
+|--------|---------|------|
+| **`node`** | CLI 进程直接动态导入命令模块，在同进程内完成执行 | 已完全可用 |
+| **`browser`** | 由 WebSculpt 自建的后台 daemon 进程执行，CLI 通过 IPC 转发任务 | 已完全可用 |
+| **`shell`** | 命令包生命周期（draft、validate、create）已支持，CLI 执行引擎尚未接入 | 仅创建/校验 |
+| **`python`** | 同上 | 仅创建/校验 |
 
 > **注意**：`browser` 在这里是**运行时名称**，表示命令需要浏览器环境；它与 `@playwright/cli` npm 包（Agent 探索阶段使用的 CLI 工具）在架构上完全独立。daemon 内部直接使用 `playwright-core` 连接浏览器，不依赖 `@playwright/cli` 包的进程或会话管理。
 
-daemon 集中管理浏览器资源，负责内存监控、执行次数阈值触发自动重启、metrics 与日志持久化。
-
-`shell` 与 `python` 已完成命令包生命周期支持（`draft`、`validate`、`create` 均可生成和校验），但 CLI 执行引擎尚未接入。
+daemon 集中管理浏览器资源，负责内存监控、执行次数阈值触发自动重启、metrics 与日志持久化。详见 [`Daemon.md`](./Daemon.md)。
 
 ---
 
@@ -144,16 +248,27 @@ WebSculpt/
 │   ├── cli/                    # 入口、引擎、Meta 命令、内置命令、校验器
 │   │   ├── engine/             # 命令发现与执行调度
 │   │   ├── meta/               # 元命令实现与共享逻辑
+│   │   │   ├── capture/        # capture 工作流
+│   │   │   ├── command/        # 命令管理
+│   │   │   └── lib/            # 元命令共享逻辑
 │   │   ├── builtin/            # 内置扩展命令
-│   │   └── runtime/            # 运行时规范化
+│   │   ├── runtime/            # 运行时规范化
+│   │   └── types/              # CLI 内部类型
 │   ├── daemon/                 # 后台浏览器执行进程
 │   │   ├── client/             # IPC 客户端、生命周期管理、状态持久化
 │   │   ├── server/             # 浏览器管理与任务执行后端
 │   │   └── shared/             # 协议定义与跨进程共享路径
 │   ├── types/                  # 跨层共享 TypeScript 类型定义
 │   └── infra/                  # 基础设施工具：用户目录路径、配置与日志读写
-├── skills/websculpt/           # Agent skill 交付物
+├── skills/                     # Agent skill 交付物
+│   ├── websculpt-explore/      # 探索阶段 skill（含 access 参考）
+│   └── websculpt-capture/      # 沉淀阶段 skill（含编写契约）
+├── openspec/                   # OpenSpec 变更管理
 ├── tests/                      # 测试套件（CLI 引擎、Meta 命令与 daemon）
+│   ├── e2e/
+│   ├── integration/
+│   └── unit/
+├── docs/                       # 文档
 └── dist/                       # 构建输出
 ```
 
@@ -167,5 +282,6 @@ WebSculpt/
 ├── audit.jsonl              # 命令安装/覆盖审计日志
 ├── registry-index.json      # 持久化注册表索引（命令 manifest 缓存）
 ├── daemon.json              # daemon 进程状态（PID、socket 路径）
-└── daemon.log               # daemon 运行日志
+├── daemon.log               # daemon 运行日志
+└── daemon-metrics.json      # daemon 会话汇总指标
 ```

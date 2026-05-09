@@ -349,7 +349,7 @@ websculpt capture finalize <name> [--force]
 | `--runtime <runtime>` | `new` 必填，`node` / `browser` / `shell` / `python` |
 | `--force` | `new` 覆盖已存在工作区；`finalize` 覆盖已有 user 命令 |
 
-详细的状态机与校验逻辑见代码及 [`docs/capture-status-flow.md`](./capture-status-flow.md)。
+详细的状态机与校验逻辑见 [`Capture.md`](./Capture.md)。
 
 ---
 
