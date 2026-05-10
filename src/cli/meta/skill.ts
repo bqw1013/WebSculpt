@@ -14,18 +14,90 @@ function isAgent(value: string): value is Agent {
 	return (AGENTS as readonly string[]).includes(value);
 }
 
-function getAgentDirs(scope: "local" | "global"): Record<Agent, string> {
-	const base = scope === "global" ? path.join(os.homedir()) : process.cwd();
-	return {
-		claude: path.join(base, ".claude", "skills", "websculpt"),
-		codex: path.join(base, ".codex", "skills", "websculpt"),
-		agents: path.join(base, ".agents", "skills", "websculpt"),
-	};
-}
-
 function getAgentRootDir(scope: "local" | "global", agent: Agent): string {
 	const base = scope === "global" ? path.join(os.homedir()) : process.cwd();
 	return path.join(base, `.${agent}`);
+}
+
+function getAgentSkillDir(scope: "local" | "global", agent: Agent, skillName: string): string {
+	return path.join(getAgentRootDir(scope, agent), "skills", skillName);
+}
+
+function getSkillsDir(): string | null {
+	const currentDir = path.dirname(fileURLToPath(import.meta.url));
+	const packageSkillsDir = path.resolve(currentDir, "..", "..", "..", "skills");
+	if (fs.existsSync(packageSkillsDir)) {
+		return packageSkillsDir;
+	}
+	const cwdSkillsDir = path.join(process.cwd(), "skills");
+	if (fs.existsSync(cwdSkillsDir)) {
+		return cwdSkillsDir;
+	}
+	return null;
+}
+
+/** Scans the skills directory and returns all matching websculpt-* paths filtered by language. */
+export function resolveSkillSources(lang?: string): string[] {
+	const skillsDir = getSkillsDir();
+	if (!skillsDir) {
+		throw Object.assign(new Error("Built-in skill source not found. Use --from to specify the skill source path."), {
+			code: "SKILL_SOURCE_NOT_FOUND",
+		});
+	}
+
+	const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
+	const sources = entries
+		.filter(
+			(e) =>
+				e.isDirectory() &&
+				e.name.startsWith("websculpt-") &&
+				fs.existsSync(path.join(skillsDir, e.name, "SKILL.md")),
+		)
+		.map((e) => path.join(skillsDir, e.name));
+
+	const filtered = sources.filter((src) => {
+		const name = path.basename(src);
+		if (lang === "zh") {
+			return !name.endsWith("-en");
+		}
+		// Default to en: keep only *-en directories
+		return name.endsWith("-en");
+	});
+
+	if (filtered.length === 0) {
+		throw Object.assign(new Error("Built-in skill source not found. Use --from to specify the skill source path."), {
+			code: "SKILL_SOURCE_NOT_FOUND",
+		});
+	}
+
+	return filtered;
+}
+
+/** Resolves a single skill by short name to its full directory path. */
+export function resolveSingleSkillSource(name: string, lang?: string): string {
+	const skillName = lang === "zh" ? `websculpt-${name}` : `websculpt-${name}-en`;
+
+	const skillsDir = getSkillsDir();
+	if (!skillsDir) {
+		throw Object.assign(
+			new Error(`Built-in skill source not found for "${name}". Use --from to specify the skill source path.`),
+			{
+				code: "SKILL_SOURCE_NOT_FOUND",
+			},
+		);
+	}
+
+	const skillPath = path.join(skillsDir, skillName);
+	if (fs.existsSync(path.join(skillPath, "SKILL.md"))) {
+		return skillPath;
+	}
+
+	throw Object.assign(
+		new Error(`Built-in skill source not found for "${name}". Use --from to specify the skill source path.`),
+		{
+			code: "SKILL_SOURCE_NOT_FOUND",
+		},
+	);
 }
 
 /** Resolves the built-in skill source directory. */
@@ -37,21 +109,14 @@ export function resolveSkillSource(from?: string, lang?: string): string {
 		return path.resolve(from);
 	}
 
-	const currentDir = path.dirname(fileURLToPath(import.meta.url));
-	const skillName = lang === "zh" ? "websculpt" : "websculpt-en";
-	const packageRelative = path.resolve(currentDir, "..", "..", "..", "skills", skillName);
-	if (fs.existsSync(path.join(packageRelative, "SKILL.md"))) {
-		return packageRelative;
+	// Default to English, resolve the first available skill for backward compatibility
+	const sources = resolveSkillSources(lang);
+	if (sources.length === 0) {
+		throw Object.assign(new Error("Built-in skill source not found. Use --from to specify the skill source path."), {
+			code: "SKILL_SOURCE_NOT_FOUND",
+		});
 	}
-
-	const cwdRelative = path.join(process.cwd(), "skills", skillName);
-	if (fs.existsSync(path.join(cwdRelative, "SKILL.md"))) {
-		return cwdRelative;
-	}
-
-	throw Object.assign(new Error("Built-in skill source not found. Use --from to specify the skill source path."), {
-		code: "SKILL_SOURCE_NOT_FOUND",
-	});
+	return sources[0] as string;
 }
 
 function parseAgents(filter?: string): Agent[] {
@@ -69,6 +134,31 @@ function parseAgents(filter?: string): Agent[] {
 	return valid;
 }
 
+function getBaseSkillName(sourceName: string): string {
+	return sourceName.replace(/-en$/, "");
+}
+
+function getBuiltInSkillNames(): string[] {
+	const skillsDir = getSkillsDir();
+	if (skillsDir) {
+		try {
+			const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
+			const names = entries
+				.filter(
+					(e) =>
+						e.isDirectory() &&
+						e.name.startsWith("websculpt-") &&
+						fs.existsSync(path.join(skillsDir, e.name, "SKILL.md")),
+				)
+				.map((e) => getBaseSkillName(e.name));
+			return [...new Set(names)];
+		} catch {
+			// fall through
+		}
+	}
+	return ["websculpt-explore", "websculpt-capture"];
+}
+
 /** Installs the WebSculpt skill to agent directories. */
 export function handleSkillInstall(options: {
 	global?: boolean;
@@ -76,14 +166,22 @@ export function handleSkillInstall(options: {
 	from?: string;
 	force?: boolean;
 	lang?: string;
+	name?: string;
 }): MetaCommandResult {
 	try {
-		const source = resolveSkillSource(options.from, options.lang);
+		let sources: string[];
+		if (options.from) {
+			sources = [resolveSkillSource(options.from)];
+		} else if (options.name) {
+			sources = [resolveSingleSkillSource(options.name, options.lang)];
+		} else {
+			sources = resolveSkillSources(options.lang);
+		}
+
 		const scope = options.global ? "global" : "local";
 		const agents = parseAgents(options.agents);
 
-		const agentDirs = getAgentDirs(scope);
-		const results: Array<{ agent: string; status: "installed" | "skipped" | "replaced" }> = [];
+		const results: Array<{ agent: string; skill: string; status: "installed" | "skipped" | "replaced" }> = [];
 
 		if (scope === "local") {
 			const detectedAgents = agents.filter((a) => fs.existsSync(getAgentRootDir(scope, a)));
@@ -100,23 +198,27 @@ export function handleSkillInstall(options: {
 		}
 
 		for (const agent of agents) {
-			const target = agentDirs[agent];
 			if (scope === "local" && !fs.existsSync(getAgentRootDir(scope, agent))) {
 				continue;
 			}
 
-			if (fs.existsSync(target)) {
-				if (options.force) {
-					fs.rmSync(target, { recursive: true, force: true });
-					fs.cpSync(source, target, { recursive: true, force: true });
-					results.push({ agent, status: "replaced" });
+			for (const source of sources) {
+				const skillName = getBaseSkillName(path.basename(source));
+				const target = getAgentSkillDir(scope, agent, skillName);
+
+				if (fs.existsSync(target)) {
+					if (options.force) {
+						fs.rmSync(target, { recursive: true, force: true });
+						fs.cpSync(source, target, { recursive: true, force: true });
+						results.push({ agent, skill: skillName, status: "replaced" });
+					} else {
+						results.push({ agent, skill: skillName, status: "skipped" });
+					}
 				} else {
-					results.push({ agent, status: "skipped" });
+					fs.mkdirSync(path.dirname(target), { recursive: true });
+					fs.cpSync(source, target, { recursive: true, force: true });
+					results.push({ agent, skill: skillName, status: "installed" });
 				}
-			} else {
-				fs.mkdirSync(path.dirname(target), { recursive: true });
-				fs.cpSync(source, target, { recursive: true, force: true });
-				results.push({ agent, status: "installed" });
 			}
 		}
 
@@ -137,21 +239,57 @@ export function handleSkillInstall(options: {
 }
 
 /** Uninstalls the WebSculpt skill from agent directories. */
-export function handleSkillUninstall(options: { global?: boolean; agents?: string }): MetaCommandResult {
+export function handleSkillUninstall(options: { global?: boolean; agents?: string; name?: string }): MetaCommandResult {
 	try {
 		const scope = options.global ? "global" : "local";
 		const agents = parseAgents(options.agents);
 
-		const agentDirs = getAgentDirs(scope);
-		const results: Array<{ agent: string; status: "removed" | "not_found" }> = [];
+		const results: Array<{ agent: string; skill: string; status: "removed" | "not_found" }> = [];
 
 		for (const agent of agents) {
-			const target = agentDirs[agent];
-			if (fs.existsSync(target)) {
-				fs.rmSync(target, { recursive: true, force: true });
-				results.push({ agent, status: "removed" });
+			const agentSkillsDir = path.join(getAgentRootDir(scope, agent), "skills");
+
+			if (!fs.existsSync(agentSkillsDir)) {
+				// No skills directory at all
+				if (options.name) {
+					const skillName = `websculpt-${options.name}`;
+					results.push({ agent, skill: skillName, status: "not_found" });
+				} else {
+					const builtInSkills = getBuiltInSkillNames();
+					for (const skillName of builtInSkills) {
+						results.push({ agent, skill: skillName, status: "not_found" });
+					}
+				}
+				continue;
+			}
+
+			if (options.name) {
+				const skillName = `websculpt-${options.name}`;
+				const target = path.join(agentSkillsDir, skillName);
+				if (fs.existsSync(target)) {
+					fs.rmSync(target, { recursive: true, force: true });
+					results.push({ agent, skill: skillName, status: "removed" });
+				} else {
+					results.push({ agent, skill: skillName, status: "not_found" });
+				}
 			} else {
-				results.push({ agent, status: "not_found" });
+				const entries = fs.readdirSync(agentSkillsDir, { withFileTypes: true });
+				const skillDirs = entries
+					.filter((e) => e.isDirectory() && e.name.startsWith("websculpt-"))
+					.map((e) => e.name);
+
+				if (skillDirs.length === 0) {
+					const builtInSkills = getBuiltInSkillNames();
+					for (const skillName of builtInSkills) {
+						results.push({ agent, skill: skillName, status: "not_found" });
+					}
+				} else {
+					for (const skillName of skillDirs) {
+						const target = path.join(agentSkillsDir, skillName);
+						fs.rmSync(target, { recursive: true, force: true });
+						results.push({ agent, skill: skillName, status: "removed" });
+					}
+				}
 			}
 		}
 
@@ -167,21 +305,23 @@ export function handleSkillUninstall(options: { global?: boolean; agents?: strin
 
 /** Displays the installation status of the WebSculpt skill across agents. */
 export function handleSkillStatus(): MetaCommandResult {
-	const localDirs = getAgentDirs("local");
-	const globalDirs = getAgentDirs("global");
+	const skillNames = getBuiltInSkillNames();
 	const lines: string[] = [];
 
 	for (const agent of AGENTS) {
-		const localExists = fs.existsSync(localDirs[agent]);
-		const globalExists = fs.existsSync(globalDirs[agent]);
+		lines.push(`${agent}:`);
 
-		if (localExists) {
-			const suffix = globalExists ? " [global present]" : "";
-			lines.push(`${agent.padEnd(8)} installed  local${suffix}`);
-		} else if (globalExists) {
-			lines.push(`${agent.padEnd(8)} installed  global`);
-		} else {
-			lines.push(`${agent.padEnd(8)} not installed`);
+		for (const skillName of skillNames) {
+			const localExists = fs.existsSync(getAgentSkillDir("local", agent, skillName));
+			const globalExists = fs.existsSync(getAgentSkillDir("global", agent, skillName));
+
+			if (localExists) {
+				lines.push(`  ${skillName.padEnd(22)} installed  local`);
+			} else if (globalExists) {
+				lines.push(`  ${skillName.padEnd(22)} installed  global`);
+			} else {
+				lines.push(`  ${skillName.padEnd(22)} not installed`);
+			}
 		}
 	}
 
@@ -195,23 +335,30 @@ export function registerSkillMeta(program: Command): void {
 
 	skill
 		.command("install")
-		.description("Install the WebSculpt skill to agent directories")
+		.description("Install WebSculpt skills to agent directories")
+		.argument("[name]", "Skill name to install (e.g., capture, explore)")
 		.option("-g, --global", "Install to global agent directories")
 		.option("-a, --agents <agents>", "Target specific agents (claude,codex,agents,all)")
 		.option("--from <path>", "Explicit skill source path")
 		.option("--lang <lang>", "Language: en (default) or zh")
 		.option("--force", "Replace existing installation")
-		.action(async (options: { global?: boolean; agents?: string; from?: string; force?: boolean; lang?: string }) => {
-			renderOutput(handleSkillInstall(options), format());
-		});
+		.action(
+			async (
+				name: string | undefined,
+				options: { global?: boolean; agents?: string; from?: string; force?: boolean; lang?: string },
+			) => {
+				renderOutput(handleSkillInstall({ ...options, name }), format());
+			},
+		);
 
 	skill
 		.command("uninstall")
-		.description("Uninstall the WebSculpt skill from agent directories")
+		.description("Uninstall WebSculpt skills from agent directories")
+		.argument("[name]", "Skill name to uninstall (e.g., capture, explore)")
 		.option("-g, --global", "Uninstall from global agent directories")
 		.option("-a, --agents <agents>", "Target specific agents")
-		.action(async (options: { global?: boolean; agents?: string }) => {
-			const result = handleSkillUninstall(options);
+		.action(async (name: string | undefined, options: { global?: boolean; agents?: string }) => {
+			const result = handleSkillUninstall({ ...options, name });
 			renderOutput(result, format());
 			if (result.success && (result as SkillUninstallResult).results.every((r) => r.status === "not_found")) {
 				process.exitCode = 1;

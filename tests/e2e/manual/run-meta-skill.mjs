@@ -32,6 +32,10 @@ async function run() {
 	await runStep("skill status (before)", ["skill", "status"]);
 	await runStep("skill install", ["skill", "install", "--force"]);
 	await runStep("skill status (after install)", ["skill", "status"]);
+	await runStep("skill install capture", ["skill", "install", "capture", "--force"]);
+	await runStep("skill status (after single install)", ["skill", "status"]);
+	await runStep("skill uninstall capture", ["skill", "uninstall", "capture"]);
+	await runStep("skill status (after single uninstall)", ["skill", "status"]);
 	await runStep("skill uninstall", ["skill", "uninstall"]);
 	await runStep("skill status (after uninstall)", ["skill", "status"]);
 

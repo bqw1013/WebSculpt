@@ -1,0 +1,23 @@
+{
+  "id": "hackernews-get-top",
+  "domain": "hackernews",
+  "action": "get-top",
+  "runtime": "node",
+  "description": "Fetch top stories from HackerNews front page via the official Algolia Search API. Returns a ranked list with title, URL, vote count, comment count, author, and timestamps. Supports adjustable result limit and client-side sorting by points or comments. No authentication required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of stories to return (1-30, default 15)",
+      "required": false,
+      "default": "15"
+    },
+    {
+      "name": "sortBy",
+      "description": "Sort results by 'points' (default) or 'comments'",
+      "required": false,
+      "default": "points"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

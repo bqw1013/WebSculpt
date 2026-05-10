@@ -64,25 +64,23 @@ describe("handleCommandShow", () => {
 	it("merges system prerequisites for browser runtime", async () => {
 		vi.mocked(findCommand).mockReturnValue({
 			manifest: {
-				id: "github-list-trending",
+				id: "github-get-trending",
 				domain: "github",
-				action: "list-trending",
+				action: "get-trending",
 				description: "Fetch trending",
 				runtime: "browser",
 				requiresBrowser: true,
 			},
-			commandPath: "/tmp/commands/github/list-trending/command.js",
+			commandPath: "/tmp/commands/github/get-trending/command.js",
 			source: "builtin",
 			runtime: "browser",
 		});
 		vi.mocked(access).mockResolvedValue(undefined);
 
-		const result = await handleCommandShow("github", "list-trending");
+		const result = await handleCommandShow("github", "get-trending");
 		expect(result.success).toBe(true);
 		if (!result.success) return;
-		expect(result.command.prerequisites).toContain(
-			"Requires `playwright-cli attach --cdp=chrome|msedge --session=default`",
-		);
+		expect(result.command.prerequisites).toContain("Requires Chrome or Edge running with remote debugging enabled.");
 	});
 
 	it("returns readmeContent when includeReadme is true and README.md exists", async () => {

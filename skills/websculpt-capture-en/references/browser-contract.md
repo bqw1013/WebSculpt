@@ -1,0 +1,132 @@
+# Browser Runtime Contract
+
+> Applicable to WebSculpt commands with `runtime: "browser"`.
+
+## 1. Module Format
+
+The entry file is `command.js`, and it must use standard ESM default export.
+
+```js
+export default async function (page, params) {
+  return {};
+}
+```
+
+Signature:
+
+```text
+async (page, params) => unknown
+```
+
+`page` is created by the WebSculpt daemon for this execution. Do not close the injected `page`; the daemon will clean up uniformly.
+
+## 2. Parameters
+
+`params` is passed as the second argument to the command function; all values are strings. Use `parseInt` or `parseFloat` for numbers, and `params.flag === "true"` for booleans.
+
+For parameters that already have `default` declared in the manifest, do not write fallback in code (e.g., `params.foo || "default"`).
+
+`params.xxx` accessed in code must be declared in `manifest.json`'s `parameters`; otherwise `capture validate` will report an `UNDECLARED_PARAM` error.
+
+## 3. Environment
+
+Browser runtime executes in the daemon's Node.js process. The daemon connects to the user's existing Chrome or Edge instance via `connectOverCDP`; it does not launch a new browser, nor does it use headless mode. The connection is lazy: it is only attempted when a browser runtime command is executed for the first time.
+
+After the command is loaded, the daemon creates a new `page` in the browser's default context and injects it into the command function. This page reuses the user's login state, cookies, and localStorage; after command execution completes, the daemon automatically closes the page, so command code should not close the injected `page`.
+
+The daemon loads command modules via dynamic `import()`, and bypasses ESM cache using a timestamp query parameter, so changes to `command.js` take effect upon re-execution without reinstallation. Command execution timeout is 20 minutes (error code `COMMAND_TIMEOUT`), not 5 seconds; 5 seconds is only the daemon's own graceful shutdown fallback timeout and is unrelated to command execution.
+
+Available capabilities include the Playwright `page` API, Node.js built-in modules, and global `fetch`.
+
+Note: `page.evaluate(callback)` executes in the browser process and cannot use Node.js modules or `require`/`import`.
+
+Restrictions:
+
+- Do not read or write the local file system.
+- `console.log` outputs to the daemon process; CLI users usually cannot see it; debugging information should be carried out through the return value.
+
+## 4. Code Compliance Constraints
+
+The following constraints are automatically checked during the `capture validate` phase; failure to meet them will directly cause errors:
+
+| Rule | Description | Error Code |
+|------|-------------|------------|
+| Code length limit | `command.js` must not exceed 1000 lines | `CODE_TOO_LONG` |
+| Prohibit temporary snapshot refs | Code must not contain temporary snapshot references like `e1`, `e15` | `TEMP_REF_FOUND` |
+| Prohibit browser connection keywords | Must not use `launch`, `connect`, `connectOverCDP`, `newBrowser`, `chrome-remote-interface` | `BROWSER_CONNECTION_FORBIDDEN` |
+| Prohibit inline import | Must not use dynamic imports in the form of `await import(...)` | `INLINE_IMPORT_FORBIDDEN` |
+| Prohibit illegal module imports | Can only import Node.js built-in modules | `ILLEGAL_IMPORT_FORBIDDEN` |
+| Parameter declaration consistency | `params.xxx` must be declared in `manifest.parameters` | `UNDECLARED_PARAM` |
+
+## 5. Return Value
+
+Directly `return` serializable pure data. The return value will be serialized by `JSON.stringify` and written into the execution log, so please ensure the returned structure can be safely serialized.
+
+Recommended:
+
+```js
+return { items, count: items.length };
+```
+
+Avoid:
+
+- Returning functions (silently discarded by `JSON.stringify`)
+- Returning class instances (non-enumerable properties such as methods will be lost)
+- Returning circular references (will cause `JSON.stringify` to throw an exception, and command execution will be marked as failed)
+- Returning structures containing `undefined` (properties in objects will be omitted, elements in arrays will become `null`)
+
+During development and debugging, you may temporarily carry debugging information out through the return value:
+
+```js
+return {
+  debug: { url: page.url(), title: await page.title() },
+  items
+};
+```
+
+In formal commands, remove the debug field, or confirm that it is valuable to the caller.
+
+## 6. Errors
+
+Business errors should set `error.code` and include the error code in the message. If not set, command failure will fallback to `COMMAND_EXECUTION_ERROR`.
+
+```js
+const error = new Error("[DRIFT_DETECTED] Expected result selector was not found");
+error.code = "DRIFT_DETECTED";
+throw error;
+```
+
+Infrastructure errors such as `BROWSER_ATTACH_REQUIRED`, `DAEMON_BUSY`, and `COMMAND_TIMEOUT` are produced by the runner or daemon; command code does not need to throw them.
+
+## Performance and Stability Recommendations
+
+The following recommendations come from common observations in actual capture and can help reduce timeouts and instability, but please judge applicability based on the actual site characteristics.
+
+### Page Load Timeout
+
+If the command frequently times out during the `page.goto()` phase, consider:
+
+1. Changing `waitUntil` from the default `"load"` to `"domcontentloaded"`, to avoid waiting for third-party ad/tracking scripts.
+2. Using `page.waitForSelector(targetSelector)` to wait for the target element to stably appear, rather than waiting for all resources to finish loading.
+
+## 7. Checklist
+
+### Code Quality
+
+- [ ] Use `export default` to export an async function.
+- [ ] Signature is `async (page, params) => unknown`.
+- [ ] Do not close the injected `page`.
+- [ ] Parameter conversion is explicit.
+- [ ] No in-code default overrides manifest default.
+- [ ] Wait for stable elements before extracting data.
+- [ ] Return value is serializable.
+- [ ] Error codes are explicit.
+- [ ] Implementation does not go beyond evidence.
+
+### Compliance Constraints
+
+- [ ] Code does not exceed 1000 lines.
+- [ ] No temporary snapshot references.
+- [ ] No inline dynamic import.
+- [ ] Only import Node.js built-in modules.
+- [ ] All `params.xxx` are already declared in the manifest.

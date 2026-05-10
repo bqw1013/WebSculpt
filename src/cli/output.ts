@@ -1,4 +1,6 @@
 import type { CommandParameter, ValidationDetail } from "../types/index.js";
+import type { ArtifactState } from "./meta/capture/lib/capture-status-computer.js";
+import type { CommandLibrarySnapshot } from "./meta/capture/lib/capture-utils.js";
 
 /** Output format for meta command results. */
 export type OutputFormat = "human" | "json";
@@ -34,6 +36,7 @@ export interface ValidationErrorResult {
 export interface CommandValidateResult {
 	success: true;
 	warnings?: ValidationDetail[];
+	message?: string;
 }
 
 /** Result shape for a successful command removal. */
@@ -53,6 +56,50 @@ export interface CommandDraftResult {
 		file?: string;
 		command?: string;
 	}>;
+	warnings?: ValidationDetail[];
+}
+
+/** Result shape for a successful capture workspace creation. */
+export interface CaptureNewResult {
+	success: true;
+	capture: {
+		name: string;
+		path: string;
+		domain: string;
+		action: string;
+		runtime: string;
+	};
+	commandLibrarySnapshot: CommandLibrarySnapshot;
+	summary: {
+		domain: string;
+		action: string;
+		duplicateWarning?: string;
+		estimatedSteps: number;
+	};
+	next: string;
+	warnings?: ValidationDetail[];
+}
+
+/** Result shape for a successful capture status query. */
+export interface CaptureStatusResult {
+	success: true;
+	capture: {
+		name: string;
+		path: string;
+	};
+	artifacts: {
+		evidence: ArtifactState;
+		command: ArtifactState;
+		manifest: ArtifactState;
+		readme: ArtifactState;
+		context: ArtifactState;
+		validation: ArtifactState;
+	};
+	readyToFinalize: boolean;
+	next: {
+		action: string;
+		target?: string;
+	};
 	warnings?: ValidationDetail[];
 }
 
@@ -166,13 +213,13 @@ export interface DaemonRestartResult {
 /** Result shape for a successful skill install. */
 export interface SkillInstallResult {
 	success: true;
-	results: Array<{ agent: string; status: "installed" | "skipped" | "replaced" }>;
+	results: Array<{ agent: string; skill: string; status: "installed" | "skipped" | "replaced" }>;
 }
 
 /** Result shape for a successful skill uninstall. */
 export interface SkillUninstallResult {
 	success: true;
-	results: Array<{ agent: string; status: "removed" | "not_found" }>;
+	results: Array<{ agent: string; skill: string; status: "removed" | "not_found" }>;
 }
 
 /** Result shape for a successful skill status. */
@@ -196,6 +243,8 @@ export type MetaCommandResult =
 	| CommandValidateResult
 	| ValidationErrorResult
 	| CommandDraftResult
+	| CaptureNewResult
+	| CaptureStatusResult
 	| CommandShowResult
 	| MetaCommandError;
 
@@ -256,6 +305,14 @@ function isMetaCommandError(r: MetaCommandResult): r is MetaCommandError | Valid
 
 function isCommandDraftResult(r: MetaCommandResult): r is CommandDraftResult {
 	return r.success && "draftPath" in r;
+}
+
+function isCaptureNewResult(r: MetaCommandResult): r is CaptureNewResult {
+	return r.success && "capture" in r && "commandLibrarySnapshot" in r;
+}
+
+function isCaptureStatusResult(r: MetaCommandResult): r is CaptureStatusResult {
+	return r.success && "artifacts" in r && "readyToFinalize" in r;
 }
 
 function isCommandCreateResult(r: MetaCommandResult): r is CommandCreateResult {
@@ -333,6 +390,96 @@ function renderDraftResult(result: CommandDraftResult): void {
 	}
 }
 
+function renderCaptureNewResult(result: CaptureNewResult): void {
+	console.log(`Capture workspace created at ${result.capture.path}`);
+	console.log("");
+	printKeyValue("name:", result.capture.name);
+	printKeyValue("domain:", result.capture.domain);
+	printKeyValue("action:", result.capture.action);
+	printKeyValue("runtime:", result.capture.runtime);
+	console.log("");
+	console.log("Command library snapshot:");
+	printKeyValue("  total:", String(result.commandLibrarySnapshot.totalCommands));
+	const sameDomain = result.commandLibrarySnapshot.sameDomainCommands;
+	printKeyValue("  same domain:", sameDomain.length > 0 ? sameDomain.join(", ") : "none");
+	printKeyValue("  name conflict:", result.commandLibrarySnapshot.nameConflict ? "yes" : "no");
+	if (result.commandLibrarySnapshot.conflictSource !== undefined) {
+		printKeyValue("  conflict source:", result.commandLibrarySnapshot.conflictSource);
+	}
+	if (result.warnings && result.warnings.length > 0) {
+		console.log("");
+		printWarnings(result.warnings);
+	}
+	console.log("");
+	console.log(`Next: ${result.next}`);
+}
+
+function formatNextHint(result: CaptureStatusResult): string {
+	const { next, artifacts: a } = result;
+	const base = `${next.action}${next.target ? ` (${next.target})` : ""}`;
+
+	switch (next.action) {
+		case "fill-evidence":
+			return a.evidence.reason ? `${base}: ${a.evidence.reason}` : base;
+		case "fill-manifest": {
+			if (a.manifest.reason?.includes("does not match capture")) {
+				return `${base}: ${a.manifest.reason}`;
+			}
+			if (a.manifest.status === "ready") {
+				return `${base}: Add description`;
+			}
+			return a.manifest.reason ? `${base}: ${a.manifest.reason}` : base;
+		}
+		case "fill-command":
+			return a.command.reason ? `${base}: ${a.command.reason}` : base;
+		case "fill-readme":
+			return a.readme.reason ? `${base}: ${a.readme.reason}` : base;
+		case "fill-context":
+			return a.context.reason ? `${base}: ${a.context.reason}` : base;
+		case "validate":
+			return a.validation.reason ? `${base}: ${a.validation.reason}` : base;
+		case "request-user-confirmation":
+			return `finalize: Ready to run "capture finalize"`;
+		default:
+			return base;
+	}
+}
+
+function renderCaptureStatusResult(result: CaptureStatusResult): void {
+	console.log(`Capture status for ${result.capture.name}`);
+	console.log(`Workspace: ${result.capture.path}`);
+	console.log("");
+
+	const a = result.artifacts;
+	const states = [
+		["evidence", a.evidence],
+		["command", a.command],
+		["manifest", a.manifest],
+		["readme", a.readme],
+		["context", a.context],
+		["validation", a.validation],
+	] as const;
+
+	for (const [name, state] of states) {
+		const statusLabel = state.status.toUpperCase();
+		const reason = state.reason ? ` (${state.reason})` : "";
+		console.log(`  ${name.padEnd(12)} ${statusLabel}${reason}`);
+	}
+
+	console.log("");
+	if (result.readyToFinalize) {
+		console.log("Status: READY TO FINALIZE");
+		console.log(`Next: ${formatNextHint(result)}`);
+	} else {
+		console.log(`Next: ${formatNextHint(result)}`);
+	}
+
+	if (result.warnings && result.warnings.length > 0) {
+		console.log("");
+		printWarnings(result.warnings);
+	}
+}
+
 function renderCreateResult(result: CommandCreateResult): void {
 	console.log(`Created command ${result.command} at ${result.path}`);
 	if (result.warnings && result.warnings.length > 0) {
@@ -362,8 +509,11 @@ function renderListResult(result: CommandListResult): void {
 	const widths = [commandMaxWidth, sourceMaxWidth, browserMaxWidth, loginMaxWidth];
 
 	console.log(formatRow(["Command", "Source", "Browser", "Login", "Description"], widths));
-	for (const row of rows) {
+	for (const [i, row] of rows.entries()) {
 		console.log(formatRow([row.command, row.source, row.browser, row.login, row.description], widths));
+		if (i < rows.length - 1) {
+			console.log("");
+		}
 	}
 }
 
@@ -451,8 +601,18 @@ function renderLines(lines: string[]): void {
 }
 
 function renderSkillResults(result: SkillInstallResult | SkillUninstallResult): void {
+	const byAgent = new Map<string, Array<{ skill: string; status: string }>>();
 	for (const r of result.results) {
-		console.log(`${r.agent}: ${r.status}`);
+		const list = byAgent.get(r.agent) ?? [];
+		list.push({ skill: r.skill, status: r.status });
+		byAgent.set(r.agent, list);
+	}
+
+	for (const [agent, items] of byAgent) {
+		console.log(`${agent}:`);
+		for (const item of items) {
+			console.log(`  ${item.skill}: ${item.status}`);
+		}
 	}
 }
 
@@ -470,6 +630,9 @@ function renderValidationResult(result: CommandValidateResult): void {
 		}
 	} else {
 		console.log("Validation passed");
+	}
+	if (result.message) {
+		console.log(result.message);
 	}
 }
 
@@ -498,6 +661,16 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		return;
 	}
 
+	if (isCaptureNewResult(result)) {
+		renderCaptureNewResult(result);
+		return;
+	}
+
+	if (isCaptureStatusResult(result)) {
+		renderCaptureStatusResult(result);
+		return;
+	}
+
 	if (isCommandCreateResult(result)) {
 		renderCreateResult(result);
 		return;
@@ -523,13 +696,13 @@ export function renderOutput(result: MetaCommandResult, format: OutputFormat): v
 		return;
 	}
 
-	if (isMessageResult(result)) {
-		renderMessageResult(result);
+	if (isCommandValidateResult(result)) {
+		renderValidationResult(result);
 		return;
 	}
 
-	if (isCommandValidateResult(result)) {
-		renderValidationResult(result);
+	if (isMessageResult(result)) {
+		renderMessageResult(result);
 		return;
 	}
 

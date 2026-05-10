@@ -45,18 +45,17 @@ async function run() {
 
 	// --- Builtin commands ---
 	const promises = [
-		runBg("github-list-trending", ["github", "list-trending", "--limit", "3"]),
-		runBg("hackernews-list-top", ["hackernews", "list-top", "--limit", "3"]),
-		runBg("zhihu-list-hot", ["zhihu", "list-hot", "--limit", "3"]),
-		runBg("zhihu-list-posts", ["zhihu", "list-posts", "--user", "https://www.zhihu.com/people/bai-qiang-wei-10", "--limit", "2"]),
-		runBg("zhihu-list-activities", ["zhihu", "list-activities", "--user", "https://www.zhihu.com/people/bai-qiang-wei-10", "--limit", "2"]),
-		runBg("zhihu-get-post", ["zhihu", "get-post", "--url", "https://zhuanlan.zhihu.com/p/608634079"]),
-		runBg("zhihu-get-user-profile", ["zhihu", "get-user-profile", "--user", "https://www.zhihu.com/people/bai-qiang-wei-10"]),
+		runBg("arxiv-search-papers", ["arxiv", "search-papers", "--query", "machine learning", "--limit", "3"]),
+		runBg("bilibili-get-hot", ["bilibili", "get-hot", "--limit", "5"]),
+		runBg("github-get-trending", ["github", "get-trending", "--limit", "3"]),
+		runBg("hackernews-get-top", ["hackernews", "get-top", "--limit", "3"]),
+		runBg("reddit-get-hot", ["reddit", "get-hot", "--limit", "3"]),
+		runBg("weibo-get-hot-search", ["weibo", "get-hot-search", "--limit", "5"]),
+		runBg("zhihu-get-hot", ["zhihu", "get-hot", "--limit", "3"]),
 
 		// --- User commands ---
 		runBg("16888-list-sales", ["16888", "list-sales", "--year", "2026", "--month", "3", "--limit", "3"]),
 		runBg("cpcaauto-list-sales-rankings", ["cpcaauto", "list-sales-rankings", "--limit", "3"]),
-
 	];
 
 	console.log("");

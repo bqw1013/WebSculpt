@@ -1,4 +1,4 @@
-import { access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { handleCommandDraft, parseParamSpec } from "../../../../src/cli/meta/command/draft.js";
 
@@ -61,6 +61,14 @@ describe("handleCommandDraft", () => {
 		}
 	});
 
+	it("rejects reserved domain 'capture'", async () => {
+		const result = await handleCommandDraft("capture", "test", {});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(result.error.code).toBe("RESERVED_DOMAIN");
+		}
+	});
+
 	it("generates structured README.md and context.md templates", async () => {
 		const result = await handleCommandDraft("test-domain", "test-action", { force: true });
 		expect(result.success).toBe(true);
@@ -79,7 +87,7 @@ describe("handleCommandDraft", () => {
 		if (!result.success) return;
 
 		const manifestPath = `${result.draftPath}/manifest.json`;
-		const manifest = JSON.parse(await (await import("node:fs/promises")).readFile(manifestPath, "utf-8"));
+		const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
 		expect(manifest.requiresBrowser).toBe(false);
 		expect(manifest.authRequired).toBe("unknown");
 	});
@@ -90,7 +98,7 @@ describe("handleCommandDraft", () => {
 		if (!result.success) return;
 
 		const manifestPath = `${result.draftPath}/manifest.json`;
-		const manifest = JSON.parse(await (await import("node:fs/promises")).readFile(manifestPath, "utf-8"));
+		const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
 		expect(manifest.requiresBrowser).toBe(true);
 		expect(manifest.authRequired).toBe("unknown");
 	});

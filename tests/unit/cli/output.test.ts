@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { CaptureNewResult } from "../../../src/cli/output.js";
 import { renderOutput } from "../../../src/cli/output.js";
 
 describe("renderOutput", () => {
@@ -134,4 +135,58 @@ describe("renderOutput", () => {
 		expect(logSpy).toHaveBeenCalledWith("# Usage\nRun with --name");
 		logSpy.mockRestore();
 	});
+
+	it("prints a capture new result as JSON", () => {
+		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+		const result = createCaptureNewResult();
+
+		renderOutput(result, "json");
+
+		expect(logSpy).toHaveBeenCalledWith(JSON.stringify(result, null, 2));
+		logSpy.mockRestore();
+	});
+
+	it("prints a human-readable capture new summary", () => {
+		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+		renderOutput(createCaptureNewResult(), "human");
+
+		expect(logSpy).toHaveBeenCalledWith("Capture workspace created at /tmp/.websculpt-captures/github-trending");
+		expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("github/get-trending"));
+		expect(logSpy).toHaveBeenCalledWith("Next: websculpt capture status github-trending");
+		logSpy.mockRestore();
+	});
 });
+
+function createCaptureNewResult(): CaptureNewResult {
+	return {
+		success: true,
+		capture: {
+			name: "github-trending",
+			path: "/tmp/.websculpt-captures/github-trending",
+			domain: "github",
+			action: "get-trending",
+			runtime: "browser",
+		},
+		commandLibrarySnapshot: {
+			totalCommands: 2,
+			sameDomainCommands: ["github/get-trending"],
+			nameConflict: true,
+			conflictSource: "builtin",
+		},
+		summary: {
+			domain: "github",
+			action: "get-trending",
+			duplicateWarning: "Builtin command exists",
+			estimatedSteps: 5,
+		},
+		next: "websculpt capture status github-trending",
+		warnings: [
+			{
+				code: "BUILTIN_OVERRIDE",
+				message: "Builtin command already exists",
+				level: "warning",
+			},
+		],
+	};
+}

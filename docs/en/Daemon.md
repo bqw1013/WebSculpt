@@ -1,39 +1,41 @@
 # WebSculpt Daemon Technical Documentation
 
-> This document is for developers, describing the architecture design, process model, and resource management strategy of the WebSculpt background daemon process.
+> This document is intended for developers and describes the architecture design, process model, and resource management strategy of the WebSculpt background daemon process.
 
 ---
 
-## 1. Positioning and Responsibilities
+## 1. Role and Responsibilities
 
-The daemon is the CLI's command execution engine, responsible for running user command modules in an existing browser instance through Playwright.
+The daemon is the command execution engine of the CLI, responsible for running user command modules in an existing browser instance via Playwright.
 
-Division of responsibilities between CLI and daemon:
+Division of labor between CLI and daemon:
 
-- **CLI**: Command discovery, parsing, and dispatching; on-demand daemon spawning; sending execution requests via IPC.
-- **daemon**: Maintains browser CDP connection; creates isolated pages for each command and executes; manages memory, sessions, and logs.
+- **CLI**: Command discovery, parsing, and scheduling; launching the daemon on demand; sending execution requests via IPC.
+- **daemon**: Maintaining browser CDP connections; creating isolated pages for each command and executing them; managing memory, sessions, and logs.
+
+> **Relationship with `@playwright/cli`**: `@playwright/cli` is a standalone CLI tool used by the Agent during the **exploration phase** (providing commands such as `attach`, `eval`, `snapshot`). The WebSculpt daemon connects directly to the browser via `connectOverCDP` from `playwright-core` during the **execution phase**, and does not depend on any process or session management from the `@playwright/cli` package.
 
 ---
 
 ## 2. Process Model
 
-### 2.1 Auto-Spawning
+### 2.1 Auto-Start
 
-When a `browser` command is first executed, the CLI automatically detects and spawns the daemon via `ensureDaemonClient()`:
+When a command with `runtime: "browser"` is executed for the first time, the CLI automatically detects and starts the daemon via `ensureDaemonClient()`:
 
-1. Read the daemon state file (`daemon.json`) to check for an existing daemon state
-2. If the PID is alive and the socket is reachable, reuse the existing instance
-3. If it does not exist or is unreachable, acquire a cross-process lock and start a new daemon
-4. After the new daemon starts and writes the state file, the CLI establishes an IPC connection
+1. Read the daemon status file (`daemon.json`) to check for an existing daemon instance.
+2. If the PID is alive and the socket is reachable, reuse the existing instance.
+3. If it does not exist or is unreachable, acquire a cross-process lock and start a new daemon.
+4. After the new daemon starts and writes the status file, the CLI establishes an IPC connection.
 
-The cross-process lock (`daemon-start.lock`) prevents multiple CLI processes from spawning multiple daemon instances simultaneously.
+The cross-process lock (`daemon-start.lock`) prevents multiple CLI processes from starting multiple daemon instances simultaneously.
 
 ### 2.2 Lifecycle Management
 
 The daemon provides the following lifecycle interfaces:
 
 - `daemon start`: Manual start
-- `daemon stop`: Graceful shutdown (graceful shutdown → poll confirmation → SIGKILL fallback)
+- `daemon stop`: Graceful shutdown (graceful shutdown -> poll for confirmation -> SIGKILL fallback)
 - `daemon restart`: Stop then start
 - `daemon status`: Query health status
 - `daemon logs`: Read recent logs
@@ -42,15 +44,15 @@ The daemon provides the following lifecycle interfaces:
 
 When a stop signal is received, the daemon shuts down in the following order:
 
-1. Stop monitoring and flush metrics
-2. Clean up state file, close browser and socket
-3. Force exit after a 5-second timeout
+1. Stop monitoring and flush metrics.
+2. Clean up the status file, close the browser, and close the socket.
+3. Force exit after a 5-second timeout.
 
 ---
 
 ## 3. IPC Protocol
 
-The CLI and daemon communicate via **Unix Domain Socket** (Linux/macOS) or **Windows Named Pipe**, with transmission format **NDJSON** (newline-delimited JSON), split by line to support stream processing of multiple requests/responses.
+The CLI and daemon communicate via **Unix Domain Socket** (Linux/macOS) or **Windows Named Pipe**, using **NDJSON** (newline-delimited JSON) as the transport format. Messages are split by line to support streaming processing of multiple requests/responses.
 
 ### 3.1 Request Format
 
@@ -76,25 +78,25 @@ interface SocketResponse {
 
 - `run`: Execute a command
   - Parameters: `{ commandPath: string, params: Record<string, string> }`
-  - Success return: Protocol layer wraps as `{ success: true, data: unknown }`, client unpacks and returns `data`
-- `health`: Query daemon health status, no parameters required
-- `stop`: Request graceful shutdown, returns `{ shuttingDown: true }`, no parameters required
+  - On success: The protocol layer wraps the response as `{ success: true, data: unknown }`, and the client unpacks and returns `data`
+- `health`: Query daemon health status; no parameters required
+- `stop`: Request graceful shutdown; returns `{ shuttingDown: true }`; no parameters required
 
-### 3.4 Health Endpoint Return Structure
+### 3.4 Health Endpoint Response Structure
 
 ```typescript
 {
   pid: number;
   uptime: number;           // Seconds since start
   healthy: true;
-  degraded: boolean;        // Whether memory exceeds warning threshold
+  degraded: boolean;        // Whether memory exceeds the warning threshold
   browser: {
-    connected: boolean;     // Whether CDP connection is established
-    lazy: boolean;          // Whether never connected before
-    pages: number;          // Current number of open pages
+    connected: boolean;     // Whether a CDP connection has been established
+    lazy: boolean;          // Whether a connection has never been made
+    pages: number;          // Number of currently open pages
   };
   sessions: {
-    active: number;         // Currently executing sessions
+    active: number;         // Number of currently executing sessions
     max: number;            // Maximum concurrent sessions
     total: number;          // Cumulative executions since this start
   };
@@ -121,37 +123,37 @@ interface SocketResponse {
 
 ### 4.1 Browser Connection
 
-The daemon internally maintains a single browser CDP connection via browser-manager (`chromium.connectOverCDP("chrome")`), not starting a new browser but connecting to the user's existing Chrome/Edge instance.
+The daemon internally maintains a single browser CDP connection via `browser-manager` (`chromium.connectOverCDP("chrome")`). It does not launch a new browser; instead, it connects to the user's existing Chrome/Edge instance.
 
-The connection has the following fault tolerance mechanisms:
+The connection includes the following fault-tolerance mechanisms:
 
-- **Lazy connection**: CDP connection is only established when a command is first executed.
-- **Concurrent deduplication**: Multiple simultaneous requests share the same connection attempt, avoiding multiple browser windows popping up.
-- **Auto-reconnect**: The `withBrowser` wrapper detects disconnections (`TargetClosedError`, `ECONNRESET`, `ECONNREFUSED`, `EPIPE`, etc.) and attempts to reconnect once. If the browser is not started, throws `BROWSER_ATTACH_REQUIRED`.
+- **Lazy connection**: The CDP connection is established only when a command is executed for the first time.
+- **Concurrent deduplication**: Multiple simultaneous requests share the same connection attempt, preventing multiple browser windows from popping up.
+- **Auto-reconnect**: When the `withBrowser` wrapper detects a disconnected connection (`TargetClosedError`, `ECONNRESET`, `ECONNREFUSED`, `EPIPE`, etc.), it closes the old connection and reconnects once. If the browser is not started, it throws `BROWSER_ATTACH_REQUIRED`.
 
 ### 4.2 Page Isolation
 
 When each command is executed:
 
-1. Reuse the browser's default context (preserving user login state, cookies, localStorage)
-2. Create a new page in that context
-3. Load the user command module via dynamic `import()`, execute its default export function in the Node.js process, manipulating the page through the Playwright API
-4. Close the page after execution completes
+1. Reuse the browser's default context (preserving user login state, cookies, localStorage).
+2. Create a new page within that context.
+3. Load the user command module via dynamic `import()`, execute its default exported function in the Node.js process, and manipulate the page through the Playwright API.
+4. Close the page after execution completes.
 
-Module loading uses `?t=${Date.now()}` to bypass ESM cache, ensuring the latest version is loaded on next execution after command file modifications.
+Module loading uses `?t=${Date.now()}` to bypass ESM caching, ensuring that modified command files are loaded as the latest version on the next execution.
 
 ### 4.3 Session Limits
 
 | Limit | Value | Description |
 |-------|-------|-------------|
-| Max concurrent sessions | 20 | Upper limit of simultaneously executing commands |
-| Max total pages | 50 | Upper limit of total open pages in the browser (commands may internally create additional pages) |
-| Command execution timeout | 20 minutes | Can be overridden in test environment via `WEBSCULPT_TEST_COMMAND_TIMEOUT_MS` |
+| Max concurrent sessions | 20 | Upper limit on the number of commands being executed simultaneously |
+| Max total pages | 50 | Upper limit on the total number of open pages in the browser (commands may internally create additional pages) |
+| Command execution timeout | 20 minutes | Can be overridden in test environments via `WEBSCULPT_TEST_COMMAND_TIMEOUT_MS` |
 
-When limits are reached, the daemon does not queue but returns errors directly:
+When limits are reached, the daemon does not queue requests but returns errors directly:
 
-- Concurrent sessions full → `DAEMON_BUSY`
-- Total pages full → `DAEMON_PAGE_LIMIT`
+- Concurrent sessions full -> `DAEMON_BUSY`
+- Total pages full -> `DAEMON_PAGE_LIMIT`
 
 ---
 
@@ -159,29 +161,29 @@ When limits are reached, the daemon does not queue but returns errors directly:
 
 ### 5.1 Memory Monitoring
 
-Three-level memory thresholds (monitored object is daemon process RSS):
+Three-tier memory threshold (monitored object is daemon process RSS):
 
 | Level | Threshold | Behavior |
 |-------|-----------|----------|
-| Warning | 400 MB | Marked as degraded and warning log recorded; does not affect request processing, only reflected in health endpoint |
+| Warning | 400 MB | Marked as degraded and a warning log is recorded; does not affect request processing, only reflected in the health endpoint |
 | Limit | 600 MB | Marked as restartPending, enters drain mode (rejects new requests, closes after existing sessions complete) |
-| Emergency | 1000 MB | Cleans up state file then force exits to prevent OOM |
+| Emergency | 1000 MB | Cleans up the status file and forces exit to prevent OOM |
 
 Sampling interval is 60 seconds.
 
 ### 5.2 Execution Count Threshold
 
-After accumulating 200 command executions, the daemon marks itself as `restartPending`. At this point:
+After accumulating 200 command executions, the daemon is marked as `restartPending`. At this point:
 
 - New requests are rejected and return `DAEMON_RESTARTING`
-- Currently executing sessions continue to completion
-- When active session count drops to 0, graceful shutdown is automatically triggered
-- The CLI automatically retries after receiving `DAEMON_RESTARTING`, spawning a new daemon instance
+- Existing executing sessions continue to complete
+- When the number of active sessions drops to 0, graceful shutdown is automatically triggered
+- The CLI automatically retries after receiving `DAEMON_RESTARTING`, launching a new daemon instance
 
 ### 5.3 Metrics and Logs
 
-- **Logs**: Structured events during operation are written to `daemon.log` in NDJSON format, including start/shutdown events, request start/end, memory warnings, browser connect/disconnect, etc.
-- **Metrics**: When the daemon shuts down, it flushes summary metrics for this session (start time, uptime, execution count, peak concurrency, peak pages, peak RSS, shutdown reason) to `daemon-metrics.json`.
+- **Logs**: Structured events during runtime are written to `daemon.log` in NDJSON format, including start/stop events, request start/end, memory alarms, browser connect/disconnect, etc.
+- **Metrics**: When the daemon shuts down, it flushes summary metrics for the current session (start time, uptime, execution count, peak concurrency, peak page count, peak RSS, shutdown reason) to `daemon-metrics.json`.
 
 ---
 
@@ -194,11 +196,11 @@ After accumulating 200 command executions, the daemon marks itself as `restartPe
 | `INVALID_PARAMS` | Request parameters missing or malformed |
 | `UNKNOWN_METHOD` | Requested IPC method does not exist |
 | `PARSE_ERROR` | Received data is not valid JSON |
-| `INTERNAL_ERROR` | Socket server internal processing exception |
+| `INTERNAL_ERROR` | Internal socket server processing exception |
 | `DAEMON_BUSY` | Concurrent session limit reached |
 | `DAEMON_PAGE_LIMIT` | Total page limit reached |
 | `DAEMON_RESTARTING` | Daemon is in restartPending drain state |
-| `COMMAND_TIMEOUT` | Command execution timed out (20 minutes) |
+| `COMMAND_TIMEOUT` | Command execution timeout (20 minutes) |
 | `BROWSER_ATTACH_REQUIRED` | Need to attach to an existing CDP session |
 
 ### Client and Communication Layer
@@ -206,18 +208,18 @@ After accumulating 200 command executions, the daemon marks itself as `restartPe
 | Error Code | Scenario |
 |------------|----------|
 | `DAEMON_START_FAILED` | Daemon failed to start |
-| `DAEMON_UNREACHABLE` | Daemon started but cannot be connected |
-| `SOCKET_TIMEOUT` | Client socket request timed out (60 seconds) |
+| `DAEMON_UNREACHABLE` | Daemon is started but unreachable |
+| `SOCKET_TIMEOUT` | Client socket request timeout (60 seconds) |
 
 ---
 
 ## 7. CLI-Side Mechanisms
 
-### Cross-Platform Launch
+### Cross-Platform Startup
 
-- **Linux/macOS**: Uses `child_process.spawn` with `detached: true` to start the daemon process, parent process immediately calls `unref()`.
-- **Windows**: Launches daemon via temporary VBScript calling `WScript.Shell.Run`, detaching the daemon from the parent process's Job Object to avoid the shell hanging waiting for the daemon to exit. The resulting node process has no parent-child relationship with the CLI, so the daemon writes its PID to the state file itself for subsequent CLI processes to discover.
+- **Linux/macOS**: Uses `child_process.spawn` with `detached: true` to start the daemon process, and the parent process immediately calls `unref()`.
+- **Windows**: Starts the daemon via a temporary VBScript invoking `WScript.Shell.Run`, detaching the daemon from the parent process's Job Object to avoid the shell hanging while waiting for the daemon to exit. The launched node process has no parent-child relationship with the CLI, so the daemon writes its PID to the status file itself for subsequent CLI processes to discover.
 
-### Fault Tolerance Retry
+### Fault-Tolerance Retry
 
-The client automatically retries once for `DAEMON_UNREACHABLE` and `DAEMON_RESTARTING`. For unreachable scenarios, the client compares the PID in the state file: if it matches the PID recorded when the request was initiated, it sends `SIGTERM` to clean up the zombie process and deletes the state file, then spawns a new instance; if the PID has changed, it means another process has already completed the restart, so it skips cleanup and directly uses the new instance.
+The client automatically retries once for `DAEMON_UNREACHABLE` and `DAEMON_RESTARTING`. For the unreachable scenario, the client compares the PID in the status file: if it matches the PID recorded when the request was initiated, it sends `SIGTERM` to clean up the zombie process and deletes the status file, then launches a new instance; if the PID has changed, it means another process has already completed the restart, so it skips cleanup and uses the new instance directly.

@@ -1,0 +1,17 @@
+{
+  "id": "weibo-get-hot-search",
+  "domain": "weibo",
+  "action": "get-hot-search",
+  "runtime": "node",
+  "description": "Fetch Weibo (微博) real-time hot search trending topics. Returns a ranked list with topic title, heat value, tag (e.g., 新/热/沸), and search URL. No authentication required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of hot search items to return (1-100)",
+      "required": false,
+      "default": "50"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

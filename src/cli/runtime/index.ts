@@ -8,7 +8,7 @@ export const RUNTIME_SYSTEM_PREREQUISITES: Record<CommandRuntime, string[] | und
 	node: undefined,
 	shell: undefined,
 	python: undefined,
-	browser: ["Requires `playwright-cli attach --cdp=chrome|msedge --session=default`"],
+	browser: ["Requires Chrome or Edge running with remote debugging enabled."],
 };
 
 /**

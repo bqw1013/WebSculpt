@@ -1,154 +1,258 @@
 # WebSculpt
 
 [![npm version](https://img.shields.io/npm/v/websculpt)](https://www.npmjs.com/package/websculpt)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Node Version](https://img.shields.io/node/v/websculpt)](package.json)
 [![npm downloads](https://img.shields.io/npm/dm/websculpt)](https://www.npmjs.com/package/websculpt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript)](https://www.typescriptlang.org/)
 
 [English](README.md) · [中文](README_zh.md)
 
-> **Tired of reinventing the wheel every time an Agent needs to gather information?**
+> **Every time a conversation ends, the Agent's web-surfing experience resets to zero.**
 >
-> Searching through page structure, anti-bot measures, and DOM selectors fills up the context window with exploration noise, leaving no room for the actual analysis. The successful path disappears when the conversation ends, and you start all over again next time.
+> Next week when you check the same website again, it starts from scratch—figuring out page structure, anti-bot measures, login flows—filling up the context window with exploration noise, leaving no room for the actual analysis.
 
-**WebSculpt is a harness for information retrieval.** Its core principle is "explore once, reuse forever": AI-discovered information retrieval paths are distilled into locally reusable `domain/action` commands; subsequent tasks invoke them directly, freeing up context space. The accumulated command library evolves with use, making the Agent smarter over time.
+**WebSculpt is the Agent's procedural memory.** It doesn't remember knowledge; it remembers the proven experience of "how to get data from a specific website." Through Harness, it constrains exploration behavior and distills successful paths into locally reusable `domain/action` commands; subsequent tasks invoke them directly, freeing up context space. The command library evolves with use, making the Agent smarter over time.
 
 ![WebSculpt Workflow](docs/assets/flow-en.svg)
 
 ---
 
-## Table of Contents
+## Contents
 
-- [Usage](#usage)
-- [What Problem Does This Solve](#what-problem-does-this-solve)
-- [Good Fit For](#good-fit-for)
-- [What Does a Distilled Command Look Like](#what-does-a-distilled-command-look-like)
-- [Core Concepts](#core-concepts)
-- [Documentation Map](#documentation-map)
-- [Known Limitations](#known-limitations)
-- [Usage Statement](#usage-statement)
-- [License](#license)
+- [1. Install](#1-install)
+- [2. Usage](#2-usage)
+- [3. Why WebSculpt](#3-why-websculpt)
+- [4. Usage Examples](#4-usage-examples)
+- [5. Core Concepts](#5-core-concepts)
+- [6. Key Design Choices](#6-key-design-choices)
+- [7. Documentation](#7-documentation)
+- [8. Usage Statement](#8-usage-statement)
+- [9. License](#9-license)
 
 ---
 
-## Usage
-
-### Install
+## 1. Install
 
 ```bash
+# 1. Install CLI tool
 npm install -g @playwright/cli@^0.1.8 websculpt
+
+# 2. Install Skill for Agent
+websculpt skill install --lang en       # Current project
+# websculpt skill install --global --lang en   # Global scope
 ```
 
-### Quick Start
+## 2. Usage
 
-No configuration is needed after installation; built-in commands can be run directly.
+### Core Usage
 
-Built-in commands fall into two categories:
+After installing the Skill, simply describe your needs to the Agent. The Agent will automatically check the command library, explore information, and assess whether it's worth distilling—you only need to confirm the name and input/output, and the Agent completes all coding and installation.
 
-- **Zero-dependency commands**: Work out of the box and return results directly.
-- **Browser commands**: Reuse your Chrome/Edge login state and session.
+> **You**: Check Hacker News top stories for me.
+>
+> **Agent**: Analyzing page structure, extracting data... Query complete. Also, this path is proven. Suggest distilling it into a `hackernews/get-top` command for direct future use. Confirm?
+>
+> **You**: Confirm.
+>
+> **Agent**: Distillation complete.
+>
+> ---
+>
+> **You**: Check Hacker News top stories for me.
+>
+> **Agent**: Invoking `hackernews/get-top`. Results returned in seconds, zero extra token consumption.
 
-Use `websculpt command list` to view all available commands and their categories.
+### Extended Command Quick Start
 
-Zero-dependency example:
+Extended commands fall into two categories: some work out of the box, others require connecting to a Chrome/Edge browser session.
 
 ```bash
-# Fetch top articles from Hacker News
-websculpt hackernews list-top --limit 5
+# View all available commands
+websculpt command list
+
+# Zero-dependency commands (no browser needed)
+websculpt hackernews get-top --limit 5
+
+# Browser commands (reuse Chrome/Edge login state)
+# 1. Open Chrome browser
+# 2. Navigate to chrome://inspect/#remote-debugging
+# 3. Check "Allow remote debugging for this browser instance" and keep browser open
+websculpt github get-trending --language python --period weekly
 ```
 
-Before using browser commands, enable remote debugging. Open Chrome/Edge, navigate to `chrome://inspect/#remote-debugging`, and check the option to allow remote debugging. If you encounter the `BROWSER_ATTACH_REQUIRED` error, follow these steps and retry:
+### Meta Command Quick Reference
 
 ```bash
-# Fetch today's trending Python repositories on GitHub
-websculpt github list-trending --language python --since daily
+# Manually start background browser process (browser commands usually auto-start, for debugging)
+websculpt daemon start
+
+# Check daemon status
+websculpt daemon status
+
+# Stop background browser process
+websculpt daemon stop
+
+# Remove a user-distilled command
+websculpt command remove <domain> <action>
 ```
 
-### Configure Agent Skill
+---
 
-Navigate to your project directory and install the WebSculpt conventions into the Agent used by the current project:
+## 3. Why WebSculpt
 
-```bash
-websculpt skill install        # Current project
-websculpt skill install --global   # Global scope
-```
+### Procedural Memory
 
-After installation, simply describe your requirements to the Agent. It will automatically check the command library and decide whether to reuse an existing command or explore a new one.
+Every time a conversation ends, the Agent's web-surfing experience resets to zero. Next week when you check the same website again, it starts from scratch—figuring out page structure, anti-bot measures, login flows—filling up the context window with exploration noise, leaving no room for the actual analysis. WebSculpt distills the Agent's successful information retrieval paths into locally reusable commands, forming continuously evolving **procedural memory**.
+
+### Applicable Scenarios
+
+1. **Setting up a browser environment is harder than getting the Agent to work?**
+
+   You want to operate web pages, but Playwright, Puppeteer, CDP configuration docs are overwhelming, and the environment setup keeps failing.
+
+   WebSculpt converges browser automation into a single protocol. The Agent connects directly to your currently open Chrome/Edge, reusing your login state and cookies. **No need to understand the underlying toolchain—just describe your needs.**
+
+2. **Teaching the same website from scratch every time?**
+
+   Every time the Agent checks Hacker News or GitHub Trends, it has to re-analyze page structure and trial-and-error selectors. The context is consumed by exploration, leaving no room for actual analysis.
+
+   WebSculpt includes a set of ready-to-use commands out of the box. For new websites, let the Agent explore once and automatically distill it into a dedicated command, **permanently available, zero repeat cost.**
+
+3. **Agent burns half its context just to look something up?**
+
+   The Agent analyzes DOM on the fly, trial-and-error selectors, results are hit-or-miss, and tokens and context are quickly consumed.
+
+   WebSculpt solidifies proven paths into commands. Subsequent invocations return structured JSON directly. **Zero exploration cost, stable and predictable results.**
+
+4. **Agent gets lost halfway through slightly complex browser tasks?**
+
+   Multi-page navigation, form filling, data extraction—the Agent runs out of context and breaks mid-chain.
+
+   WebSculpt supports breaking down complex flows into multiple atomic commands, each responsible for a clear step. Combine them to stably complete complex tasks, **and each step is individually reusable.**
+
+5. **Want to turn daily queries into CLI tools and integrate them into your workflow?**
+
+   You frequently query a data source and want to turn it into a command-line tool, but don't know where to start.
+
+   WebSculpt distilled commands output structured JSON, directly callable by scripts, CI pipelines, or other systems. **Your daily operations become programmable APIs.**
 
 ---
 
-## What Problem Does This Solve
+## 4. Usage Examples
 
-| | Without WebSculpt | With WebSculpt |
-|---|---|---|
-| Structured data extraction from a site | Agent analyzes DOM on the fly → trial and error → consumes massive context | Check local command library → direct invocation → JSON returned in seconds |
-| Pages requiring login state | Re-explore login flow and page structure every time | Reuse distilled session strategies and interaction paths |
-| Check again next week | Explore from scratch | Command executes directly, results are stable and predictable |
-| Across sessions | Previous success is lost | Command library accumulates, Agent capabilities grow over time |
+### Access a Specific Website
 
----
+> **You**: Check today's top stories on Hacker News for me.
+>
+> **Agent**: No match in command library. Accessing Hacker News directly... Query complete. Search results are often mixed and outdated, while direct website operation yields accurate structured data. This path is proven. Suggest distilling it into `hackernews/get-top` for direct future use. Confirm?
+>
+> **You**: Confirm.
+>
+> ---
+>
+> **You**: Check today's top stories on Hacker News for me.
+>
+> **Agent**: Invoking `hackernews/get-top`. Structured data returned in seconds, zero extra token consumption.
 
-## Good Fit For
+### Connect to a Logged-in Browser
 
-- **Multi-source information aggregation**: Continuously extract structured data from frequently visited sites to feed analysis, reporting, or monitoring
-- **Stateful page retrieval**: Reuse browser login state and interaction paths to access non-public or dynamically rendered data
-- **Personal / team command library**: Accumulate a private set of fast paths to your data sources; the Agent gets faster with use
+> **You**: Check my GitHub notifications.
+>
+> **Agent**: No match in command library. Connecting to your Chrome... Detected that browser is currently logged into GitHub. Fetching data directly through existing session. Suggest distilling it into `github/get-notifications`, **requires keeping Chrome open and logged in**. Confirm?
+>
+> **You**: Confirm.
+>
+> ---
+>
+> **You**: Check my GitHub notifications.
+>
+> **Agent**: Invoking `github/get-notifications`. Chrome is currently in logged-in state. Fetching data directly through existing browser session.
 
-> WebSculpt focuses on "how to reliably obtain data". Analysis, judgment, and decision-making after data retrieval are left to the Agent based on its own capabilities.
+### Build Your Own Command
 
----
-
-## What Does a Distilled Command Look Like
-
-A successful exploration is distilled into a parameterizable command package stored in the local command library:
-
-```
-~/.websculpt/commands/<domain>/<action>/
-  ├── manifest.json      # Command metadata: purpose, parameters, runtime
-  ├── command.js         # Execution logic: selectors, cleansing, error handling
-  ├── README.md          # Instructions for callers
-  └── context.md         # Background and failure signals for maintainers
-```
-
-It is essentially the Agent's experience of "how I scraped data from this web page" turned into a maintainable, version-controllable, reusable local asset.
-
-> Since commands run locally and may reuse your browser session via `browser`, it is recommended to periodically review the logic in your command library to avoid unintended page operations.
-
----
-
-## Core Concepts
-
-- **Command Library**: Locally reusable information retrieval commands for the Agent, named in `domain/action` format (e.g., `github/list-trending`). Divided into Builtin (project built-in) and User (Agent distilled); User commands can override Builtin ones.
-- **Skill**: A set of conventions the Agent automatically follows after installation, including tool selection strategy, exploration workflow, and distillation contract.
-- **Runtime**: The execution environment for commands. `node` is used for HTTP requests and data cleansing; `browser` is used for browser automation and can reuse your login state and cookies. A command can declare only one runtime.
-
----
-
-## Documentation Map
-
-| Document | Content | For Whom |
-|----------|---------|----------|
-| [`docs/CLI.md`](docs/CLI.md) | Usage, parameters, and output contracts for all Meta commands | When consulting the manual |
-| [`docs/Architecture.md`](docs/Architecture.md) | Four-layer system architecture and code organization | Developers, contributors |
-| `skills/websculpt/` | Complete Agent Skill deliverables (strategy, contract, operating guide) | **Agents with the Skill installed** |
-
-> **Early version note**: WebSculpt is in active development. Builtin commands are provided as examples only; the core design goal is to help you distill your own command library through daily information retrieval tasks. Commands may break when target site structures change; please set expectations accordingly.
+> **You**: Create a command for me to monitor this product's price changes daily.
+>
+> **Agent**: Exploring target page... Confirmed price selector and page structure. Suggest distilling it into `shop/watch-price`, parameters support `url` and `threshold`. Confirm?
+>
+> **You**: Confirm.
+>
+> ---
+>
+> **You**: How much is this product now?
+>
+> **Agent**: Invoking `shop/watch-price`. Current price $199. The distilled command has entered the command library. Future similar requests will be automatically reused.
 
 ---
 
-## Known Limitations
+## 5. Core Concepts
 
-- The `shell` and `python` runtimes already support the full command package lifecycle (`draft`, `validate`, `create`), but the CLI execution engine has not yet been wired in.
-- The full interaction flow and auto-trigger mechanism for the self-healing loop (automatic repair proposals after command failure) are not yet implemented.
+**Command System**
 
-## Usage Statement
+WebSculpt has two types of commands:
+- **Meta commands**: Manage the CLI itself and the command library, such as `capture`, `command`, `skill`. Built into the system, cannot be overridden.
+- **Extended commands**: Reusable information retrieval workflows, invoked by `domain/action` (e.g., `hackernews/get-top`). Further divided into:
+  - **Builtin commands**: Distributed with WebSculpt
+  - **User commands**: Distilled by the Agent into `~/.websculpt/commands/`. User commands have higher priority than Builtin, automatically overriding on name collision—the command library evolves with use.
+
+**Lifecycle**
+
+- **Explore**: The Agent's process of retrieving information. First checks the local command library to reuse existing paths; if no match, explores new paths via external tools.
+- **Capture**: The process of solidifying a proven path into a command. The Agent automatically advances the workflow; users only need to confirm the name and input/output.
+
+**Execution Environment (Runtime)**
+
+- `node`: HTTP requests and data cleansing, zero dependencies
+- `browser`: Connects to your currently open Chrome/Edge via Playwright, reusing your login state and cookies
+
+---
+
+## 6. Key Design Choices
+
+### Two-Phase Skill Delivery
+
+WebSculpt's complete functionality is divided into two sequentially connected Skills, directly delivered to the user's Agent:
+- `websculpt-explore`: Information retrieval phase, discovering reusable paths
+- `websculpt-capture`: Distillation phase, solidifying proven paths into commands
+
+This is not loose usage advice, but deliverables containing complete protocols, state constraints, and delivery standards.
+
+### Explore: Document Soft Constraints + Session Self-Reporting
+
+`websculpt-explore` first constrains the Agent's tool selection: must check the library and reuse builtin commands first, only allowed to explore new paths when no match; when browser automation is needed, converges to the single protocol of Playwright CDP connecting to the current browser.
+
+Constraints are enforced through two mechanisms:
+- **Document soft constraints**: Skill documents define protocol flows; the Agent follows rules to execute
+- **Session self-reporting**: ExploreSession requires the Agent to output the current state block at the end of each reply, prohibiting advancement to the next step until standards are met
+
+### Capture: CLI State Checks + Artifact Pipeline
+
+`websculpt-capture` further introduces CLI hard constraints on top of explore's constraints:
+- The Agent doesn't need to understand the complete flow, only needs to loop executing `capture status`, advancing according to the returned `next.action`
+- The distillation process is split into 6 Artifacts, advancing with strict layered dependencies
+- Hard gates are established through Evidence Audit, Draft Fingerprint, and 4 sets of real tests; cannot finalize until all are passed
+
+---
+
+## 7. Documentation
+
+**Usage**
+- [`docs/CLI.md`](docs/CLI.md) — Usage, parameters, and output contracts for all commands
+
+**Design and Implementation**
+- [`docs/Capture.md`](docs/Capture.md) — Distillation workflow: six-artifact pipeline, state machine, hard-gate installation
+- [`docs/Architecture.md`](docs/Architecture.md) — Four-layer system architecture and code organization
+- [`docs/Daemon.md`](docs/Daemon.md) — Background browser process, IPC protocol, and resource management
+
+---
+
+## 8. Usage Statement
 
 When using WebSculpt, please comply with the target website's robots.txt and Terms of Service. Use it only on publicly accessible data you are permitted to access; unauthorized data collection is prohibited.
 
-## License
+## 9. License
 
-MIT
+Apache-2.0
 
 ---
 
