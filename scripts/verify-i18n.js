@@ -24,28 +24,37 @@ function collectMarkdownFiles(dir, baseDir = dir) {
 }
 
 // 1. Check skill references structural parity between Chinese and English trees
-const skillRefsDir = path.join(root, "skills", "websculpt", "references");
-const skillEnRefsDir = path.join(root, "skills", "websculpt-en", "references");
+const skillsDir = path.join(root, "skills");
+const skillDirs = fs.existsSync(skillsDir)
+	? fs.readdirSync(skillsDir, { withFileTypes: true })
+		.filter((d) => d.isDirectory() && !d.name.endsWith("-en"))
+		.map((d) => d.name)
+	: [];
 
-const zhFiles = collectMarkdownFiles(skillRefsDir);
-const enFiles = collectMarkdownFiles(skillEnRefsDir);
+for (const skillName of skillDirs) {
+	const skillRefsDir = path.join(skillsDir, skillName, "references");
+	const skillEnRefsDir = path.join(skillsDir, `${skillName}-en`, "references");
 
-const zhSet = new Set(zhFiles);
-const enSet = new Set(enFiles);
+	const zhFiles = collectMarkdownFiles(skillRefsDir);
+	const enFiles = collectMarkdownFiles(skillEnRefsDir);
 
-for (const f of zhFiles) {
-	if (!enSet.has(f)) {
-		errors.push(
-			`Missing English skill reference: ${path.join("skills", "websculpt-en", "references", f)}`,
-		);
+	const zhSet = new Set(zhFiles);
+	const enSet = new Set(enFiles);
+
+	for (const f of zhFiles) {
+		if (!enSet.has(f)) {
+			errors.push(
+				`Missing English skill reference: ${path.join("skills", `${skillName}-en`, "references", f)}`,
+			);
+		}
 	}
-}
 
-for (const f of enFiles) {
-	if (!zhSet.has(f)) {
-		errors.push(
-			`Missing Chinese skill reference: ${path.join("skills", "websculpt", "references", f)}`,
-		);
+	for (const f of enFiles) {
+		if (!zhSet.has(f)) {
+			errors.push(
+				`Missing Chinese skill reference: ${path.join("skills", skillName, "references", f)}`,
+			);
+		}
 	}
 }
 
@@ -77,13 +86,13 @@ if (fs.existsSync(docsDir)) {
 
 // 3. Check root README files exist
 const readmePath = path.join(root, "README.md");
-const readmeEnPath = path.join(root, "README_en.md");
+const readmeZhPath = path.join(root, "README_zh.md");
 
 if (!fs.existsSync(readmePath)) {
 	errors.push("Missing root README.md");
 }
-if (!fs.existsSync(readmeEnPath)) {
-	errors.push("Missing root README_en.md");
+if (!fs.existsSync(readmeZhPath)) {
+	errors.push("Missing root README_zh.md");
 }
 
 // Report
