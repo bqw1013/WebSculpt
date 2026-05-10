@@ -52,7 +52,7 @@
     "self-healing"
   ],
   "author": "bqw",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bqw1013/websculpt.git"
