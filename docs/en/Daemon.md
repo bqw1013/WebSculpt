@@ -123,7 +123,7 @@ interface SocketResponse {
 
 ### 4.1 Browser Connection
 
-The daemon internally maintains a single browser CDP connection via `browser-manager` (`chromium.connectOverCDP("chrome")`). It does not launch a new browser; instead, it connects to the user's existing Chrome/Edge instance.
+The daemon internally maintains a single browser CDP connection via `browser-manager` (`chromium.connectOverCDP("chrome")`). It does not launch a new browser; instead, it connects to the user's existing Chrome instance.
 
 The connection includes the following fault-tolerance mechanisms:
 

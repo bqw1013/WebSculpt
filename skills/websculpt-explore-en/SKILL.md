@@ -7,13 +7,14 @@ description: Use for any scenario that requires acquiring or verifying external 
 
 ## WebSculpt Overview
 
-WebSculpt accumulates information acquisition paths as locally reusable `domain/action` commands. "Capture" is the term for this accumulation process; the CLI command `capture` is its entry point. The closed loop consists of three stages:
+WebSculpt accumulates information acquisition paths as locally reusable `domain/action` commands. "Capture" is the term for this accumulation process; the CLI command `capture` is its entry point. The closed loop consists of two stages:
 
 1. **explore** — Complete the information acquisition task and discover reusable paths.
-2. **capture** — Organize path evidence to prepare for subsequent command generation.
-3. **compile** — Compile verified paths into command packages and install them into the command library.
+2. **capture** — Precipitate verified paths into locally reusable command assets and install them into the command library.
 
-`websculpt-explore` is the first stage.
+The final output is a `domain/action` command that can be directly invoked by the CLI.
+
+`websculpt-explore` is the skill for the explore stage.
 
 ## Responsibilities
 
@@ -25,13 +26,18 @@ You are the discovery and validation layer. When facing an information acquisiti
 4. Delivering results while recording verified path evidence.
 5. After delivery, outputting a Capture Assessment to hand off candidate paths to `websculpt-capture`; do not create capture workspaces or generate command assets in this stage.
 
+## Prohibitions
+
+- **Prohibited** from installing or using `playwright` (official library), `puppeteer`, `selenium`, or other browser automation tools on your own. Browser automation is unified under the project- designated `@playwright/cli`.
+- **Prohibited** from executing any `playwright-cli` commands or browser operations before `guideRead` is `true`.
+
 ## Startup Protocol
 
 Every time you enter the explore phase, execute the following protocol first:
 
 1. Clarify the information the user wants to acquire, time range, source preferences, and output format.
 2. Execute "Check Library and Select Tools": check the library to reuse existing commands first; only select external tools when none are reusable.
-3. If it is determined that browser automation is needed, read `./references/access/playwright-cli-guide.md` before execution.
+3. If it is determined that browser automation is needed, you **must read** `./references/access/playwright-cli-guide.md` first. After reading, set `ExploreSession.guideRead` to `true` before executing any browser operations. Before that, executing any `playwright-cli` subcommand is strictly prohibited.
 4. Advance exploration with small-step validation; do not make subsequent judgments based on unverified guesses, and promptly switch away from invalid paths.
 5. When delivering results, execute Capture assessment in the same reply and append a Capture Assessment.
 
@@ -107,6 +113,8 @@ Select the external tool that can complete the current task and is most conduciv
 | URL known, need to read page body, document, or already-rendered content | WebFetch | Switch to curl or browser when body is missing, JS rendering, login wall, 403/429. |
 | URL known, need raw HTTP response, headers, raw HTML, or embedded script data | curl | Switch to browser when HTML lacks key data or embedded scripts require interactive verification. |
 | Content depends on login state, JS rendering, multi-step interaction, or static scraping fails / strong anti-bot | Browser automation | Request user intervention when login, authorization, or handling high-risk account operations are needed; slow down and request confirmation when CAPTCHA, abnormal verification, or account risk appears. |
+
+**Prohibited search evasion**: If it is confirmed that the target information depends on login state, JS rendering, or structural signals such as CAPTCHA/403/429 appear, continuing to search to evade browser automation is prohibited. At this point there are only two options: switch to browser automation, or explain to the user that a browser environment is needed.
 
 After using external tools, update ExploreSession:
 - `toolsUsed` append the name of the used tool (e.g., `"websearch"`, `"webfetch"`, `"curl"`, `"browser"`)

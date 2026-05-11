@@ -123,7 +123,7 @@ interface SocketResponse {
 
 ### 4.1 浏览器连接
 
-daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium.connectOverCDP("chrome")`），不启动新浏览器，而是连接用户已有的 Chrome/Edge 实例。
+daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium.connectOverCDP("chrome")`），不启动新浏览器，而是连接用户已有的 Chrome 实例。
 
 连接具备以下容错机制：
 

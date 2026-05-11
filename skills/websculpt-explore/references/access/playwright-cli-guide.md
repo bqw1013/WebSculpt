@@ -4,13 +4,18 @@
 
 ## 1. 定位
 
-`@playwright/cli` 是 explore 阶段的浏览器自动化工具，通过 CDP attach 连接到用户已打开的 Chrome 或 Edge，复用真实浏览器环境中的登录态、Cookie、LocalStorage 和浏览器指纹。
+`@playwright/cli` 是 explore 阶段的浏览器自动化工具，通过 CDP attach 连接到用户已打开的 Chrome，复用真实浏览器环境中的登录态、Cookie、LocalStorage 和浏览器指纹。
 
 适用场景包括登录态页面、JS 渲染内容、多步骤交互、需要模拟真实用户浏览点击的任务，以及静态抓取失败或反爬较强的站点。
 
 ## 2. 环境准备
 
 > Playwright CLI 只能 attach 到用户已有浏览器实例，不要 launch 新浏览器。
+
+**explore 阶段严禁使用以下命令：**
+- `open [url]` — 会 launch 新浏览器实例，违反"只 attach"原则
+- `install-browser [browser]` — 不需要在 explore 阶段安装浏览器
+- `attach` 时若没有可连接的会话，应按下方步骤引导用户建立连接，**禁止用 `open` 绕过**
 
 **1. 确认 CLI 已安装**
 
@@ -34,7 +39,7 @@ playwright-cli list
 - 存在其他 open 会话但无 `default` → 先关闭残留会话，再重新 attach
 - 无 open 会话 → 按以下步骤建立连接：
 
-  1. 引导用户在 Chrome 或 Edge 中打开 `chrome://inspect/#remote-debugging`，勾选允许远程调试并保持浏览器打开
+  1. 引导用户在 Chrome 中打开 `chrome://inspect/#remote-debugging`，勾选允许远程调试并保持浏览器打开
 
   2. 告知用户风险：
 
@@ -46,12 +51,6 @@ playwright-cli list
 
      ```bash
      playwright-cli attach --cdp=chrome --session=default
-     ```
-
-     或：
-
-     ```bash
-     playwright-cli attach --cdp=msedge --session=default
      ```
 
   4. 确认 attach 成功：

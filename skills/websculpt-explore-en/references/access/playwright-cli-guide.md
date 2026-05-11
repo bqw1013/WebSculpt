@@ -4,13 +4,18 @@
 
 ## 1. Positioning
 
-`@playwright/cli` is the browser automation tool for the explore phase. It connects to the user's already-open Chrome or Edge via CDP attach, reusing the real browser environment's login state, cookies, localStorage, and browser fingerprint.
+`@playwright/cli` is the browser automation tool for the explore phase. It connects to the user's already-open Chrome via CDP attach, reusing the real browser environment's login state, cookies, localStorage, and browser fingerprint.
 
 Applicable scenarios include login-state pages, JS-rendered content, multi-step interactions, tasks that require simulating real user browsing and clicks, and sites where static scraping fails or anti-bot measures are strong.
 
 ## 2. Environment Preparation
 
 > Playwright CLI can only attach to existing browser instances; do not launch a new browser.
+
+**The following commands are strictly prohibited in the explore phase:**
+- `open [url]` — launches a new browser instance, violating the "attach only" principle
+- `install-browser [browser]` — no need to install a browser during the explore phase
+- If there is no connectable session during `attach`, follow the steps below to guide the user to establish a connection; **bypassing with `open` is prohibited**
 
 **1. Confirm CLI is installed**
 
@@ -34,7 +39,7 @@ Choose the corresponding operation based on output:
 - Other open sessions exist but no `default` → close residual sessions first, then re-attach
 - No open sessions → establish connection following these steps:
 
-  1. Guide the user to open `chrome://inspect/#remote-debugging` in Chrome or Edge, check "Allow remote debugging", and keep the browser open
+  1. Guide the user to open `chrome://inspect/#remote-debugging` in Chrome, check "Allow remote debugging", and keep the browser open
 
   2. Inform the user of risks:
 
@@ -46,12 +51,6 @@ Choose the corresponding operation based on output:
 
      ```bash
      playwright-cli attach --cdp=chrome --session=default
-     ```
-
-     Or:
-
-     ```bash
-     playwright-cli attach --cdp=msedge --session=default
      ```
 
   4. Confirm attach success:
