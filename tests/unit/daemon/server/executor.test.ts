@@ -1,14 +1,16 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Browser, BrowserContext, Page } from "playwright-core";
+import type { Page } from "playwright-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../../../src/daemon/server/executor/browser-manager.js", () => ({
 	withBrowser: vi.fn(),
+	acquirePage: vi.fn(),
+	releasePage: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { withBrowser } from "../../../../src/daemon/server/executor/browser-manager.js";
+import { acquirePage, withBrowser } from "../../../../src/daemon/server/executor/browser-manager.js";
 
 describe("executeCommand timeout", () => {
 	let tempDir: string;
@@ -37,16 +39,10 @@ describe("executeCommand timeout", () => {
 			}),
 		} as unknown as Page;
 
-		const mockContext = {
-			newPage: vi.fn().mockResolvedValue(mockPage),
-		} as unknown as BrowserContext;
-
-		const mockBrowser = {
-			contexts: vi.fn().mockReturnValue([mockContext]),
-		} as unknown as Browser;
+		vi.mocked(acquirePage).mockResolvedValue(mockPage);
 
 		vi.mocked(withBrowser).mockImplementation(async (fn) => {
-			return fn(mockBrowser);
+			return fn({} as import("playwright-core").Browser);
 		});
 
 		vi.resetModules();

@@ -51,14 +51,14 @@ async function run() {
 	if (listResult.exitCode !== 0) stepFail(`exit ${listResult.exitCode}`);
 	stepOk();
 
-	printSection("command show github list-trending");
-	const show1 = await runSourceCli(["command", "show", "github", "list-trending"]);
+	printSection("command show github get-trending");
+	const show1 = await runSourceCli(["command", "show", "github", "get-trending"]);
 	console.log(show1.stdout);
 	if (show1.exitCode !== 0) stepFail(`exit ${show1.exitCode}`);
 	stepOk();
 
-	printSection("command show hackernews list-top --include-readme");
-	const show2 = await runSourceCli(["command", "show", "hackernews", "list-top", "--include-readme"]);
+	printSection("command show hackernews get-top --include-readme");
+	const show2 = await runSourceCli(["command", "show", "hackernews", "get-top", "--include-readme"]);
 	console.log(show2.stdout);
 	if (show2.exitCode !== 0) stepFail(`exit ${show2.exitCode}`);
 	stepOk();
@@ -113,8 +113,8 @@ async function run() {
 		stepFail(e.message);
 	}
 
-	printSection("prepare validate target (copy builtin hackernews/list-top)");
-	const builtinDir = resolve(REPO_ROOT, "src/cli/builtin/hackernews/list-top");
+	printSection("prepare validate target (copy builtin hackernews/get-top)");
+	const builtinDir = resolve(REPO_ROOT, "src/cli/builtin/hackernews/get-top");
 	const validateDir = `${TMP_DIR}/validate-cmd`;
 	await mkdir(validateDir, { recursive: true });
 	// Node >=16.7.0 supports fs.cp via fs/promises in Node 18+

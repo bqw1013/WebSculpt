@@ -1,9 +1,11 @@
-import { type Browser, chromium } from "playwright-core";
+import { type Browser, chromium, type Page } from "playwright-core";
+import { DAEMON_LIMITS } from "../config/limits.js";
 import { logEvent } from "../observability/logger.js";
 
 let cachedBrowser: Browser | null = null;
 let connectingPromise: Promise<Browser> | null = null;
 let hasEverConnected = false;
+const pagePool: Page[] = [];
 
 /**
  * Returns an active Browser connected over Chrome DevTools Protocol.
@@ -84,9 +86,78 @@ export function getOpenPageCount(): number {
 }
 
 /**
+ * Acquires a page for command execution.
+ * Reuses a pooled page when available, or creates a new one.
+ * Pooled pages are reset to about:blank before reuse.
+ */
+export async function acquirePage(): Promise<Page> {
+	const browser = cachedBrowser;
+	if (!browser?.isConnected()) {
+		throw new Error("Browser is not connected");
+	}
+
+	const context = browser.contexts()[0];
+	if (!context) {
+		throw new Error("Browser has no default context available");
+	}
+
+	while (pagePool.length > 0) {
+		const page = pagePool.pop();
+		if (!page || page.isClosed()) {
+			continue;
+		}
+		try {
+			await page.goto("about:blank", { timeout: 5000 });
+			return page;
+		} catch {
+			await page.close().catch(() => {});
+		}
+	}
+
+	return context.newPage();
+}
+
+/**
+ * Releases a page back to the pool after command execution.
+ * The page is navigated to about:blank to clear renderer state.
+ * If the pool is at capacity, the page is closed instead.
+ */
+export async function releasePage(page: Page): Promise<void> {
+	if (page.isClosed()) {
+		return;
+	}
+
+	try {
+		await page.goto("about:blank", { timeout: 5000 });
+	} catch {
+		await page.close().catch(() => {});
+		return;
+	}
+
+	if (pagePool.length < DAEMON_LIMITS.maxConcurrentSessions) {
+		pagePool.push(page);
+	} else {
+		await page.close().catch(() => {});
+	}
+}
+
+/**
+ * Closes all pooled pages and empties the pool.
+ */
+export async function drainPagePool(): Promise<void> {
+	const pages = pagePool.splice(0, pagePool.length);
+	for (const page of pages) {
+		if (!page.isClosed()) {
+			await page.close().catch(() => {});
+		}
+	}
+}
+
+/**
  * Closes the cached browser connection and clears the cache.
  */
 export async function closeBrowser(): Promise<void> {
+	await drainPagePool();
 	if (cachedBrowser) {
 		await cachedBrowser.close().catch(() => {});
 		logEvent("WARN", "browser_disconnect");

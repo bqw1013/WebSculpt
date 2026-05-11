@@ -1,6 +1,6 @@
-import { pathToFileURL } from "node:url";
 import type { Page } from "playwright-core";
-import { withBrowser } from "./browser-manager.js";
+import { acquirePage, releasePage, withBrowser } from "./browser-manager.js";
+import { loadCommandModule } from "./module-loader.js";
 
 const COMMAND_TIMEOUT_MS = process.env.WEBSCULPT_TEST_COMMAND_TIMEOUT_MS
 	? Number(process.env.WEBSCULPT_TEST_COMMAND_TIMEOUT_MS)
@@ -14,40 +14,34 @@ function createTimeoutError(): Error & { code: string } {
 
 /**
  * Dynamically imports a command module and executes its default export
- * inside a new page of the browser's default context.
- * This preserves the user's login state, cookies, and storage from the
- * existing Chrome session connected over CDP.
- * ESM module cache is bypassed via a cache-busting query parameter.
+ * inside a pooled browser page. This preserves the user's login state,
+ * cookies, and storage from the existing Chrome session connected over CDP.
+ * ESM module cache is managed by file modification time: unchanged files
+ * reuse the cached module, modified files trigger a reload.
  *
  * A 20-minute safety timeout is enforced: if the handler has not completed
  * within that window, the page is forcibly closed so the session slot is
  * released and the daemon does not leak resources.
  */
 export async function executeCommand(commandPath: string, params: Record<string, string>): Promise<unknown> {
-	return withBrowser(async (browser) => {
-		// Reuse the default browser context so the new page inherits
-		// cookies, localStorage, and login state from the existing Chrome session.
-		const context = browser.contexts()[0];
-		if (!context) {
-			throw new Error("Browser has no default context available");
-		}
+	return withBrowser(async () => {
 		let page: Page | undefined;
 		let timeoutHandle: NodeJS.Timeout | null = null;
 		let timedOut = false;
 
 		try {
-			page = await context.newPage();
+			page = await acquirePage();
 
 			timeoutHandle = setTimeout(() => {
 				timedOut = true;
 				page?.close().catch(() => {});
 			}, COMMAND_TIMEOUT_MS);
 
-			const module = await import(`${pathToFileURL(commandPath).href}?t=${Date.now()}`);
+			const module = await loadCommandModule(commandPath);
 			if (timedOut) {
 				throw createTimeoutError();
 			}
-			const handler = module.default;
+			const handler = (module as Record<string, unknown>).default;
 
 			if (typeof handler !== "function") {
 				throw new Error(`Command module at ${commandPath} does not export a default function`);
@@ -67,8 +61,9 @@ export async function executeCommand(commandPath: string, params: Record<string,
 			if (timeoutHandle) {
 				clearTimeout(timeoutHandle);
 			}
-			// Close only the isolated page; leave the shared context open.
-			await page?.close().catch(() => {});
+			if (page) {
+				await releasePage(page).catch(() => {});
+			}
 		}
 	});
 }
