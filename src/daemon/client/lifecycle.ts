@@ -2,6 +2,7 @@ import { open, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { createClient, type DaemonClient } from "./connection.js";
 import { getDaemonStateDir } from "./daemon-paths.js";
+import { killDaemonProcess } from "./kill-process.js";
 import { startDaemonWithRetry, waitForDaemonReady } from "./spawn.js";
 import { isProcessAlive, readDaemonState } from "./state.js";
 
@@ -46,7 +47,8 @@ export async function ensureDaemonClient(): Promise<DaemonClient> {
 			});
 			return cachedClient;
 		} catch {
-			// Stale daemon; fall through to start a new one
+			// Stale daemon; kill it before starting a new one.
+			await killDaemonProcess(state.pid);
 		}
 	}
 
@@ -65,7 +67,8 @@ export async function ensureDaemonClient(): Promise<DaemonClient> {
 				});
 				return cachedClient;
 			} catch {
-				// Stale daemon; fall through to start a new one
+				// Stale daemon; kill it before starting a new one.
+				await killDaemonProcess(state.pid);
 			}
 		}
 

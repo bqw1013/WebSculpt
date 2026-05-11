@@ -47,18 +47,15 @@ export function createClient(
 
 					// For unreachable daemons, kill stale process and clear state
 					// only if PID still matches. For DAEMON_RESTARTING the daemon
-					// is already shutting down gracefully, so skip SIGTERM.
+					// is already shutting down gracefully, so skip kill.
 					if (unreachable) {
 						const { readDaemonState, DAEMON_JSON } = await import("./state.js");
 						const { unlink } = await import("node:fs/promises");
+						const { killDaemonProcess } = await import("./kill-process.js");
 						const currentState = await readDaemonState();
 						if (currentState) {
 							if (currentState.pid === recordedPid) {
-								try {
-									process.kill(currentState.pid, "SIGTERM");
-								} catch {
-									// Ignore if process already gone
-								}
+								await killDaemonProcess(currentState.pid);
 								await unlink(DAEMON_JSON).catch(() => {});
 							}
 							// If PID does not match, another process restarted the daemon.
