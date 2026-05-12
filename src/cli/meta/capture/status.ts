@@ -3,8 +3,8 @@ import { join } from "node:path";
 import type { Command } from "commander";
 import type { MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
-import { computeCaptureStatus } from "./lib/capture-status-computer.js";
-import { getCaptureWorkspacePath } from "./lib/capture-utils.js";
+import { getCaptureWorkspacePath } from "./lib/capture-io.js";
+import { computeCaptureStatus } from "./lib/capture-state.js";
 
 /**
  * Handles the `capture status <name>` command.

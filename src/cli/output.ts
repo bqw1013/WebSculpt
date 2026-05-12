@@ -1,6 +1,6 @@
 import type { CommandParameter, ValidationDetail } from "../types/index.js";
-import type { ArtifactState } from "./meta/capture/lib/capture-status-computer.js";
-import type { CommandLibrarySnapshot } from "./meta/capture/lib/capture-utils.js";
+import type { CommandLibrarySnapshot } from "./meta/capture/lib/capture-io.js";
+import type { ArtifactState } from "./meta/capture/lib/capture-state.js";
 
 /** Output format for meta command results. */
 export type OutputFormat = "human" | "json";

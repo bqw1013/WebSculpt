@@ -1,10 +1,8 @@
-import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { parse, stringify } from "yaml";
-import type { CommandRuntime } from "../../../../types/index.js";
+import type { ValidationDetail } from "../../../../types/index.js";
 import { scanAllCommands } from "../../../engine/command-discovery/scanner.js";
-import { resolveEntryFile } from "../../../runtime/index.js";
 
 /** Objective command-library state captured when a workspace is created. */
 export interface CommandLibrarySnapshot {
@@ -19,7 +17,7 @@ export interface CaptureYaml {
 	name: string;
 	domain: string;
 	action: string;
-	runtime: CommandRuntime;
+	runtime: string;
 	createdAt: string;
 	schema: "command-capture";
 	commandLibrarySnapshot: CommandLibrarySnapshot;
@@ -28,20 +26,13 @@ export interface CaptureYaml {
 	supersedes: null;
 }
 
-/** Identity mismatch found between capture metadata and the draft manifest. */
-export interface CaptureDraftIdentityMismatch {
-	field: "domain" | "action" | "runtime";
-	expected: string;
-	actual: unknown;
-	message: string;
-}
-
-/** Result of reading and checking the draft manifest. */
-export interface CaptureDraftManifestInspection {
-	content: string;
-	invalidReason?: string;
-	manifest?: Record<string, unknown>;
-	mismatch?: CaptureDraftIdentityMismatch;
+/** Persisted result of a validation run. */
+export interface ValidationRecord {
+	success: boolean;
+	draftFingerprint?: string;
+	timestamp: string;
+	warnings?: ValidationDetail[];
+	errors?: ValidationDetail[];
 }
 
 /**
@@ -79,76 +70,30 @@ export async function writeCaptureYaml(filePath: string, metadata: CaptureYaml):
 }
 
 /**
- * Reads `draft/manifest.json` and compares its identity fields with capture metadata.
+ * Reads and validates a validation.json record from disk.
+ * Returns undefined when the file is missing; rethrows all other errors.
  */
-export async function inspectCaptureDraftManifest(
-	draftPath: string,
-	captureYaml: CaptureYaml,
-): Promise<CaptureDraftManifestInspection> {
-	let content: string;
+export async function readValidationRecord(workspacePath: string): Promise<ValidationRecord | undefined> {
 	try {
-		content = await readFile(join(draftPath, "manifest.json"), "utf8");
-	} catch {
-		return {
-			content: "",
-			invalidReason: "Manifest file not found",
-		};
-	}
-
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(content) as unknown;
+		const raw = await readFile(join(workspacePath, "validation.json"), "utf8");
+		const parsed: unknown = JSON.parse(raw);
+		if (!isValidationRecord(parsed)) {
+			return undefined;
+		}
+		return parsed;
 	} catch (err: unknown) {
-		const message = err instanceof Error ? err.message : String(err);
-		return {
-			content,
-			invalidReason: `Manifest JSON is invalid: ${message}`,
-		};
+		if (isNodeError(err) && err.code === "ENOENT") {
+			return undefined;
+		}
+		throw err;
 	}
-
-	if (!isRecord(parsed)) {
-		return {
-			content,
-			invalidReason: "Manifest JSON must be an object",
-		};
-	}
-
-	return {
-		content,
-		manifest: parsed,
-		mismatch: findCaptureDraftIdentityMismatch(captureYaml, parsed),
-	};
 }
 
 /**
- * Computes a stable hash for draft files whose contents are covered by validation.
+ * Writes a validation record to validation.json in the workspace root.
  */
-export async function computeCaptureDraftFingerprint(
-	name: string,
-	captureYaml: CaptureYaml,
-	baseDir = process.cwd(),
-): Promise<string> {
-	const draftPath = getCaptureDraftPath(name, baseDir);
-	const files = ["manifest.json", resolveEntryFile(captureYaml.runtime), "README.md", "context.md"];
-	const hash = createHash("sha256");
-
-	hash.update(
-		JSON.stringify({ domain: captureYaml.domain, action: captureYaml.action, runtime: captureYaml.runtime }),
-	);
-	hash.update("\0");
-	for (const file of files) {
-		hash.update(file);
-		hash.update("\0");
-		try {
-			hash.update(await readFile(join(draftPath, file), "utf8"));
-		} catch (err: unknown) {
-			const code = isNodeError(err) ? err.code : "UNKNOWN";
-			hash.update(`missing:${code}`);
-		}
-		hash.update("\0");
-	}
-
-	return hash.digest("hex");
+export async function writeValidationRecord(workspacePath: string, record: ValidationRecord): Promise<void> {
+	await writeFile(join(workspacePath, "validation.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
 }
 
 /**
@@ -184,73 +129,16 @@ export async function scanCommandLibrarySnapshot(domain: string, action: string)
 	return snapshot;
 }
 
-/**
- * Generates the initial evidence document with mandatory audit headings.
- */
-export function generateEvidenceTemplate(metadata: CaptureYaml): string {
-	return `# Evidence: ${metadata.domain}/${metadata.action}
-
-This document records the research and validation evidence for the \`${metadata.domain}/${metadata.action}\` command.
-
-## Exploration Path
-
-<!-- Record command library overlap checks and the guide or tool contract you consulted. -->
-
-## Verified URLs
-
-<!-- List each URL that was actually visited and used for extraction. -->
-
-## Structural Evidence
-
-<!-- Record DOM selectors, JSON fields, API shapes, or other structural facts. -->
-
-## Failure Signals
-
-<!-- Describe known failure modes, dependencies, and drift signals. -->
-
-## Capture Assessment
-
-<!-- State whether this command should be captured and why. -->
-`;
+/** Rethrows every error except ENOENT. */
+export function swallowENOENT(err: unknown): never | undefined {
+	if (isNodeError(err) && err.code === "ENOENT") {
+		return undefined;
+	}
+	throw err;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function findCaptureDraftIdentityMismatch(
-	captureYaml: CaptureYaml,
-	manifest: Record<string, unknown>,
-): CaptureDraftIdentityMismatch | undefined {
-	const expected = {
-		domain: captureYaml.domain,
-		action: captureYaml.action,
-		runtime: captureYaml.runtime,
-	} as const;
-
-	for (const field of ["domain", "action", "runtime"] as const) {
-		const actual = manifest[field];
-		if (actual !== expected[field]) {
-			return {
-				field,
-				expected: expected[field],
-				actual,
-				message: `Manifest ${field} ${formatManifestValue(actual)} does not match capture ${field} "${expected[field]}"`,
-			};
-		}
-	}
-
-	return undefined;
-}
-
-function formatManifestValue(value: unknown): string {
-	if (typeof value === "string") {
-		return `"${value}"`;
-	}
-	if (value === undefined) {
-		return "undefined";
-	}
-	return JSON.stringify(value) ?? String(value);
 }
 
 function isNodeError(value: unknown): value is NodeJS.ErrnoException {
@@ -266,6 +154,17 @@ function isCommandLibrarySnapshot(value: unknown): value is CommandLibrarySnapsh
 		value.sameDomainCommands.every((command) => typeof command === "string") &&
 		typeof value.nameConflict === "boolean" &&
 		(conflictSource === undefined || conflictSource === "user" || conflictSource === "builtin")
+	);
+}
+
+function isValidationRecord(value: unknown): value is ValidationRecord {
+	if (!isRecord(value)) return false;
+	return (
+		typeof value.success === "boolean" &&
+		(value.draftFingerprint === undefined || typeof value.draftFingerprint === "string") &&
+		typeof value.timestamp === "string" &&
+		(value.warnings === undefined || Array.isArray(value.warnings)) &&
+		(value.errors === undefined || Array.isArray(value.errors))
 	);
 }
 

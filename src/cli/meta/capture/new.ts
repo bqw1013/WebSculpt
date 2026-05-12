@@ -1,20 +1,19 @@
 import { access, constants, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
-import type { CommandManifest, CommandRuntime, ValidationDetail } from "../../../types/index.js";
+import type { CommandRuntime, ValidationDetail } from "../../../types/index.js";
 import { RESERVED_DOMAINS } from "../../engine/contract.js";
 import type { CaptureNewResult, MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
-import { isExecutable, normalizeRuntime, resolveEntryFile, runtimeRequiresBrowser } from "../../runtime/index.js";
-import { generateCommandTemplate, generateContextTemplate, generateReadmeTemplate } from "../lib/draft-templates.js";
+import { isExecutable, normalizeRuntime } from "../../runtime/index.js";
+import { generateEvidenceTemplate, writeDraftSkeleton } from "./lib/capture-draft.js";
 import {
 	type CaptureYaml,
-	generateEvidenceTemplate,
 	getCaptureDraftPath,
 	getCaptureWorkspacePath,
 	scanCommandLibrarySnapshot,
 	writeCaptureYaml,
-} from "./lib/capture-utils.js";
+} from "./lib/capture-io.js";
 
 const VALID_CAPTURE_NAME = /^[a-z0-9-]+$/;
 
@@ -161,30 +160,6 @@ export function registerCaptureNew(group: Command, format: () => "human" | "json
 		.action(async (name: string, options: CaptureNewOptions) => {
 			renderOutput(await handleCaptureNew(name, options), format());
 		});
-}
-
-async function writeDraftSkeleton(
-	draftPath: string,
-	domain: string,
-	action: string,
-	runtime: CommandRuntime,
-): Promise<void> {
-	const manifest: CommandManifest = {
-		id: `${domain}-${action}`,
-		domain,
-		action,
-		runtime,
-		description: "",
-		parameters: [],
-		requiresBrowser: runtimeRequiresBrowser(runtime),
-		authRequired: "unknown",
-	};
-	const entryFile = resolveEntryFile(runtime);
-
-	await writeFile(join(draftPath, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
-	await writeFile(join(draftPath, entryFile), generateCommandTemplate(runtime, []), "utf8");
-	await writeFile(join(draftPath, "README.md"), generateReadmeTemplate(domain, action, runtime), "utf8");
-	await writeFile(join(draftPath, "context.md"), generateContextTemplate(domain, action), "utf8");
 }
 
 function buildWarnings(

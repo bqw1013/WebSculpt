@@ -1,16 +1,16 @@
-import { access, constants, writeFile } from "node:fs/promises";
+import { access, constants } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
 import type { CommandValidateResult, MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
 import { handleCommandValidate } from "../command/validate.js";
+import { computeCaptureDraftFingerprint, inspectCaptureDraftManifest } from "./lib/capture-draft.js";
 import {
-	computeCaptureDraftFingerprint,
 	getCaptureDraftPath,
 	getCaptureWorkspacePath,
-	inspectCaptureDraftManifest,
 	readCaptureYaml,
-} from "./lib/capture-utils.js";
+	writeValidationRecord,
+} from "./lib/capture-io.js";
 
 /**
  * Handles the `capture validate <name>` command.
@@ -73,7 +73,7 @@ export async function handleCaptureValidate(name: string): Promise<MetaCommandRe
 				}),
 	};
 
-	await writeFile(join(workspacePath, "validation.json"), JSON.stringify(validationRecord, null, 2), "utf8");
+	await writeValidationRecord(workspacePath, validationRecord);
 
 	return finalResult;
 }

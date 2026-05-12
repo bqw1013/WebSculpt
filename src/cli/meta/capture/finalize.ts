@@ -1,17 +1,11 @@
-import { access, constants, copyFile, readFile } from "node:fs/promises";
+import { access, constants, copyFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
 import type { MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
 import { handleCommandCreate } from "../command/create.js";
-import { computeCaptureStatus } from "./lib/capture-status-computer.js";
-import {
-	computeCaptureDraftFingerprint,
-	getCaptureDraftPath,
-	getCaptureWorkspacePath,
-	readCaptureYaml,
-} from "./lib/capture-utils.js";
-import { auditEvidence } from "./lib/evidence-audit.js";
+import { getCaptureDraftPath, getCaptureWorkspacePath, readCaptureYaml } from "./lib/capture-io.js";
+import { type CaptureStatusData, computeCaptureStatus } from "./lib/capture-state.js";
 
 /** Options accepted by the `capture finalize` command handler. */
 export interface CaptureFinalizeOptions {
@@ -43,72 +37,13 @@ export async function handleCaptureFinalize(
 	}
 
 	const captureYaml = await readCaptureYaml(join(workspacePath, "capture.yaml"));
-
-	// Hard gate 1: validation.json must exist and report success.
-	const validationPath = join(workspacePath, "validation.json");
-	let validationRecord: { draftFingerprint?: unknown; success?: unknown };
-	try {
-		const validationContent = await readFile(validationPath, "utf8");
-		validationRecord = JSON.parse(validationContent) as { draftFingerprint?: unknown; success?: unknown };
-	} catch {
-		return {
-			success: false,
-			error: {
-				code: "VALIDATION_NOT_FOUND",
-				message: "No validation result found. Run `capture validate` first.",
-			},
-		};
-	}
-
-	if (validationRecord.success !== true) {
-		return {
-			success: false,
-			error: {
-				code: "VALIDATION_FAILED",
-				message: "Last validation failed. Fix issues and run `capture validate` again.",
-			},
-		};
-	}
-
-	if (validationRecord.draftFingerprint !== (await computeCaptureDraftFingerprint(name, captureYaml))) {
-		return {
-			success: false,
-			error: {
-				code: "VALIDATION_STALE",
-				message: "Draft files changed after the last successful validation. Run `capture validate` again.",
-			},
-		};
-	}
-
-	// Hard gate 2: evidence audit must pass.
-	const evidenceContent = await readFile(join(workspacePath, "evidence.md"), "utf8");
-	const audit = auditEvidence(evidenceContent, captureYaml.runtime);
-
-	if (!audit.passed) {
-		const parts: string[] = [];
-		if (audit.missingHeadings.length > 0) {
-			parts.push(`Missing headings: ${audit.missingHeadings.join(", ")}`);
-		}
-		if (audit.emptyHeadings.length > 0) {
-			parts.push(`Empty headings: ${audit.emptyHeadings.join(", ")}`);
-		}
-		return {
-			success: false,
-			error: {
-				code: "EVIDENCE_NOT_READY",
-				message: `Evidence audit failed: ${parts.join("; ")}`,
-			},
-		};
-	}
-
 	const status = await computeCaptureStatus(name);
+
 	if (!status.readyToFinalize) {
+		const error = buildFinalizeError(status);
 		return {
 			success: false,
-			error: {
-				code: "DRAFT_NOT_READY",
-				message: `Capture is not ready to finalize. Next action: ${status.nextAction}.`,
-			},
+			error,
 		};
 	}
 
@@ -130,6 +65,47 @@ export async function handleCaptureFinalize(
 	}
 
 	return createResult;
+}
+
+/** Maps artifact states from the state machine to CLI finalize error codes. */
+function buildFinalizeError(status: CaptureStatusData): { code: string; message: string } {
+	const { artifacts } = status;
+
+	if (artifacts.validation.status !== "done") {
+		const detail = artifacts.validation.detail;
+		if (detail?.lastResult === "failed") {
+			return {
+				code: "VALIDATION_FAILED",
+				message: "Last validation failed. Fix issues and run `capture validate` again.",
+			};
+		}
+		if (detail?.lastResult === "stale") {
+			return {
+				code: "VALIDATION_STALE",
+				message: "Draft files changed after the last successful validation. Run `capture validate` again.",
+			};
+		}
+		// When validation is blocked only because other draft artifacts are incomplete,
+		// surface the underlying artifact issue rather than a validation error.
+		if (artifacts.validation.reason !== "Draft artifacts are not complete") {
+			return {
+				code: "VALIDATION_NOT_FOUND",
+				message: artifacts.validation.reason ?? "No validation result found. Run `capture validate` first.",
+			};
+		}
+	}
+
+	if (artifacts.evidence.status !== "done") {
+		return {
+			code: "EVIDENCE_NOT_READY",
+			message: `Evidence audit failed: ${artifacts.evidence.reason ?? ""}`,
+		};
+	}
+
+	return {
+		code: "DRAFT_NOT_READY",
+		message: `Capture is not ready to finalize. Next action: ${status.nextAction}.`,
+	};
 }
 
 /** Registers the `capture finalize` sub-command. */
