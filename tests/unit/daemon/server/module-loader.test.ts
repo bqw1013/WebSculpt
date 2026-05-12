@@ -33,9 +33,9 @@ describe("loadCommandModule", () => {
 		const mod1 = await loadCommandModule(filePath);
 
 		// Force a different mtime by writing new content.
+		writeFileSync(filePath, "export default async () => 'second';", "utf-8");
 		const newTime = Date.now() + 1000;
 		utimesSync(filePath, newTime / 1000, newTime / 1000);
-		writeFileSync(filePath, "export default async () => 'second';", "utf-8");
 
 		const mod2 = await loadCommandModule(filePath);
 
@@ -52,9 +52,9 @@ describe("loadCommandModule", () => {
 		const fn1 = (mod1 as Record<string, unknown>).default as () => Promise<unknown>;
 		expect(await fn1()).toBe(1);
 
+		writeFileSync(filePath, "export default async () => 2;", "utf-8");
 		const newTime = Date.now() + 1000;
 		utimesSync(filePath, newTime / 1000, newTime / 1000);
-		writeFileSync(filePath, "export default async () => 2;", "utf-8");
 
 		const mod2 = await loadCommandModule(filePath);
 		const fn2 = (mod2 as Record<string, unknown>).default as () => Promise<unknown>;

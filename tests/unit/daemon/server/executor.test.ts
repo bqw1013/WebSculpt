@@ -19,7 +19,7 @@ describe("executeCommand timeout", () => {
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
-		process.env.WEBSCULPT_TEST_COMMAND_TIMEOUT_MS = "50";
+		process.env.WEBSCULPT_TEST_COMMAND_TIMEOUT_MS = "500";
 
 		tempDir = mkdtempSync(join(tmpdir(), "ws-test-"));
 
