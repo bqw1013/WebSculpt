@@ -1,4 +1,4 @@
-import { access, copyFile, mkdir, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, rm, utimes, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
 import { USER_COMMANDS_DIR } from "../../../infra/paths.js";
@@ -107,12 +107,19 @@ export async function handleCommandCreate(
 		};
 		await writeFile(join(commandDir, "manifest.json"), JSON.stringify(normalizedManifest, null, 2));
 
-		// Copy entry file
-		await copyFile(join(sourceDir, entryFile), join(commandDir, entryFile));
+		// Copy entry file and freshen its mtime so daemon module-loader
+		// cache reliably detects the change on Windows (copyFile preserves
+		// source timestamps by default on Windows).
+		const now = new Date();
+		const entryDest = join(commandDir, entryFile);
+		await copyFile(join(sourceDir, entryFile), entryDest);
+		await utimes(entryDest, now, now);
 
 		// Copy README.md if present
 		if (hasReadme) {
-			await copyFile(join(sourceDir, "README.md"), join(commandDir, "README.md"));
+			const readmeDest = join(commandDir, "README.md");
+			await copyFile(join(sourceDir, "README.md"), readmeDest);
+			await utimes(readmeDest, now, now);
 		}
 
 		// Copy context.md if present
