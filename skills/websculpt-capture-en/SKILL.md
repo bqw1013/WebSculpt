@@ -204,7 +204,7 @@ Core constraints:
 - Business errors: `const err = new Error("[CODE] message"); err.code = "CODE"; throw err;`
 - Can only import Node.js built-in modules; third-party dependencies and inline imports are prohibited.
 
-Detailed specifications see `./references/node-contract.md` or `./references/browser-contract.md` (according to runtime).
+Detailed specifications see `skills/websculpt-capture-en/references/node-contract.md` or `skills/websculpt-capture-en/references/browser-contract.md` (according to runtime).
 
 Error code specification: uppercase snake_case, semantically clear. Examples: `AUTH_REQUIRED` (login needed), `NOT_FOUND` (resource does not exist), `EMPTY_RESULT` (result is empty), `MISSING_PARAM` (missing required parameter), `DRIFT_DETECTED` (page structure changed).
 

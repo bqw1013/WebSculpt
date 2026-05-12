@@ -37,7 +37,7 @@ Every time you enter the explore phase, execute the following protocol first:
 
 1. Clarify the information the user wants to acquire, time range, source preferences, and output format.
 2. Execute "Check Library and Select Tools": check the library to reuse existing commands first; only select external tools when none are reusable.
-3. If it is determined that browser automation is needed, you **must read** `./references/access/playwright-cli-guide.md` first. After reading, set `ExploreSession.guideRead` to `true` before executing any browser operations. Before that, executing any `playwright-cli` subcommand is strictly prohibited.
+3. If it is determined that browser automation is needed, you **must read** `skills/websculpt-explore/references/access/playwright-cli-guide.md` first. After reading, set `ExploreSession.guideRead` to `true` before executing any browser operations. Before that, executing any `playwright-cli` subcommand is strictly prohibited.
 4. Advance exploration with small-step validation; do not make subsequent judgments based on unverified guesses, and promptly switch away from invalid paths.
 5. When delivering results, execute Capture assessment in the same reply and append a Capture Assessment.
 
@@ -157,10 +157,10 @@ When intervening, you must explain: what has been completed, what obstacle was e
 
 > **Note**: The "browser automation" described in this section refers to you **directly operating** the browser for web exploration. Invoking existing commands in the command library that require browser execution is not within the scope of this section; handle them according to the instructions in "Check Library and Select Tools".
 
-Browser automation is suitable for login state, JS rendering, multi-step interaction, or scenarios where static scraping is difficult. Before execution, you must read `./references/access/playwright-cli-guide.md`.
+Browser automation is suitable for login state, JS rendering, multi-step interaction, or scenarios where static scraping is difficult. Before execution, you must read `skills/websculpt-explore/references/access/playwright-cli-guide.md`.
 
 Before using browser automation, confirm ExploreSession:
-- If `guideRead` is not `true`, read `./references/access/playwright-cli-guide.md` first
+- If `guideRead` is not `true`, read `skills/websculpt-explore/references/access/playwright-cli-guide.md` first
 - After reading, set `guideRead: true`
 - `toolsUsed` append `"browser"`
 
