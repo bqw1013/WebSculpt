@@ -60,7 +60,7 @@ export class WebSculptHelp extends Help {
 
 		if (cmd.name() === "websculpt") {
 			out += "Command types:\n";
-			out += "  Meta      Manage the CLI system (registry, config, agent skill docs)\n";
+			out += "  Meta      Manage the CLI system (registry, config, scope, daemon, capture, skill)\n";
 			out += "  Builtin   Default commands shipped with the project\n";
 			out += "  User      Custom commands created by you or AI; override builtin\n";
 			out += "\n";

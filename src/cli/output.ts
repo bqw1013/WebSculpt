@@ -19,6 +19,7 @@ export type {
 	MetaCommandError,
 	MetaCommandResult,
 	OutputFormat,
+	ScopeShowResult,
 	SkillInstallResult,
 	SkillStatusResult,
 	SkillUninstallResult,

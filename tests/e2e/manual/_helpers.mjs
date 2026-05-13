@@ -44,14 +44,14 @@ export function websculptPath(homeDir, ...parts) {
  * Executes the source-form CLI through tsx and captures its process result.
  * When homeDir is omitted, uses the current process environment.
  */
-export async function runSourceCli(args, homeDir) {
+export async function runSourceCli(args, homeDir, options = {}) {
 	const cliEnv = homeDir
 		? { ...process.env, ...createHomeEnv(homeDir) }
 		: process.env;
 
 	return new Promise((resolveResult, reject) => {
 		const child = spawn(process.execPath, [tsxCliPath, sourceCliEntry, ...args], {
-			cwd: repoRoot,
+			cwd: options.cwd ?? repoRoot,
 			env: cliEnv,
 			windowsHide: true,
 		});

@@ -1,6 +1,7 @@
 import { access, constants, copyFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
+import { findScope, readScope, writeScope } from "../../engine/scope.js";
 import type { MetaCommandResult } from "../../output.js";
 import { renderOutput } from "../../output.js";
 import { handleCommandCreate } from "../command/create.js";
@@ -61,6 +62,23 @@ export async function handleCaptureFinalize(
 			await copyFile(join(workspacePath, "evidence.md"), join(createResult.path, "evidence.md"));
 		} catch {
 			// Best-effort copy; the command is already correctly installed.
+		}
+	}
+
+	// Auto-append the newly created command to the nearest active scope.
+	if (createResult.success) {
+		const scopePath = findScope(process.cwd());
+		if (scopePath) {
+			try {
+				const scope = await readScope(scopePath);
+				const identifier = `${captureYaml.domain}/${captureYaml.action}`;
+				if (!scope.config.commands.includes(identifier)) {
+					scope.config.commands.push(identifier);
+					await writeScope(scopePath, scope.config);
+				}
+			} catch {
+				// Best-effort scope update; do not fail finalization.
+			}
 		}
 	}
 

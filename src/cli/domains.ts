@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import type { CommandParameter, CommandRuntime } from "../types/index.js";
 import type { ResolvedCommand } from "./engine/contract.js";
 import { executeCommand } from "./engine/execution/orchestrator.js";
-import { listAllCommands } from "./engine/registry.js";
+import { listScopedCommands } from "./engine/scope.js";
 import { printJson } from "./output/formatters.js";
 import { RUNTIME_SYSTEM_PREREQUISITES } from "./runtime/index.js";
 
@@ -89,7 +89,7 @@ function buildHelpText(command: ResolvedCommand): string {
  * through the executor.
  */
 export function registerDomainCommands(program: Command): void {
-	const commands = listAllCommands();
+	const commands = listScopedCommands(process.cwd());
 	const domainMap = groupCommandsByDomain(commands);
 
 	for (const [domain, domainCommands] of domainMap) {

@@ -149,6 +149,15 @@ export interface ConfigInitResult {
 	message: string;
 }
 
+/** Result shape for a successful scope show. */
+export interface ScopeShowResult {
+	success: true;
+	scopeCommands: Array<{
+		command: string;
+		valid: boolean;
+	}>;
+}
+
 /** Result shape for a successful daemon stop. */
 export interface DaemonStopResult {
 	success: true;
