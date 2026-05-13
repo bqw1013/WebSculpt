@@ -26,7 +26,7 @@
 
 ## Command Execution
 
-- After code changes (except documentation changes): run the project's type-checking / validation / lint commands, and fix all errors before finishing.
+- After code changes (except documentation changes): run `npm run check` and `npm run typecheck`, and fix all errors before finishing.
 - Run specific tests only when instructed; if you create or modify test files, you **must** run the test and iterate until it passes.
 
 ## E2E Test Readability
