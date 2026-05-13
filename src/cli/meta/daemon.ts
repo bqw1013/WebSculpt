@@ -203,11 +203,7 @@ export function registerDaemonMeta(program: Command): void {
 		.command("status")
 		.description("Show daemon health and resource status")
 		.action(async () => {
-			const result = await handleDaemonStatus();
-			renderOutput(result, format());
-			if (!result.success) {
-				process.exitCode = 1;
-			}
+			renderOutput(await handleDaemonStatus(), format());
 		});
 
 	daemon
@@ -215,11 +211,7 @@ export function registerDaemonMeta(program: Command): void {
 		.description("Show recent daemon log entries")
 		.option("--lines <n>", "Number of lines to show", (val) => Number.parseInt(val, 10))
 		.action(async (options: { lines?: number }) => {
-			const result = await handleDaemonLogs({ lines: options.lines });
-			renderOutput(result, format());
-			if (!result.success) {
-				process.exitCode = 1;
-			}
+			renderOutput(await handleDaemonLogs({ lines: options.lines }), format());
 		});
 
 	daemon

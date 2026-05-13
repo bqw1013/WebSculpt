@@ -74,7 +74,7 @@ describe("command create", () => {
 		);
 		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error).toEqual(
 			expect.objectContaining({
@@ -96,7 +96,7 @@ describe("command create", () => {
 		);
 		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error).toEqual(
 			expect.objectContaining({
@@ -120,7 +120,7 @@ describe("command create", () => {
 		);
 		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error).toEqual(
 			expect.objectContaining({
@@ -154,7 +154,7 @@ describe("command create", () => {
 		);
 		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error).toEqual(
 			expect.objectContaining({
@@ -261,7 +261,7 @@ describe("command create", () => {
 		);
 		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error).toEqual(
 			expect.objectContaining({
@@ -293,7 +293,7 @@ describe("command create", () => {
 		);
 		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error).toEqual(
 			expect.objectContaining({

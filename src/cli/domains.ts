@@ -3,7 +3,7 @@ import type { CommandParameter, CommandRuntime } from "../types/index.js";
 import type { ResolvedCommand } from "./engine/contract.js";
 import { executeCommand } from "./engine/execution/orchestrator.js";
 import { listAllCommands } from "./engine/registry.js";
-import { printJson } from "./output.js";
+import { printJson } from "./output/formatters.js";
 import { RUNTIME_SYSTEM_PREREQUISITES } from "./runtime/index.js";
 
 /** Groups resolved commands by their manifest domain. */

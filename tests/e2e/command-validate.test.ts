@@ -141,7 +141,7 @@ describe("command validate", () => {
 			error?: { code: string; details?: Array<{ code: string; level: string }> };
 		}>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("VALIDATION_ERROR");
 		expect(payload.error?.details).toEqual(
@@ -175,7 +175,7 @@ describe("command validate", () => {
 			error?: { code: string; details?: Array<{ code: string; level: string }> };
 		}>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("VALIDATION_ERROR");
 		expect(payload.error?.details).toEqual(
@@ -194,7 +194,7 @@ describe("command validate", () => {
 		);
 		const payload = parseJsonOutput<{ success: boolean; error?: { code: string } }>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("RESERVED_DOMAIN");
 	});
@@ -225,7 +225,7 @@ describe("command validate", () => {
 			error?: { code: string; details?: Array<{ code: string; level: string }> };
 		}>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("VALIDATION_ERROR");
 

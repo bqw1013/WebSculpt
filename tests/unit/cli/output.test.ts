@@ -1,8 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CaptureNewResult } from "../../../src/cli/output.js";
 import { renderOutput } from "../../../src/cli/output.js";
 
 describe("renderOutput", () => {
+	beforeEach(() => {
+		process.exitCode = undefined;
+	});
 	it("prints pretty-printed JSON for a create success in json mode", () => {
 		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 		renderOutput({ success: true, command: "notes/save", path: "/tmp/notes/save" }, "json");
@@ -78,6 +81,27 @@ describe("renderOutput", () => {
 		expect(logSpy).toHaveBeenCalledWith(
 			JSON.stringify({ success: false, error: { code: "NOT_FOUND", message: "Missing" } }, null, 2),
 		);
+		logSpy.mockRestore();
+	});
+
+	it("sets process.exitCode to 1 for an error result in human mode", () => {
+		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+		renderOutput({ success: false, error: { code: "ERR", message: "fail" } }, "human");
+		expect(process.exitCode).toBe(1);
+		logSpy.mockRestore();
+	});
+
+	it("sets process.exitCode to 1 for an error result in json mode", () => {
+		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+		renderOutput({ success: false, error: { code: "ERR", message: "fail" } }, "json");
+		expect(process.exitCode).toBe(1);
+		logSpy.mockRestore();
+	});
+
+	it("does not set process.exitCode for a success result", () => {
+		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+		renderOutput({ success: true, command: "notes/save", path: "/tmp/notes/save" }, "human");
+		expect(process.exitCode).toBeUndefined();
 		logSpy.mockRestore();
 	});
 

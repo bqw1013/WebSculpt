@@ -72,7 +72,7 @@ describe("capture finalize", () => {
 		const result = await runCaptureFinalize(homeDir, workDir, ["ev-bad"]);
 		const payload = parseJsonOutput<CaptureFinalizePayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("EVIDENCE_NOT_READY");
 
@@ -97,7 +97,7 @@ describe("capture finalize", () => {
 		const result = await runCaptureFinalize(homeDir, workDir, ["no-val"]);
 		const payload = parseJsonOutput<CaptureFinalizePayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("VALIDATION_NOT_FOUND");
 	});
@@ -119,7 +119,7 @@ describe("capture finalize", () => {
 		const result = await runCaptureFinalize(homeDir, workDir, ["val-bad"]);
 		const payload = parseJsonOutput<CaptureFinalizePayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("VALIDATION_FAILED");
 	});
@@ -130,7 +130,7 @@ describe("capture finalize", () => {
 		const result = await runCaptureFinalize(homeDir, workDir, ["no-such-cap"]);
 		const payload = parseJsonOutput<CaptureFinalizePayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("NOT_FOUND");
 	});
@@ -200,7 +200,7 @@ websculpt example collect
 		const result = await runCaptureFinalize(homeDir, workDir, ["stale-finalize"]);
 		const payload = parseJsonOutput<CaptureFinalizePayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("VALIDATION_STALE");
 	});

@@ -180,7 +180,7 @@ describe("command draft", () => {
 			error?: { code: string };
 		}>(secondResult.stdout);
 
-		expect(secondResult.exitCode).toBe(0);
+		expect(secondResult.exitCode).toBe(1);
 		expect(secondPayload.success).toBe(false);
 		expect(secondPayload.error?.code).toBe("ALREADY_EXISTS");
 

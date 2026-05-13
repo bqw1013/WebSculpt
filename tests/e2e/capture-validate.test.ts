@@ -85,7 +85,7 @@ describe("capture validate", () => {
 		const result = await runCaptureValidate(homeDir, workDir, ["invalid-cap"]);
 		const payload = parseJsonOutput<CaptureValidatePayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("VALIDATION_ERROR");
 
@@ -164,7 +164,7 @@ describe("capture validate", () => {
 		const result = await runCaptureValidate(homeDir, workDir, ["runtime-mismatch"]);
 		const payload = parseJsonOutput<CaptureValidatePayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.details).toContainEqual(
 			expect.objectContaining({
@@ -192,7 +192,7 @@ describe("capture validate", () => {
 		const result = await runCaptureValidate(homeDir, workDir, ["no-such-cap"]);
 		const payload = parseJsonOutput<CaptureValidatePayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("NOT_FOUND");
 	});

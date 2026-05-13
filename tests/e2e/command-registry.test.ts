@@ -345,7 +345,7 @@ describe("command registry", () => {
 			const removeResult = await runSourceCli(["command", "remove", "notes", "delete", "--format", "json"], homeDir);
 			const removePayload = parseJsonOutput<CommandRemoveResult>(removeResult.stdout);
 
-			expect(removeResult.exitCode).toBe(0);
+			expect(removeResult.exitCode).toBe(1);
 			expect(removePayload.success).toBe(false);
 			expect(removePayload.error).toEqual(
 				expect.objectContaining({

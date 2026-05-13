@@ -185,7 +185,7 @@ describe("capture new", () => {
 		]);
 		const payload = parseJsonOutput<CaptureNewPayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("RESERVED_DOMAIN");
 	});
@@ -214,7 +214,7 @@ describe("capture new", () => {
 		const payload = parseJsonOutput<CaptureNewPayload>(secondResult.stdout);
 
 		expect(parseJsonOutput<CaptureNewPayload>(firstResult.stdout).success).toBe(true);
-		expect(secondResult.exitCode).toBe(0);
+		expect(secondResult.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("CAPTURE_ALREADY_EXISTS");
 	});
@@ -236,7 +236,7 @@ describe("capture new", () => {
 		]);
 		const payload = parseJsonOutput<CaptureNewPayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("COMMAND_ALREADY_EXISTS");
 	});

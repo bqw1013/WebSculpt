@@ -353,7 +353,7 @@ TODO: list common business error codes.
 		const result = await runCaptureStatus(homeDir, workDir, ["no-such-cap"]);
 		const payload = parseJsonOutput<CaptureStatusPayload>(result.stdout);
 
-		expect(result.exitCode).toBe(0);
+		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("NOT_FOUND");
 	});
