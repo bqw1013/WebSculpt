@@ -13,7 +13,7 @@ WebSculpt CLI is the entry point for command discovery, execution, and managemen
 
 | Classification | Location | Description |
 |------|------|------|
-| **Meta** | Built into the system | Manage the CLI itself and the command library, e.g. `config init`, `command list` |
+| **Meta** | Built into the system | Manage the CLI itself and the command library, e.g. `config init`, `command list`, `scope show` |
 | **Builtin** | `src/cli/builtin/` | Default capabilities or examples distributed with the project |
 | **User** | `~/.websculpt/commands/` | Custom workflows captured by users or AI during specific tasks; can override builtin |
 
@@ -26,7 +26,7 @@ When `websculpt <domain> <action>` is entered, the system resolves it in the fol
 
 **Key rules**:
 
-- Meta commands (`capture`, `command`, `config`, `daemon`, `skill`) are registered at the system level and do not participate in extension command scanning, so they cannot be overridden by User or Builtin commands.
+- Meta commands (`capture`, `command`, `config`, `daemon`, `scope`, `skill`) are registered at the system level and do not participate in extension command scanning, so they cannot be overridden by User or Builtin commands.
 - Conflicts between User and Builtin are resolved in favor of User.
 
 ## 2. Extension Command Structure
@@ -207,11 +207,17 @@ Returns `DAEMON_STOP_FAILED` on failure (only when the process resists force ter
 
 #### `command list`
 
-List all available extension commands in the current environment, annotated with source (builtin / user).
+List available extension commands in the current environment, annotated with source (builtin / user).
+
+By default, if a `.websculpt/scope.json` exists in the current working directory or any ancestor directory, only whitelisted commands are returned; when no scope is found, all commands are returned. Use `--all` to bypass scope filtering.
 
 ```bash
-websculpt command list
+websculpt command list [--all]
 ```
+
+| Option | Description |
+|------|------|
+| `--all` | Show all commands, ignoring the scope whitelist |
 
 ---
 
@@ -369,7 +375,7 @@ websculpt skill install [name] [options]
 
 | Parameter | Description |
 |------|------|
-| `name` | Optional, specify a single skill name (e.g. `capture`, `explore`); omit to install all built-in skills |
+| `name` | Optional, specify a single skill name (e.g. `capture`, `explore`, `scope`); omit to install all built-in skills |
 
 | Option | Description |
 |------|------|
@@ -397,7 +403,7 @@ websculpt skill uninstall [name] [options]
 
 | Parameter | Description |
 |------|------|
-| `name` | Optional, specify a single skill name (e.g. `capture`, `explore`); omit to remove all `websculpt-*` skills |
+| `name` | Optional, specify a single skill name (e.g. `capture`, `explore`, `scope`); omit to remove all `websculpt-*` skills |
 
 | Option | Description |
 |------|------|
@@ -424,6 +430,110 @@ websculpt skill status
 
 - Groups by agent, reports installation status per skill (`installed` / `not installed`) and effective scope (`local` / `global`)
 - Local installation takes precedence over global
+
+---
+
+### 4.6 `scope`
+
+Manage project-level command visibility. By maintaining a `scope.json` whitelist in the current directory, control which extension commands appear in `command list` and CLI help.
+
+```bash
+websculpt scope init
+websculpt scope destroy
+websculpt scope show
+websculpt scope add <identifier>
+websculpt scope remove <identifier>
+```
+
+| Subcommand | Purpose |
+|--------|------|
+| `init` | Initialize a scope in the current directory (creates `.websculpt/scope.json`) |
+| `destroy` | Destroy the scope in the current directory |
+| `show` | Display the active scope configuration and whitelist validity |
+| `add` | Add a command to the whitelist; `identifier` can be `domain/action` or `domain` (bulk-adds all commands in that domain) |
+| `remove` | Remove a command from the whitelist; supports `domain/action` or `domain` (bulk-removes all commands in that domain) |
+
+#### `scope init`
+
+Initialize a scope in the current directory.
+
+```bash
+websculpt scope init
+```
+
+**Key behaviors**
+
+- Creates `.websculpt/scope.json` in the current directory (whitelist starts empty)
+- Returns error `SCOPE_ALREADY_EXISTS` if a scope already exists
+
+---
+
+#### `scope destroy`
+
+Destroy the scope in the current directory.
+
+```bash
+websculpt scope destroy
+```
+
+**Key behaviors**
+
+- Only deletes `.websculpt/scope.json` in the current directory; does not affect ancestor scopes
+- Returns error `NO_SCOPE_FOUND` if no scope exists
+
+---
+
+#### `scope show`
+
+Display the active scope configuration.
+
+```bash
+websculpt scope show
+```
+
+**Key behaviors**
+
+- Traverses upward from the current directory and displays the nearest `scope.json` whitelist along with the availability status (`valid`) of each command
+- Returns a message when no scope is configured: "No scope configured in this directory. All commands are visible."
+
+---
+
+#### `scope add <identifier>`
+
+Add a command to the active scope whitelist.
+
+```bash
+websculpt scope add <identifier>
+```
+
+| Parameter | Description |
+|------|------|
+| `identifier` | `domain/action` or `domain` (bulk-adds all existing commands in that domain) |
+
+**Key behaviors**
+
+- Operates on the **nearest** scope found by upward traversal
+- Returns error `NO_SCOPE_FOUND` when no scope exists
+- Duplicate commands are automatically deduplicated
+
+---
+
+#### `scope remove <identifier>`
+
+Remove a command from the active scope whitelist.
+
+```bash
+websculpt scope remove <identifier>
+```
+
+| Parameter | Description |
+|------|------|
+| `identifier` | `domain/action` or `domain` (bulk-removes all commands in that domain) |
+
+**Key behaviors**
+
+- Operates on the **nearest** scope found by upward traversal
+- Returns error `NO_SCOPE_FOUND` when no scope exists
 
 ## 5. Usage Examples
 

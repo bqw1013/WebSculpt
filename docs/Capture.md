@@ -179,6 +179,8 @@ Evidence 是对 `evidence.md` 的三层 Markdown 审核。
 
 安装成功后，`evidence.md` 会被复制到命令目录，即使后续清理工作区，证据档案仍然保留。
 
+此外，若当前工作目录或其祖先目录存在 active scope，`capture finalize` 会自动将新命令追加到该 scope 的白名单中。此步骤为 best-effort：追加失败不会阻断 finalize 本身。
+
 ---
 
 ## 6. 边界与限制

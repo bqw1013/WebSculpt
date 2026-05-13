@@ -13,7 +13,7 @@ WebSculpt CLI 是命令的发现、执行与管理入口。它面向人类用户
 
 | 分类 | 位置 | 说明 |
 |------|------|------|
-| **Meta（元命令）** | 系统内置 | 管理 CLI 本身和命令库，如 `config init`、`command list` |
+| **Meta（元命令）** | 系统内置 | 管理 CLI 本身和命令库，如 `config init`、`command list`、`scope show` |
 | **Builtin（内置扩展命令）** | `src/cli/builtin/` | 随项目分发的默认能力或示例 |
 | **User（用户自定义命令）** | `~/.websculpt/commands/` | 用户或 AI 在具体任务中沉淀的自定义工作流，可覆盖 builtin |
 
@@ -26,7 +26,7 @@ WebSculpt CLI 是命令的发现、执行与管理入口。它面向人类用户
 
 **关键规则**：
 
-- Meta 命令（`capture`、`command`、`config`、`daemon`、`skill`）在系统层面直接注册，不参与扩展命令扫描，因此不会被 User 或 Builtin 覆盖。
+- Meta 命令（`capture`、`command`、`config`、`daemon`、`scope`、`skill`）在系统层面直接注册，不参与扩展命令扫描，因此不会被 User 或 Builtin 覆盖。
 - User 与 Builtin 的冲突以 User 为准。
 
 ## 2. 扩展命令结构
@@ -207,11 +207,17 @@ websculpt daemon stop
 
 #### `command list`
 
-列出当前环境中所有可用的扩展命令，并标注来源（builtin / user）。
+列出当前环境中可用的扩展命令，并标注来源（builtin / user）。
+
+默认情况下，若当前工作目录或其祖先目录存在 `.websculpt/scope.json`，仅返回白名单内的命令；无 scope 时返回全部。使用 `--all` 可绕过 scope 过滤。
 
 ```bash
-websculpt command list
+websculpt command list [--all]
 ```
+
+| 选项 | 说明 |
+|------|------|
+| `--all` | 显示全部命令，忽略 scope 白名单 |
 
 ---
 
@@ -369,7 +375,7 @@ websculpt skill install [name] [options]
 
 | 参数 | 说明 |
 |------|------|
-| `name` | 可选，指定单个 skill 名称（如 `capture`、`explore`）；省略则安装所有内置 skills |
+| `name` | 可选，指定单个 skill 名称（如 `capture`、`explore`、`scope`）；省略则安装所有内置 skills |
 
 | 选项 | 说明 |
 |------|------|
@@ -397,7 +403,7 @@ websculpt skill uninstall [name] [options]
 
 | 参数 | 说明 |
 |------|------|
-| `name` | 可选，指定单个 skill 名称（如 `capture`、`explore`）；省略则移除所有 `websculpt-*` skills |
+| `name` | 可选，指定单个 skill 名称（如 `capture`、`explore`、`scope`）；省略则移除所有 `websculpt-*` skills |
 
 | 选项 | 说明 |
 |------|------|
@@ -424,6 +430,110 @@ websculpt skill status
 
 - 按 agent 分组，逐 skill 报告安装状态（`installed` / `not installed`）及生效范围（`local` / `global`）
 - local 安装优先于 global
+
+---
+
+### 4.6 `scope`
+
+管理项目级命令可见性。通过在当前目录维护 `scope.json` 白名单，控制 `command list` 和 CLI 帮助中显示的扩展命令。
+
+```bash
+websculpt scope init
+websculpt scope destroy
+websculpt scope show
+websculpt scope add <identifier>
+websculpt scope remove <identifier>
+```
+
+| 子命令 | 作用 |
+|--------|------|
+| `init` | 在当前目录初始化 scope（创建 `.websculpt/scope.json`） |
+| `destroy` | 销毁当前目录的 scope |
+| `show` | 显示当前生效的 scope 配置及白名单有效性 |
+| `add` | 将命令加入白名单；`identifier` 可为 `domain/action` 或 `domain`（批量添加该域下全部命令） |
+| `remove` | 将命令从白名单移除；支持 `domain/action` 或 `domain`（批量移除该域下全部命令） |
+
+#### `scope init`
+
+在当前目录初始化 scope。
+
+```bash
+websculpt scope init
+```
+
+**关键行为**
+
+- 在当前目录创建 `.websculpt/scope.json`（白名单初始为空）
+- 已存在时报错 `SCOPE_ALREADY_EXISTS`
+
+---
+
+#### `scope destroy`
+
+销毁当前目录的 scope。
+
+```bash
+websculpt scope destroy
+```
+
+**关键行为**
+
+- 仅删除当前目录的 `.websculpt/scope.json`，不删除祖先目录的 scope
+- 不存在时报错 `NO_SCOPE_FOUND`
+
+---
+
+#### `scope show`
+
+显示当前生效的 scope 配置。
+
+```bash
+websculpt scope show
+```
+
+**关键行为**
+
+- 从当前目录向上遍历，显示最近一个 `scope.json` 的白名单及每条命令的可用状态（`valid`）
+- 无 scope 时返回提示"No scope configured in this directory. All commands are visible."
+
+---
+
+#### `scope add <identifier>`
+
+将命令加入当前生效的 scope 白名单。
+
+```bash
+websculpt scope add <identifier>
+```
+
+| 参数 | 说明 |
+|------|------|
+| `identifier` | `domain/action` 或 `domain`（批量添加该域下全部现有命令） |
+
+**关键行为**
+
+- 操作对象为向上遍历找到的**最近**一个 scope
+- 无 scope 时报错 `NO_SCOPE_FOUND`
+- 重复的命令自动去重
+
+---
+
+#### `scope remove <identifier>`
+
+将命令从当前生效的 scope 白名单中移除。
+
+```bash
+websculpt scope remove <identifier>
+```
+
+| 参数 | 说明 |
+|------|------|
+| `identifier` | `domain/action` 或 `domain`（批量移除该域下全部命令） |
+
+**关键行为**
+
+- 操作对象为向上遍历找到的**最近**一个 scope
+- 无 scope 时报错 `NO_SCOPE_FOUND`
 
 ## 5. 使用示例
 

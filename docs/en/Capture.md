@@ -179,6 +179,8 @@ When any gate is not satisfied, an explicit error code is returned; silent degra
 
 After successful installation, `evidence.md` is copied to the command directory. Even if the workspace is cleaned up later, the evidence archive is retained.
 
+Additionally, if an active scope exists in the current working directory or any ancestor directory, `capture finalize` automatically appends the newly created command to that scope's whitelist. This step is best-effort: a failure to append does not block the finalize itself.
+
 ---
 
 ## 6. Boundaries and Limitations

@@ -203,7 +203,7 @@ Regardless of path, both `command create` and `capture finalize` enforce L1–L3
 
 The CLI is the discovery, management, and lifecycle entry point for commands, offering the same interface to both human users and AI.
 
-- **Meta commands**: Manage the CLI itself and the command library. Includes `command`, `config`, `daemon`, `skill`, `capture`.
+- **Meta commands**: Manage the CLI itself and the command library. Includes `command`, `config`, `daemon`, `scope`, `skill`, `capture`.
 - **Extension commands**: Reusable information acquisition workflows. Meta commands cannot be overridden, preventing extension commands from breaking core management capabilities.
 
 ### 5.2 Lookup Priority

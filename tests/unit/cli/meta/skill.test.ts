@@ -51,8 +51,10 @@ describe("resolveSkillSources", () => {
 		readdirSpy = vi.spyOn(fs, "readdirSync").mockReturnValue([
 			{ name: "websculpt-explore", isDirectory: () => true },
 			{ name: "websculpt-capture", isDirectory: () => true },
+			{ name: "websculpt-scope", isDirectory: () => true },
 			{ name: "websculpt-explore-en", isDirectory: () => true },
 			{ name: "websculpt-capture-en", isDirectory: () => true },
+			{ name: "websculpt-scope-en", isDirectory: () => true },
 		] as unknown as fs.Dirent[]);
 	});
 
@@ -62,12 +64,20 @@ describe("resolveSkillSources", () => {
 
 	it("returns all English skills by default", () => {
 		const result = resolveSkillSources();
-		expect(result.map((r) => path.basename(r))).toEqual(["websculpt-explore-en", "websculpt-capture-en"]);
+		expect(result.map((r) => path.basename(r))).toEqual([
+			"websculpt-explore-en",
+			"websculpt-capture-en",
+			"websculpt-scope-en",
+		]);
 	});
 
 	it("returns Chinese skills when lang is zh", () => {
 		const result = resolveSkillSources("zh");
-		expect(result.map((r) => path.basename(r))).toEqual(["websculpt-explore", "websculpt-capture"]);
+		expect(result.map((r) => path.basename(r))).toEqual([
+			"websculpt-explore",
+			"websculpt-capture",
+			"websculpt-scope",
+		]);
 	});
 
 	it("throws when no matching skills are found", () => {
@@ -245,8 +255,10 @@ describe("handleSkillUninstall", () => {
 				{ agent: "claude", skill: "websculpt-explore", status: "removed" },
 				{ agent: "codex", skill: "websculpt-explore", status: "not_found" },
 				{ agent: "codex", skill: "websculpt-capture", status: "not_found" },
+				{ agent: "codex", skill: "websculpt-scope", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-explore", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-capture", status: "not_found" },
+				{ agent: "agents", skill: "websculpt-scope", status: "not_found" },
 			],
 		});
 	});
@@ -258,10 +270,13 @@ describe("handleSkillUninstall", () => {
 			results: [
 				{ agent: "claude", skill: "websculpt-explore", status: "not_found" },
 				{ agent: "claude", skill: "websculpt-capture", status: "not_found" },
+				{ agent: "claude", skill: "websculpt-scope", status: "not_found" },
 				{ agent: "codex", skill: "websculpt-explore", status: "not_found" },
 				{ agent: "codex", skill: "websculpt-capture", status: "not_found" },
+				{ agent: "codex", skill: "websculpt-scope", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-explore", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-capture", status: "not_found" },
+				{ agent: "agents", skill: "websculpt-scope", status: "not_found" },
 			],
 		});
 	});
@@ -307,12 +322,15 @@ describe("handleSkillStatus", () => {
 				"claude:",
 				"  websculpt-explore      installed  local",
 				"  websculpt-capture      not installed",
+				"  websculpt-scope        not installed",
 				"codex:",
 				"  websculpt-explore      not installed",
 				"  websculpt-capture      installed  global",
+				"  websculpt-scope        not installed",
 				"agents:",
 				"  websculpt-explore      not installed",
 				"  websculpt-capture      not installed",
+				"  websculpt-scope        not installed",
 			],
 		});
 	});
