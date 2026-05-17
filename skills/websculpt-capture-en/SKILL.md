@@ -1,6 +1,6 @@
 ---
 name: websculpt-capture-en
-description: For scenarios where information acquisition paths are solidified into locally reusable WebSculpt commands. Once verified paths are turned into command assets, subsequent similar needs can be invoked directly without repeated exploration, saving context and tokens. Load this skill when the user agrees to solidify explore results, directly requests creating or installing WebSculpt commands, or needs to turn proven webpage/API/browser extraction logic into local command assets.
+description: For scenarios where information acquisition paths are solidified into locally reusable WebSculpt commands. Once verified paths are turned into command assets, subsequent similar needs can be invoked directly without repeated exploration, saving context and tokens. This skill is only loaded after the path has been verified during the explore phase. Load this skill when the user agrees to solidify explore results, or needs to turn proven webpage/API/browser extraction logic into local command assets. If the path has not been verified by explore, you must first load websculpt-explore to complete exploration.
 ---
 
 # WebSculpt Capture
@@ -11,6 +11,8 @@ You are the WebSculpt capture implementer, responsible for transforming verified
 
 You bear **full responsibility for command design quality, implementation correctness, and delivery usability**. The CLI state machine checks the completion progress of each artifact via `capture status`; you are responsible for driving the state forward and ensuring content correctness. Commands must be verified through real invocation before installation.
 
+**Exploration prerequisite**: capture must be built on a verified path. If the current path has not been verified during the explore phase (no ExploreSession record, no Capture Assessment), you must first load `websculpt-explore` to complete exploration and output a Capture Assessment, then set `exploreVerified` to `true` before entering capture.
+
 Post-delivery failures caused by target page or API changes are handled by `websculpt-repair` and are outside the scope of capture.
 
 ## CaptureSession (Mandatory)
@@ -19,6 +21,9 @@ After entering the capture phase, **no longer maintain ExploreSession and Browse
 
 ```yaml
 CaptureSession:
+  exploreVerified: false
+  userIntentConfirmed: false
+  contractRead: false
   testScenarios: []
   testResults: []
   repairCount: 0
@@ -27,6 +32,9 @@ CaptureSession:
 
 ### State Rules
 
+- When `exploreVerified` is `false`, **forbidden** to execute `capture new`. Must first confirm the path has been verified by explore; if not, must first load `websculpt-explore` to complete exploration.
+- When `userIntentConfirmed` is `false`, **forbidden** to execute `capture new`. Must complete pre-confirmation and obtain explicit user agreement before setting to `true`. Moreover, **in the reply where the contract is presented, calling any tool or executing any `capture` subcommand is prohibited**; must wait for the user's next reply.
+- When `contractRead` is `false`, **forbidden** to edit or modify `draft/command.js`. Must first read the contract document for the corresponding runtime and set to `true`.
 - When `testScenarios` is empty, **forbidden** to execute `capture finalize`. Before finalize, you must list the specific commands for 4 test groups, covering happy path, generalized parameters, boundary parameters, and error scenarios.
 - When `testResults` length < 4, **forbidden** to report "tests passed" or "testing complete".
 - During repair loops, `repairStep` must advance in order; skipping steps is prohibited:
@@ -40,6 +48,9 @@ CaptureSession:
 
 ### Update Timing
 
+- After confirming the path has been verified by explore: set `exploreVerified` to `true`
+- After pre-confirmation is complete and user has explicitly agreed: set `userIntentConfirmed` to `true`
+- After reading the contract document for the corresponding runtime: set `contractRead` to `true`
 - Before finalize: design 4 test groups, write into `testScenarios`
 - After each test group execution: record results to `testResults`
 - When entering repair loop: `repairCount += 1`, set `repairStep` to `modify`
@@ -48,10 +59,31 @@ CaptureSession:
 
 ## Workflow
 
-1. `capture new` creates a workspace; after user confirmation, enter the loop.
-2. Repeatedly execute `capture status`, driving forward according to artifact status (fill in evidence and draft files, execute `capture validate`), until all artifacts are `done`.
-3. Execute `capture finalize` to install as an executable command.
-4. Execute at least 4 groups of real command tests; if they fail, enter the repair loop.
+1. **Pre-confirmation**: Present the command contract (scenario, output, parameters, naming, runtime, conflicts) to the user, obtain explicit agreement, then set `userIntentConfirmed: true`. **In the reply where the contract is presented, calling any tool or executing any `capture` subcommand is prohibited**; must wait for the user's next reply.
+2. `capture new` creates a workspace, then directly enter the state-driven loop.
+3. Repeatedly execute `capture status`, driving forward according to artifact status (fill in evidence and draft files, execute `capture validate`), until all artifacts are `done`.
+4. Execute `capture finalize` to install as an executable command.
+5. Execute at least 4 groups of real command tests; if they fail, enter the repair loop.
+
+### 0. Pre-confirmation (must occur before `capture new`)
+
+Before executing `capture new`, you must present the command contract item by item to the user and obtain explicit agreement. When the user proposes modifications, adjust the plan and re-present until explicit agreement is reached.
+
+**Key Rules**:
+- **In the reply where the contract is presented, calling any tool or executing any `capture` subcommand is prohibited**. Your sole responsibility is to present the contract and output `CaptureSession`.
+- Only after the user explicitly replies with agreement can you set `userIntentConfirmed` to `true` and execute `capture new` in the **next conversation turn**.
+
+| Confirmation Item | Content to Present | Why It Must Be Before new |
+|-------------------|--------------------|---------------------------|
+| Scenario | What problem the command solves, when it is reused | Ensure user understands the value |
+| Output Data | Field list and example JSON snippet | Avoid rework from unexpected output |
+| Input Parameters | Name, required, default, supported range | Avoid parameter design omissions leading to draft rework |
+| Runtime | `node`/`browser`/`shell`/`python` and rationale | Affects environment dependencies and execution mode |
+| Naming | Proposed `domain/action` | User may have naming preferences |
+| Existing Command Relations | Same/similar commands, whether overriding builtin/user | Avoid accidental overrides |
+| Prerequisites & Limitations | Whether login is needed, known boundaries, unsupported features | Manage user expectations |
+
+In the **next conversation turn** after the user explicitly agrees, set `CaptureSession.userIntentConfirmed` to `true`, then execute `capture new`.
 
 ### 1. Creation
 
@@ -84,7 +116,7 @@ A command can only declare one runtime.
 | `README.md` | `draft/` | Documentation for callers |
 | `context.md` | `draft/` | Context for future repairers |
 
-After creation, report to the user: list of existing commands in the same domain, whether a name conflict exists, and the conflict source (user command / built-in command). Request user confirmation; if rejected, delete the workspace and terminate; if confirmed, enter the state-driven loop.
+After creation, report to the user that the workspace has been created. If `capture new` outputs conflict warnings (e.g., `BUILTIN_OVERRIDE`), inform the user as well, then directly enter the state-driven loop.
 
 ### 2. State-Driven Loop
 
@@ -196,6 +228,8 @@ Key constraints:
 
 ### `command.js`
 
+**Reading prerequisite**: Before editing `draft/command.js`, you **must** read the contract document for the corresponding runtime (`skills/websculpt-capture-en/references/node-contract.md` or `browser-contract.md`). After reading, set `CaptureSession.contractRead` to `true`. When `contractRead` is `false`, editing or modifying `command.js` is prohibited.
+
 Export format: `export default async function(params)` (node) or `export default async (page, params)` (browser).
 
 Core constraints:
@@ -210,7 +244,11 @@ Error code specification: uppercase snake_case, semantically clear. Examples: `A
 
 ## Prohibited
 
+- Must not execute `capture new` when the path has not been verified by explore (`exploreVerified: false`).
+- Must not call any tool or execute any `capture` subcommand in the reply where the contract is presented.
+- Must not execute `capture new` before `CaptureSession.userIntentConfirmed` is `true`.
+- Must not edit `draft/command.js` before `contractRead` is `true`.
 - Must not force advancement when `capture status` returns blocked.
 - Must not fill in draft before evidence audit passes.
-- Must not enter the state-driven loop before user confirmation after `capture new`.
+- After `capture new`, directly enter the state-driven loop; do not report conflicts again to request user confirmation (conflicts should have been disclosed and handled during pre-confirmation).
 - Must not directly modify installed commands (always modify workspace draft and re-finalize).
