@@ -80,6 +80,53 @@ export interface CaptureNewResult {
 	warnings?: ValidationDetail[];
 }
 
+/** Result shape for a successful explore workspace creation. */
+export interface ExploreNewResult {
+	success: true;
+	explore: {
+		name: string;
+		path: string;
+		intent: string;
+	};
+	next: string;
+}
+
+/** Result shape for a successful explore assess. */
+export interface ExploreAssessPassedResult {
+	success: true;
+	explore: {
+		name: string;
+		path: string;
+	};
+	assessment: {
+		status: "passed";
+		captureEligible: boolean;
+		candidate?: string;
+	};
+	next: string;
+}
+
+/** Result shape for a failed explore assess. */
+export interface ExploreAssessFailedResult {
+	success: false;
+	explore: {
+		name: string;
+		path: string;
+	};
+	error: {
+		code: string;
+		message: string;
+	};
+	audit: {
+		missingHeadings: string[];
+		emptyHeadings: string[];
+		keywordGaps: string[];
+	};
+}
+
+/** Union of explore assess results. */
+export type ExploreAssessResult = ExploreAssessPassedResult | ExploreAssessFailedResult;
+
 /** Result shape for a successful capture status query. */
 export interface CaptureStatusResult {
 	success: true;
@@ -255,4 +302,6 @@ export type MetaCommandResult =
 	| CaptureNewResult
 	| CaptureStatusResult
 	| CommandShowResult
+	| ExploreNewResult
+	| ExploreAssessResult
 	| MetaCommandError;
