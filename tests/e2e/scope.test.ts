@@ -397,7 +397,7 @@ async function runCaptureValidate(homeDir: string, workDir: string, args: string
 }
 
 async function writeCompleteEvidence(workDir: string, name: string, runtime: string) {
-	const evidencePath = join(workDir, ".websculpt-captures", name, "evidence.md");
+	const evidencePath = join(workDir, ".websculpt/captures", name, "evidence.md");
 	const guideLine = runtime === "browser" ? "We consulted guide.md for the browser contract." : "";
 	const content = `# Evidence: example/auto
 
@@ -428,14 +428,14 @@ This command should be captured because it provides reusable data collection.
 }
 
 async function writeCompleteCommand(workDir: string, name: string, runtime: string) {
-	const draftPath = join(workDir, ".websculpt-captures", name, "draft");
+	const draftPath = join(workDir, ".websculpt/captures", name, "draft");
 	const entryFile = runtime === "shell" ? "command.sh" : runtime === "python" ? "command.py" : "command.js";
 	const code = "export default async function(params) { return { ok: true }; }\n";
 	await writeFile(join(draftPath, entryFile), code, "utf8");
 }
 
 async function writeCompleteManifest(workDir: string, name: string) {
-	const manifestPath = join(workDir, ".websculpt-captures", name, "draft", "manifest.json");
+	const manifestPath = join(workDir, ".websculpt/captures", name, "draft", "manifest.json");
 	const manifest = {
 		domain: "example",
 		action: "auto",
@@ -449,7 +449,7 @@ async function writeCompleteManifest(workDir: string, name: string) {
 }
 
 async function writeCompleteReadme(workDir: string, name: string) {
-	const readmePath = join(workDir, ".websculpt-captures", name, "draft", "README.md");
+	const readmePath = join(workDir, ".websculpt/captures", name, "draft", "README.md");
 	const content = `# example/auto
 
 Auto example data.
@@ -470,7 +470,7 @@ websculpt example auto
 }
 
 async function writeCompleteContext(workDir: string, name: string) {
-	const contextPath = join(workDir, ".websculpt-captures", name, "draft", "context.md");
+	const contextPath = join(workDir, ".websculpt/captures", name, "draft", "context.md");
 	const content = `# Context
 
 ## Precipitation Background

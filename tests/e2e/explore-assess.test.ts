@@ -167,11 +167,11 @@ async function createExploreWorkspace(homeDir: string, workDir: string, name: st
 }
 
 async function writeTraceMd(workDir: string, name: string, content: string): Promise<void> {
-	await writeFile(join(workDir, ".websculpt-explores", name, "trace.md"), content, "utf8");
+	await writeFile(join(workDir, ".websculpt/explores", name, "trace.md"), content, "utf8");
 }
 
 async function readExploreYaml(workDir: string, name: string): Promise<ExploreYaml> {
-	const raw = await readFile(join(workDir, ".websculpt-explores", name, "explore.yaml"), "utf8");
+	const raw = await readFile(join(workDir, ".websculpt/explores", name, "explore.yaml"), "utf8");
 	return parse(raw) as ExploreYaml;
 }
 

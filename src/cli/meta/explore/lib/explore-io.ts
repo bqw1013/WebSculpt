@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { parse, stringify } from "yaml";
+import { EXPLORE_DIR, WORKSPACE_ROOT } from "../../shared.js";
 
 /** Machine-readable metadata stored in explore.yaml. */
 export interface ExploreYaml {
@@ -20,7 +21,7 @@ export interface ExploreYaml {
  * Resolves the absolute path for a named explore workspace.
  */
 export function getExploreWorkspacePath(name: string, baseDir = process.cwd()): string {
-	return resolve(baseDir, ".websculpt-explores", name);
+	return resolve(baseDir, WORKSPACE_ROOT, EXPLORE_DIR, name);
 }
 
 /**

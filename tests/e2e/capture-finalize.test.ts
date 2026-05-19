@@ -64,7 +64,7 @@ describe("capture finalize", () => {
 		expect(parseJsonOutput<CaptureFinalizePayload>(validateResult.stdout).success).toBe(true);
 		// Break evidence by leaving it empty
 		await writeFile(
-			join(workDir, ".websculpt-captures", "ev-bad", "evidence.md"),
+			join(workDir, ".websculpt/captures", "ev-bad", "evidence.md"),
 			"# Evidence: example/collect\n\n## Exploration Path\n\n## Verified URLs\n\n## Structural Evidence\n\n## Failure Signals\n\n## Capture Assessment\n",
 			"utf8",
 		);
@@ -156,7 +156,7 @@ describe("capture finalize", () => {
 		expect(result.exitCode).toBe(0);
 		expect(payload.success).toBe(true);
 
-		const workspacePath = join(workDir, ".websculpt-captures", "preserve");
+		const workspacePath = join(workDir, ".websculpt/captures", "preserve");
 		await expect(access(join(workspacePath, "capture.yaml"), constants.F_OK)).resolves.toBeUndefined();
 		await expect(access(join(workspacePath, "evidence.md"), constants.F_OK)).resolves.toBeUndefined();
 		await expect(access(join(workspacePath, "draft", "command.js"), constants.F_OK)).resolves.toBeUndefined();
@@ -177,7 +177,7 @@ describe("capture finalize", () => {
 		const validateResult = await runCaptureValidate(homeDir, workDir, ["stale-finalize"]);
 		expect(parseJsonOutput<CaptureFinalizePayload>(validateResult.stdout).success).toBe(true);
 		await writeFile(
-			join(workDir, ".websculpt-captures", "stale-finalize", "draft", "README.md"),
+			join(workDir, ".websculpt/captures", "stale-finalize", "draft", "README.md"),
 			`# example/collect
 
 Collects changed example data.
@@ -270,7 +270,7 @@ async function runCaptureValidate(homeDir: string, workDir: string, args: string
 }
 
 async function writeCompleteEvidence(workDir: string, name: string, runtime: string) {
-	const evidencePath = join(workDir, ".websculpt-captures", name, "evidence.md");
+	const evidencePath = join(workDir, ".websculpt/captures", name, "evidence.md");
 	const guideLine = runtime === "browser" ? "We consulted guide.md for the browser contract." : "";
 	const content = `# Evidence: example/collect
 
@@ -301,7 +301,7 @@ This command should be captured because it provides reusable data collection.
 }
 
 async function writeCompleteCommand(workDir: string, name: string, runtime: string) {
-	const draftPath = join(workDir, ".websculpt-captures", name, "draft");
+	const draftPath = join(workDir, ".websculpt/captures", name, "draft");
 	const entryFile = runtime === "shell" ? "command.sh" : runtime === "python" ? "command.py" : "command.js";
 	const code =
 		runtime === "browser"
@@ -311,7 +311,7 @@ async function writeCompleteCommand(workDir: string, name: string, runtime: stri
 }
 
 async function writeCompleteManifest(workDir: string, name: string) {
-	const manifestPath = join(workDir, ".websculpt-captures", name, "draft", "manifest.json");
+	const manifestPath = join(workDir, ".websculpt/captures", name, "draft", "manifest.json");
 	const manifest = {
 		domain: "example",
 		action: "collect",
@@ -325,7 +325,7 @@ async function writeCompleteManifest(workDir: string, name: string) {
 }
 
 async function writeCompleteReadme(workDir: string, name: string) {
-	const readmePath = join(workDir, ".websculpt-captures", name, "draft", "README.md");
+	const readmePath = join(workDir, ".websculpt/captures", name, "draft", "README.md");
 	const content = `# example/collect
 
 Collects example data.
@@ -346,7 +346,7 @@ websculpt example collect
 }
 
 async function writeCompleteContext(workDir: string, name: string) {
-	const contextPath = join(workDir, ".websculpt-captures", name, "draft", "context.md");
+	const contextPath = join(workDir, ".websculpt/captures", name, "draft", "context.md");
 	const content = `# Context
 
 ## Precipitation Background
@@ -385,6 +385,6 @@ async function writeCompleteDraft(workDir: string, name: string, runtime: string
 }
 
 async function writeValidationJson(workDir: string, name: string, success: boolean) {
-	const validationPath = join(workDir, ".websculpt-captures", name, "validation.json");
+	const validationPath = join(workDir, ".websculpt/captures", name, "validation.json");
 	await writeFile(validationPath, JSON.stringify({ success, timestamp: new Date().toISOString() }, null, 2), "utf8");
 }

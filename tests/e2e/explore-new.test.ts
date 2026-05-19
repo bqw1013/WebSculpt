@@ -37,7 +37,7 @@ describe("explore new", () => {
 
 		const result = await runExploreNew(homeDir, workDir, ["producthunt-today", "--intent", "查 ProductHunt 热榜"]);
 		const payload = parseJsonOutput<ExploreNewPayload>(result.stdout);
-		const workspacePath = join(workDir, ".websculpt-explores", "producthunt-today");
+		const workspacePath = join(workDir, ".websculpt/explores", "producthunt-today");
 
 		expect(result.exitCode).toBe(0);
 		expect(payload.success).toBe(true);
@@ -99,7 +99,7 @@ describe("explore new", () => {
 		const { homeDir, workDir } = await createExploreTestDirs(tempDirs);
 
 		const firstResult = await runExploreNew(homeDir, workDir, ["force-explore", "--intent", "first"]);
-		const workspacePath = join(workDir, ".websculpt-explores", "force-explore");
+		const workspacePath = join(workDir, ".websculpt/explores", "force-explore");
 
 		const secondResult = await runExploreNew(homeDir, workDir, ["force-explore", "--intent", "second", "--force"]);
 		const payload = parseJsonOutput<ExploreNewPayload>(secondResult.stdout);

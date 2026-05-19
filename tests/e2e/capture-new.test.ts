@@ -63,7 +63,7 @@ describe("capture new", () => {
 			"node",
 		]);
 		const payload = parseJsonOutput<CaptureNewPayload>(result.stdout);
-		const workspacePath = join(workDir, ".websculpt-captures", "my-capture");
+		const workspacePath = join(workDir, ".websculpt/captures", "my-capture");
 
 		expect(result.exitCode).toBe(0);
 		expect(payload.success).toBe(true);
@@ -135,7 +135,7 @@ describe("capture new", () => {
 		]);
 		const payload = parseJsonOutput<CaptureNewPayload>(result.stdout);
 		const commandJs = await readFile(
-			join(workDir, ".websculpt-captures", "browser-capture", "draft", "command.js"),
+			join(workDir, ".websculpt/captures", "browser-capture", "draft", "command.js"),
 			"utf8",
 		);
 
@@ -288,7 +288,7 @@ describe("capture new", () => {
 			"node",
 			"--force",
 		]);
-		const workspacePath = join(workDir, ".websculpt-captures", "force-capture");
+		const workspacePath = join(workDir, ".websculpt/captures", "force-capture");
 		await writeFile(join(workspacePath, "obsolete.txt"), "obsolete", "utf8");
 
 		const secondResult = await runCaptureNew(homeDir, workDir, [
