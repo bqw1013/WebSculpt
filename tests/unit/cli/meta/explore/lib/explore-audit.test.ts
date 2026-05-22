@@ -16,14 +16,29 @@ Followed REST conventions.
 https://example.com/api
 
 ## Assessment
-Scenario: collect daily metrics.
-Candidate: metrics/collect
-Runtime: node
-Parameters: date
-Output schema: { count: number }
-Prerequisites: none
-Rationale: automates manual workflow.
-Reuse conclusion: none applicable.
+### Scenario
+collect daily metrics.
+
+### Candidate
+metrics/collect
+
+### Runtime
+node
+
+### Parameters
+date
+
+### Output Schema
+{ count: number }
+
+### Command Library Relation
+New command.
+
+### Prerequisites
+none
+
+### Confirmation
+User agreed to proceed.
 `;
 
 		const result = auditTrace(content);
@@ -32,6 +47,8 @@ Reuse conclusion: none applicable.
 		expect(result.missingHeadings).toEqual([]);
 		expect(result.emptyHeadings).toEqual([]);
 		expect(result.keywordGaps).toEqual([]);
+		expect(result.missingSubHeadings).toEqual([]);
+		expect(result.emptySubHeadings).toEqual([]);
 	});
 
 	it("fails when a required heading is missing", () => {
@@ -45,6 +62,10 @@ Followed REST conventions.
 https://example.com/api
 
 ## Assessment
+### Scenario
+Explored API.
+
+### Candidate
 No candidate identified.
 `;
 
@@ -68,6 +89,10 @@ Followed REST conventions.
 https://example.com/api
 
 ## Assessment
+### Scenario
+Explored API.
+
+### Candidate
 No candidate identified.
 `;
 
@@ -92,6 +117,10 @@ Followed REST conventions.
 Only searched, no verified page.
 
 ## Assessment
+### Scenario
+Explored API.
+
+### Candidate
 No candidate identified.
 `;
 
@@ -116,6 +145,10 @@ Navigate and scrape.
 https://example.com/page
 
 ## Assessment
+### Scenario
+Explored API.
+
+### Candidate
 No candidate identified.
 `;
 
@@ -140,6 +173,10 @@ Read guide.md for browser automation workflow.
 https://example.com/page
 
 ## Assessment
+### Scenario
+Explored API.
+
+### Candidate
 No candidate identified.
 `;
 
@@ -148,21 +185,217 @@ No candidate identified.
 		expect(result.passed).toBe(true);
 		expect(result.keywordGaps).toEqual([]);
 	});
+
+	it("passes for candidate path with all 8 H3 subsections present and non-empty", () => {
+		const content = `## Library Check
+Checked.
+
+## Tool Trace
+Used API.
+
+## Protocol
+REST.
+
+## Verified Sources
+https://example.com
+
+## Assessment
+### Scenario
+Daily metrics.
+
+### Candidate
+metrics/collect
+
+### Runtime
+node
+
+### Parameters
+date
+
+### Output Schema
+{ count: number }
+
+### Command Library Relation
+New.
+
+### Prerequisites
+none
+
+### Confirmation
+User agreed.
+`;
+
+		const result = auditTrace(content);
+		expect(result.passed).toBe(true);
+		expect(result.missingSubHeadings).toEqual([]);
+		expect(result.emptySubHeadings).toEqual([]);
+	});
+
+	it("fails for candidate path missing Confirmation", () => {
+		const content = `## Library Check
+Checked.
+
+## Tool Trace
+Used API.
+
+## Protocol
+REST.
+
+## Verified Sources
+https://example.com
+
+## Assessment
+### Scenario
+Daily metrics.
+
+### Candidate
+metrics/collect
+
+### Runtime
+node
+
+### Parameters
+date
+
+### Output Schema
+{ count: number }
+
+### Command Library Relation
+New.
+
+### Prerequisites
+none
+`;
+
+		const result = auditTrace(content);
+		expect(result.passed).toBe(false);
+		expect(result.missingSubHeadings).toContain("Confirmation");
+		expect(result.code).toBe("CONFIRMATION_MISSING");
+	});
+
+	it("fails for candidate path with empty Parameters", () => {
+		const content = `## Library Check
+Checked.
+
+## Tool Trace
+Used API.
+
+## Protocol
+REST.
+
+## Verified Sources
+https://example.com
+
+## Assessment
+### Scenario
+Daily metrics.
+
+### Candidate
+metrics/collect
+
+### Runtime
+node
+
+### Parameters
+
+### Output Schema
+{ count: number }
+
+### Command Library Relation
+New.
+
+### Prerequisites
+none
+
+### Confirmation
+User agreed.
+`;
+
+		const result = auditTrace(content);
+		expect(result.passed).toBe(false);
+		expect(result.emptySubHeadings).toContain("Parameters");
+		expect(result.code).toBe("ASSESSMENT_INCOMPLETE");
+	});
+
+	it("passes for no-candidate path with only Scenario and Candidate", () => {
+		const content = `## Library Check
+Checked.
+
+## Tool Trace
+Used API.
+
+## Protocol
+REST.
+
+## Verified Sources
+https://example.com
+
+## Assessment
+### Scenario
+One-off query.
+
+### Candidate
+No candidate identified.
+`;
+
+		const result = auditTrace(content);
+		expect(result.passed).toBe(true);
+		expect(result.missingSubHeadings).toEqual([]);
+		expect(result.emptySubHeadings).toEqual([]);
+	});
+
+	it("fails for ambiguous Candidate content", () => {
+		const content = `## Library Check
+Checked.
+
+## Tool Trace
+Used API.
+
+## Protocol
+REST.
+
+## Verified Sources
+https://example.com
+
+## Assessment
+### Scenario
+Daily metrics.
+
+### Candidate
+Maybe something useful.
+`;
+
+		const result = auditTrace(content);
+		expect(result.passed).toBe(false);
+		expect(result.code).toBe("INVALID_CANDIDATE_FORMAT");
+	});
 });
 
 describe("parseAssessmentCandidate", () => {
-	it("returns no-candidate when explicitly stated", () => {
-		const content = "No candidate identified";
+	it("returns no-candidate when explicitly stated in H3", () => {
+		const content = "### Candidate\nNo candidate identified";
 		expect(parseAssessmentCandidate(content)).toBe("no-candidate");
 	});
 
-	it("returns candidate when domain/action pattern is found", () => {
-		const content = "Candidate: metrics/collect";
+	it("returns candidate when domain/action pattern is in H3", () => {
+		const content = "### Candidate\nmetrics/collect";
 		expect(parseAssessmentCandidate(content)).toBe("metrics/collect");
 	});
 
-	it("returns undefined for ambiguous content", () => {
-		const content = "Maybe something useful.";
+	it("returns undefined for ambiguous H3 content", () => {
+		const content = "### Candidate\nMaybe something useful.";
 		expect(parseAssessmentCandidate(content)).toBeUndefined();
+	});
+
+	it("returns no-candidate from flat text without H3 heading", () => {
+		expect(parseAssessmentCandidate("No candidate identified")).toBe("no-candidate");
+	});
+
+	it("returns candidate from flat text when content is domain/action", () => {
+		expect(parseAssessmentCandidate("metrics/collect")).toBe("metrics/collect");
+	});
+
+	it("returns undefined for flat text without valid candidate", () => {
+		expect(parseAssessmentCandidate("Maybe something useful.")).toBeUndefined();
 	});
 });

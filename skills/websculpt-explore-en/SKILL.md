@@ -75,7 +75,7 @@ You can self-check at any time during exploration:
 websculpt explore assess <name>
 ```
 
-`assess` checks `trace.md` structural integrity and safety rules (e.g., whether `Verified Sources` contains URLs, whether browser paths mention `guide.md`). Supplement `trace.md` based on returned error hints, then re-assess.
+`assess` checks `trace.md` structural integrity, safety rules, and Assessment subsection completeness. Supplement `trace.md` based on returned error hints (e.g., missing subsections, empty content), then re-assess.
 
 **Assessment must pass before exploration ends**. Do not deliver results without passing audit.
 
@@ -90,11 +90,13 @@ Evaluate whether a precipitable path was produced. If any of the following condi
 - Output results are unstable.
 
 After exclusion, if a reusable path is found:
-1. Write the candidate `domain/action` into `trace.md`'s Assessment
-2. Present the precipitation suggestion to the user in natural language (scenario, value, candidate command name) and request confirmation
-3. After user approval, suggest entering `websculpt-capture`
+1. Fill in the command contract in `## Assessment` of `trace.md`, then execute `websculpt explore assess <name>`
+2. Supplement according to assess error hints (e.g., missing subsections, empty content, missing Confirmation), repeat until passed
+3. After assess passes, translate the contract into the user's language and present it to the user to obtain explicit agreement
+4. Record the discussion summary and user decision in `### Confirmation`, re-assess to ensure it passes
+5. After user approval, suggest entering `websculpt-capture`
 
-Do not create a capture workspace on your own.
+Calling any tool or executing any `capture` subcommand is prohibited in the reply where the contract is presented. Do not create a capture workspace on your own. If the user refuses to solidify, record the refusal reason in `### Confirmation`, and the explore phase ends.
 
 ## Tool Selection
 
@@ -103,6 +105,8 @@ Do not create a capture workspace on your own.
 Commands in the WebSculpt library are verified information acquisition paths that usually provide high-quality structured output and significantly save tokens. Before invoking any external tool, you must prioritize attempting to reuse existing commands; do not abandon reuse due to a single parameter mistake.
 
 ### No Reusable Commands: Select External Tools
+
+Browser automation is a core strength of WebSculpt, not a last-resort fallback. When structural obstacles such as JS rendering, login states, or anti-scraping measures are encountered, actively switch to browser automation instead of continuing to work around with lighter tools.
 
 Select the external tool most conducive to leaving stable evidence. If task characteristics are unclear, start with light tools; once structural signals such as CAPTCHA, login walls, content requiring interaction, 403, or 429 appear, switch to browser automation.
 

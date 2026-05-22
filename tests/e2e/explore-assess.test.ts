@@ -18,6 +18,8 @@ interface ExploreAssessPayload {
 		missingHeadings: string[];
 		emptyHeadings: string[];
 		keywordGaps: string[];
+		missingSubHeadings: string[];
+		emptySubHeadings: string[];
 	};
 	error?: {
 		code: string;
@@ -49,7 +51,7 @@ describe("explore assess", () => {
 	it("passes for a complete trace with candidate", async () => {
 		const { homeDir, workDir } = await createExploreTestDirs(tempDirs);
 		await createExploreWorkspace(homeDir, workDir, "with-candidate");
-		await writeTraceMd(workDir, "with-candidate", completeTrace("Candidate: example/collect"));
+		await writeTraceMd(workDir, "with-candidate", completeTrace("example/collect"));
 
 		const result = await runExploreAssess(homeDir, workDir, ["with-candidate"]);
 		const payload = parseJsonOutput<ExploreAssessPayload>(result.stdout);
@@ -70,7 +72,7 @@ describe("explore assess", () => {
 	it("passes for a trace with no candidate", async () => {
 		const { homeDir, workDir } = await createExploreTestDirs(tempDirs);
 		await createExploreWorkspace(homeDir, workDir, "no-candidate");
-		await writeTraceMd(workDir, "no-candidate", completeTrace("No candidate identified"));
+		await writeTraceMd(workDir, "no-candidate", completeTrace("no-candidate"));
 
 		const result = await runExploreAssess(homeDir, workDir, ["no-candidate"]);
 		const payload = parseJsonOutput<ExploreAssessPayload>(result.stdout);
@@ -89,7 +91,7 @@ describe("explore assess", () => {
 	it("fails when a required heading is missing", async () => {
 		const { homeDir, workDir } = await createExploreTestDirs(tempDirs);
 		await createExploreWorkspace(homeDir, workDir, "missing-heading");
-		const trace = completeTrace("No candidate identified").replace("## Library Check\nChecked command list.\n\n", "");
+		const trace = completeTrace("no-candidate").replace("## Library Check\nChecked command list.\n\n", "");
 		await writeTraceMd(workDir, "missing-heading", trace);
 
 		const result = await runExploreAssess(homeDir, workDir, ["missing-heading"]);
@@ -107,7 +109,7 @@ describe("explore assess", () => {
 	it("fails when a heading is empty", async () => {
 		const { homeDir, workDir } = await createExploreTestDirs(tempDirs);
 		await createExploreWorkspace(homeDir, workDir, "empty-heading");
-		const trace = completeTrace("").replace("## Assessment\nNo candidate identified", "## Assessment\n");
+		const trace = completeTrace("no-candidate").replace("Checked command list.", "");
 		await writeTraceMd(workDir, "empty-heading", trace);
 
 		const result = await runExploreAssess(homeDir, workDir, ["empty-heading"]);
@@ -116,13 +118,13 @@ describe("explore assess", () => {
 		expect(result.exitCode).toBe(1);
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("EXPLORE_AUDIT_FAILED");
-		expect(payload.audit?.emptyHeadings).toContain("Assessment");
+		expect(payload.audit?.emptyHeadings).toContain("Library Check");
 	});
 
 	it("fails when no verified URL is present", async () => {
 		const { homeDir, workDir } = await createExploreTestDirs(tempDirs);
 		await createExploreWorkspace(homeDir, workDir, "no-url");
-		const trace = completeTrace("No candidate identified").replace("https://example.com/api", "searched online");
+		const trace = completeTrace("no-candidate").replace("https://example.com/api", "searched online");
 		await writeTraceMd(workDir, "no-url", trace);
 
 		const result = await runExploreAssess(homeDir, workDir, ["no-url"]);
@@ -137,7 +139,7 @@ describe("explore assess", () => {
 	it("fails when browser runtime lacks guide.md acknowledgment", async () => {
 		const { homeDir, workDir } = await createExploreTestDirs(tempDirs);
 		await createExploreWorkspace(homeDir, workDir, "no-guide");
-		const trace = completeTrace("No candidate identified").replace(
+		const trace = completeTrace("no-candidate").replace(
 			"## Tool Trace\nUsed REST API.",
 			"## Tool Trace\nUsed Playwright to automate browser.",
 		);
@@ -150,6 +152,33 @@ describe("explore assess", () => {
 		expect(payload.success).toBe(false);
 		expect(payload.error?.code).toBe("GUIDE_NOT_ACKNOWLEDGED");
 		expect(payload.audit?.keywordGaps).toContain("guide-read");
+	});
+
+	it("fails for candidate trace missing Confirmation", async () => {
+		const { homeDir, workDir } = await createExploreTestDirs(tempDirs);
+		await createExploreWorkspace(homeDir, workDir, "missing-confirmation");
+		await writeTraceMd(workDir, "missing-confirmation", candidateTraceWithoutConfirmation());
+
+		const result = await runExploreAssess(homeDir, workDir, ["missing-confirmation"]);
+		const payload = parseJsonOutput<ExploreAssessPayload>(result.stdout);
+
+		expect(result.exitCode).toBe(1);
+		expect(payload.success).toBe(false);
+		expect(payload.error?.code).toBe("CONFIRMATION_MISSING");
+		expect(payload.audit?.missingSubHeadings).toContain("Confirmation");
+	});
+
+	it("passes for no-candidate trace without Confirmation", async () => {
+		const { homeDir, workDir } = await createExploreTestDirs(tempDirs);
+		await createExploreWorkspace(homeDir, workDir, "no-candidate-no-confirmation");
+		await writeTraceMd(workDir, "no-candidate-no-confirmation", completeTrace("no-candidate"));
+
+		const result = await runExploreAssess(homeDir, workDir, ["no-candidate-no-confirmation"]);
+		const payload = parseJsonOutput<ExploreAssessPayload>(result.stdout);
+
+		expect(result.exitCode).toBe(0);
+		expect(payload.success).toBe(true);
+		expect(payload.assessment?.captureEligible).toBe(false);
 	});
 });
 
@@ -179,7 +208,29 @@ async function runExploreAssess(homeDir: string, workDir: string, args: string[]
 	return await runSourceCli(["explore", "assess", ...args, "--format", "json"], homeDir, { cwd: workDir });
 }
 
-function completeTrace(assessmentContent: string): string {
+function completeTrace(candidate: string): string {
+	if (candidate === "no-candidate") {
+		return `## Library Check
+Checked command list.
+
+## Tool Trace
+Used REST API.
+
+## Protocol
+Followed REST conventions.
+
+## Verified Sources
+https://example.com/api
+
+## Assessment
+### Scenario
+One-off exploration.
+
+### Candidate
+No candidate identified.
+`;
+	}
+
 	return `## Library Check
 Checked command list.
 
@@ -193,6 +244,65 @@ Followed REST conventions.
 https://example.com/api
 
 ## Assessment
-${assessmentContent}
+### Scenario
+Collect daily metrics.
+
+### Candidate
+${candidate}
+
+### Runtime
+node
+
+### Parameters
+date
+
+### Output Schema
+{ count: number }
+
+### Command Library Relation
+New command.
+
+### Prerequisites
+none
+
+### Confirmation
+User agreed to proceed.
+`;
+}
+
+function candidateTraceWithoutConfirmation(): string {
+	return `## Library Check
+Checked command list.
+
+## Tool Trace
+Used REST API.
+
+## Protocol
+Followed REST conventions.
+
+## Verified Sources
+https://example.com/api
+
+## Assessment
+### Scenario
+Collect daily metrics.
+
+### Candidate
+example/collect
+
+### Runtime
+node
+
+### Parameters
+date
+
+### Output Schema
+{ count: number }
+
+### Command Library Relation
+New command.
+
+### Prerequisites
+none
 `;
 }

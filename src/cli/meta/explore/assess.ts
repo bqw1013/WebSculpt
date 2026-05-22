@@ -53,6 +53,12 @@ export async function handleExploreAssess(name: string): Promise<MetaCommandResu
 			if (audit.keywordGaps.length > 0) {
 				message += `; keyword gaps: ${audit.keywordGaps.join(", ")}`;
 			}
+			if (audit.missingSubHeadings.length > 0) {
+				message += `; missing subheadings: ${audit.missingSubHeadings.join(", ")}`;
+			}
+			if (audit.emptySubHeadings.length > 0) {
+				message += `; empty subheadings: ${audit.emptySubHeadings.join(", ")}`;
+			}
 
 			const errorCode = audit.code ?? "EXPLORE_AUDIT_FAILED";
 			const result: ExploreAssessFailedResult = {
@@ -69,6 +75,8 @@ export async function handleExploreAssess(name: string): Promise<MetaCommandResu
 					missingHeadings: audit.missingHeadings,
 					emptyHeadings: audit.emptyHeadings,
 					keywordGaps: audit.keywordGaps,
+					missingSubHeadings: audit.missingSubHeadings,
+					emptySubHeadings: audit.emptySubHeadings,
 				},
 			};
 			return result;
@@ -114,7 +122,7 @@ export async function handleExploreAssess(name: string): Promise<MetaCommandResu
 				candidate,
 			},
 			next: captureEligible
-				? `Candidate command identified: ${candidate}. Proceed to "websculpt capture new".`
+				? `Candidate command identified: ${candidate}. Present the full contract to the user, record their agreement in "### Confirmation", and then proceed to "websculpt capture new".`
 				: "No candidate identified. Explore phase complete without capture.",
 		};
 		return result;

@@ -121,6 +121,8 @@ export interface ExploreAssessFailedResult {
 		missingHeadings: string[];
 		emptyHeadings: string[];
 		keywordGaps: string[];
+		missingSubHeadings: string[];
+		emptySubHeadings: string[];
 	};
 }
 

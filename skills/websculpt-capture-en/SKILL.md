@@ -22,7 +22,6 @@ After entering the capture phase, only output CaptureSession. The **end** of eve
 ```yaml
 CaptureSession:
   exploreVerified: false
-  userIntentConfirmed: false
   contractRead: false
   testScenarios: []
   testResults: []
@@ -33,7 +32,6 @@ CaptureSession:
 ### State Rules
 
 - When `exploreVerified` is `false`, **forbidden** to execute `capture new`. Must first confirm the path has been verified by explore; if not, must first load `websculpt-explore` to complete exploration.
-- When `userIntentConfirmed` is `false`, **forbidden** to execute `capture new`. Must complete pre-confirmation and obtain explicit user agreement before setting to `true`. Moreover, **in the reply where the contract is presented, calling any tool or executing any `capture` subcommand is prohibited**; must wait for the user's next reply.
 - When `contractRead` is `false`, **forbidden** to edit or modify `draft/command.js`. Must first read the contract document for the corresponding runtime and set to `true`.
 - When `testScenarios` is empty, **forbidden** to execute `capture finalize`. Before finalize, you must list the specific commands for 4 test groups, covering happy path, generalized parameters, boundary parameters, and error scenarios.
 - When `testResults` length < 4, **forbidden** to report "tests passed" or "testing complete".
@@ -49,7 +47,6 @@ CaptureSession:
 ### Update Timing
 
 - After confirming the path has been verified by explore: set `exploreVerified` to `true`
-- After pre-confirmation is complete and user has explicitly agreed: set `userIntentConfirmed` to `true`
 - After reading the contract document for the corresponding runtime: set `contractRead` to `true`
 - Before finalize: design 4 test groups, write into `testScenarios`
 - After each test group execution: record results to `testResults`
@@ -59,31 +56,11 @@ CaptureSession:
 
 ## Workflow
 
-1. **Pre-confirmation**: Present the command contract (scenario, output, parameters, naming, runtime, conflicts) to the user, obtain explicit agreement, then set `userIntentConfirmed: true`. **In the reply where the contract is presented, calling any tool or executing any `capture` subcommand is prohibited**; must wait for the user's next reply.
-2. `capture new` creates a workspace, then directly enter the state-driven loop.
+1. Confirm `exploreVerified: true` (`explore assess` has returned `status: passed`), then execute `capture new` to create a workspace.
+2. Directly enter the state-driven loop.
 3. Repeatedly execute `capture status`, driving forward according to artifact status (fill in evidence and draft files, execute `capture validate`), until all artifacts are `done`.
 4. Execute `capture finalize` to install as an executable command.
 5. Execute at least 4 groups of real command tests; if they fail, enter the repair loop.
-
-### 0. Pre-confirmation (must occur before `capture new`)
-
-Before executing `capture new`, you must present the command contract item by item to the user and obtain explicit agreement. When the user proposes modifications, adjust the plan and re-present until explicit agreement is reached.
-
-**Key Rules**:
-- **In the reply where the contract is presented, calling any tool or executing any `capture` subcommand is prohibited**. Your sole responsibility is to present the contract and output `CaptureSession`.
-- Only after the user explicitly replies with agreement can you set `userIntentConfirmed` to `true` and execute `capture new` in the **next conversation turn**.
-
-| Confirmation Item | Content to Present | Why It Must Be Before new |
-|-------------------|--------------------|---------------------------|
-| Scenario | What problem the command solves, when it is reused | Ensure user understands the value |
-| Output Data | Field list and example JSON snippet | Avoid rework from unexpected output |
-| Input Parameters | Name, required, default, supported range | Avoid parameter design omissions leading to draft rework |
-| Runtime | `node`/`browser`/`shell`/`python` and rationale | Affects environment dependencies and execution mode |
-| Naming | Proposed `domain/action` | User may have naming preferences |
-| Existing Command Relations | Same/similar commands, whether overriding builtin/user | Avoid accidental overrides |
-| Prerequisites & Limitations | Whether login is needed, known boundaries, unsupported features | Manage user expectations |
-
-In the **next conversation turn** after the user explicitly agrees, set `CaptureSession.userIntentConfirmed` to `true`, then execute `capture new`.
 
 ### 1. Creation
 
@@ -245,10 +222,8 @@ Error code specification: uppercase snake_case, semantically clear. Examples: `A
 ## Prohibited
 
 - Must not execute `capture new` when the path has not been verified by explore (`exploreVerified: false`).
-- Must not call any tool or execute any `capture` subcommand in the reply where the contract is presented.
-- Must not execute `capture new` before `CaptureSession.userIntentConfirmed` is `true`.
 - Must not edit `draft/command.js` before `contractRead` is `true`.
 - Must not force advancement when `capture status` returns blocked.
 - Must not fill in draft before evidence audit passes.
-- After `capture new`, directly enter the state-driven loop; do not report conflicts again to request user confirmation (conflicts should have been disclosed and handled during pre-confirmation).
+- After `capture new`, directly enter the state-driven loop.
 - Must not directly modify installed commands (always modify workspace draft and re-finalize).

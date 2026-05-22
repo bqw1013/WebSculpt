@@ -75,7 +75,7 @@ websculpt explore new <name> --intent "<目标描述>"
 websculpt explore assess <name>
 ```
 
-`assess` 会检查 `trace.md` 的结构完整性和安全规则（如 `Verified Sources` 是否包含 URL、浏览器路径是否提及 `guide.md`）。根据返回的错误提示补充 `trace.md`，然后重新 assess。
+`assess` 会检查 `trace.md` 的结构完整性、安全规则及 Assessment 子节完整性。根据返回的错误提示补充 `trace.md`（如缺少子节、内容为空等），然后重新 assess。
 
 **探索结束前必须通过 assess**。未通过审计不得交付结果。
 
@@ -90,11 +90,13 @@ websculpt explore assess <name>
 - 输出结果不稳定
 
 排除后若发现可复用路径：
-1. 将候选 `domain/action` 写入 `trace.md` 的 Assessment
-2. 用自然语言向用户呈现沉淀建议（场景、价值、候选命令名），请求确认
-3. 用户同意后，建议进入 `websculpt-capture`
+1. 在 `trace.md` 的 `## Assessment` 中填写命令契约，然后执行 `websculpt explore assess <name>`
+2. 按 assess 返回的错误提示补充（如缺少子节、内容为空、Confirmation 缺失等），重复直至通过
+3. assess 通过后，将契约翻译为用户语言展示给用户，获取明确同意
+4. 把讨论摘要和用户决策记录到 `### Confirmation`，重新 assess 确保通过
+5. 用户同意后，建议进入 `websculpt-capture`
 
-不要自行创建 capture 工作区。
+展示契约的回复中禁止调用任何工具或执行任何 `capture` 子命令。不要自行创建 capture 工作区。若用户拒绝沉淀，将拒绝原因记录到 `### Confirmation` 中，explore 阶段即告结束。
 
 ## 工具选择
 
@@ -103,6 +105,8 @@ websculpt explore assess <name>
 WebSculpt 命令库中沉淀的命令是已经验证过的信息获取路径，通常能提供高质量的结构化输出，并且能显著节省 token。在调用任何外部信息获取工具前，**必须优先尝试复用已有命令**，不要因为一次参数调错或格式不熟就放弃复用转而自行探索。
 
 ### 无可复用时选择外部工具
+
+浏览器自动化是 WebSculpt 的核心优势领域，而非万不得已的兜底手段；遇到 JS 渲染、登录态或反爬等结构性障碍时，应积极切换到浏览器自动化，而不是继续用轻工具绕行。
 
 选择能完成当前任务且最利于后续留下稳定证据的外部工具。若任务特征不明确，从轻工具开始；一旦出现 CAPTCHA、登录墙、内容需交互才可见、403、429 等结构性信号，切换到浏览器自动化。
 

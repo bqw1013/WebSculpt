@@ -69,6 +69,14 @@ describe("explore new", () => {
 		expect(trace).toContain("## Protocol");
 		expect(trace).toContain("## Verified Sources");
 		expect(trace).toContain("## Assessment");
+		expect(trace).toContain("### Scenario");
+		expect(trace).toContain("### Candidate");
+		expect(trace).toContain("### Runtime");
+		expect(trace).toContain("### Parameters");
+		expect(trace).toContain("### Output Schema");
+		expect(trace).toContain("### Command Library Relation");
+		expect(trace).toContain("### Prerequisites");
+		expect(trace).toContain("### Confirmation");
 		expect(trace).toContain("<!--");
 	});
 

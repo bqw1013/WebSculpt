@@ -18,15 +18,28 @@ export function generateTraceTemplate(): string {
 
 ## Assessment
 
-<!-- Provide a preliminary command contract:
-- Scenario: what user need this addresses
-- Candidate: proposed command name (domain/action) or "No candidate identified"
-- Runtime: node, browser, shell, or python
-- Parameters: expected inputs
-- Output schema: expected structure of the result
-- Prerequisites: setup or auth required
-- Rationale: why this command is needed
-- Reuse conclusion: whether an existing command can be reused
--->
+### Scenario
+<!-- What user need this command addresses -->
+
+### Candidate
+<!-- Proposed command name (domain/action) or "No candidate identified" -->
+
+### Runtime
+<!-- node, browser, shell, or python -->
+
+### Parameters
+<!-- Expected inputs -->
+
+### Output Schema
+<!-- Expected structure of the result -->
+
+### Command Library Relation
+<!-- Relationship to existing commands (reuse, conflict, or new) -->
+
+### Prerequisites
+<!-- Setup or auth required -->
+
+### Confirmation
+<!-- Record of user discussion and agreement to proceed -->
 `;
 }
