@@ -18,28 +18,35 @@ export function generateTraceTemplate(): string {
 
 ## Assessment
 
+<!--
+AUDIT RULES:
+- Candidate MUST be "No candidate identified" (→ only Scenario + Candidate required) OR "domain/action" (→ all 8 subsections required).
+- DO NOT fill Confirmation before presenting the contract to the user.
+- Keep ### subsections intact. Do not flatten Assessment into a plain list.
+-->
+
 ### Scenario
-<!-- What user need this command addresses -->
+<!-- What user need this command addresses. Example: "Get daily hot list from Zhihu." -->
 
 ### Candidate
-<!-- Proposed command name (domain/action) or "No candidate identified" -->
+<!-- MUST be exactly "No candidate identified" OR "domain/action" like "zhihu/get-hot". No natural language. -->
 
 ### Runtime
-<!-- node, browser, shell, or python -->
+<!-- node | browser | shell | python -->
 
 ### Parameters
-<!-- Expected inputs -->
+<!-- Expected inputs with types. Example: "date: string (YYYY-MM-DD, optional)" -->
 
 ### Output Schema
-<!-- Expected structure of the result -->
+<!-- Expected result structure. Example: "Array<{title: string, url: string}>" -->
 
 ### Command Library Relation
-<!-- Relationship to existing commands (reuse, conflict, or new) -->
+<!-- reuse | conflict | new. Explain relationship to existing commands. -->
 
 ### Prerequisites
-<!-- Setup or auth required -->
+<!-- Setup or auth required. Example: "none" or "API key required" -->
 
 ### Confirmation
-<!-- Record of user discussion and agreement to proceed -->
+<!-- LEAVE EMPTY initially. AFTER presenting the contract to the user and getting explicit agreement, record the discussion summary here. -->
 `;
 }

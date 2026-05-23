@@ -75,7 +75,7 @@ websculpt explore new <name> --intent "<目标描述>"
 websculpt explore assess <name>
 ```
 
-`assess` 会检查 `trace.md` 的结构完整性、安全规则及 Assessment 子节完整性。根据返回的错误提示补充 `trace.md`（如缺少子节、内容为空等），然后重新 assess。
+`assess` 会检查 `trace.md` 的结构完整性、安全规则及 Assessment 子节完整性。Assessment 必须使用 `###` 子节结构，Candidate 必须为 `"No candidate identified"` 或 `domain/action` 格式。根据返回的错误提示补充 `trace.md`（如缺少子节、内容为空、Candidate 格式错误、Confirmation 缺失等），然后重新 assess。
 
 **探索结束前必须通过 assess**。未通过审计不得交付结果。
 
@@ -90,7 +90,7 @@ websculpt explore assess <name>
 - 输出结果不稳定
 
 排除后若发现可复用路径：
-1. 在 `trace.md` 的 `## Assessment` 中填写命令契约，然后执行 `websculpt explore assess <name>`
+1. 在 `trace.md` 的 `## Assessment` 中填写命令契约（按模板注释的格式要求和校验规则填写），然后执行 `websculpt explore assess <name>`
 2. 按 assess 返回的错误提示补充（如缺少子节、内容为空、Confirmation 缺失等），重复直至通过
 3. assess 通过后，将契约翻译为用户语言展示给用户，获取明确同意
 4. 把讨论摘要和用户决策记录到 `### Confirmation`，重新 assess 确保通过

@@ -75,7 +75,7 @@ You can self-check at any time during exploration:
 websculpt explore assess <name>
 ```
 
-`assess` checks `trace.md` structural integrity, safety rules, and Assessment subsection completeness. Supplement `trace.md` based on returned error hints (e.g., missing subsections, empty content), then re-assess.
+`assess` checks `trace.md` structural integrity, safety rules, and Assessment subsection completeness. Assessment must use `###` subsection structure, and Candidate must be either `"No candidate identified"` or `domain/action` format. Supplement `trace.md` based on returned error hints (e.g., missing subsections, empty content, invalid Candidate format, missing Confirmation), then re-assess.
 
 **Assessment must pass before exploration ends**. Do not deliver results without passing audit.
 
@@ -90,7 +90,7 @@ Evaluate whether a precipitable path was produced. If any of the following condi
 - Output results are unstable.
 
 After exclusion, if a reusable path is found:
-1. Fill in the command contract in `## Assessment` of `trace.md`, then execute `websculpt explore assess <name>`
+1. Fill in the command contract in `## Assessment` of `trace.md` following the template comment guidance and audit rules, then execute `websculpt explore assess <name>`
 2. Supplement according to assess error hints (e.g., missing subsections, empty content, missing Confirmation), repeat until passed
 3. After assess passes, translate the contract into the user's language and present it to the user to obtain explicit agreement
 4. Record the discussion summary and user decision in `### Confirmation`, re-assess to ensure it passes
