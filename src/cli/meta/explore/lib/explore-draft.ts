@@ -26,27 +26,27 @@ AUDIT RULES:
 -->
 
 ### Scenario
-<!-- What user need this command addresses. Example: "Get daily hot list from Zhihu." -->
+<!-- USER CONTRACT: What user need this command addresses. Present this to the user. Example: "Get daily hot list from Zhihu." -->
 
 ### Candidate
-<!-- MUST be exactly "No candidate identified" OR "domain/action" like "zhihu/get-hot". No natural language. -->
+<!-- USER CONTRACT: Command name. MUST be exactly "No candidate identified" OR "domain/action" like "zhihu/get-hot". Present this to the user. -->
 
 ### Runtime
-<!-- node | browser | shell | python -->
+<!-- USER CONTRACT: Execution environment. Present to user. Options: node | browser | shell | python -->
 
 ### Parameters
-<!-- Expected inputs with types. Example: "date: string (YYYY-MM-DD, optional)" -->
+<!-- USER CONTRACT: Expected inputs. Present to user so they know what parameters they will use. Example: "date: string (YYYY-MM-DD, optional)" -->
 
 ### Output Schema
-<!-- Expected result structure. Example: "Array<{title: string, url: string}>" -->
+<!-- USER CONTRACT: Result structure. Present to user so they know what output to expect. Example: "Array<{title: string, url: string}>" -->
 
 ### Command Library Relation
-<!-- reuse | conflict | new. Explain relationship to existing commands. -->
+<!-- USER CONTRACT: Relationship to existing commands. Present to user. Options: reuse | conflict | new -->
 
 ### Prerequisites
-<!-- Setup or auth required. Example: "none" or "API key required" -->
+<!-- USER CONTRACT: Setup or auth required. Present to user so they know what's needed before using this command. Example: "none" or "API key required" -->
 
 ### Confirmation
-<!-- LEAVE EMPTY initially. AFTER presenting the contract to the user and getting explicit agreement, record the discussion summary here. -->
+<!-- DO NOT FILL UNTIL USER REVIEWS ALL ABOVE CONTRACT ITEMS. After presenting the full Assessment contract to the user and getting explicit agreement on ALL items, record their confirmation here. -->
 `;
 }
