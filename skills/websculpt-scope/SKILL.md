@@ -1,6 +1,6 @@
 ---
 name: websculpt-scope
-description: 用于管理 WebSculpt 项目级命令可见性的场景。当用户提到命令列表太长、想按项目精简命令、或需要对特定目录控制哪些命令可见时加载本 skill。
+description: 管理 WebSculpt 项目与可用命令之间的关联关系。当用户提到为项目添加/移除命令、查看项目命令范围、初始化或销毁 scope，以及按项目维度控制命令可见性时加载本 skill。
 ---
 
 # WebSculpt Scope

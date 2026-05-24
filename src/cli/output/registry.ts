@@ -51,6 +51,12 @@ import {
 	renderDaemonStop,
 } from "./renderers/daemon.js";
 import { isMetaCommandError, renderError } from "./renderers/error.js";
+import {
+	isExploreAssessResult,
+	isExploreNewResult,
+	renderExploreAssessResult,
+	renderExploreNewResult,
+} from "./renderers/explore.js";
 import { isScopeShowResult, renderScopeShowResult } from "./renderers/scope.js";
 import {
 	isSkillInstallResult,
@@ -72,6 +78,8 @@ import {
 export const renderers: AnyRenderer[] = [
 	register(isMetaCommandError, renderError),
 	register(isCommandDraftResult, renderDraftResult),
+	register(isExploreNewResult, renderExploreNewResult),
+	register(isExploreAssessResult, renderExploreAssessResult),
 	register(isCaptureNewResult, renderCaptureNewResult),
 	register(isCaptureStatusResult, renderCaptureStatusResult),
 	register(isCommandCreateResult, renderCreateResult),

@@ -70,15 +70,32 @@ The explore stage **does not create command assets**; it is only responsible for
 
 `skills/websculpt-explore/` contains:
 
-- `SKILL.md`: exploration protocol, ExploreSession state machine, library lookup and tool selection rules, Capture Assessment format.
+- `SKILL.md`: exploration protocol, library lookup and tool selection rules, trace.md filling specification, explore assess audit requirements.
 - `references/access/playwright-cli-guide.md`: operational reference for when the agent needs to directly operate a browser during exploration.
 
 ### 2.3 Key Mechanisms
 
-- **Mandatory library check**: Every explore session must begin with `websculpt command list`, and the conclusion must be recorded in `ExploreSession.libraryResult`.
+- **Mandatory library check**: Every explore session must begin with `websculpt command list`, and the conclusion must be recorded in the `Library Check` section of `trace.md`.
 - **Progressive confirmation**: Candidate commands are confirmed from light to heavy (`--help` → `command show` → `command show --include-readme`).
-- **Browser prerequisite check**: If direct browser operation is needed, the agent must first read `playwright-cli-guide.md` and record this in `ExploreSession.guideRead`.
-- **Capture Assessment**: On delivery, the agent must evaluate whether there is a reusable path and provide a candidate `domain/action` along with recommended next steps.
+- **Browser prerequisite check**: If direct browser operation is needed, the agent must first read `playwright-cli-guide.md` and record this in the `Protocol` section of `trace.md`.
+- **Assessment structured**: The `## Assessment` section in `trace.md` must contain 8 mandatory H3 subsections (Scenario, Candidate, Runtime, Parameters, Output Schema, Command Library Relation, Prerequisites, Confirmation).
+- **CLI hard constraint**: `explore assess` performs L1/L2/L3 three-layer Markdown auditing and H3 subsection integrity checks; entering capture is prohibited before passing.
+
+---
+
+### 2.4 Workspace Structure
+
+The explore workspace is located in the **current project directory**:
+
+```text
+.websculpt/
+└── explores/
+    └── <name>/
+        ├── explore.yaml    # metadata + audit results (written on creation, updated on assess)
+        └── trace.md        # exploration trace (filled by agent, audited by assess)
+```
+
+`explore.yaml` records the workspace identity, exploration intent, and the result of the last `assess` (`status`, `captureEligible`, `candidate`). `trace.md` uses 5 mandatory H2 headings (Library Check / Tool Trace / Protocol / Verified Sources / Assessment), where Assessment must contain 8 H3 subsections when a candidate is proposed.
 
 ---
 
@@ -99,16 +116,17 @@ Core responsibilities:
 The workspace is located in the **current project directory**:
 
 ```text
-.websculpt-captures/
-└── <name>/
-    ├── capture.yaml      # machine-readable metadata + command library snapshot (written on creation, read-only thereafter)
-    ├── evidence.md       # exploration evidence (filled by agent, audited by system)
-    ├── draft/            # command package skeleton
-    │   ├── manifest.json
-    │   ├── command.js
-    │   ├── README.md
-    │   └── context.md
-    └── validation.json   # result of the most recent validate (includes draft fingerprint)
+.websculpt/
+└── captures/
+    └── <name>/
+        ├── capture.yaml      # machine-readable metadata + command library snapshot (written on creation, read-only thereafter)
+        ├── evidence.md       # exploration evidence (filled by agent, audited by system)
+        ├── draft/            # command package skeleton
+        │   ├── manifest.json
+        │   ├── command.js
+        │   ├── README.md
+        │   └── context.md
+        └── validation.json   # result of the most recent validate (includes draft fingerprint)
 ```
 
 ### 3.3 Core Design Concepts
@@ -181,7 +199,7 @@ Extension commands can be created through two paths:
 | Path | Command Series | Draft Location | Characteristics |
 |------|---------------|----------------|-----------------|
 | **A: Direct creation** | `command draft / validate / create` | `.websculpt-drafts/` | Manual authoring or scripted scenarios; full process control |
-| **B: Capture workflow** | `capture new / status / validate / finalize` | `.websculpt-captures/<name>/draft/` | Agent-driven; additionally requires `evidence.md` and state-machine progression; internally reuses `command` validation and installation capabilities, adding evidence audit and draft fingerprint anti-tampering |
+| **B: Capture workflow** | `capture new / status / validate / finalize` | `.websculpt/captures/<name>/draft/` | Agent-driven; additionally requires `evidence.md` and state-machine progression; internally reuses `command` validation and installation capabilities, adding evidence audit and draft fingerprint anti-tampering |
 
 Path B internally calls the same installation logic as path A during finalize, but with additional pre-gates.
 
@@ -203,7 +221,7 @@ Regardless of path, both `command create` and `capture finalize` enforce L1–L3
 
 The CLI is the discovery, management, and lifecycle entry point for commands, offering the same interface to both human users and AI.
 
-- **Meta commands**: Manage the CLI itself and the command library. Includes `command`, `config`, `daemon`, `scope`, `skill`, `capture`.
+- **Meta commands**: Manage the CLI itself and the command library. Includes `command`, `config`, `daemon`, `explore`, `scope`, `skill`, `capture`.
 - **Extension commands**: Reusable information acquisition workflows. Meta commands cannot be overridden, preventing extension commands from breaking core management capabilities.
 
 ### 5.2 Lookup Priority
@@ -254,6 +272,7 @@ WebSculpt/
 │   │   ├── meta/               # meta command implementations and shared logic
 │   │   │   ├── capture/        # capture workflow
 │   │   │   ├── command/        # command management
+│   │   │   ├── explore/        # explore workflow
 │   │   │   └── lib/            # meta command shared logic
 │   │   ├── builtin/            # built-in extension commands
 │   │   ├── runtime/            # runtime normalization
@@ -276,7 +295,22 @@ WebSculpt/
 └── dist/                       # build output
 ```
 
-### 7.2 User Directory
+### 7.2 Project-level Workspace Directory
+
+WebSculpt maintains `.websculpt/` in the current project root for project-related local data:
+
+```text
+./.websculpt/
+├── scope.json         # project-level command visibility whitelist
+├── explores/          # explore workspaces
+└── captures/          # capture workspaces
+```
+
+For detailed structure of explore and capture workspaces, see §2.4 and §3.2.
+
+---
+
+### 7.3 User Directory
 
 ```
 ~/.websculpt/

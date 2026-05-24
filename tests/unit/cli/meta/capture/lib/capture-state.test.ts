@@ -358,9 +358,9 @@ describe("deriveNextAction", () => {
 		expect(result.nextTarget).toBeUndefined();
 	});
 
-	it("returns request-user-confirmation when all artifacts are done", () => {
+	it("returns finalize when all artifacts are done", () => {
 		const result = deriveNextAction(allDone, "node");
-		expect(result.nextAction).toBe("request-user-confirmation");
+		expect(result.nextAction).toBe("finalize");
 		expect(result.nextTarget).toBeUndefined();
 	});
 

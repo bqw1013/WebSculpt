@@ -44,7 +44,7 @@ describe("capture validate", () => {
 		expect(payload.success).toBe(true);
 
 		const validationJson = await readJsonFile<ValidationJson>(
-			join(workDir, ".websculpt-captures", "valid-cap", "validation.json"),
+			join(workDir, ".websculpt/captures", "valid-cap", "validation.json"),
 		);
 		expect(validationJson.success).toBe(true);
 		expect(validationJson.draftFingerprint).toEqual(expect.any(String));
@@ -64,12 +64,12 @@ describe("capture validate", () => {
 		// Make command.js invalid by removing the export default
 		await writeCompleteEvidence(workDir, "invalid-cap", "node");
 		await writeFile(
-			join(workDir, ".websculpt-captures", "invalid-cap", "draft", "command.js"),
+			join(workDir, ".websculpt/captures", "invalid-cap", "draft", "command.js"),
 			"// broken - no export\n",
 			"utf8",
 		);
 		await writeFile(
-			join(workDir, ".websculpt-captures", "invalid-cap", "draft", "manifest.json"),
+			join(workDir, ".websculpt/captures", "invalid-cap", "draft", "manifest.json"),
 			JSON.stringify({
 				domain: "example",
 				action: "collect",
@@ -90,7 +90,7 @@ describe("capture validate", () => {
 		expect(payload.error?.code).toBe("VALIDATION_ERROR");
 
 		const validationJson = await readJsonFile<ValidationJson>(
-			join(workDir, ".websculpt-captures", "invalid-cap", "validation.json"),
+			join(workDir, ".websculpt/captures", "invalid-cap", "validation.json"),
 		);
 		expect(validationJson.success).toBe(false);
 		expect(validationJson.errors).toBeDefined();
@@ -116,7 +116,7 @@ describe("capture validate", () => {
 
 		// Break the draft
 		await writeFile(
-			join(workDir, ".websculpt-captures", "overwrite-cap", "draft", "command.js"),
+			join(workDir, ".websculpt/captures", "overwrite-cap", "draft", "command.js"),
 			"// broken\n",
 			"utf8",
 		);
@@ -127,7 +127,7 @@ describe("capture validate", () => {
 		expect(payload.success).toBe(false);
 
 		const validationJson = await readJsonFile<ValidationJson>(
-			join(workDir, ".websculpt-captures", "overwrite-cap", "validation.json"),
+			join(workDir, ".websculpt/captures", "overwrite-cap", "validation.json"),
 		);
 		expect(validationJson.success).toBe(false);
 	});
@@ -146,7 +146,7 @@ describe("capture validate", () => {
 		await writeCompleteEvidence(workDir, "runtime-mismatch", "browser");
 		await writeCompleteCommand(workDir, "runtime-mismatch", "browser");
 		await writeFile(
-			join(workDir, ".websculpt-captures", "runtime-mismatch", "draft", "manifest.json"),
+			join(workDir, ".websculpt/captures", "runtime-mismatch", "draft", "manifest.json"),
 			JSON.stringify({
 				domain: "example",
 				action: "collect",
@@ -174,7 +174,7 @@ describe("capture validate", () => {
 		);
 
 		const validationJson = await readJsonFile<ValidationJson>(
-			join(workDir, ".websculpt-captures", "runtime-mismatch", "validation.json"),
+			join(workDir, ".websculpt/captures", "runtime-mismatch", "validation.json"),
 		);
 		expect(validationJson.success).toBe(false);
 		expect(validationJson.errors).toContainEqual(
@@ -219,7 +219,7 @@ async function readJsonFile<T>(filePath: string): Promise<T> {
 }
 
 async function writeCompleteEvidence(workDir: string, name: string, runtime: string) {
-	const evidencePath = join(workDir, ".websculpt-captures", name, "evidence.md");
+	const evidencePath = join(workDir, ".websculpt/captures", name, "evidence.md");
 	const guideLine = runtime === "browser" ? "We consulted guide.md for the browser contract." : "";
 	const content = `# Evidence: example/collect
 
@@ -250,7 +250,7 @@ This command should be captured because it provides reusable data collection.
 }
 
 async function writeCompleteCommand(workDir: string, name: string, runtime: string) {
-	const draftPath = join(workDir, ".websculpt-captures", name, "draft");
+	const draftPath = join(workDir, ".websculpt/captures", name, "draft");
 	const entryFile = runtime === "shell" ? "command.sh" : runtime === "python" ? "command.py" : "command.js";
 	const code =
 		runtime === "browser"
@@ -260,7 +260,7 @@ async function writeCompleteCommand(workDir: string, name: string, runtime: stri
 }
 
 async function writeCompleteManifest(workDir: string, name: string) {
-	const manifestPath = join(workDir, ".websculpt-captures", name, "draft", "manifest.json");
+	const manifestPath = join(workDir, ".websculpt/captures", name, "draft", "manifest.json");
 	const manifest = {
 		domain: "example",
 		action: "collect",
@@ -274,7 +274,7 @@ async function writeCompleteManifest(workDir: string, name: string) {
 }
 
 async function writeCompleteReadme(workDir: string, name: string) {
-	const readmePath = join(workDir, ".websculpt-captures", name, "draft", "README.md");
+	const readmePath = join(workDir, ".websculpt/captures", name, "draft", "README.md");
 	const content = `# example/collect
 
 Collects example data.
@@ -295,7 +295,7 @@ websculpt example collect
 }
 
 async function writeCompleteContext(workDir: string, name: string) {
-	const contextPath = join(workDir, ".websculpt-captures", name, "draft", "context.md");
+	const contextPath = join(workDir, ".websculpt/captures", name, "draft", "context.md");
 	const content = `# Context
 
 ## Precipitation Background

@@ -3,6 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { parse, stringify } from "yaml";
 import type { ValidationDetail } from "../../../../types/index.js";
 import { scanAllCommands } from "../../../engine/command-discovery/scanner.js";
+import { CAPTURE_DIR, WORKSPACE_ROOT } from "../../shared.js";
 
 /** Objective command-library state captured when a workspace is created. */
 export interface CommandLibrarySnapshot {
@@ -39,7 +40,7 @@ export interface ValidationRecord {
  * Resolves the absolute path for a named capture workspace.
  */
 export function getCaptureWorkspacePath(name: string, baseDir = process.cwd()): string {
-	return resolve(baseDir, ".websculpt-captures", name);
+	return resolve(baseDir, WORKSPACE_ROOT, CAPTURE_DIR, name);
 }
 
 /**

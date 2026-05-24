@@ -1,6 +1,6 @@
 ---
 name: websculpt-scope
-description: For managing WebSculpt project-level command visibility. Load this skill when the user mentions the command list being too long, wants to trim commands by project, or needs to control which commands are visible in a specific directory.
+description: Manages the relationship between WebSculpt projects and available commands. Load this skill when the user mentions adding or removing commands for a project, viewing the project's command scope, initializing or destroying a scope, or controlling command visibility at the project level.
 ---
 
 # WebSculpt Scope

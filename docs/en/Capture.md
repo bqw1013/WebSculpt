@@ -31,6 +31,8 @@ The Capture path reuses the `command validate` and `command create` capabilities
 
 Explore must be usable independently (users want data only, without capture). Only when the user explicitly agrees to solidify explore results into a command does the Capture workflow begin.
 
+The prerequisite for entering Capture is that the corresponding explore workspace has passed the `explore assess` audit (returning `status: passed`), with the `### Confirmation` section in `trace.md` recording the user's decision.
+
 ---
 
 ## 2. Workspace Structure
@@ -38,16 +40,17 @@ Explore must be usable independently (users want data only, without capture). On
 The workspace is located in the **current project directory**:
 
 ```text
-.websculpt-captures/
-└── <name>/
-    ├── capture.yaml      # Machine-readable metadata + command library snapshot (written at creation, read-only afterwards)
-    ├── evidence.md       # Exploration evidence (filled by Agent, audited by system)
-    ├── draft/            # Command package skeleton (generated alongside capture new)
-    │   ├── manifest.json # Pre-filled domain/action/runtime, id left empty
-    │   ├── command.js    # Runtime entry template
-    │   ├── README.md     # Template
-    │   └── context.md    # Template
-    └── validation.json   # Most recent validate result (includes draft fingerprint)
+.websculpt/
+└── captures/
+    └── <name>/
+        ├── capture.yaml      # Machine-readable metadata + command library snapshot (written at creation, read-only afterwards)
+        ├── evidence.md       # Exploration evidence (filled by Agent, audited by system)
+        ├── draft/            # Command package skeleton (generated alongside capture new)
+        │   ├── manifest.json # Pre-filled domain/action/runtime, id left empty
+        │   ├── command.js    # Runtime entry template
+        │   ├── README.md     # Template
+        │   └── context.md    # Template
+        └── validation.json   # Most recent validate result (includes draft fingerprint)
 ```
 
 **Design intent**:
@@ -122,7 +125,7 @@ The `next.action` value space is fixed:
 - `fill-readme` -> Write `README.md`
 - `fill-context` -> Write `context.md`
 - `validate` -> Execute `capture validate <name>`
-- `request-user-confirmation` -> Show summary to user and request confirmation
+- `finalize` -> All artifacts completed, ready to execute `capture finalize`
 
 This layer of abstraction encapsulates the state machine complexity inside the CLI. The Agent sees a simple "current state + next action" interface.
 
@@ -187,4 +190,4 @@ Additionally, if an active scope exists in the current working directory or any 
 
 - If a builtin command already exists at `capture new`, a `BUILTIN_OVERRIDE` warning is issued but execution is allowed. If a user command already exists, it is blocked by default and can be overridden with `--force`.
 - The command package lifecycle for `shell` and `python` runtimes (draft / validate / create) is already supported, but the CLI execution engine has not yet been integrated. A `RUNTIME_NOT_EXECUTABLE` warning is attached at creation time.
-- The workspace is retained in `.websculpt-captures/` under the project directory, not the user home directory. The Agent should decide on its own whether to clean up after the user rejects finalize.
+- The workspace is retained in `.websculpt/captures/` under the project directory, not the user home directory. The Agent should decide on its own whether to clean up after the user rejects finalize.

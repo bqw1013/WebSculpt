@@ -236,7 +236,7 @@ export function deriveNextAction(
 			return { nextAction: rule.action, nextTarget: target };
 		}
 	}
-	return { nextAction: "request-user-confirmation" };
+	return { nextAction: "finalize" };
 }
 
 // ---------------------------------------------------------------------------

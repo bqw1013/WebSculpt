@@ -190,7 +190,7 @@ Every time a conversation ends, the Agent's web-surfing experience resets to zer
 **Command System**
 
 WebSculpt has two types of commands:
-- **Meta commands**: Manage the CLI itself and the command library, such as `capture`, `command`, `skill`. Built into the system, cannot be overridden.
+- **Meta commands**: Manage the CLI itself and the command library, such as `explore`, `capture`, `command`, `skill`. Built into the system, cannot be overridden.
 - **Extended commands**: Reusable information retrieval workflows, invoked by `domain/action` (e.g., `hackernews/get-top`). Further divided into:
   - **Builtin commands**: Distributed with WebSculpt
   - **User commands**: Distilled by the Agent into `~/.websculpt/commands/`. User commands have higher priority than Builtin, automatically overriding on name collision—the command library evolves with use.
@@ -217,13 +217,13 @@ WebSculpt's complete functionality is divided into two sequentially connected Sk
 
 This is not loose usage advice, but deliverables containing complete protocols, state constraints, and delivery standards.
 
-### Explore: Document Soft Constraints + Session Self-Reporting
+### Explore: Document Soft Constraints + Filesystem Truth
 
 `websculpt-explore` first constrains the Agent's tool selection: must check the library and reuse builtin commands first, only allowed to explore new paths when no match; when browser automation is needed, converges to the single protocol of Playwright CDP connecting to the current browser.
 
 Constraints are enforced through two mechanisms:
 - **Document soft constraints**: Skill documents define protocol flows; the Agent follows rules to execute
-- **Session self-reporting**: ExploreSession requires the Agent to output the current state block at the end of each reply, prohibiting advancement to the next step until standards are met
+- **Filesystem truth**: The Agent writes exploration traces to `trace.md`; `explore assess` performs structured audits (heading completeness, non-empty content, keyword safety rules, Assessment H3 subsection checks), blocking entry to capture until passed
 
 ### Capture: CLI State Checks + Artifact Pipeline
 

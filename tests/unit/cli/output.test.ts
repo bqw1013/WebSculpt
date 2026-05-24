@@ -175,7 +175,7 @@ describe("renderOutput", () => {
 
 		renderOutput(createCaptureNewResult(), "human");
 
-		expect(logSpy).toHaveBeenCalledWith("Capture workspace created at /tmp/.websculpt-captures/github-trending");
+		expect(logSpy).toHaveBeenCalledWith("Capture workspace created at /tmp/.websculpt/captures/github-trending");
 		expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("github/get-trending"));
 		expect(logSpy).toHaveBeenCalledWith("Next: websculpt capture status github-trending");
 		logSpy.mockRestore();
@@ -187,7 +187,7 @@ function createCaptureNewResult(): CaptureNewResult {
 		success: true,
 		capture: {
 			name: "github-trending",
-			path: "/tmp/.websculpt-captures/github-trending",
+			path: "/tmp/.websculpt/captures/github-trending",
 			domain: "github",
 			action: "get-trending",
 			runtime: "browser",
