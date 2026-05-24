@@ -20,7 +20,7 @@
     "README.md",
     "LICENSE"
   ],
-  "packageManager": "npm@10.9.3",
+  "packageManager": "npm@11.15.0",
   "engines": {
     "node": ">=20"
   },
