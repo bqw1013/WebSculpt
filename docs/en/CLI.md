@@ -26,7 +26,7 @@ When `websculpt <domain> <action>` is entered, the system resolves it in the fol
 
 **Key rules**:
 
-- Meta commands (`capture`, `command`, `config`, `daemon`, `scope`, `skill`) are registered at the system level and do not participate in extension command scanning, so they cannot be overridden by User or Builtin commands.
+- Meta commands (`capture`, `command`, `config`, `daemon`, `explore`, `scope`, `skill`) are registered at the system level and do not participate in extension command scanning, so they cannot be overridden by User or Builtin commands.
 - Conflicts between User and Builtin are resolved in favor of User.
 
 ## 2. Extension Command Structure
@@ -65,7 +65,7 @@ Extension commands can be created through two paths:
 | Path | Command series | Draft location | Characteristics |
 |------|---------|---------|------|
 | **A: Direct creation** | `command draft / validate / create` | `.websculpt-drafts/` | Manual authoring or scripted scenarios; full control over the workflow |
-| **B: Capture workflow** | `capture new / status / validate / finalize` | `.websculpt-captures/<name>/draft/` | Agent-driven; additionally requires `evidence.md` and state machine progression; reuses `command` validation and installation underneath, adding evidence auditing and draft fingerprint tamper-proofing |
+| **B: Capture workflow** | `capture new / status / validate / finalize` | `.websculpt/captures/<name>/draft/` | Agent-driven; additionally requires `evidence.md` and state machine progression; reuses `command` validation and installation underneath, adding evidence auditing and draft fingerprint tamper-proofing |
 
 `~/.websculpt/commands/` is the system's formal archive; only commands that pass validation can enter it. The `manifest.json` in the draft stage does not inject `id`/`domain`/`action`; during installation, CLI parameters are authoritative and forcibly injected.
 
@@ -332,7 +332,38 @@ websculpt command remove <domain> <action>
 
 ---
 
-### 4.4 `capture`
+### 4.4 `explore`
+
+Manage the explore workspace, providing filesystem authenticity and CLI hard constraints for the Agent's exploration phase.
+
+```bash
+websculpt explore new <name> --intent <intent> [--force]
+websculpt explore assess <name>
+```
+
+| Subcommand | Purpose |
+|--------|------|
+| `new` | Create workspace, generate `explore.yaml` and `trace.md` templates |
+| `assess` | Audit structural integrity and safety rules of `trace.md`, write results to `explore.yaml` |
+
+**Options**
+
+| Option | Description |
+|------|------|
+| `--intent <intent>` | Required for `new`, description of the exploration target |
+| `--force` | `new` overwrites existing workspace |
+
+**Key behaviors**
+
+- `explore new` requires names to match `^[a-z0-9-]+$`, otherwise returns error `INVALID_EXPLORE_NAME`
+- Returns error `EXPLORE_ALREADY_EXISTS` when workspace already exists without `--force`
+- `explore assess` returns error `NOT_FOUND` when workspace does not exist
+- Returns error `EXPLORE_AUDIT_FAILED` when `trace.md` is missing
+- Audit logic: L1 (5 mandatory H2 headings) → L2 (content non-empty) → L3 (keyword safety rules) → Assessment H3 subsection integrity check
+
+---
+
+### 4.5 `capture`
 
 Manage the command capture workspace, converting verified information-retrieval paths into reusable extension commands.
 
@@ -363,7 +394,7 @@ For detailed state machine and validation logic, see [`Capture.md`](./Capture.md
 
 ---
 
-### 4.5 `skill`
+### 4.6 `skill`
 
 #### `skill install`
 
@@ -433,7 +464,7 @@ websculpt skill status
 
 ---
 
-### 4.6 `scope`
+### 4.7 `scope`
 
 Manage project-level command visibility. By maintaining a `scope.json` whitelist in the current directory, control which extension commands appear in `command list` and CLI help.
 
@@ -587,7 +618,7 @@ websculpt capture status mysite-fetch   # → fill-evidence
 # Edit evidence.md
 websculpt capture status mysite-fetch   # → fill-command
 # Edit draft/command.js
-# ... continue according to status until validate
+# ... continue according to status until finalize
 
 # 3. Validate and install
 websculpt capture validate mysite-fetch
