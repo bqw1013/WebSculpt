@@ -133,7 +133,7 @@ describe("capture status", () => {
 		expect(payload.artifacts?.context.status).toBe("done");
 		expect(payload.artifacts?.validation.status).toBe("done");
 		expect(payload.readyToFinalize).toBe(true);
-		expect(payload.next?.action).toBe("request-user-confirmation");
+		expect(payload.next?.action).toBe("finalize");
 	});
 
 	it("reports validation blocked and next action validate when validation previously failed", async () => {

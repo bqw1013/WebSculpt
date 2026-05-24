@@ -57,7 +57,7 @@ function formatNextHint(result: CaptureStatusResult): string {
 			return a.context.reason ? `${base}: ${a.context.reason}` : base;
 		case "validate":
 			return a.validation.reason ? `${base}: ${a.validation.reason}` : base;
-		case "request-user-confirmation":
+		case "finalize":
 			return `finalize: Ready to run "capture finalize"`;
 		default:
 			return base;
