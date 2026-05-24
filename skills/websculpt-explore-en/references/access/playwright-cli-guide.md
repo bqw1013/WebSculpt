@@ -208,10 +208,41 @@ If the page shows CAPTCHA, 403/429, content is human-visible but automation retr
 - Preserve complete URL, do not crop session-related parameters
 - Let the user confirm before high-risk account operations
 
-## 8. Environment Cleanliness
+## 8. Performance and Speed
 
-- **Create new pages through `tab-new` for any task; do not reuse the user's existing tabs.**
-- **Must close tabs you created after the task ends.**
+After a browser session has been attached for a long time, Chrome memory and CDP connection overhead will continuously accumulate, causing operations to slow down or even freeze the system. The following practices can alleviate performance degradation **without re-attaching** or **closing the session**.
+
+### `eval` over `snapshot`
+
+`snapshot` triggers a full-page ARIA snapshot; the daemon needs to traverse the entire DOM tree and serialize it to text, which is data-heavy and CPU-intensive. Only use `snapshot` in the following situations:
+
+- First entering an unfamiliar page, needing to understand the interactive element structure.
+- After executing clicks, fills, or pagination that may change the page structure.
+
+For all other situations (checking whether an element exists, extracting known fields, verifying text content, getting simple attributes), always use `eval`. `eval` only executes a small amount of JavaScript and returns lightweight results, putting far less pressure on the browser and daemon than `snapshot`.
+
+### `goto about:blank` as task buffer
+
+After completing information extraction on a page, there is no need to immediately `tab-close` and create a new tab. First navigate the current tab to a blank page:
+
+```bash
+playwright-cli goto about:blank
+```
+
+This encourages Chrome to release the previous page's rendering process, V8 Heap, and GPU textures, and is lighter than `tab-new` / `tab-close`. After buffering, you can directly use `goto <url>` to continue the next task; **no re-attachment is needed**.
+
+### Control concurrent tabs
+
+The more tabs opened simultaneously, the greater the Chrome rendering process overhead, and each `tab-new` / `tab-close` executes a `headerSnapshot()` poll on all existing tabs. Recommendations:
+
+- **Self-created tabs open simultaneously should not exceed 2.**
+- Periodically execute `tab-list` to check and promptly close tabs for completed tasks.
+- For consecutive tasks under the same site, if currently already in a **self-created tab**, prefer using `goto` to switch URLs rather than creating additional new tabs.
+
+## 9. Environment Cleanliness
+
+- **Do not reuse the user's existing tabs.** Reusing user tabs will pollute their browsing state, violating the "do not disturb the user" principle.
+- **AI self-created tabs can be reused through `goto` during task gaps** to reduce `tab-new` overhead; after the task ultimately ends, you must close the tabs you created.
 - Do not actively disconnect an available `default` session.
 
 If attach status is abnormal, first check connection status:
@@ -232,6 +263,6 @@ After cleanup completes, re-attach following the steps in Section 2 "Environment
 
 > Forcibly terminating browser processes may lose user data; you must obtain the user's explicit authorization first.
 
-## 9. PowerShell Notes
+## 10. PowerShell Notes
 
 PowerShell is unfriendly to complex quotes and curly braces. If `run-code` errors due to parameter passing, prioritize switching to `eval` to verify selectors and data structures; do not dwell on it repeatedly; complex runner logic is left for the subsequent `websculpt-capture` phase to implement through command files.

@@ -1,5 +1,5 @@
 ---
-name: websculpt-capture-en
+name: websculpt-capture
 description: For scenarios where information acquisition paths are solidified into locally reusable WebSculpt commands. Once verified paths are turned into command assets, subsequent similar needs can be invoked directly without repeated exploration, saving context and tokens. This skill is only loaded after the path has been verified during the explore phase. Load this skill when the user agrees to solidify explore results, or needs to turn proven webpage/API/browser extraction logic into local command assets. If the path has not been verified by explore, you must first load websculpt-explore to complete exploration.
 ---
 
@@ -31,7 +31,7 @@ CaptureSession:
 
 ### State Rules
 
-- When `exploreVerified` is `false`, **forbidden** to execute `capture new`. Must first confirm the path has been verified by explore; if not, must first load `websculpt-explore` to complete exploration.
+- When `exploreVerified` is `false`, **forbidden** to execute `capture new`. Must first confirm the path has been verified by explore (`explore assess` returned `status: passed`); if not, must first load `websculpt-explore` to complete exploration, fill in `trace.md`, and pass the audit.
 - When `contractRead` is `false`, **forbidden** to edit or modify `draft/command.js`. Must first read the contract document for the corresponding runtime and set to `true`.
 - When `testScenarios` is empty, **forbidden** to execute `capture finalize`. Before finalize, you must list the specific commands for 4 test groups, covering happy path, generalized parameters, boundary parameters, and error scenarios.
 - When `testResults` length < 4, **forbidden** to report "tests passed" or "testing complete".
@@ -82,7 +82,7 @@ Select `runtime` based on the tools used during the exploration phase:
 
 A command can only declare one runtime.
 
-`capture new` creates a `.websculpt-captures/<name>/` workspace in the current directory, containing the following files:
+`capture new` creates a `.websculpt/captures/<name>/` workspace in the current directory, containing the following files:
 
 | File | Location | Description |
 |------|----------|-------------|
@@ -225,5 +225,5 @@ Error code specification: uppercase snake_case, semantically clear. Examples: `A
 - Must not edit `draft/command.js` before `contractRead` is `true`.
 - Must not force advancement when `capture status` returns blocked.
 - Must not fill in draft before evidence audit passes.
-- After `capture new`, directly enter the state-driven loop.
+- After `capture new`, directly enter the state-driven loop. Do not report conflicts again to ask for user confirmation (conflicts should have already been informed and handled during pre-creation confirmation).
 - Must not directly modify installed commands (always modify workspace draft and re-finalize).

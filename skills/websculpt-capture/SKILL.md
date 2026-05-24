@@ -82,7 +82,7 @@ websculpt capture new <name> --domain <domain> --action <action> --runtime <runt
 
 一个命令只能声明一种 runtime。
 
-`capture new` 在当前目录创建 `.websculpt-captures/<name>/` 工作区，包含以下文件：
+`capture new` 在当前目录创建 `.websculpt/captures/<name>/` 工作区，包含以下文件：
 
 | 文件 | 位置 | 说明 |
 |------|------|------|

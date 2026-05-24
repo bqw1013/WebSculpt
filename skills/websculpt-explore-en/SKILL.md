@@ -44,7 +44,7 @@ websculpt command show <domain> <action> --include-readme
 
 **Notes when calling existing commands**:
 - If invocation fails, first check if parameters were incorrect. After comparing with `--help` or `command show` output to correct parameters, you must try again. Try at least two different parameter combinations. Only if multiple attempts fail and it is confirmed not to be a parameter issue should you judge the command as unavailable.
-- If the command indicates a browser environment is required (e.g., `BROWSER_ATTACH_REQUIRED`), stop immediately and inform the user. Do not attempt to start a daemon or attach a browser yourself. Only if the user explicitly says "don't use this command" or "I'll handle it" should you abandon it. If the user explicitly refuses, subsequently skip browser-required commands directly.
+- If the command indicates a browser environment is required (e.g., `BROWSER_ATTACH_REQUIRED`), stop immediately and inform the user that a browser and debug mode are required. Do not attempt to start a daemon or attach a browser yourself to bypass it. Only if the user explicitly says "don't use this command" or "I'll handle it" should you abandon it and enter external tool exploration. If the user explicitly refuses, subsequently skip browser-required commands directly in the same session; do not repeatedly ask.
 - If a command library command requires browser execution, you do not need to read `guide.md`. It is executed by the WebSculpt backend.
 
 **Decision**:
@@ -59,7 +59,7 @@ When external tools (WebSearch, WebFetch, curl, or browser automation) are neede
 websculpt explore new <name> --intent "<goal description>"
 ```
 
-`explore new` returns the workspace path. Write the library check conclusion into `trace.md`'s `Library Check` section.
+Write the library check conclusion into `trace.md`'s `Library Check` section.
 
 ### Step 3: Execute External Exploration
 
@@ -125,7 +125,7 @@ After using external tools, record tools and key findings into `trace.md`'s `Too
 
 Request user intervention:
 - Payment or subscription required with no available session.
-- Command library, light tools, and browser all exhausted but still cannot break through.
+- Command library, light tools, and browser all exhausted but still cannot break through permissions, anti-bot measures, or structural changes.
 - Multiple paths feasible but stability/rate limiting/account risk requires trade-offs.
 - Operation may modify remote state or carries explicit account risk.
 
