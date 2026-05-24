@@ -59,6 +59,8 @@ websculpt command show <domain> <action> --include-readme
 websculpt explore new <name> --intent "<目标描述>"
 ```
 
+**创建完成后，先读取工作区中的 `trace.md`，确认初始结构和各章节位置，再开始写入。**
+
 将查库结论写入 `trace.md` 的 `Library Check` 部分。
 
 ### Step 3: 执行外部探索

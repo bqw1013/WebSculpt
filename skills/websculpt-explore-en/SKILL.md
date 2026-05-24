@@ -59,6 +59,8 @@ When external tools (WebSearch, WebFetch, curl, or browser automation) are neede
 websculpt explore new <name> --intent "<goal description>"
 ```
 
+**After creation, read the `trace.md` in the workspace first, confirm the initial structure and section positions, then start writing.**
+
 Write the library check conclusion into `trace.md`'s `Library Check` section.
 
 ### Step 3: Execute External Exploration
