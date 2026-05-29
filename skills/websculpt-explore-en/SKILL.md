@@ -48,8 +48,8 @@ websculpt command show <domain> <action> --include-readme
 - If a command library command requires browser execution, you do not need to read `guide.md`. It is executed by the WebSculpt backend.
 
 **Decision**:
-- Command directly covers the need → call it, deliver results, end. No `explore new` needed.
-- Needs supplementation or replacement → proceed to Step 2.
+- Command covers the need → **must call this command to complete delivery, end**. Do not skip the command and explore on your own under the pretext of "verification", "attempt", or "supplementation". No `explore new` needed.
+- Command cannot cover the need, or confirmed unavailable after the above systematic troubleshooting → proceed to Step 2.
 
 ### Step 2: Create Workspace and Record Library Check
 
@@ -60,6 +60,8 @@ websculpt explore new <name> --intent "<goal description>"
 ```
 
 **After creation, read the `trace.md` in the workspace first, confirm the initial structure and section positions, then start writing.**
+
+The headings at all levels in `trace.md` are structural anchors for `explore assess`; do not delete, replace, rename, or adjust their levels. Please supplement content under the corresponding headings, and do not modify the headings themselves.
 
 Write the library check conclusion into `trace.md`'s `Library Check` section.
 
@@ -77,7 +79,7 @@ You can self-check at any time during exploration:
 websculpt explore assess <name>
 ```
 
-`assess` checks `trace.md` structural integrity, safety rules, and Assessment subsection completeness. Assessment must use `###` subsection structure, and Candidate must be either `"No candidate identified"` or `domain/action` format. Supplement `trace.md` based on returned error hints (e.g., missing subsections, empty content, invalid Candidate format, missing Confirmation), then re-assess.
+`assess` checks `trace.md` structural integrity (whether preset headings exist and have not been modified), safety rules, and Assessment subsection completeness. Assessment must use `###` subsection structure, and Candidate must be either `"No candidate identified"` or `domain/action` format. Supplement `trace.md` based on returned error hints (e.g., missing subsections, empty content, invalid Candidate format, missing Confirmation), then re-assess.
 
 **Assessment must pass before exploration ends**. Do not deliver results without passing audit.
 
@@ -92,13 +94,14 @@ Evaluate whether a precipitable path was produced. If any of the following condi
 - Output results are unstable.
 
 After exclusion, if a reusable path is found:
-1. Fill in the command contract in `## Assessment` of `trace.md` following the template comment guidance and audit rules, then execute `websculpt explore assess <name>`
-2. Supplement according to assess error hints (e.g., missing subsections, empty content, missing Confirmation), repeat until passed
-3. After assess passes, translate the contract into the user's language and present it to the user to obtain explicit agreement
-4. Record the discussion summary and user decision in `### Confirmation`, re-assess to ensure it passes
-5. After user approval, suggest entering `websculpt-capture`
+1. Fill in the command contract in `## Assessment` of `trace.md` following the template comment guidance and audit rules, **but do not fill in `### Confirmation`**.
+2. Execute `websculpt explore assess <name>`, **expecting it to fail due to missing Confirmation**. Correct other issues based on returned errors (e.g., missing subsections, empty content, invalid Candidate format), but **still do not fill in Confirmation**.
+3. After confirming other items are correct, you must present the full contract to the user first. Present the command name, functionality, parameters, output format, prerequisites, etc., in the user's language clearly, and explicitly request the user's agreement on the contract content.
+4. After the user explicitly agrees, record the discussion summary and user decision in `### Confirmation`; if the user refuses, record the refusal reason in `### Confirmation`.
+5. Re-execute `websculpt explore assess <name>` to ensure it fully passes.
+6. Suggest entering `websculpt-capture`. If the user refuses, the explore phase ends.
 
-Calling any tool or executing any `capture` subcommand is prohibited in the reply where the contract is presented. Do not create a capture workspace on your own. If the user refuses to solidify, record the refusal reason in `### Confirmation`, and the explore phase ends.
+Calling any tool or executing any `capture` subcommand is prohibited in the reply where the contract is presented. Do not create a capture workspace on your own.
 
 ## Tool Selection
 

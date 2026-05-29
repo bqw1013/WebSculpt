@@ -48,8 +48,8 @@ websculpt command show <domain> <action> --include-readme
 - 若命令库已有命令需要浏览器执行，你不需要阅读 `guide.md`。该命令由 WebSculpt 后台执行，与你直接操作浏览器无关。
 
 **判断结果**：
-- 命令直接覆盖需求 → 调用命令，交付结果，结束。无需 `explore new`。
-- 需要补充或替代 → 进入 Step 2。
+- 命令覆盖需求 → **必须调用该命令完成交付，结束**。不得以"验证""尝试"或"补充"为由跳过命令而自行探索。无需 `explore new`。
+- 命令无法覆盖需求，或经上述规范排查后确认命令不可用 → 进入 Step 2。
 
 ### Step 2: 创建工作区并记录查库结论
 
@@ -60,6 +60,8 @@ websculpt explore new <name> --intent "<目标描述>"
 ```
 
 **创建完成后，先读取工作区中的 `trace.md`，确认初始结构和各章节位置，再开始写入。**
+
+`trace.md` 的各级标题是 `explore assess` 的结构锚点，不得删除、替换、重命名或调整层级；请在对应标题下方补充内容，不要改动标题本身。
 
 将查库结论写入 `trace.md` 的 `Library Check` 部分。
 
@@ -77,7 +79,7 @@ websculpt explore new <name> --intent "<目标描述>"
 websculpt explore assess <name>
 ```
 
-`assess` 会检查 `trace.md` 的结构完整性、安全规则及 Assessment 子节完整性。Assessment 必须使用 `###` 子节结构，Candidate 必须为 `"No candidate identified"` 或 `domain/action` 格式。根据返回的错误提示补充 `trace.md`（如缺少子节、内容为空、Candidate 格式错误、Confirmation 缺失等），然后重新 assess。
+`assess` 会检查 `trace.md` 的结构完整性（各预设标题是否存在且未被改动）、安全规则及 Assessment 子节完整性。Assessment 必须使用 `###` 子节结构，Candidate 必须为 `"No candidate identified"` 或 `domain/action` 格式。根据返回的错误提示补充 `trace.md`（如缺少子节、内容为空、Candidate 格式错误、Confirmation 缺失等），然后重新 assess。
 
 **探索结束前必须通过 assess**。未通过审计不得交付结果。
 
@@ -92,13 +94,14 @@ websculpt explore assess <name>
 - 输出结果不稳定
 
 排除后若发现可复用路径：
-1. 在 `trace.md` 的 `## Assessment` 中填写命令契约（按模板注释的格式要求和校验规则填写），然后执行 `websculpt explore assess <name>`
-2. 按 assess 返回的错误提示补充（如缺少子节、内容为空、Confirmation 缺失等），重复直至通过
-3. assess 通过后，将契约翻译为用户语言展示给用户，获取明确同意
-4. 把讨论摘要和用户决策记录到 `### Confirmation`，重新 assess 确保通过
-5. 用户同意后，建议进入 `websculpt-capture`
+1. 在 `trace.md` 的 `## Assessment` 中填写命令契约（按模板注释的格式要求和校验规则填写），**但不要填写 `### Confirmation`**。
+2. 执行 `websculpt explore assess <name>`，**预期会因 Confirmation 缺失而失败**。根据返回的错误修正其他问题（如缺少子节、内容为空、Candidate 格式错误等），但**仍不填写 Confirmation**。
+3. 确认其他项无误后，必须先将完整契约展示给用户。把命令名称、功能、参数、输出格式、前置条件等以用户语言清晰呈现，明确请求用户对契约内容的同意。
+4. 用户明确同意后，把讨论摘要和用户决策记录到 `### Confirmation`；若用户拒绝，将拒绝原因记录到 `### Confirmation` 中。
+5. 重新执行 `websculpt explore assess <name>`，确保全部通过。
+6. 建议进入 `websculpt-capture`。若用户拒绝，explore 阶段即告结束。
 
-展示契约的回复中禁止调用任何工具或执行任何 `capture` 子命令。不要自行创建 capture 工作区。若用户拒绝沉淀，将拒绝原因记录到 `### Confirmation` 中，explore 阶段即告结束。
+展示契约的回复中禁止调用任何工具或执行任何 `capture` 子命令。不要自行创建 capture 工作区。
 
 ## 工具选择
 
