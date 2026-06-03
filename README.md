@@ -1,7 +1,7 @@
 # WebSculpt
 
 <p align="center">
-  <img src="docs/assets/header-logo.png" width="100%" alt="WebSculpt">
+  <img src="docs/assets/header-logo-black.png" width="100%" alt="WebSculpt">
 </p>
 
 [![npm version](https://img.shields.io/npm/v/websculpt)](https://www.npmjs.com/package/websculpt)
