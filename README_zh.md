@@ -69,7 +69,7 @@ websculpt skill install --lang zh       # 当前项目
 
 ### 扩展命令快速体验
 
-扩展命令分两类：一类直接运行即可，另一类需要连接 Chrome/Edge 浏览器会话。
+扩展命令分两类：一类直接运行即可，另一类需要连接 Chrome 浏览器会话。
 
 ```bash
 # 先查看所有可用命令
@@ -78,7 +78,7 @@ websculpt command list
 # 零依赖命令（无需浏览器）
 websculpt bilibili get-hot --limit 5
 
-# 浏览器命令（复用 Chrome/Edge 登录态）
+# 浏览器命令（复用 Chrome 登录态）
 # 1. 打开 Chrome 浏览器
 # 2. 访问 chrome://inspect/#remote-debugging
 # 3. 勾选 Allow remote debugging for this browser instance 并保持浏览器打开
@@ -115,7 +115,7 @@ websculpt command remove <domain> <action>
 
    想操作网页，但 Playwright、Puppeteer、CDP 的配置文档看得头大，环境装了半天还是报错。
 
-   WebSculpt 把浏览器自动化收敛为单一协议，Agent 直接连接你当前打开的 Chrome/Edge，复用你的登录态和 Cookie。**不需要理解底层工具链，描述需求即可。**
+   WebSculpt 把浏览器自动化收敛为单一协议，Agent 直接连接你当前打开的 Chrome，复用你的登录态和 Cookie。**不需要理解底层工具链，描述需求即可。**
 
 2. **同一个网站，每次都要重新教一遍？**
 
@@ -207,7 +207,7 @@ WebSculpt 有两类命令：
 **执行环境（运行时）**
 
 - `node`：HTTP 请求与数据清洗，零依赖
-- `browser`：通过 Playwright 连接你当前打开的 Chrome/Edge，复用你的登录态和 Cookie
+- `browser`：通过 Playwright 连接你当前打开的 Chrome，复用你的登录态和 Cookie
 
 ---
 

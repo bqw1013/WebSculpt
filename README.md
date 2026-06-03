@@ -69,7 +69,7 @@ After installing the Skill, simply describe your needs to the Agent. The Agent w
 
 ### Extended Command Quick Start
 
-Extended commands fall into two categories: some work out of the box, others require connecting to a Chrome/Edge browser session.
+Extended commands fall into two categories: some work out of the box, others require connecting to a Chrome browser session.
 
 ```bash
 # View all available commands
@@ -78,7 +78,7 @@ websculpt command list
 # Zero-dependency commands (no browser needed)
 websculpt hackernews get-top --limit 5
 
-# Browser commands (reuse Chrome/Edge login state)
+# Browser commands (reuse Chrome login state)
 # 1. Open Chrome browser
 # 2. Navigate to chrome://inspect/#remote-debugging
 # 3. Check "Allow remote debugging for this browser instance" and keep browser open
@@ -115,7 +115,7 @@ Every time a conversation ends, the Agent's web-surfing experience resets to zer
 
    You want to operate web pages, but Playwright, Puppeteer, CDP configuration docs are overwhelming, and the environment setup keeps failing.
 
-   WebSculpt converges browser automation into a single protocol. The Agent connects directly to your currently open Chrome/Edge, reusing your login state and cookies. **No need to understand the underlying toolchain—just describe your needs.**
+   WebSculpt converges browser automation into a single protocol. The Agent connects directly to your currently open Chrome, reusing your login state and cookies. **No need to understand the underlying toolchain—just describe your needs.**
 
 2. **Teaching the same website from scratch every time?**
 
@@ -207,7 +207,7 @@ WebSculpt has two types of commands:
 **Execution Environment (Runtime)**
 
 - `node`: HTTP requests and data cleansing, zero dependencies
-- `browser`: Connects to your currently open Chrome/Edge via Playwright, reusing your login state and cookies
+- `browser`: Connects to your currently open Chrome via Playwright, reusing your login state and cookies
 
 ---
 
