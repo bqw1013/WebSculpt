@@ -127,6 +127,20 @@ websculpt capture finalize <name>
 
 **关键规则**：已安装命令只是 draft 的副本。发现问题只改工作区 draft 文件并重新 finalize，不要直接修改已安装目录。工作区保留供后续修复参考。
 
+### Browser Runtime 测试注意事项
+
+**独立的浏览器连接**
+
+`@playwright/cli`（explore 阶段）与 websculpt daemon（capture 执行阶段）是**两次独立的 CDP attach**。explore 时成功连接，不代表 capture 测试时自动可用。
+
+**首次连接的系统弹窗**
+
+daemon 首次尝试 `connectOverCDP` 时，Chrome 可能弹出"允许远程调试"的系统确认对话框。用户若点击较慢，连接可能超时。
+
+**排查提示**
+
+测试过程中若命令返回 `BROWSER_ATTACH_REQUIRED`，排查时除确认远程调试已开启，也请考虑：是否因确认弹窗未及时处理导致连接失败。
+
 ### 4. 安装后测试
 
 安装完成后，必须执行 **至少 4 组真实命令调用**，强制覆盖以下场景：

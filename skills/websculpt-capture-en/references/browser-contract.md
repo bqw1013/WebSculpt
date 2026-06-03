@@ -30,7 +30,7 @@ For parameters that already have `default` declared in the manifest, do not writ
 
 ## 3. Environment
 
-Browser runtime executes in the daemon's Node.js process. The daemon connects to the user's existing Chrome or Edge instance via `connectOverCDP`; it does not launch a new browser, nor does it use headless mode. The connection is lazy: it is only attempted when a browser runtime command is executed for the first time.
+Browser runtime executes in the daemon's Node.js process. The daemon connects to the user's existing Chrome or Edge instance via `connectOverCDP`; it does not launch a new browser, nor does it use headless mode. The connection is lazy: it is only attempted when a browser runtime command is executed for the first time. This connection is independent of the `@playwright/cli` used during the explore phase and does not share the attach session.
 
 After the command is loaded, the daemon creates a new `page` in the browser's default context and injects it into the command function. This page reuses the user's login state, cookies, and localStorage; after command execution completes, the daemon automatically closes the page, so command code should not close the injected `page`.
 

@@ -30,7 +30,7 @@ manifest 中已声明 `default` 的参数，不要在代码中写 fallback（如
 
 ## 3. 环境
 
-Browser runtime 在 daemon 的 Node.js 进程中执行。daemon 通过 `connectOverCDP` 连接用户已有的 Chrome 或 Edge 实例，不会启动新浏览器，也不使用无头模式；连接是惰性的，仅在首次执行 browser runtime 命令时才会尝试建立。
+Browser runtime 在 daemon 的 Node.js 进程中执行。daemon 通过 `connectOverCDP` 连接用户已有的 Chrome 或 Edge 实例，不会启动新浏览器，也不使用无头模式；连接是惰性的，仅在首次执行 browser runtime 命令时才会尝试建立。此连接与 explore 阶段使用的 `@playwright/cli` 相互独立，不共享 attach 会话。
 
 命令加载后，daemon 为其创建一个位于浏览器默认上下文中的新 `page` 并注入命令函数。该页面复用用户的登录态、Cookie 和 LocalStorage；命令执行完成后由 daemon 自动关闭，因此命令代码不应自行关闭 `page`。
 

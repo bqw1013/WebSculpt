@@ -127,6 +127,20 @@ websculpt capture finalize <name>
 
 **Key Rule**: Installed commands are only copies of the draft. When problems are found, only modify the workspace draft files and re-finalize; do not directly modify the installed directory. The workspace is retained for subsequent repair reference.
 
+### Browser Runtime Testing Notes
+
+**Independent browser connections**
+
+`@playwright/cli` (explore phase) and the websculpt daemon (capture execution phase) perform **two independent CDP attach operations**. A successful connection during explore does not mean capture testing will automatically work.
+
+**System confirmation dialog on first connection**
+
+When the daemon first attempts `connectOverCDP`, Chrome may display a system confirmation dialog asking to "allow remote debugging." If the user clicks slowly, the connection may time out.
+
+**Troubleshooting hint**
+
+If a command returns `BROWSER_ATTACH_REQUIRED` during testing, in addition to confirming that remote debugging is enabled, also consider: whether the connection failed because the confirmation dialog was not handled in time.
+
 ### 4. Post-Installation Testing
 
 After installation is complete, must execute **at least 4 groups of real command invocations**, mandatorily covering the following scenarios:
