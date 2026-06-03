@@ -1,5 +1,9 @@
 # WebSculpt
 
+<p align="center">
+  <img src="docs/assets/header-logo.png" width="800" alt="WebSculpt">
+</p>
+
 [![npm version](https://img.shields.io/npm/v/websculpt)](https://www.npmjs.com/package/websculpt)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Node Version](https://img.shields.io/node/v/websculpt)](package.json)
