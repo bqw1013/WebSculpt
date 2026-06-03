@@ -9,5 +9,5 @@ export const DAEMON_LIMITS = {
 	memoryWarningMB: 400,
 	memoryLimitMB: 600,
 	memoryEmergencyMB: 1000,
-	restartAfterExecutions: 200,
+	restartAfterExecutions: 2000,
 } as const;

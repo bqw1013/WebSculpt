@@ -185,7 +185,7 @@ describe("handleDaemonStatus", () => {
 				memoryWarningMB: 400,
 				memoryLimitMB: 600,
 				memoryEmergencyMB: 1000,
-				restartAfterExecutions: 200,
+				restartAfterExecutions: 2000,
 			},
 		};
 		vi.mocked(readDaemonState).mockResolvedValueOnce({ pid: 1234, socketPath: "/tmp/daemon.sock" });

@@ -173,7 +173,7 @@ Sampling interval is 60 seconds.
 
 ### 5.2 Execution Count Threshold
 
-After accumulating 200 command executions, the daemon is marked as `restartPending`. At this point:
+After accumulating 2000 command executions, the daemon is marked as `restartPending`. At this point:
 
 - New requests are rejected and return `DAEMON_RESTARTING`
 - Existing executing sessions continue to complete

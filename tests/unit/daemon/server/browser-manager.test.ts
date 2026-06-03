@@ -9,7 +9,7 @@ vi.mock("../../../../src/daemon/server/config/limits.js", () => ({
 		memoryWarningMB: 400,
 		memoryLimitMB: 600,
 		memoryEmergencyMB: 1000,
-		restartAfterExecutions: 200,
+		restartAfterExecutions: 2000,
 	},
 }));
 

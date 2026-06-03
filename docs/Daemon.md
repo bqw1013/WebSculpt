@@ -173,7 +173,7 @@ daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium
 
 ### 5.2 执行次数阈值
 
-累计执行 200 次命令后，daemon 标记为 `restartPending`。此时：
+累计执行 2000 次命令后，daemon 标记为 `restartPending`。此时：
 
 - 新请求被拒绝并返回 `DAEMON_RESTARTING`
 - 现有执行中的会话继续完成
