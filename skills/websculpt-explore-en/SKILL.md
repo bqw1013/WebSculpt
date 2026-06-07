@@ -73,7 +73,20 @@ Select tools and begin exploration (see "Tool Selection"). Record key findings t
 
 If using browser automation, you must first read `references/access/playwright-cli-guide.md` in the same directory as SKILL.md, and record the reading in `trace.md`'s `Protocol`. Do not execute `playwright-cli` before recording.
 
-### Step 4: Self-Check and Audit
+### Step 4: Evaluate and Record
+
+Evaluate whether a precipitable path was produced. What is precipitated is a **successfully executed, parameterizable experience path**. If any of the following conditions are met, directly judge as no candidate:
+- The path was not actually executed, or primary sources were not verified (not a successful experience)
+- Output results are unstable, or the source is not reproducible (experience cannot be reused)
+- The path lacks parameterizable characteristics; each execution requires completely different steps or inputs (cannot be converted into a CLI command)
+
+After exclusion, if a reusable path is found, fill in the command contract in `## Assessment` of `trace.md` following the template comment guidance and audit rules, **but do not fill in `### Confirmation`**.
+
+If judged as no candidate, mark `"No candidate identified"` in Candidate.
+
+### Step 5: Audit and Deliver
+
+Deliver results to the user. Confirm `explore assess` has passed before delivery.
 
 You can self-check at any time during exploration:
 
@@ -81,26 +94,16 @@ You can self-check at any time during exploration:
 websculpt explore assess <name>
 ```
 
-`assess` checks `trace.md` structural integrity (whether preset headings exist and have not been modified), safety rules, and Assessment subsection completeness. Assessment must use `###` subsection structure, and Candidate must be either `"No candidate identified"` or `domain/action` format. Supplement `trace.md` based on returned error hints (e.g., missing subsections, empty content, invalid Candidate format, missing Confirmation), then re-assess.
+`assess` checks `trace.md` structural integrity (whether preset headings exist and have not been modified), safety rules, and Assessment subsection completeness. Assessment must use `###` subsection structure, and Candidate must be either `"No candidate identified"` or `domain/action` format. Supplement `trace.md` based on returned error hints (e.g., missing subsections, empty content, invalid Candidate format), then re-assess.
 
 **Assessment must pass before exploration ends**. Do not deliver results without passing audit.
 
-### Step 5: Deliver and Hand Off
-
-Deliver results to the user. Confirm `explore assess` has passed before delivery.
-
-Evaluate whether a precipitable path was produced. What is precipitated is a **successfully executed, parameterizable experience path**. If any of the following conditions are met, directly judge as no candidate:
-- The path was not actually executed, or primary sources were not verified (not a successful experience)
-- Output results are unstable, or the source is not reproducible (experience cannot be reused)
-- The path lacks parameterizable characteristics; each execution requires completely different steps or inputs (cannot be converted into a CLI command)
-
-After exclusion, if a reusable path is found:
-1. Fill in the command contract in `## Assessment` of `trace.md` following the template comment guidance and audit rules, **but do not fill in `### Confirmation`**.
-2. Execute `websculpt explore assess <name>`, **expecting it to fail due to missing Confirmation**. Correct other issues based on returned errors (e.g., missing subsections, empty content, invalid Candidate format), but **still do not fill in Confirmation**.
-3. After confirming other items are correct, you must present the full contract to the user first. Present the command name, functionality, parameters, output format, prerequisites, etc., in the user's language clearly, and explicitly request the user's agreement on the contract content.
-4. After the user explicitly agrees, record the discussion summary and user decision in `### Confirmation`; if the user refuses, record the refusal reason in `### Confirmation`.
-5. Re-execute `websculpt explore assess <name>` to ensure it fully passes.
-6. Suggest entering `websculpt-capture`. If the user refuses, the explore phase ends.
+If Step 4 identified a candidate (not `"No candidate identified"`), handle delivery with the following flow:
+1. Execute `websculpt explore assess <name>`, **expecting it to fail due to missing Confirmation**. Correct other issues based on returned errors (e.g., missing subsections, empty content, invalid Candidate format), but **still do not fill in Confirmation**.
+2. After confirming other items are correct, you must present the full contract to the user first. Present the command name, functionality, parameters, output format, prerequisites, etc., in the user's language clearly, and explicitly request the user's agreement on the contract content.
+3. After the user explicitly agrees, record the discussion summary and user decision in `### Confirmation`; if the user refuses, record the refusal reason in `### Confirmation`.
+4. Re-execute `websculpt explore assess <name>` to ensure it fully passes.
+5. Suggest entering `websculpt-capture`. If the user refuses, the explore phase ends.
 
 Calling any tool or executing any `capture` subcommand is prohibited in the reply where the contract is presented. Do not create a capture workspace on your own.
 

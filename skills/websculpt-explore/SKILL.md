@@ -73,7 +73,20 @@ websculpt explore new <name> --intent "<目标描述>"
 
 若使用浏览器自动化，必须先阅读 SKILL.md 同目录下的 `references/access/playwright-cli-guide.md`，并在 `trace.md` 的 `Protocol` 中记录已读。未记录前严禁执行 `playwright-cli`。
 
-### Step 4: 自检与审计
+### Step 4: 评估与记录
+
+评估是否产生可沉淀的路径。沉淀的是**已经成功跑通、可被参数化的经验路径**。若满足以下任一条件，直接判定为无候选：
+- 路径未实际跑通，或未验证一手来源（非成功经验）
+- 输出结果不稳定，或来源不可重现（经验无法复用）
+- 不具备可参数化的特征，每次执行所需的步骤或输入完全不同（无法转换为 CLI 命令）
+
+排除后若发现可复用路径，在 `trace.md` 的 `## Assessment` 中填写命令契约（按模板注释的格式要求和校验规则填写），**但不要填写 `### Confirmation`**。
+
+若判定为无候选，在 Candidate 中标记 `"No candidate identified"`。
+
+### Step 5: 审计与交付
+
+向用户交付探索结果。交付前确认 `explore assess` 已通过。
 
 探索过程中可随时自检：
 
@@ -81,26 +94,16 @@ websculpt explore new <name> --intent "<目标描述>"
 websculpt explore assess <name>
 ```
 
-`assess` 会检查 `trace.md` 的结构完整性（各预设标题是否存在且未被改动）、安全规则及 Assessment 子节完整性。Assessment 必须使用 `###` 子节结构，Candidate 必须为 `"No candidate identified"` 或 `domain/action` 格式。根据返回的错误提示补充 `trace.md`（如缺少子节、内容为空、Candidate 格式错误、Confirmation 缺失等），然后重新 assess。
+`assess` 会检查 `trace.md` 的结构完整性（各预设标题是否存在且未被改动）、安全规则及 Assessment 子节完整性。Assessment 必须使用 `###` 子节结构，Candidate 必须为 `"No candidate identified"` 或 `domain/action` 格式。根据返回的错误提示补充 `trace.md`（如缺少子节、内容为空、Candidate 格式错误等），然后重新 assess。
 
 **探索结束前必须通过 assess**。未通过审计不得交付结果。
 
-### Step 5: 交付与交接
-
-向用户交付探索结果。交付前确认 `explore assess` 已通过。
-
-评估是否产生可沉淀的路径。沉淀的是**已经成功跑通、可被参数化的经验路径**。若满足以下任一条件，直接判定为无候选：
-- 路径未实际跑通，或未验证一手来源（非成功经验）
-- 输出结果不稳定，或来源不可重现（经验无法复用）
-- 不具备可参数化的特征，每次执行所需的步骤或输入完全不同（无法转换为 CLI 命令）
-
-排除后若发现可复用路径：
-1. 在 `trace.md` 的 `## Assessment` 中填写命令契约（按模板注释的格式要求和校验规则填写），**但不要填写 `### Confirmation`**。
-2. 执行 `websculpt explore assess <name>`，**预期会因 Confirmation 缺失而失败**。根据返回的错误修正其他问题（如缺少子节、内容为空、Candidate 格式错误等），但**仍不填写 Confirmation**。
-3. 确认其他项无误后，必须先将完整契约展示给用户。把命令名称、功能、参数、输出格式、前置条件等以用户语言清晰呈现，明确请求用户对契约内容的同意。
-4. 用户明确同意后，把讨论摘要和用户决策记录到 `### Confirmation`；若用户拒绝，将拒绝原因记录到 `### Confirmation` 中。
-5. 重新执行 `websculpt explore assess <name>`，确保全部通过。
-6. 建议进入 `websculpt-capture`。若用户拒绝，explore 阶段即告结束。
+若 Step 4 已识别候选（非 `"No candidate identified"`），交付时按以下流程处理：
+1. 执行 `websculpt explore assess <name>`，**预期会因 Confirmation 缺失而失败**。根据返回的错误修正其他问题（如缺少子节、内容为空、Candidate 格式错误等），但**仍不填写 Confirmation**。
+2. 确认其他项无误后，必须先将完整契约展示给用户。把命令名称、功能、参数、输出格式、前置条件等以用户语言清晰呈现，明确请求用户对契约内容的同意。
+3. 用户明确同意后，把讨论摘要和用户决策记录到 `### Confirmation`；若用户拒绝，将拒绝原因记录到 `### Confirmation` 中。
+4. 重新执行 `websculpt explore assess <name>`，确保全部通过。
+5. 建议进入 `websculpt-capture`。若用户拒绝，explore 阶段即告结束。
 
 展示契约的回复中禁止调用任何工具或执行任何 `capture` 子命令。不要自行创建 capture 工作区。
 
