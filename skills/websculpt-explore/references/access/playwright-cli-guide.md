@@ -53,6 +53,10 @@ playwright-cli list
      playwright-cli attach --cdp=chrome --session=default
      ```
 
+     > **Windows 注意**：`attach` 在该平台常表现为挂起或超时，但 CDP 连接通常已在后台成功建立。
+     > 超时后执行 `playwright-cli list` 验证。若列表中已存在 `default` 会话，即表示连接成功，
+     > 后续命令可直接使用，无需重复 `attach`。
+
   4. 确认 attach 成功：
 
      ```bash

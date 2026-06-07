@@ -53,6 +53,9 @@ Choose the corresponding operation based on output:
      playwright-cli attach --cdp=chrome --session=default
      ```
 
+     > **Windows note**: `attach` on this platform often appears to hang or time out, but the CDP connection is usually already established in the background.
+     > After a timeout, run `playwright-cli list` to verify. If the `default` session already exists in the list, the connection is successful and subsequent commands can be used directly without repeating `attach`.
+
   4. Confirm attach success:
 
      ```bash
