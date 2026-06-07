@@ -18,6 +18,8 @@ export default async function (page, params) {
 async (page, params) => unknown
 ```
 
+此签名必须与 `capture new` 生成的模板保持一致，不得改为命名导出、普通函数声明或调整参数顺序。
+
 `page` 由 WebSculpt daemon 为本次执行创建。不要关闭注入的 `page`；daemon 会统一清理。
 
 ## 2. 参数
@@ -109,6 +111,10 @@ throw error;
 1. 将 `waitUntil` 从默认的 `"load"` 改为 `"domcontentloaded"`，避免等待第三方广告/追踪脚本。
 2. 配合 `page.waitForSelector(targetSelector)` 等待目标元素稳定出现，而非等待全部资源加载完成。
 
+## 复用 Explore 验证结果
+
+若本命令经过 explore 阶段验证，编写 `command.js` 时应优先参考已验证的路径，避免凭猜测重新发明选择器、交互流程或等待策略。explore 与 capture 的浏览器连接相互独立，但页面行为规律是一致的——在 explore 阶段验证有效的逻辑，在 daemon 中通常同样有效。
+
 ## 7. 检查清单
 
 ### 代码质量
@@ -122,6 +128,8 @@ throw error;
 - [ ] 返回值可序列化。
 - [ ] 错误码明确。
 - [ ] 实现没有超出 evidence。
+- [ ] 保留模板生成的箭头函数签名和 `page` / `params` 参数顺序。
+- [ ] 已消除所有 `TODO:` 标记及占位返回值（如 `return { ok: true };`）。
 
 ### 合规约束
 
