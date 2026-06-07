@@ -13,6 +13,8 @@ WebSculpt divides this process into two stages:
 - **explore** (you): acquire information, validate paths, deliver results
 - **capture** (`websculpt-capture`): solidify validated paths into reusable commands
 
+The essence of a WebSculpt command is to convert a successfully validated path from exploration into a CLI command for quick reuse later. Commands are not limited to acquiring information; they can also perform operations. The criterion for precipitation is not "how many times the user will use it," but "whether this successful experience is worth reusing."
+
 Your core task is to solve the user's current information acquisition needs. If a reusable path is discovered during exploration, record it in `trace.md`; if not, deliver the results directly without forcing a candidate.
 
 `explore new` and `explore assess` are tools to help you structurally record the exploration process, not an extra burden.
@@ -87,11 +89,10 @@ websculpt explore assess <name>
 
 Deliver results to the user. Confirm `explore assess` has passed before delivery.
 
-Evaluate whether a precipitable path was produced. **Judge based on the structural properties of the path, not on the user's stated intent.** When the path has an identifiable target, parameterizable inputs, and a predictable output structure, it has precipitation value. If any of the following conditions are met, directly judge as no candidate:
-- The path lacks encapsulable structural characteristics: the target is not uniquely identifiable, the interaction logic cannot be parameterized, or the output is not predictable.
-- Only search snippets were verified without reading primary sources.
-- The path was not actually executed.
-- Output results are unstable.
+Evaluate whether a precipitable path was produced. What is precipitated is a **successfully executed, parameterizable experience path**. If any of the following conditions are met, directly judge as no candidate:
+- The path was not actually executed, or primary sources were not verified (not a successful experience)
+- Output results are unstable, or the source is not reproducible (experience cannot be reused)
+- The path lacks parameterizable characteristics; each execution requires completely different steps or inputs (cannot be converted into a CLI command)
 
 After exclusion, if a reusable path is found:
 1. Fill in the command contract in `## Assessment` of `trace.md` following the template comment guidance and audit rules, **but do not fill in `### Confirmation`**.
