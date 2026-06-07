@@ -87,8 +87,8 @@ websculpt explore assess <name>
 
 Deliver results to the user. Confirm `explore assess` has passed before delivery.
 
-Evaluate whether a precipitable path was produced. If any of the following conditions are met, directly judge as no candidate:
-- This was a one-time Q&A with no parameterizable path.
+Evaluate whether a precipitable path was produced. **Judge based on the structural properties of the path, not on the user's stated intent.** When the path has an identifiable target, parameterizable inputs, and a predictable output structure, it has precipitation value. If any of the following conditions are met, directly judge as no candidate:
+- The path lacks encapsulable structural characteristics: the target is not uniquely identifiable, the interaction logic cannot be parameterized, or the output is not predictable.
 - Only search snippets were verified without reading primary sources.
 - The path was not actually executed.
 - Output results are unstable.
