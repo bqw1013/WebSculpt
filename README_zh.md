@@ -41,7 +41,7 @@
 
 ```bash
 # 1. 安装 CLI 工具
-npm install -g @playwright/cli@^0.1.8 websculpt
+npm install -g @playwright/cli@0.1.12 websculpt
 
 # 2. 为 Agent 安装 Skill（包含 explore、capture、scope）
 websculpt skill install --lang zh       # 当前项目
