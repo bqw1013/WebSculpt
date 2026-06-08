@@ -37,6 +37,8 @@
 
 ## 1. 安装
 
+**环境要求**：Node.js >= 20
+
 ```bash
 # 1. 安装 CLI 工具
 npm install -g @playwright/cli@^0.1.8 websculpt

@@ -37,6 +37,8 @@
 
 ## 1. Install
 
+**Prerequisites**: Node.js >= 20
+
 ```bash
 # 1. Install CLI tool
 npm install -g @playwright/cli@^0.1.8 websculpt

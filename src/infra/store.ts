@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { AUDIT_FILE, CONFIG_FILE, LOG_FILE, USER_COMMANDS_DIR, WEBSCULPT_DIR } from "./paths.js";
 
 export interface Config {
@@ -26,6 +27,17 @@ export interface AuditEntry {
 export async function initStore(): Promise<void> {
 	await mkdir(WEBSCULPT_DIR, { recursive: true });
 	await mkdir(USER_COMMANDS_DIR, { recursive: true });
+
+	// Ensure package.json exists so that user command entry files (.js)
+	// containing ESM syntax are correctly interpreted on all supported
+	// Node.js versions (including v20 without automatic module detection).
+	const pkgPath = join(WEBSCULPT_DIR, "package.json");
+	try {
+		await readFile(pkgPath, "utf-8");
+	} catch {
+		await writeFile(pkgPath, JSON.stringify({ type: "module" }, null, 2));
+	}
+
 	try {
 		await readFile(CONFIG_FILE, "utf-8");
 	} catch {
