@@ -37,7 +37,7 @@
 
 ## 1. Install
 
-**Prerequisites**: Node.js >= 20
+**Prerequisites**: Node.js >= 22
 
 ```bash
 # 1. Install CLI tool
