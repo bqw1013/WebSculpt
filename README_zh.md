@@ -20,7 +20,7 @@
 
 ![WebSculpt 工作流程](docs/assets/flow-zh.svg)
 
-<video src="docs/assets/WebSculpt-DeepSeek-Final-zh.mp4" controls width="100%"></video>
+<video src="https://github.com/bqw1013/WebSculpt/raw/master/docs/assets/WebSculpt-DeepSeek-Final-zh.mp4" controls width="100%"></video>
 
 ---
 
