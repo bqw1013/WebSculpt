@@ -20,6 +20,10 @@
 
 ![WebSculpt Workflow](docs/assets/flow-en.svg)
 
+> Demo video (Chinese)
+
+<video src="docs/assets/WebSculpt-DeepSeek-Final-zh.mp4" controls width="100%"></video>
+
 ---
 
 ## Contents
