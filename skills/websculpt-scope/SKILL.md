@@ -1,13 +1,15 @@
 ---
 name: websculpt-scope
-description: 管理 WebSculpt 项目与可用命令之间的关联关系。当用户提到为项目添加/移除命令、查看项目命令范围、初始化或销毁 scope，以及按项目维度控制命令可见性时加载本 skill。
+description: 控制 `websculpt command list` 的可见范围。通过项目级白名单屏蔽无关命令，保持 Agent 上下文纯净。当用户提到为项目添加/移除命令、查看项目命令范围、初始化或销毁 scope，以及按项目维度控制命令可见性时加载本 skill。
 ---
 
 # WebSculpt Scope
 
 ## 定位
 
-Scope 是 WebSculpt 的项目级命令可见性机制。随着命令库积累，全局可用的扩展命令可能包含大量与当前项目无关的条目。Scope 通过在项目目录中维护白名单，控制 `command list` 和 CLI help 默认显示的内容。
+Scope 的唯一作用对象是 `websculpt command list`。它不改变命令的实际执行、不控制权限，只过滤"能看到什么"。
+
+Scope 是 WebSculpt 的项目级命令可见性机制。随着命令库积累，全局可用的扩展命令可能包含大量与当前项目无关的条目。Scope 通过在项目目录中维护白名单，控制 `command list` 默认显示的内容。
 
 ## 核心机制
 
@@ -20,7 +22,7 @@ Scope 是 WebSculpt 的项目级命令可见性机制。随着命令库积累，
 
 ### `scope init`
 
-在当前目录初始化 scope，创建 `.websculpt/scope.json`（白名单初始为空）。
+在当前目录初始化 scope，创建 `.websculpt/scope.json`（白名单初始为空，此时 `command list` 不显示任何扩展命令，需通过 `scope add` 显式添加后才可见）。
 
 ```bash
 websculpt scope init
@@ -47,7 +49,7 @@ websculpt scope add <identifier>
 `identifier` 支持两种形式：
 
 - `domain/action`：添加单个命令，如 `github/list-trending`
-- `domain`：批量添加该域下全部现有命令，如 `github`
+- `domain`：批量添加该域下**当前已安装的**全部命令，如 `github`。注意这是快照操作，后续通过 capture 新沉淀的同域命令不会自动加入，需再次 add。
 
 ### `scope remove <identifier>`
 
@@ -61,7 +63,7 @@ websculpt scope remove <identifier>
 
 ### `scope destroy`
 
-销毁当前目录的 scope，删除 `.websculpt/scope.json`。不影响祖先目录的 scope。
+销毁当前目录的 scope，删除 `.websculpt/scope.json`。销毁后，scope 向上回退到最近的祖先 `scope.json`；若祖先也无 scope，则恢复全部命令可见。不影响祖先目录的 scope。
 
 ```bash
 websculpt scope destroy
@@ -69,7 +71,7 @@ websculpt scope destroy
 
 ## 与 Capture 的关系
 
-`capture finalize` 安装新命令后，会自动将其追加到最近的 active scope 白名单（best-effort，失败不阻断安装）。因此通过 capture 沉淀的命令通常会自动进入当前项目的视野。
+`capture finalize` 安装新命令后，会自动将其追加到最近的 active scope 白名单（best-effort，失败不阻断安装）。若当前目录链上不存在任何 scope，此步骤自动跳过，此时命令本身即为全局可见。因此通过 capture 沉淀的命令通常会自动进入当前项目的视野。
 
 ## 典型场景
 

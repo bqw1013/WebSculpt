@@ -1,13 +1,15 @@
 ---
 name: websculpt-scope
-description: Manages the relationship between WebSculpt projects and available commands. Load this skill when the user mentions adding or removing commands for a project, viewing the project's command scope, initializing or destroying a scope, or controlling command visibility at the project level.
+description: Controls the visibility of `websculpt command list`. Shields irrelevant commands through a project-level whitelist to keep the Agent's context clean. Load this skill when the user mentions adding or removing commands for a project, viewing the project's command scope, initializing or destroying a scope, or controlling command visibility at the project level.
 ---
 
 # WebSculpt Scope
 
 ## Positioning
 
-Scope is WebSculpt's project-level command visibility mechanism. As the command library grows, the globally available extension commands may contain many entries irrelevant to the current project. Scope controls what `command list` and CLI help display by default through a whitelist maintained in the project directory.
+Scope's sole target is `websculpt command list`. It does not change how commands execute, does not control permissions — it only filters "what you see."
+
+Scope is WebSculpt's project-level command visibility mechanism. As the command library grows, the globally available extension commands may contain many entries irrelevant to the current project. Scope controls what `command list` displays by default through a whitelist maintained in the project directory.
 
 ## Core Mechanism
 
@@ -20,7 +22,7 @@ Scope is WebSculpt's project-level command visibility mechanism. As the command 
 
 ### `scope init`
 
-Initialize a scope in the current directory, creating `.websculpt/scope.json` (whitelist starts empty).
+Initialize a scope in the current directory, creating `.websculpt/scope.json` (whitelist starts empty; at this point `command list` shows no extension commands — they become visible only after being explicitly added via `scope add`).
 
 ```bash
 websculpt scope init
@@ -47,7 +49,7 @@ websculpt scope add <identifier>
 `identifier` supports two forms:
 
 - `domain/action`: Add a single command, e.g. `github/list-trending`
-- `domain`: Bulk-add all existing commands in that domain, e.g. `github`
+- `domain`: Bulk-add all commands **currently installed** in that domain, e.g. `github`. Note this is a snapshot operation; newly captured commands in the same domain will not be automatically included and require another `scope add`.
 
 ### `scope remove <identifier>`
 
@@ -61,7 +63,7 @@ Supports `domain/action` for precise removal, or `domain` to bulk-remove all com
 
 ### `scope destroy`
 
-Destroy the scope in the current directory, removing `.websculpt/scope.json`. Does not affect ancestor scopes.
+Destroy the scope in the current directory, removing `.websculpt/scope.json`. After destruction, scope falls back to the nearest ancestor `scope.json`; if no ancestor scope exists, reverts to showing all commands. Does not affect ancestor scopes.
 
 ```bash
 websculpt scope destroy
@@ -69,7 +71,7 @@ websculpt scope destroy
 
 ## Relationship with Capture
 
-After `capture finalize` installs a new command, it automatically appends the command to the nearest active scope whitelist (best-effort; failure does not block installation). Therefore, commands captured through the capture workflow usually enter the current project's view automatically.
+After `capture finalize` installs a new command, it automatically appends the command to the nearest active scope whitelist (best-effort; failure does not block installation). If no scope exists anywhere in the current directory chain, this step is silently skipped, as the command is globally visible anyway. Therefore, commands captured through the capture workflow usually enter the current project's view automatically.
 
 ## Typical Scenarios
 

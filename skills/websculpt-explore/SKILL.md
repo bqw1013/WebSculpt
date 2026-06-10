@@ -69,7 +69,7 @@ websculpt explore new <name> --intent "<目标描述>"
 
 ### Step 3: 执行外部探索
 
-选择工具并开始探索（参见「工具选择」）。将关键发现实时写入 `trace.md`。
+选择工具并开始探索（参见「工具选择」）。将每次工具调用的关键发现实时写入 `trace.md`，**必须包含实际获取到的结构化数据样本**（如 JSON 片段、提取的文本内容、选择器匹配结果），不能只写"尝试了 X"或"访问了 Y"。若多次尝试均未能提取到符合目标的数据，如实记录失败原因，这对后续评估同样关键。
 
 若使用浏览器自动化，必须先阅读 SKILL.md 同目录下的 `references/access/playwright-cli-guide.md`，并在 `trace.md` 的 `Protocol` 中记录已读。未记录前严禁执行 `playwright-cli`。
 
@@ -80,7 +80,7 @@ websculpt explore new <name> --intent "<目标描述>"
 - 输出结果不稳定，或来源不可重现（经验无法复用）
 - 不具备可参数化的特征，每次执行所需的步骤或输入完全不同（无法转换为 CLI 命令）
 
-排除后若发现可复用路径，在 `trace.md` 的 `## Assessment` 中填写命令契约（按模板注释的格式要求和校验规则填写），**但不要填写 `### Confirmation`**。
+排除后若发现可复用路径，在 `trace.md` 的 `## Assessment` 中填写命令契约（按模板注释的格式要求和校验规则填写），**但不要填写 `### Confirmation`**。注意：可复用路径必须在 `Tool Trace` 中有对应的成功数据记录作为依据，没有数据样本凭空臆测的契约视为无效。
 
 若判定为无候选，在 Candidate 中标记 `"No candidate identified"`。
 

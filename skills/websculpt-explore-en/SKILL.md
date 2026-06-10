@@ -69,7 +69,7 @@ Write the library check conclusion into `trace.md`'s `Library Check` section.
 
 ### Step 3: Execute External Exploration
 
-Select tools and begin exploration (see "Tool Selection"). Record key findings to `trace.md` in real time.
+Select tools and begin exploration (see "Tool Selection"). Record key findings from each tool invocation to `trace.md` in real time, **and must include actual structured data samples obtained** (e.g., JSON fragments, extracted text content, selector match results). Do not just write "tried X" or "visited Y". If multiple attempts fail to extract data matching the target, record the failure reasons truthfully — this is equally critical for subsequent evaluation.
 
 If using browser automation, you must first read `references/access/playwright-cli-guide.md` in the same directory as SKILL.md, and record the reading in `trace.md`'s `Protocol`. Do not execute `playwright-cli` before recording.
 
@@ -80,7 +80,7 @@ Evaluate whether a precipitable path was produced. What is precipitated is a **s
 - Output results are unstable, or the source is not reproducible (experience cannot be reused)
 - The path lacks parameterizable characteristics; each execution requires completely different steps or inputs (cannot be converted into a CLI command)
 
-After exclusion, if a reusable path is found, fill in the command contract in `## Assessment` of `trace.md` following the template comment guidance and audit rules, **but do not fill in `### Confirmation`**.
+After exclusion, if a reusable path is found, fill in the command contract in `## Assessment` of `trace.md` following the template comment guidance and audit rules, **but do not fill in `### Confirmation`**. Note: a reusable path must have a corresponding successful data record in `Tool Trace` as evidence; a contract fabricated without data samples is considered invalid.
 
 If judged as no candidate, mark `"No candidate identified"` in Candidate.
 
