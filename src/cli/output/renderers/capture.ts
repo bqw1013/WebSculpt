@@ -1,5 +1,5 @@
 import { printKeyValue, printWarnings } from "../formatters.js";
-import type { CaptureNewResult, CaptureStatusResult, MetaCommandResult } from "../types.js";
+import type { CaptureImportResult, CaptureNewResult, CaptureStatusResult, MetaCommandResult } from "../types.js";
 
 export function isCaptureNewResult(r: MetaCommandResult): r is CaptureNewResult {
 	return r.success && "capture" in r && "commandLibrarySnapshot" in r;
@@ -21,6 +21,26 @@ export function renderCaptureNewResult(result: CaptureNewResult): void {
 	if (result.commandLibrarySnapshot.conflictSource !== undefined) {
 		printKeyValue("  conflict source:", result.commandLibrarySnapshot.conflictSource);
 	}
+	if (result.warnings && result.warnings.length > 0) {
+		console.log("");
+		printWarnings(result.warnings);
+	}
+	console.log("");
+	console.log(`Next: ${result.next}`);
+}
+
+export function isCaptureImportResult(r: MetaCommandResult): r is CaptureImportResult {
+	return r.success && "capture" in r && "importedFrom" in r;
+}
+
+export function renderCaptureImportResult(result: CaptureImportResult): void {
+	console.log(`Capture workspace imported at ${result.capture.path}`);
+	console.log("");
+	printKeyValue("name:", result.capture.name);
+	printKeyValue("domain:", result.capture.domain);
+	printKeyValue("action:", result.capture.action);
+	printKeyValue("runtime:", result.capture.runtime);
+	printKeyValue("imported from:", result.importedFrom);
 	if (result.warnings && result.warnings.length > 0) {
 		console.log("");
 		printWarnings(result.warnings);

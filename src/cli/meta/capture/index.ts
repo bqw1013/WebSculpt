@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { getFormat } from "../shared.js";
 import { registerCaptureFinalize } from "./finalize.js";
+import { registerCaptureImport } from "./import.js";
 import { registerCaptureNew } from "./new.js";
 import { registerCaptureStatus } from "./status.js";
 import { registerCaptureValidate } from "./validate.js";
@@ -11,6 +12,7 @@ export function registerCaptureMeta(program: Command): void {
 	const group = program.command("capture").description("Manage capture workspaces");
 
 	registerCaptureNew(group, format);
+	registerCaptureImport(group, format);
 	registerCaptureStatus(group, format);
 	registerCaptureValidate(group, format);
 	registerCaptureFinalize(group, format);

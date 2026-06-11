@@ -1,6 +1,7 @@
 export { formatRow, formatUptime, printJson, printKeyValue, printWarnings } from "./output/formatters.js";
 export { renderOutput } from "./output/index.js";
 export type {
+	CaptureImportResult,
 	CaptureNewResult,
 	CaptureStatusResult,
 	CommandCreateResult,

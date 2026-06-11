@@ -80,6 +80,21 @@ export interface CaptureNewResult {
 	warnings?: ValidationDetail[];
 }
 
+/** Result shape for a successful capture import. */
+export interface CaptureImportResult {
+	success: true;
+	capture: {
+		name: string;
+		path: string;
+		domain: string;
+		action: string;
+		runtime: string;
+	};
+	importedFrom: string;
+	next: string;
+	warnings?: ValidationDetail[];
+}
+
 /** Result shape for a successful explore workspace creation. */
 export interface ExploreNewResult {
 	success: true;
@@ -302,6 +317,7 @@ export type MetaCommandResult =
 	| ValidationErrorResult
 	| CommandDraftResult
 	| CaptureNewResult
+	| CaptureImportResult
 	| CaptureStatusResult
 	| CommandShowResult
 	| ExploreNewResult

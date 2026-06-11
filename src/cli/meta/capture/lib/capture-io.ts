@@ -23,7 +23,7 @@ export interface CaptureYaml {
 	schema: "command-capture";
 	commandLibrarySnapshot: CommandLibrarySnapshot;
 	repairOf: null;
-	sourceCommand: null;
+	sourceCommand: string | null;
 	supersedes: null;
 }
 
@@ -180,7 +180,7 @@ function isCaptureYaml(value: unknown): value is CaptureYaml {
 		value.schema === "command-capture" &&
 		isCommandLibrarySnapshot(value.commandLibrarySnapshot) &&
 		value.repairOf === null &&
-		value.sourceCommand === null &&
+		(value.sourceCommand === null || typeof value.sourceCommand === "string") &&
 		value.supersedes === null
 	);
 }
