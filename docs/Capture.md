@@ -16,16 +16,17 @@ Capture 是在"探索路径"与"正式命令资产"之间引入的一个**轻量
 - **状态机驱动**：Agent 不需要理解完整流程，只需循环执行 `capture status` 并按返回的 `next.action` 推进。
 - **硬门槛安装**：只有证据、代码、文档、校验全部通过后，才能通过 `capture finalize` 进入命令库。
 
-### 1.2 两条创建路径
+### 1.2 创建路径
 
-WebSculpt 支持两种创建扩展命令的方式，最终安装到同一位置（`~/.websculpt/commands/<domain>/<action>/`），命令包结构也完全一致：
+WebSculpt 支持三种创建或重建扩展命令的方式，最终安装到同一位置（`~/.websculpt/commands/<domain>/<action>/`），命令包结构也完全一致：
 
 | 路径 | 命令 | 适用场景 |
 |------|------|----------|
 | **直接创建** | `command draft / validate / create` | 人工编写、脚本化、已知明确需求 |
-| **沉淀工作流** | `capture new / status / validate / finalize` | Agent 驱动，要求记录证据并通过状态机推进 |
+| **沉淀工作流** | `capture new / status / validate / finalize` | Agent 驱动，从零开始沉淀新命令 |
+| **反向导入** | `capture import / status / validate / finalize` | 修改或维护已有命令，保留原始证据和上下文 |
 
-Capture 路径底层复用了 `command validate` 和 `command create` 的能力，额外增加了 evidence 审计和 draft 指纹防篡改。
+Capture 路径（含 `new` 和 `import`）底层复用了 `command validate` 和 `command create` 的能力，额外增加了 evidence 审计和 draft 指纹防篡改。
 
 ### 1.3 与 Explore 的关系
 
@@ -189,5 +190,6 @@ Evidence 是对 `evidence.md` 的三层 Markdown 审核。
 ## 6. 边界与限制
 
 - `capture new` 时若 builtin 命令已存在，发出 `BUILTIN_OVERRIDE` 警告但允许继续；若 user 命令已存在，默认阻断，可用 `--force` 覆盖。
+- `capture import` 要求被导入命令必须包含 `evidence.md`，否则报错 `EVIDENCE_MISSING`。没有证据的命令无法进入状态机，需通过 `capture new` 从头创建。
 - `shell` 和 `python` 运行时的命令包生命周期（draft / validate / create）已支持，但 CLI 执行引擎尚未接入，创建时会附带 `RUNTIME_NOT_EXECUTABLE` 警告。
 - 工作区保留在项目目录的 `.websculpt/captures/` 中，不是用户目录；Agent 应在用户拒绝 finalize 后自行决定是否清理。

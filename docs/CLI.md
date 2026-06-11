@@ -369,6 +369,7 @@ websculpt explore assess <name>
 
 ```bash
 websculpt capture new <name> --domain <domain> --action <action> --runtime <runtime> [--force]
+websculpt capture import <domain> <action> [--name <name>]
 websculpt capture status <name>
 websculpt capture validate <name>
 websculpt capture finalize <name> [--force]
@@ -377,6 +378,7 @@ websculpt capture finalize <name> [--force]
 | 子命令 | 作用 |
 |--------|------|
 | `new` | 创建工作区，生成 `capture.yaml`、`evidence.md` 和 `draft/` 骨架 |
+| `import` | 将已安装的命令反向导入为 capture 工作区，用于修改或维护已有命令 |
 | `status` | 查询工作区状态，返回 6 个 artifact 的完成度、`readyToFinalize` 和 `next.action` |
 | `validate` | 预检 draft 合规性，通过后写入带指纹的 `validation.json` |
 | `finalize` | 安装到命令库；仅在 `status` 返回 `readyToFinalize: true` 时才可执行 |
@@ -388,7 +390,14 @@ websculpt capture finalize <name> [--force]
 | `--domain <domain>` | `new` 必填，目标命令 domain |
 | `--action <action>` | `new` 必填，目标命令 action |
 | `--runtime <runtime>` | `new` 必填，`node` / `browser` / `shell` / `python` |
+| `--name <name>` | `import` 可选，自定义工作区名称（默认 `<domain>-<action>-<YYMMDD>`，碰撞时自动加 `-1`、`-2` 后缀） |
 | `--force` | `new` 覆盖已存在工作区；`finalize` 覆盖已有 user 命令 |
+
+**关键行为**
+
+- `import` 查找优先级：User > Builtin；被导入命令必须包含 `evidence.md`，否则报错 `EVIDENCE_MISSING`
+- `import` 成功后工作区所有 artifact 预置为 `done`，`capture status` 直接返回 `nextAction: finalize`
+- 修改 imported 工作区的 draft 文件后，指纹失效，`capture status` 会让 `validation` 回退到 `blocked`，需重新执行 `validate → finalize --force`
 
 详细的状态机与校验逻辑见 [`Capture.md`](./Capture.md)。
 
@@ -623,6 +632,22 @@ websculpt capture status mysite-fetch   # → fill-command
 # 3. 校验并安装
 websculpt capture validate mysite-fetch
 websculpt capture finalize mysite-fetch
+```
+
+**路径 C：反向导入（`capture import`）**
+
+适合修改或维护已有命令。从命令库反向重建 capture 工作区，保留原始 `evidence.md`，draft 文件预填充为当前安装版本。
+
+```bash
+# 1. 反向导入
+websculpt capture import mysite fetch --name mysite-repair
+
+# 2. 修改 draft/ 文件...
+
+# 3. 校验并安装（修改后需重新校验）
+websculpt capture status mysite-repair    # → validate（如果 draft 被修改过）
+websculpt capture validate mysite-repair
+websculpt capture finalize mysite-repair --force
 ```
 
 ### 5.4 调用与卸载

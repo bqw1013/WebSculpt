@@ -16,16 +16,17 @@ Its core responsibilities:
 - **State machine driven**: The Agent does not need to understand the full workflow; it only needs to loop executing `capture status` and advance according to the returned `next.action`.
 - **Hard gate installation**: Only after evidence, code, documentation, and validation all pass can `capture finalize` promote the asset into the command library.
 
-### 1.2 Two Creation Paths
+### 1.2 Creation Paths
 
-WebSculpt supports two ways to create extension commands. Both install to the same location (`~/.websculpt/commands/<domain>/<action>/`) with an identical command package structure:
+WebSculpt supports three ways to create or reconstruct extension commands. All install to the same location (`~/.websculpt/commands/<domain>/<action>/`) with an identical command package structure:
 
 | Path | Command | Use Case |
 |------|---------|----------|
 | **Direct creation** | `command draft / validate / create` | Manual authoring, scripting, well-defined requirements |
-| **Capture workflow** | `capture new / status / validate / finalize` | Agent-driven, requires recording evidence and advancing via state machine |
+| **Capture workflow** | `capture new / status / validate / finalize` | Agent-driven, starting from scratch to capture a new command |
+| **Reverse import** | `capture import / status / validate / finalize` | Modify or maintain an existing command, preserving original evidence and context |
 
-The Capture path reuses the `command validate` and `command create` capabilities under the hood, with additional evidence auditing and draft fingerprint tamper resistance.
+The Capture path (including both `new` and `import`) reuses the `command validate` and `command create` capabilities under the hood, with additional evidence auditing and draft fingerprint tamper resistance.
 
 ### 1.3 Relationship with Explore
 
@@ -189,5 +190,6 @@ Additionally, if an active scope exists in the current working directory or any 
 ## 6. Boundaries and Limitations
 
 - If a builtin command already exists at `capture new`, a `BUILTIN_OVERRIDE` warning is issued but execution is allowed. If a user command already exists, it is blocked by default and can be overridden with `--force`.
+- `capture import` requires the imported command to contain `evidence.md`; otherwise returns error `EVIDENCE_MISSING`. Commands without evidence cannot enter the state machine and must be created from scratch via `capture new`.
 - The command package lifecycle for `shell` and `python` runtimes (draft / validate / create) is already supported, but the CLI execution engine has not yet been integrated. A `RUNTIME_NOT_EXECUTABLE` warning is attached at creation time.
 - The workspace is retained in `.websculpt/captures/` under the project directory, not the user home directory. The Agent should decide on its own whether to clean up after the user rejects finalize.

@@ -369,6 +369,7 @@ Manage the command capture workspace, converting verified information-retrieval 
 
 ```bash
 websculpt capture new <name> --domain <domain> --action <action> --runtime <runtime> [--force]
+websculpt capture import <domain> <action> [--name <name>]
 websculpt capture status <name>
 websculpt capture validate <name>
 websculpt capture finalize <name> [--force]
@@ -377,6 +378,7 @@ websculpt capture finalize <name> [--force]
 | Subcommand | Purpose |
 |--------|------|
 | `new` | Create workspace, generate `capture.yaml`, `evidence.md`, and `draft/` skeleton |
+| `import` | Reverse-import an installed command into a capture workspace for modification or maintenance |
 | `status` | Query workspace status, returning completion of 6 artifacts, `readyToFinalize`, and `next.action` |
 | `validate` | Pre-flight check draft compliance; writes `validation.json` with fingerprint on success |
 | `finalize` | Install into the command library; only executable when `status` returns `readyToFinalize: true` |
@@ -388,7 +390,14 @@ websculpt capture finalize <name> [--force]
 | `--domain <domain>` | Required for `new`, target command domain |
 | `--action <action>` | Required for `new`, target command action |
 | `--runtime <runtime>` | Required for `new`, `node` / `browser` / `shell` / `python` |
+| `--name <name>` | Optional for `import`, custom workspace name (defaults to `<domain>-<action>-<YYMMDD>`, with automatic `-1`, `-2` suffix on collision) |
 | `--force` | For `new`, overwrite existing workspace; for `finalize`, overwrite existing user command |
+
+**Key behaviors**
+
+- `import` lookup priority: User > Builtin; the imported command must contain `evidence.md`, otherwise returns error `EVIDENCE_MISSING`
+- On successful `import`, all artifacts are pre-set to `done`; `capture status` returns `nextAction: finalize` immediately
+- After modifying draft files in an imported workspace, the fingerprint becomes stale and `validation` regresses to `blocked`; re-run `validate → finalize --force`
 
 For detailed state machine and validation logic, see [`Capture.md`](./Capture.md).
 
@@ -623,6 +632,22 @@ websculpt capture status mysite-fetch   # → fill-command
 # 3. Validate and install
 websculpt capture validate mysite-fetch
 websculpt capture finalize mysite-fetch
+```
+
+**Path C: Reverse import (`capture import`)**
+
+Suitable for modifying or maintaining existing commands. Reconstructs a capture workspace from the command library, preserving the original `evidence.md` with draft files pre-filled from the installed version.
+
+```bash
+# 1. Reverse import
+websculpt capture import mysite fetch --name mysite-repair
+
+# 2. Modify draft/ files...
+
+# 3. Validate and install (re-validation required after modification)
+websculpt capture status mysite-repair    # → validate (if draft was modified)
+websculpt capture validate mysite-repair
+websculpt capture finalize mysite-repair --force
 ```
 
 ### 5.4 Invoke and uninstall

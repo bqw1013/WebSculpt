@@ -194,14 +194,15 @@ Builtin commands physically reside in `src/cli/builtin/<domain>/<action>/`, with
 
 ### 4.3 Creation Paths
 
-Extension commands can be created through two paths:
+Extension commands can be created or reconstructed through three paths:
 
 | Path | Command Series | Draft Location | Characteristics |
 |------|---------------|----------------|-----------------|
 | **A: Direct creation** | `command draft / validate / create` | `.websculpt-drafts/` | Manual authoring or scripted scenarios; full process control |
-| **B: Capture workflow** | `capture new / status / validate / finalize` | `.websculpt/captures/<name>/draft/` | Agent-driven; additionally requires `evidence.md` and state-machine progression; internally reuses `command` validation and installation capabilities, adding evidence audit and draft fingerprint anti-tampering |
+| **B: Capture workflow** | `capture new / status / validate / finalize` | `.websculpt/captures/<name>/draft/` | Agent-driven, starting from scratch to capture a new command |
+| **C: Reverse import** | `capture import / status / validate / finalize` | `.websculpt/captures/<name>/draft/` | Modify or maintain an existing command; copies draft and `evidence.md` from the command library, synthesizing a fingerprint so the workspace starts with all artifacts `done` |
 
-Path B internally calls the same installation logic as path A during finalize, but with additional pre-gates.
+Paths B and C internally call the same installation logic as path A during finalize, but with additional pre-gates such as evidence auditing and draft fingerprint anti-tampering.
 
 ### 4.4 Layered Validation
 
