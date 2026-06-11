@@ -40,10 +40,14 @@ export async function scanCommands(baseDir: string, source: "user" | "builtin"):
 	return results;
 }
 
-/** Scans both user and builtin directories and returns resolved commands. */
+/** Scans both user and builtin directories and returns resolved commands sorted by domain then action. */
 export async function scanAllCommands(): Promise<ResolvedCommand[]> {
 	const userCommands = await scanCommands(USER_COMMANDS_DIR, "user");
 	const builtinDir = getBuiltinCommandsDir();
 	const builtinCommands = await scanCommands(builtinDir, "builtin");
-	return [...userCommands, ...builtinCommands];
+	return [...userCommands, ...builtinCommands].sort((a, b) => {
+		const domainOrder = a.manifest.domain.localeCompare(b.manifest.domain);
+		if (domainOrder !== 0) return domainOrder;
+		return a.manifest.action.localeCompare(b.manifest.action);
+	});
 }

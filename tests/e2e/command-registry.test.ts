@@ -114,6 +114,61 @@ describe("command registry", () => {
 			expect(listResult.stdout).toContain("notes");
 			expect(listResult.stdout).toContain("save");
 		});
+
+		it("returns commands sorted by domain then action alphabetically", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const alphaPackage = {
+				code: "export default async function() { return { ok: true }; }\n",
+				manifest: {
+					action: "alpha",
+					description: "Alpha command",
+					domain: "aaa",
+					id: "aaa-alpha",
+					parameters: [],
+					runtime: "node",
+					requiresBrowser: false,
+				},
+			};
+			const zuluPackage = {
+				code: "export default async function() { return { ok: true }; }\n",
+				manifest: {
+					action: "zulu",
+					description: "Zulu command",
+					domain: "zzz",
+					id: "zzz-zulu",
+					parameters: [],
+					runtime: "node",
+					requiresBrowser: false,
+				},
+			};
+
+			await registerUserCommand(homeDir, "aaa-alpha", alphaPackage);
+			await registerUserCommand(homeDir, "zzz-zulu", zuluPackage);
+
+			const listResult = await runSourceCli(["command", "list", "--format", "json"], homeDir);
+			const payload = parseJsonOutput<{
+				success: boolean;
+				commands: Array<{ domain: string; action: string }>;
+			}>(listResult.stdout);
+
+			expect(listResult.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+
+			const keys = payload.commands.map((c) => `${c.domain}/${c.action}`);
+			const sortedKeys = [...keys].sort((a, b) => {
+				const da = a.split("/")[0];
+				const aa = a.split("/")[1];
+				const db = b.split("/")[0];
+				const ab = b.split("/")[1];
+				const domainOrder = da.localeCompare(db);
+				return domainOrder !== 0 ? domainOrder : aa.localeCompare(ab);
+			});
+			expect(keys).toEqual(sortedKeys);
+			expect(keys[0]).toMatch(/^aaa\//);
+			expect(keys[keys.length - 1]).toMatch(/^zzz\//);
+		});
 	});
 
 	describe("user command execution", () => {
