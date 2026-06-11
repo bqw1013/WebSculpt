@@ -156,7 +156,7 @@ function getBuiltInSkillNames(): string[] {
 			// fall through
 		}
 	}
-	return ["websculpt-explore", "websculpt-capture", "websculpt-scope"];
+	return ["websculpt-explore", "websculpt-capture", "websculpt-scope", "websculpt-maintain"];
 }
 
 /** Installs the WebSculpt skill to agent directories. */

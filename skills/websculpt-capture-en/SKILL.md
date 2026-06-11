@@ -13,7 +13,7 @@ You bear **full responsibility for command design quality, implementation correc
 
 **Exploration prerequisite**: capture must be built on a verified path. If the current path has not been verified during the explore phase (no `trace.md` audit completion record), you must first load `websculpt-explore` to complete exploration, fill in `trace.md`, execute `explore assess <name>` to pass the audit, then set `exploreVerified` to `true` before entering capture.
 
-Post-delivery failures caused by target page or API changes are handled by `websculpt-repair` and are outside the scope of capture.
+Post-delivery failures caused by target page or API changes are handled by `websculpt-maintain` and are outside the scope of capture.
 
 ## CaptureSession (Mandatory)
 

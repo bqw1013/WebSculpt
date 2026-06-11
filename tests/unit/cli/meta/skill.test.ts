@@ -256,9 +256,11 @@ describe("handleSkillUninstall", () => {
 				{ agent: "codex", skill: "websculpt-explore", status: "not_found" },
 				{ agent: "codex", skill: "websculpt-capture", status: "not_found" },
 				{ agent: "codex", skill: "websculpt-scope", status: "not_found" },
+				{ agent: "codex", skill: "websculpt-maintain", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-explore", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-capture", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-scope", status: "not_found" },
+				{ agent: "agents", skill: "websculpt-maintain", status: "not_found" },
 			],
 		});
 	});
@@ -271,12 +273,15 @@ describe("handleSkillUninstall", () => {
 				{ agent: "claude", skill: "websculpt-explore", status: "not_found" },
 				{ agent: "claude", skill: "websculpt-capture", status: "not_found" },
 				{ agent: "claude", skill: "websculpt-scope", status: "not_found" },
+				{ agent: "claude", skill: "websculpt-maintain", status: "not_found" },
 				{ agent: "codex", skill: "websculpt-explore", status: "not_found" },
 				{ agent: "codex", skill: "websculpt-capture", status: "not_found" },
 				{ agent: "codex", skill: "websculpt-scope", status: "not_found" },
+				{ agent: "codex", skill: "websculpt-maintain", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-explore", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-capture", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-scope", status: "not_found" },
+				{ agent: "agents", skill: "websculpt-maintain", status: "not_found" },
 			],
 		});
 	});
@@ -323,14 +328,17 @@ describe("handleSkillStatus", () => {
 				"  websculpt-explore      installed  local",
 				"  websculpt-capture      not installed",
 				"  websculpt-scope        not installed",
+				"  websculpt-maintain     not installed",
 				"codex:",
 				"  websculpt-explore      not installed",
 				"  websculpt-capture      installed  global",
 				"  websculpt-scope        not installed",
+				"  websculpt-maintain     not installed",
 				"agents:",
 				"  websculpt-explore      not installed",
 				"  websculpt-capture      not installed",
 				"  websculpt-scope        not installed",
+				"  websculpt-maintain     not installed",
 			],
 		});
 	});
