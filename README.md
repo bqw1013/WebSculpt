@@ -45,7 +45,7 @@
 
 ```bash
 # 1. Install CLI tool
-npm install -g @playwright/cli@0.1.12 websculpt
+npm install -g @playwright/cli@0.1.13 websculpt
 
 # 2. Install Skill for Agent (includes explore, capture, scope)
 websculpt skill install --lang en       # Current project
