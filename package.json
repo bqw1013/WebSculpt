@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "websculpt": "./dist/cli/index.js"
+    "websculpt": "dist/cli/index.js"
   },
   "files": [
     "dist",
