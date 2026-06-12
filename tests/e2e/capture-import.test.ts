@@ -78,6 +78,15 @@ describe("capture import", () => {
 		expect(statusPayload.artifacts?.validation.status).toBe("done");
 		expect(statusPayload.readyToFinalize).toBe(true);
 		expect(statusPayload.next?.action).toBe("finalize");
+
+		// Verify sourceType and backup/
+		const captureYaml = parse(await readFile(join(workspacePath, "capture.yaml"), "utf8")) as {
+			sourceType?: string;
+		};
+		expect(captureYaml.sourceType).toBe("builtin");
+		await expect(access(join(workspacePath, "backup"), constants.F_OK)).resolves.toBeUndefined();
+		await expect(access(join(workspacePath, "backup", "manifest.json"), constants.F_OK)).resolves.toBeUndefined();
+		await expect(access(join(workspacePath, "backup", "command.js"), constants.F_OK)).resolves.toBeUndefined();
 	});
 
 	it("imports a user command with sourceCommand and user precedence over builtin", async () => {
@@ -137,11 +146,19 @@ describe("capture import", () => {
 		const commandJs = await readFile(join(workspacePath, "draft", "command.js"), "utf8");
 		expect(commandJs).toContain("user: true");
 
-		// Verify capture.yaml sourceCommand
+		// Verify capture.yaml sourceCommand and sourceType
 		const captureYaml = parse(await readFile(join(workspacePath, "capture.yaml"), "utf8")) as {
 			sourceCommand: string | null;
+			sourceType?: string;
 		};
 		expect(captureYaml.sourceCommand).toBe("zhihu/get-hot");
+		expect(captureYaml.sourceType).toBe("user");
+
+		// Verify backup/ exists and contains the user command's files
+		await expect(access(join(workspacePath, "backup"), constants.F_OK)).resolves.toBeUndefined();
+		await expect(access(join(workspacePath, "backup", "manifest.json"), constants.F_OK)).resolves.toBeUndefined();
+		await expect(access(join(workspacePath, "backup", "command.js"), constants.F_OK)).resolves.toBeUndefined();
+		await expect(access(join(workspacePath, "backup", "evidence.md"), constants.F_OK)).resolves.toBeUndefined();
 	});
 
 	it("resolves name collisions with incremental suffix", async () => {

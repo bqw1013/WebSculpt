@@ -1,5 +1,11 @@
 import { printKeyValue, printWarnings } from "../formatters.js";
-import type { CaptureImportResult, CaptureNewResult, CaptureStatusResult, MetaCommandResult } from "../types.js";
+import type {
+	CaptureImportResult,
+	CaptureNewResult,
+	CaptureRestoreResult,
+	CaptureStatusResult,
+	MetaCommandResult,
+} from "../types.js";
 
 export function isCaptureNewResult(r: MetaCommandResult): r is CaptureNewResult {
 	return r.success && "capture" in r && "commandLibrarySnapshot" in r;
@@ -117,4 +123,17 @@ export function renderCaptureStatusResult(result: CaptureStatusResult): void {
 		console.log("");
 		printWarnings(result.warnings);
 	}
+}
+
+export function isCaptureRestoreResult(r: MetaCommandResult): r is CaptureRestoreResult {
+	return r.success && "sourceType" in r && "next" in r && !("capture" in r) && !("artifacts" in r);
+}
+
+export function renderCaptureRestoreResult(result: CaptureRestoreResult): void {
+	console.log(`Command restored: ${result.command}`);
+	console.log("");
+	printKeyValue("path:", result.path);
+	printKeyValue("source type:", result.sourceType);
+	console.log("");
+	console.log(`Next: ${result.next}`);
 }

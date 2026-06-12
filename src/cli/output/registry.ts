@@ -20,9 +20,11 @@ function register<T extends MetaCommandResult>(
 import {
 	isCaptureImportResult,
 	isCaptureNewResult,
+	isCaptureRestoreResult,
 	isCaptureStatusResult,
 	renderCaptureImportResult,
 	renderCaptureNewResult,
+	renderCaptureRestoreResult,
 	renderCaptureStatusResult,
 } from "./renderers/capture.js";
 import {
@@ -84,6 +86,7 @@ export const renderers: AnyRenderer[] = [
 	register(isExploreAssessResult, renderExploreAssessResult),
 	register(isCaptureNewResult, renderCaptureNewResult),
 	register(isCaptureImportResult, renderCaptureImportResult),
+	register(isCaptureRestoreResult, renderCaptureRestoreResult),
 	register(isCaptureStatusResult, renderCaptureStatusResult),
 	register(isCommandCreateResult, renderCreateResult),
 	register(isCommandListResult, renderListResult),

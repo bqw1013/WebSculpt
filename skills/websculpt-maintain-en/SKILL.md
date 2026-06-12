@@ -65,6 +65,7 @@ websculpt <domain> <action> [parameter combinations]
 ```
 - **Tests pass**: deliver the maintenance result to the user (summary of changes and verification status).
 - **Tests fail**: enter the repair loop (analyze error -> modify files again -> validate -> `finalize --force` again -> retest). If repair attempts still fail after 3 tries, circuit-break and request user intervention.
+- **Rollback**: if the repair cannot be salvaged, use `websculpt capture restore <workspace-name>` to roll the installed command back to the snapshot taken at `capture import` time. For user commands, restore overwrites the installed command directory with the backup; for builtin commands, restore removes the user override so the builtin version takes effect again.
 
 ## Hard Rules
 

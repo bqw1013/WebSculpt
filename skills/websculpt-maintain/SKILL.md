@@ -59,6 +59,7 @@ websculpt <domain> <action> [参数组合]
 ```
 - **测试通过**：向用户交付维护结果（摘要说明修改点及验证情况）。
 - **测试失败**：进入修复循环（分析报错 -> 再次修改文件 -> validate -> 再次 `finalize --force` -> 重新测试）。若修复尝试达 3 次仍失败，熔断并请求用户介入。
+- **回滚**：若修复无法挽救，可使用 `websculpt capture restore <workspace-name>` 将已安装的命令回滚到 `capture import` 时备份的快照版本。对于用户命令，restore 会用备份覆盖已安装的命令目录；对于内置命令，restore 会删除用户覆盖使内置版本重新生效。
 
 ## 关键红线
 

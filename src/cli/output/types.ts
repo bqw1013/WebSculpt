@@ -80,6 +80,15 @@ export interface CaptureNewResult {
 	warnings?: ValidationDetail[];
 }
 
+/** Result shape for a successful capture restore. */
+export interface CaptureRestoreResult {
+	success: true;
+	command: string;
+	path: string;
+	sourceType: "user" | "builtin";
+	next: string;
+}
+
 /** Result shape for a successful capture import. */
 export interface CaptureImportResult {
 	success: true;
@@ -318,6 +327,7 @@ export type MetaCommandResult =
 	| CommandDraftResult
 	| CaptureNewResult
 	| CaptureImportResult
+	| CaptureRestoreResult
 	| CaptureStatusResult
 	| CommandShowResult
 	| ExploreNewResult

@@ -24,6 +24,10 @@ export async function scanCommands(baseDir: string, source: "user" | "builtin"):
 					await access(manifestPath);
 					const raw = await readFile(manifestPath, "utf-8");
 					const manifest = JSON.parse(raw) as CommandManifest;
+					// Skip manifests that lack required identity fields
+					if (typeof manifest.domain !== "string" || typeof manifest.action !== "string") {
+						continue;
+					}
 					const runtime = normalizeRuntime(manifest.runtime);
 					const entryFile = resolveEntryFile(runtime);
 					const commandPath = join(actionPath, entryFile);

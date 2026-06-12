@@ -43,6 +43,7 @@ tmp/
 .websculpt-drafts/
 .websculpt-captures/
 .websculpt-explores/
+.websculpt/
 
 # Process / seed files
 *.pid

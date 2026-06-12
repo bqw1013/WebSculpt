@@ -1,4 +1,4 @@
-import { access, constants, copyFile, mkdir, writeFile } from "node:fs/promises";
+import { access, constants, copyFile, cp, mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { Command } from "commander";
 import { scanAllCommands } from "../../engine/command-discovery/scanner.js";
@@ -153,6 +153,11 @@ export async function handleCaptureImport(
 		// Copy evidence.md to workspace root
 		await copyFile(evidencePath, join(workspacePath, "evidence.md"));
 
+		// Record source type and create backup snapshot
+		const sourceType: "user" | "builtin" = command.source as "user" | "builtin";
+		const backupDir = join(workspacePath, "backup");
+		await cp(commandDir, backupDir, { recursive: true });
+
 		// Generate capture.yaml
 		const commandLibrarySnapshot = await scanCommandLibrarySnapshot(domain, action);
 		const metadata: CaptureYaml = {
@@ -165,6 +170,7 @@ export async function handleCaptureImport(
 			commandLibrarySnapshot,
 			repairOf: null,
 			sourceCommand: `${domain}/${action}`,
+			sourceType,
 			supersedes: null,
 		};
 		await writeCaptureYaml(join(workspacePath, "capture.yaml"), metadata);

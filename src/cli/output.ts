@@ -3,6 +3,7 @@ export { renderOutput } from "./output/index.js";
 export type {
 	CaptureImportResult,
 	CaptureNewResult,
+	CaptureRestoreResult,
 	CaptureStatusResult,
 	CommandCreateResult,
 	CommandDraftResult,

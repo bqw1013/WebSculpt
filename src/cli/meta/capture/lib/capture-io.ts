@@ -24,6 +24,8 @@ export interface CaptureYaml {
 	commandLibrarySnapshot: CommandLibrarySnapshot;
 	repairOf: null;
 	sourceCommand: string | null;
+	/** Set by `capture import` to record where the command was resolved from. */
+	sourceType?: "user" | "builtin";
 	supersedes: null;
 }
 
@@ -171,6 +173,7 @@ function isValidationRecord(value: unknown): value is ValidationRecord {
 
 function isCaptureYaml(value: unknown): value is CaptureYaml {
 	if (!isRecord(value)) return false;
+	const sourceType = value.sourceType;
 	return (
 		typeof value.name === "string" &&
 		typeof value.domain === "string" &&
@@ -181,6 +184,7 @@ function isCaptureYaml(value: unknown): value is CaptureYaml {
 		isCommandLibrarySnapshot(value.commandLibrarySnapshot) &&
 		value.repairOf === null &&
 		(value.sourceCommand === null || typeof value.sourceCommand === "string") &&
+		(sourceType === undefined || sourceType === "user" || sourceType === "builtin") &&
 		value.supersedes === null
 	);
 }
