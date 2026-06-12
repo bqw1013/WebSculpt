@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-12
+
 ### Changed
 
 - **Breaking**: Renamed the browser automation runtime identifier from `playwright-cli` to `browser` across the entire framework. The `playwright-cli` shell binary and `@playwright/cli` npm package names remain unchanged.
