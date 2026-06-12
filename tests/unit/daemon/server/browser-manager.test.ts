@@ -60,9 +60,11 @@ describe("withBrowser stale connection detection", () => {
 		await closeBrowser();
 	});
 
-	it("retries on TargetClosedError", async () => {
+	it("retries on TargetClosedError when the browser connection is dead", async () => {
 		const browser1 = mockBrowser();
 		const browser2 = mockBrowser();
+		let browser1Connected = true;
+		vi.mocked(browser1.isConnected).mockImplementation(() => browser1Connected);
 
 		let callCount = 0;
 		vi.mocked(chromium.connectOverCDP).mockImplementation(async () => {
@@ -77,7 +79,10 @@ describe("withBrowser stale connection detection", () => {
 		let fnCallCount = 0;
 		const result = await withBrowser(async () => {
 			fnCallCount++;
-			if (fnCallCount === 1) throw error;
+			if (fnCallCount === 1) {
+				browser1Connected = false;
+				throw error;
+			}
 			return "success";
 		});
 
@@ -85,9 +90,27 @@ describe("withBrowser stale connection detection", () => {
 		expect(fnCallCount).toBe(2);
 	});
 
-	it("retries on ECONNRESET", async () => {
+	it("does not reconnect on page-level TargetClosedError when the browser is still alive", async () => {
+		const browser = mockBrowser();
+		vi.mocked(chromium.connectOverCDP).mockResolvedValue(browser);
+
+		const error = new Error("page.waitForSelector: Target closed");
+		error.name = "TargetClosedError";
+
+		await expect(
+			withBrowser(async () => {
+				throw error;
+			}),
+		).rejects.toBe(error);
+
+		expect(chromium.connectOverCDP).toHaveBeenCalledTimes(1);
+	});
+
+	it("retries on ECONNRESET when the browser connection is dead", async () => {
 		const browser1 = mockBrowser();
 		const browser2 = mockBrowser();
+		let browser1Connected = true;
+		vi.mocked(browser1.isConnected).mockImplementation(() => browser1Connected);
 
 		let callCount = 0;
 		vi.mocked(chromium.connectOverCDP).mockImplementation(async () => {
@@ -102,7 +125,10 @@ describe("withBrowser stale connection detection", () => {
 		let fnCallCount = 0;
 		const result = await withBrowser(async () => {
 			fnCallCount++;
-			if (fnCallCount === 1) throw error;
+			if (fnCallCount === 1) {
+				browser1Connected = false;
+				throw error;
+			}
 			return "success";
 		});
 

@@ -196,6 +196,16 @@ export async function withBrowser<T>(fn: (browser: Browser) => Promise<T>): Prom
 			message.includes("Session closed") ||
 			message.includes("Target closed")
 		) {
+			// A closed page or target can report errors whose message contains
+			// "Session closed" or "Target closed" even though the Browser CDP
+			// connection is still alive. Reconnecting the whole browser in that
+			// case discards the cached connection and forces a new CDP attach,
+			// which can re-trigger browser authorization dialogs. Only reconnect
+			// when the browser connection itself is actually gone.
+			if (cachedBrowser?.isConnected()) {
+				throw err;
+			}
+
 			await closeBrowser();
 			browser = await getBrowser();
 			return await fn(browser);
