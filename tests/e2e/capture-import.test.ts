@@ -263,13 +263,13 @@ describe("capture import", () => {
 	it("accepts custom --name and rejects duplicates", async () => {
 		const { homeDir, workDir } = await createCaptureTestDirs(tempDirs);
 
-		const firstResult = await runCaptureImport(homeDir, workDir, ["zhihu", "get-hot", "--name", "my-repair"]);
+		const firstResult = await runCaptureImport(homeDir, workDir, ["zhihu", "get-hot", "--name", "my-maintain"]);
 		const firstPayload = parseJsonOutput<CaptureImportPayload>(firstResult.stdout);
 		expect(firstResult.exitCode).toBe(0);
 		expect(firstPayload.success).toBe(true);
-		expect(firstPayload.capture?.name).toBe("my-repair");
+		expect(firstPayload.capture?.name).toBe("my-maintain");
 
-		const secondResult = await runCaptureImport(homeDir, workDir, ["zhihu", "get-hot", "--name", "my-repair"]);
+		const secondResult = await runCaptureImport(homeDir, workDir, ["zhihu", "get-hot", "--name", "my-maintain"]);
 		const secondPayload = parseJsonOutput<CaptureImportPayload>(secondResult.stdout);
 		expect(secondResult.exitCode).toBe(1);
 		expect(secondPayload.success).toBe(false);
@@ -279,7 +279,7 @@ describe("capture import", () => {
 	it("rejects invalid custom --name", async () => {
 		const { homeDir, workDir } = await createCaptureTestDirs(tempDirs);
 
-		const result = await runCaptureImport(homeDir, workDir, ["zhihu", "get-hot", "--name", "my_repair"]);
+		const result = await runCaptureImport(homeDir, workDir, ["zhihu", "get-hot", "--name", "my_maintain"]);
 		const payload = parseJsonOutput<CaptureImportPayload>(result.stdout);
 
 		expect(result.exitCode).toBe(1);

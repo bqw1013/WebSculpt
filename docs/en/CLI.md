@@ -640,14 +640,14 @@ Suitable for modifying or maintaining existing commands. Reconstructs a capture 
 
 ```bash
 # 1. Reverse import
-websculpt capture import mysite fetch --name mysite-repair
+websculpt capture import mysite fetch --name mysite-maintain
 
 # 2. Modify draft/ files...
 
 # 3. Validate and install (re-validation required after modification)
-websculpt capture status mysite-repair    # → validate (if draft was modified)
-websculpt capture validate mysite-repair
-websculpt capture finalize mysite-repair --force
+websculpt capture status mysite-maintain    # → validate (if draft was modified)
+websculpt capture validate mysite-maintain
+websculpt capture finalize mysite-maintain --force
 ```
 
 ### 5.4 Invoke and uninstall

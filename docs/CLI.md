@@ -640,14 +640,14 @@ websculpt capture finalize mysite-fetch
 
 ```bash
 # 1. 反向导入
-websculpt capture import mysite fetch --name mysite-repair
+websculpt capture import mysite fetch --name mysite-maintain
 
 # 2. 修改 draft/ 文件...
 
 # 3. 校验并安装（修改后需重新校验）
-websculpt capture status mysite-repair    # → validate（如果 draft 被修改过）
-websculpt capture validate mysite-repair
-websculpt capture finalize mysite-repair --force
+websculpt capture status mysite-maintain    # → validate（如果 draft 被修改过）
+websculpt capture validate mysite-maintain
+websculpt capture finalize mysite-maintain --force
 ```
 
 ### 5.4 调用与卸载
