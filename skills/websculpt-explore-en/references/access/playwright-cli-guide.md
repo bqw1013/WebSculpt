@@ -266,6 +266,29 @@ After cleanup completes, re-attach following the steps in Section 2 "Environment
 
 > Forcibly terminating browser processes may lose user data; you must obtain the user's explicit authorization first.
 
-## 10. PowerShell Notes
+## 10. Troubleshooting
+
+### Commands Keep Timing Out (session open but eval/snapshot unresponsive)
+
+**Symptoms**: `attach` reports success, `playwright-cli list` shows session open, but all subsequent browser commands (`eval`, `snapshot`, `goto`, etc.) time out. Rebuilding the daemon via `close` + `attach` does not fix the issue.
+
+**Root cause**: After Chrome runs for an extended period, its CDP WebSocket service may degrade and become unresponsive. The TCP port still shows as Listening, but the CDP protocol layer is dead. The daemon can start but cannot communicate with the browser.
+
+**Diagnosis**: Locate Chrome's `DevToolsActivePort` file (typically under the Chrome user data directory), read the port number from the first line, then verify CDP liveness:
+
+```bash
+curl http://localhost:<port>/json/version
+```
+
+- Returns JSON (containing `webSocketDebuggerUrl`) → CDP is healthy, the issue lies elsewhere
+- Returns 404, empty response, or connection refused → **CDP is degraded**, Chrome restart required
+
+> The `DevToolsActivePort` path varies by platform — use `find`/`ls` to locate it, or infer from the platform's Chrome user data directory convention. This file is written by Chrome when remote debugging is enabled.
+
+**Fix**: Tell the user that Chrome's remote debugging service has become unresponsive. They need to restart Chrome, re-enable remote debugging (`chrome://inspect/#remote-debugging`), then re-attach. `close`/`kill-all`/re-`attach` cannot substitute for restarting Chrome.
+
+---
+
+## 11. PowerShell Notes
 
 PowerShell is unfriendly to complex quotes and curly braces. If `run-code` errors due to parameter passing, prioritize switching to `eval` to verify selectors and data structures; do not dwell on it repeatedly; complex runner logic is left for the subsequent `websculpt-capture` phase to implement through command files.

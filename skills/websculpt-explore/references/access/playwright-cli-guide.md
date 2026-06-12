@@ -267,6 +267,29 @@ playwright-cli kill-all
 
 > 强制终止浏览器进程可能丢失用户数据，必须先获得用户明确授权。
 
-## 10. PowerShell 注意事项
+## 10. 故障排查
+
+### 命令持续超时（session open 但 eval/snapshot 无响应）
+
+**症状**：`attach` 提示成功、`playwright-cli list` 显示 session open，但后续所有浏览器命令（`eval`、`snapshot`、`goto` 等）均超时。`close` + `attach` 重建 daemon 后问题依旧。
+
+**根因**：Chrome 长时间运行后，CDP WebSocket 服务可能退化僵死。此时 TCP 端口仍处于 Listen 状态，但 CDP 协议层已无响应，daemon 虽能启动却无法与浏览器通信。
+
+**诊断**：找到 Chrome 的 `DevToolsActivePort` 文件（通常位于 Chrome 用户数据目录下），读取首行端口号，然后验证 CDP 是否存活：
+
+```bash
+curl http://localhost:<port>/json/version
+```
+
+- 返回 JSON（含 `webSocketDebuggerUrl`）→ CDP 正常，问题在其他环节
+- 返回 404、空响应或连接拒绝 → **CDP 已僵死**，需重启 Chrome
+
+> 不同平台 `DevToolsActivePort` 路径不同，可搜索 `find`/`ls` 定位，或直接根据 Chrome 用户数据目录惯例推断。该文件由 Chrome 在开启远程调试时自动写入。
+
+**修复**：告知用户 Chrome 的远程调试服务已失效，需重启 Chrome 浏览器并重新开启远程调试（`chrome://inspect/#remote-debugging`），然后重新 `attach`。`close`/`kill-all`/重新 `attach` 均无法替代重启 Chrome。
+
+---
+
+## 11. PowerShell 注意事项
 
 PowerShell 对复杂引号和花括号不友好。若 `run-code` 因传参报错，优先改用 `eval` 验证选择器和数据结构，不要反复纠缠；复杂 runner 逻辑留给后续 `websculpt-capture` 阶段通过命令文件实现。
