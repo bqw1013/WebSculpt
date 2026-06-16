@@ -44,12 +44,23 @@ export async function scanCommands(baseDir: string, source: "user" | "builtin"):
 	return results;
 }
 
-/** Scans both user and builtin directories and returns resolved commands sorted by domain then action. */
+/** Scans both user and builtin directories and returns resolved commands sorted by domain then action.
+ *  User commands take precedence over built-in commands with the same domain/action. */
 export async function scanAllCommands(): Promise<ResolvedCommand[]> {
 	const userCommands = await scanCommands(USER_COMMANDS_DIR, "user");
 	const builtinDir = getBuiltinCommandsDir();
 	const builtinCommands = await scanCommands(builtinDir, "builtin");
-	return [...userCommands, ...builtinCommands].sort((a, b) => {
+
+	// Merge by domain/action so that user commands override builtins.
+	const merged = new Map<string, ResolvedCommand>();
+	for (const command of builtinCommands) {
+		merged.set(`${command.manifest.domain}/${command.manifest.action}`, command);
+	}
+	for (const command of userCommands) {
+		merged.set(`${command.manifest.domain}/${command.manifest.action}`, command);
+	}
+
+	return [...merged.values()].sort((a, b) => {
 		const domainOrder = a.manifest.domain.localeCompare(b.manifest.domain);
 		if (domainOrder !== 0) return domainOrder;
 		return a.manifest.action.localeCompare(b.manifest.action);
