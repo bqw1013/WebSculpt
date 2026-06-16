@@ -370,6 +370,7 @@ websculpt explore assess <name>
 ```bash
 websculpt capture new <name> --domain <domain> --action <action> --runtime <runtime> [--force]
 websculpt capture import <domain> <action> [--name <name>]
+websculpt capture restore <workspace-name>
 websculpt capture status <name>
 websculpt capture validate <name>
 websculpt capture finalize <name> [--force]
@@ -379,6 +380,7 @@ websculpt capture finalize <name> [--force]
 |--------|------|
 | `new` | 创建工作区，生成 `capture.yaml`、`evidence.md` 和 `draft/` 骨架 |
 | `import` | 将已安装的命令反向导入为 capture 工作区，用于修改或维护已有命令 |
+| `restore` | 从工作区的 `backup/` 恢复已安装命令到 `capture import` 时的快照 |
 | `status` | 查询工作区状态，返回 6 个 artifact 的完成度、`readyToFinalize` 和 `next.action` |
 | `validate` | 预检 draft 合规性，通过后写入带指纹的 `validation.json` |
 | `finalize` | 安装到命令库；仅在 `status` 返回 `readyToFinalize: true` 时才可执行 |
@@ -396,6 +398,9 @@ websculpt capture finalize <name> [--force]
 **关键行为**
 
 - `import` 查找优先级：User > Builtin；被导入命令必须包含 `evidence.md`，否则报错 `EVIDENCE_MISSING`
+- `import` 成功后会将原命令复制到工作区的 `backup/` 目录，并在 `capture.yaml` 中记录 `sourceType`（`user` 或 `builtin`）
+- `restore` 根据 `sourceType` 回滚：用户命令用 `backup/` 覆盖安装目录；内置命令删除用户覆盖使其重新生效
+- 工作区不存在、缺少 `sourceType` 或缺少 `backup/` 时，`restore` 分别报错 `NOT_FOUND`、`WORKSPACE_NOT_RESTORABLE`、`BACKUP_NOT_FOUND`
 - `import` 成功后工作区所有 artifact 预置为 `done`，`capture status` 直接返回 `nextAction: finalize`
 - 修改 imported 工作区的 draft 文件后，指纹失效，`capture status` 会让 `validation` 回退到 `blocked`，需重新执行 `validate → finalize --force`
 
@@ -648,6 +653,9 @@ websculpt capture import mysite fetch --name mysite-maintain
 websculpt capture status mysite-maintain    # → validate（如果 draft 被修改过）
 websculpt capture validate mysite-maintain
 websculpt capture finalize mysite-maintain --force
+
+# 4. 若修复失败，回滚到导入时的快照
+websculpt capture restore mysite-maintain
 ```
 
 ### 5.4 调用与卸载

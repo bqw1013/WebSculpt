@@ -51,7 +51,8 @@ Explore 必须能独立使用（用户只要数据、不要沉淀）。只有当
         │   ├── command.js    # 运行时对应入口模板
         │   ├── README.md     # 模板
         │   └── context.md    # 模板
-        └── validation.json   # 最近一次 validate 结果（含 draft 指纹）
+        ├── validation.json   # 最近一次 validate 结果（含 draft 指纹）
+        └── backup/           # capture import 时写入的原命令快照，用于 capture restore 回滚
 ```
 
 **设计意图**：
@@ -187,9 +188,36 @@ Evidence 是对 `evidence.md` 的三层 Markdown 审核。
 
 ---
 
-## 6. 边界与限制
+## 6. Restore 回滚
+
+`capture restore <workspace-name>` 用于撤销一次 maintain 尝试，将命令库恢复到 `capture import` 执行时的状态。
+
+它只作用于通过 `capture import` 创建的工作区，因为：
+
+- 导入时会把解析到的原命令完整复制到工作区根目录的 `backup/`。
+- `capture.yaml` 会记录 `sourceType`（`user` 或 `builtin`），用于决定回滚语义。
+
+回滚语义：
+
+| `sourceType` | 行为 |
+|--------------|------|
+| `user` | 删除 `~/.websculpt/commands/<domain>/<action>/`，然后用 `backup/` 重新创建该目录 |
+| `builtin` | 删除 `~/.websculpt/commands/<domain>/<action>/`（如果存在），使 builtin 命令重新生效 |
+
+Restore 成功后系统会重建命令索引。常见错误码：
+
+- `NOT_FOUND`：工作区不存在
+- `WORKSPACE_NOT_RESTORABLE`：工作区缺少 `sourceType`（通常不是由 `capture import` 创建）
+- `BACKUP_NOT_FOUND`：工作区缺少 `backup/` 目录
+
+`restore` 不会清理工作区本身的 draft 或 validation 记录；Agent 可以基于当前 draft 继续修复，或手动清理工作区。
+
+---
+
+## 7. 边界与限制
 
 - `capture new` 时若 builtin 命令已存在，发出 `BUILTIN_OVERRIDE` 警告但允许继续；若 user 命令已存在，默认阻断，可用 `--force` 覆盖。
 - `capture import` 要求被导入命令必须包含 `evidence.md`，否则报错 `EVIDENCE_MISSING`。没有证据的命令无法进入状态机，需通过 `capture new` 从头创建。
+- `capture restore` 只能用于由 `capture import` 创建且包含 `backup/` 和 `sourceType` 的工作区。
 - `shell` 和 `python` 运行时的命令包生命周期（draft / validate / create）已支持，但 CLI 执行引擎尚未接入，创建时会附带 `RUNTIME_NOT_EXECUTABLE` 警告。
 - 工作区保留在项目目录的 `.websculpt/captures/` 中，不是用户目录；Agent 应在用户拒绝 finalize 后自行决定是否清理。

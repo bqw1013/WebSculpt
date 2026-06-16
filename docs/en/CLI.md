@@ -370,6 +370,7 @@ Manage the command capture workspace, converting verified information-retrieval 
 ```bash
 websculpt capture new <name> --domain <domain> --action <action> --runtime <runtime> [--force]
 websculpt capture import <domain> <action> [--name <name>]
+websculpt capture restore <workspace-name>
 websculpt capture status <name>
 websculpt capture validate <name>
 websculpt capture finalize <name> [--force]
@@ -379,6 +380,7 @@ websculpt capture finalize <name> [--force]
 |--------|------|
 | `new` | Create workspace, generate `capture.yaml`, `evidence.md`, and `draft/` skeleton |
 | `import` | Reverse-import an installed command into a capture workspace for modification or maintenance |
+| `restore` | Restore an installed command from the workspace's `backup/` snapshot taken at `capture import` time |
 | `status` | Query workspace status, returning completion of 6 artifacts, `readyToFinalize`, and `next.action` |
 | `validate` | Pre-flight check draft compliance; writes `validation.json` with fingerprint on success |
 | `finalize` | Install into the command library; only executable when `status` returns `readyToFinalize: true` |
@@ -396,6 +398,9 @@ websculpt capture finalize <name> [--force]
 **Key behaviors**
 
 - `import` lookup priority: User > Builtin; the imported command must contain `evidence.md`, otherwise returns error `EVIDENCE_MISSING`
+- On successful `import`, the original command is copied to the workspace's `backup/` directory and `sourceType` (`user` or `builtin`) is recorded in `capture.yaml`
+- `restore` rolls back according to `sourceType`: for user commands, `backup/` overwrites the installation directory; for builtin commands, the user override is removed so the builtin becomes effective again
+- When the workspace does not exist, `sourceType` is missing, or `backup/` is missing, `restore` returns `NOT_FOUND`, `WORKSPACE_NOT_RESTORABLE`, or `BACKUP_NOT_FOUND` respectively
 - On successful `import`, all artifacts are pre-set to `done`; `capture status` returns `nextAction: finalize` immediately
 - After modifying draft files in an imported workspace, the fingerprint becomes stale and `validation` regresses to `blocked`; re-run `validate → finalize --force`
 
@@ -648,6 +653,9 @@ websculpt capture import mysite fetch --name mysite-maintain
 websculpt capture status mysite-maintain    # → validate (if draft was modified)
 websculpt capture validate mysite-maintain
 websculpt capture finalize mysite-maintain --force
+
+# 4. If the repair fails, roll back to the snapshot taken at import time
+websculpt capture restore mysite-maintain
 ```
 
 ### 5.4 Invoke and uninstall

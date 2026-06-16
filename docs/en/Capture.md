@@ -51,7 +51,8 @@ The workspace is located in the **current project directory**:
         │   ├── command.js    # Runtime entry template
         │   ├── README.md     # Template
         │   └── context.md    # Template
-        └── validation.json   # Most recent validate result (includes draft fingerprint)
+        ├── validation.json   # Most recent validate result (includes draft fingerprint)
+        └── backup/           # Original command snapshot written by capture import; used by capture restore for rollback
 ```
 
 **Design intent**:
@@ -187,9 +188,36 @@ Additionally, if an active scope exists in the current working directory or any 
 
 ---
 
-## 6. Boundaries and Limitations
+## 6. Restore Rollback
+
+`capture restore <workspace-name>` undoes a maintain attempt by rolling the command library back to the state captured at `capture import` time.
+
+It only applies to workspaces created by `capture import`, because:
+
+- At import time, the resolved command is fully copied to the `backup/` directory at the workspace root.
+- `capture.yaml` records `sourceType` (`user` or `builtin`), which determines the rollback semantics.
+
+Rollback semantics:
+
+| `sourceType` | Behavior |
+|--------------|----------|
+| `user` | Delete `~/.websculpt/commands/<domain>/<action>/` and recreate it from `backup/` |
+| `builtin` | Delete `~/.websculpt/commands/<domain>/<action>/` if it exists, so the builtin command becomes effective again |
+
+After a successful restore, the system rebuilds the command index. Common error codes:
+
+- `NOT_FOUND`: the workspace does not exist
+- `WORKSPACE_NOT_RESTORABLE`: the workspace lacks `sourceType` (usually not created by `capture import`)
+- `BACKUP_NOT_FOUND`: the workspace lacks a `backup/` directory
+
+`restore` does not clean up the workspace's own draft or validation records; the Agent can continue repairing based on the current draft, or manually clean up the workspace.
+
+---
+
+## 7. Boundaries and Limitations
 
 - If a builtin command already exists at `capture new`, a `BUILTIN_OVERRIDE` warning is issued but execution is allowed. If a user command already exists, it is blocked by default and can be overridden with `--force`.
 - `capture import` requires the imported command to contain `evidence.md`; otherwise returns error `EVIDENCE_MISSING`. Commands without evidence cannot enter the state machine and must be created from scratch via `capture new`.
+- `capture restore` can only be used on workspaces created by `capture import` that contain both `backup/` and `sourceType`.
 - The command package lifecycle for `shell` and `python` runtimes (draft / validate / create) is already supported, but the CLI execution engine has not yet been integrated. A `RUNTIME_NOT_EXECUTABLE` warning is attached at creation time.
 - The workspace is retained in `.websculpt/captures/` under the project directory, not the user home directory. The Agent should decide on its own whether to clean up after the user rejects finalize.
