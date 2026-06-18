@@ -238,7 +238,7 @@ websculpt command draft <domain> <action> [options]
 
 **Key behaviors**
 
-- Reserved domains (`command`, `config`, `skill`) return error `RESERVED_DOMAIN`; target directory already exists without `--force` returns error `ALREADY_EXISTS`
+- Reserved domains (`command`, `config`, `skill`, `daemon`, `capture`, `scope`, `explore`) return error `RESERVED_DOMAIN`; target directory already exists without `--force` returns error `ALREADY_EXISTS`
 - Generates `manifest.json` (without `id`/`domain`/`action`), entry file, `README.md`, `context.md`
 - `shell`/`python` runtimes trigger `RUNTIME_NOT_EXECUTABLE` warning (not executable)
 
@@ -329,6 +329,81 @@ websculpt command remove <domain> <action>
 - Cannot delete builtin commands (returns error `CANNOT_REMOVE_BUILTIN`)
 - Returns error `NOT_FOUND` when the target command does not exist
 - Rebuilds the registry index after deletion
+
+---
+
+#### `command export`
+
+Export currently visible extension commands into a portable directory package, suitable for sharing across WebSculpt installations or versioning via Git.
+
+```bash
+websculpt command export [identifiers...] --to <dir> [--force]
+```
+
+| Option | Description |
+|------|------|
+| `--to <dir>` | Target directory for the export package (**required**) |
+| `--force` | Overwrite non-empty target directory |
+
+| Argument (positional) | Description |
+|------|------|
+| `[identifiers...]` | Optional, commands to export. Can mix domains and commands: `domain` (all commands in that domain) or `domain/action` (single command). Omitting exports all visible commands |
+
+**Export package structure**
+
+```
+<dir>/
+  ├── index.json          ← commands array
+  └── commands/
+      └── <domain>/
+          └── <action>/
+              ├── manifest.json
+              ├── command.js
+              ├── README.md      (if present)
+              ├── context.md     (if present)
+              └── evidence.md    (if present)
+```
+
+**Key behaviors**
+
+- Exports the effective runtime view after user-over-builtin resolution (equivalent to `command list --all`, unaffected by scope whitelist)
+- Returns error `NO_COMMANDS_MATCHED` when no commands match the given identifiers
+- Returns error `DIRECTORY_NOT_EMPTY` when the target directory exists and is non-empty without `--force`; `--force` clears the target directory before writing
+- When exported commands contain `evidence.md`, the result includes an `EVIDENCE_INCLUDED` warning reminding users to review content before sharing
+
+---
+
+#### `command import`
+
+Install commands from an export package into the local user command library.
+
+```bash
+websculpt command import --from <dir> [--force] [--dry-run]
+```
+
+| Option | Description |
+|------|------|
+| `--from <dir>` | Path to the export package directory (**required**) |
+| `--force` | Overwrite existing user commands with the same name |
+| `--dry-run` | Validate and report conflicts without writing any files or modifying the registry |
+
+**Key behaviors**
+
+- Requires a `commands/` subdirectory inside the package; otherwise returns error `MISSING_COMMANDS_DIR`
+- If `index.json` exists, its `commands` array must exactly match the actual directories under `commands/`; otherwise returns error `INDEX_MISMATCH`
+- If `index.json` does not exist, import discovers commands by scanning `commands/` directly
+- Runs L1–L3 layered validation on all commands before writing: any validation failure aborts the entire import with zero side effects, returning `VALIDATION_ERROR` with per-command error details
+- Reserved domain commands (`command`, `config`, `skill`, `daemon`, `capture`, `scope`, `explore`) are rejected during validation
+- Existing user commands: skipped by default (status `skipped`), overwritten with `--force` (status `overwritten`)
+- `--dry-run` performs no writes and does not rebuild the registry index
+
+**Result status per command**
+
+| Status | Description |
+|------|------|
+| `installed` | Newly installed command |
+| `overwritten` | Existing command replaced via `--force` |
+| `skipped` | Existing command skipped (no `--force`) |
 
 ---
 

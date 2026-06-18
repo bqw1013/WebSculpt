@@ -238,7 +238,7 @@ websculpt command draft <domain> <action> [options]
 
 **关键行为**
 
-- 保留域（`command`、`config`、`skill`）报错 `RESERVED_DOMAIN`；目标目录已存在且无 `--force` 时报错 `ALREADY_EXISTS`
+- 保留域（`command`、`config`、`skill`、`daemon`、`capture`、`scope`、`explore`）报错 `RESERVED_DOMAIN`；目标目录已存在且无 `--force` 时报错 `ALREADY_EXISTS`
 - 生成 `manifest.json`（不含 `id`/`domain`/`action`）、入口文件、`README.md`、`context.md`
 - `shell`/`python` 运行时会附带 `RUNTIME_NOT_EXECUTABLE` 警告（不可执行）
 
@@ -329,6 +329,83 @@ websculpt command remove <domain> <action>
 - 不能删除 builtin 命令（报错 `CANNOT_REMOVE_BUILTIN`）
 - 目标命令不存在时报错 `NOT_FOUND`
 - 删除后自动重建 registry index
+
+---
+
+#### `command export`
+
+将当前可见的扩展命令导出为一个可移植的目录包，便于在不同 WebSculpt 安装之间共享或通过 Git 版本管理。
+
+```bash
+websculpt command export [identifiers...] --to <dir> [--force]
+```
+
+| 选项 | 说明 |
+|------|------|
+| `--to <dir>` | 导出目标目录（**必填**） |
+| `--force` | 覆盖非空目标目录 |
+
+| 参数（定位参数） | 说明 |
+|------|------|
+| `[identifiers...]` | 可选，要导出的命令标识符，可混合域和命令：`domain`（导出该域下全部命令）或 `domain/action`（导出单个命令）。省略时导出全部可见命令 |
+
+**导出包结构**
+
+```
+<dir>/
+  ├── index.json          ← commands 数组
+  └── commands/
+      └── <domain>/
+          └── <action>/
+              ├── manifest.json
+              ├── command.js
+              ├── README.md      （如存在）
+              ├── context.md     （如存在）
+              └── evidence.md    （如存在）
+```
+
+**关键行为**
+
+- 导出以 User 覆盖 Builtin 后的最终生效视图为准（等价于 `command list --all`，不受 scope 白名单限制）
+- 未匹配到任何命令时返回错误 `NO_COMMANDS_MATCHED`
+- 目标目录已存在且非空，且未使用 `--force` 时返回错误 `DIRECTORY_NOT_EMPTY`；`--force` 会清空目标目录后重新写入
+- 导出的命令中包含 `evidence.md` 时，结果附带 `EVIDENCE_INCLUDED` warning，提醒用户在分享前检查内容
+
+---
+
+#### `command import`
+
+将导出的命令包安装到本地用户命令库。
+
+```bash
+websculpt command import --from <dir> [--force] [--dry-run]
+```
+
+| 选项 | 说明 |
+|------|------|
+| `--from <dir>` | 导出包目录路径（**必填**） |
+| `--force` | 覆盖已存在的同名用户命令 |
+| `--dry-run` | 仅校验和报告冲突，不写入任何文件，不修改 registry |
+
+**关键行为**
+
+- 包目录下必须存在 `commands/` 子目录，否则返回错误 `MISSING_COMMANDS_DIR`
+- 如果包目录下存在 `index.json`，其 `commands` 数组必须与 `commands/` 下的实际目录完全一致，否则返回错误 `INDEX_MISMATCH`
+- 如果不存在 `index.json`，import 会直接扫描 `commands/` 目录发现命令
+- 导入前对所有命令执行 L1–L3 分层校验：任一命令校验不通过则整体终止，不写入任何文件，返回 `VALIDATION_ERROR` 及 per-command 错误详情
+- 保留域命令（`command`、`config`、`skill`、`daemon`、`capture`、`scope`、`explore`）在校验阶段被拒绝
+- 同名用户命令已存在时：默认跳过（状态 `skipped`），`--force` 覆盖（状态 `overwritten`）
+- `--dry-run` 模式下不执行任何写入操作，也不重建 registry index
+
+**结果状态**
+
+导入结果中每个命令会标记状态：
+
+| 状态 | 说明 |
+|------|------|
+| `installed` | 新安装的命令 |
+| `overwritten` | 使用 `--force` 覆盖的已有命令 |
+| `skipped` | 已存在且未使用 `--force` 而跳过的命令 |
 
 ---
 

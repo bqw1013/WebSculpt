@@ -270,6 +270,70 @@ describe("command create", () => {
 		);
 	});
 
+	it("rejects reserved domain 'scope' with RESERVED_DOMAIN", async () => {
+		const homeDir = await createIsolatedHome();
+		tempDirs.push(homeDir);
+
+		const scopePackage = {
+			code: "export default async function() { return { ok: true }; }\n",
+			manifest: {
+				action: "sync",
+				description: "Should not be created",
+				domain: "scope",
+				id: "scope-sync",
+				parameters: [],
+				runtime: "node",
+				requiresBrowser: false,
+			},
+		};
+		const commandDirPath = await writeCommandDir(homeDir, "scope-dir", scopePackage);
+		const result = await runSourceCli(
+			["command", "create", "scope", "sync", "--from-dir", commandDirPath, "--format", "json"],
+			homeDir,
+		);
+		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
+
+		expect(result.exitCode).toBe(1);
+		expect(payload.success).toBe(false);
+		expect(payload.error).toEqual(
+			expect.objectContaining({
+				code: "RESERVED_DOMAIN",
+			}),
+		);
+	});
+
+	it("rejects reserved domain 'explore' with RESERVED_DOMAIN", async () => {
+		const homeDir = await createIsolatedHome();
+		tempDirs.push(homeDir);
+
+		const explorePackage = {
+			code: "export default async function() { return { ok: true }; }\n",
+			manifest: {
+				action: "sync",
+				description: "Should not be created",
+				domain: "explore",
+				id: "explore-sync",
+				parameters: [],
+				runtime: "node",
+				requiresBrowser: false,
+			},
+		};
+		const commandDirPath = await writeCommandDir(homeDir, "explore-dir", explorePackage);
+		const result = await runSourceCli(
+			["command", "create", "explore", "sync", "--from-dir", commandDirPath, "--format", "json"],
+			homeDir,
+		);
+		const payload = parseJsonOutput<CommandCreateResult>(result.stdout);
+
+		expect(result.exitCode).toBe(1);
+		expect(payload.success).toBe(false);
+		expect(payload.error).toEqual(
+			expect.objectContaining({
+				code: "RESERVED_DOMAIN",
+			}),
+		);
+	});
+
 	it("rejects reserved domain 'capture' with RESERVED_DOMAIN", async () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);

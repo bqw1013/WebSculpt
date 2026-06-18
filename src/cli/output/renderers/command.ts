@@ -2,6 +2,8 @@ import { formatRow, printKeyValue, printWarnings } from "../formatters.js";
 import type {
 	CommandCreateResult,
 	CommandDraftResult,
+	CommandExportResult,
+	CommandImportResult,
 	CommandListResult,
 	CommandRemoveResult,
 	CommandShowResult,
@@ -155,4 +157,54 @@ export function isCommandRemoveResult(r: MetaCommandResult): r is CommandRemoveR
 
 export function renderRemoveResult(result: CommandRemoveResult): void {
 	console.log(`Removed command ${result.command}`);
+}
+
+export function isCommandExportResult(r: MetaCommandResult): r is CommandExportResult {
+	return r.success && "exported" in r && "to" in r;
+}
+
+export function renderExportResult(result: CommandExportResult): void {
+	console.log(`Exported ${result.exported.length} command(s) to ${result.to}:`);
+	for (const cmd of result.exported) {
+		console.log(`  ${cmd}`);
+	}
+	if (result.warnings && result.warnings.length > 0) {
+		console.log("");
+		printWarnings(result.warnings);
+	}
+}
+
+export function isCommandImportResult(r: MetaCommandResult): r is CommandImportResult {
+	return r.success && "results" in r && Array.isArray((r as CommandImportResult).results);
+}
+
+export function renderImportResult(result: CommandImportResult): void {
+	const byStatus = {
+		installed: result.results.filter((e) => e.status === "installed"),
+		overwritten: result.results.filter((e) => e.status === "overwritten"),
+		skipped: result.results.filter((e) => e.status === "skipped"),
+	};
+
+	if (byStatus.installed.length > 0) {
+		console.log(`Installed ${byStatus.installed.length} command(s):`);
+		for (const entry of byStatus.installed) {
+			console.log(`  ${entry.command}`);
+		}
+	}
+
+	if (byStatus.overwritten.length > 0) {
+		if (byStatus.installed.length > 0) console.log("");
+		console.log(`Overwritten ${byStatus.overwritten.length} command(s):`);
+		for (const entry of byStatus.overwritten) {
+			console.log(`  ${entry.command}`);
+		}
+	}
+
+	if (byStatus.skipped.length > 0) {
+		if (byStatus.installed.length > 0 || byStatus.overwritten.length > 0) console.log("");
+		console.log(`Skipped ${byStatus.skipped.length} existing command(s):`);
+		for (const entry of byStatus.skipped) {
+			console.log(`  ${entry.command}`);
+		}
+	}
 }

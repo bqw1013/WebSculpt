@@ -183,6 +183,62 @@ describe("command validate", () => {
 		);
 	});
 
+	it("rejects reserved domain 'scope' with RESERVED_DOMAIN in injection-simulation mode", async () => {
+		const homeDir = await createIsolatedHome();
+		tempDirs.push(homeDir);
+
+		const scopePackage = {
+			code: "export default async function() { return { ok: true }; }\n",
+			manifest: {
+				action: "sync",
+				description: "Should not validate",
+				domain: "scope",
+				id: "scope-sync",
+				parameters: [],
+				runtime: "node",
+				requiresBrowser: false,
+			},
+		};
+		const commandDirPath = await writeCommandDir(homeDir, "validate-scope-dir", scopePackage);
+		const result = await runSourceCli(
+			["command", "validate", "--from-dir", commandDirPath, "scope", "sync", "--format", "json"],
+			homeDir,
+		);
+		const payload = parseJsonOutput<{ success: boolean; error?: { code: string } }>(result.stdout);
+
+		expect(result.exitCode).toBe(1);
+		expect(payload.success).toBe(false);
+		expect(payload.error?.code).toBe("RESERVED_DOMAIN");
+	});
+
+	it("rejects reserved domain 'explore' with RESERVED_DOMAIN in injection-simulation mode", async () => {
+		const homeDir = await createIsolatedHome();
+		tempDirs.push(homeDir);
+
+		const explorePackage = {
+			code: "export default async function() { return { ok: true }; }\n",
+			manifest: {
+				action: "sync",
+				description: "Should not validate",
+				domain: "explore",
+				id: "explore-sync",
+				parameters: [],
+				runtime: "node",
+				requiresBrowser: false,
+			},
+		};
+		const commandDirPath = await writeCommandDir(homeDir, "validate-explore-dir", explorePackage);
+		const result = await runSourceCli(
+			["command", "validate", "--from-dir", commandDirPath, "explore", "sync", "--format", "json"],
+			homeDir,
+		);
+		const payload = parseJsonOutput<{ success: boolean; error?: { code: string } }>(result.stdout);
+
+		expect(result.exitCode).toBe(1);
+		expect(payload.success).toBe(false);
+		expect(payload.error?.code).toBe("RESERVED_DOMAIN");
+	});
+
 	it("rejects reserved domain 'config' with RESERVED_DOMAIN in injection-simulation mode", async () => {
 		const homeDir = await createIsolatedHome();
 		tempDirs.push(homeDir);

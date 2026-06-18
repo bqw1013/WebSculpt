@@ -310,6 +310,26 @@ export interface SkillStatusResult {
 	lines: string[];
 }
 
+/** Result shape for a successful command export. */
+export interface CommandExportResult {
+	success: true;
+	exported: string[];
+	to: string;
+	warnings?: ValidationDetail[];
+}
+
+/** A single entry in the import results summary. */
+export interface ImportEntry {
+	command: string;
+	status: "installed" | "overwritten" | "skipped";
+}
+
+/** Result shape for a successful command import. */
+export interface CommandImportResult {
+	success: true;
+	results: ImportEntry[];
+}
+
 /** Union of all meta command result shapes. */
 export type MetaCommandResult =
 	| CommandCreateResult
@@ -332,4 +352,6 @@ export type MetaCommandResult =
 	| CommandShowResult
 	| ExploreNewResult
 	| ExploreAssessResult
+	| CommandExportResult
+	| CommandImportResult
 	| MetaCommandError;

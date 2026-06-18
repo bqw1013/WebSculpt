@@ -2,6 +2,8 @@ import type { Command } from "commander";
 import { getFormat } from "../shared.js";
 import { registerCreate } from "./create.js";
 import { registerDraft } from "./draft.js";
+import { registerExport } from "./export.js";
+import { registerImport } from "./import.js";
 import { registerList } from "./list.js";
 import { registerRemove } from "./remove.js";
 import { registerShow } from "./show.js";
@@ -18,4 +20,6 @@ export function registerCommandMeta(program: Command): void {
 	registerCreate(group, format);
 	registerValidate(group, format);
 	registerDraft(group, format);
+	registerExport(group, format);
+	registerImport(group, format);
 }
