@@ -159,7 +159,7 @@ WebSculpt 有两类命令：
 WebSculpt 的完整功能被划分为三个前后衔接的 Skill，直接交付给用户的 Agent：
 - `websculpt-explore`：信息获取阶段，发现可复用路径
 - `websculpt-capture`：沉淀阶段，将验证过的路径固化为命令
-- `websculpt-scope`：上下文管理阶段，隔离无关命令，保持 Agent 上下文纯净
+- `websculpt-library`：命令库治理层，scope 白名单过滤和 export/import 跨安装共享
 
 这不是松散的使用建议，而是包含完整协议、状态约束和交付标准的交付物。
 

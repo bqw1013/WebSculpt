@@ -161,7 +161,7 @@ As the command library grows, you can use `scope` to restrict the current projec
 WebSculpt's complete functionality is divided into three sequentially connected Skills, directly delivered to the user's Agent:
 - `websculpt-explore`: Information retrieval phase, discovering reusable paths
 - `websculpt-capture`: Distillation phase, solidifying proven paths into commands
-- `websculpt-scope`: Context management phase, isolating irrelevant commands to keep the Agent's context clean
+- `websculpt-library`: Command library governance — scope whitelist filtering and export/import for cross-installation sharing
 
 This is not loose usage advice, but deliverables containing complete protocols, state constraints, and delivery standards.
 
