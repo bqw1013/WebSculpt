@@ -175,7 +175,11 @@ export function renderExportResult(result: CommandExportResult): void {
 }
 
 export function isCommandImportResult(r: MetaCommandResult): r is CommandImportResult {
-	return r.success && "results" in r && Array.isArray((r as CommandImportResult).results);
+	if (!r.success || !("results" in r) || !Array.isArray((r as CommandImportResult).results)) return false;
+	const arr = (r as CommandImportResult).results;
+	if (arr.length === 0) return true;
+	const first = arr[0] as unknown as Record<string, unknown>;
+	return "command" in first;
 }
 
 export function renderImportResult(result: CommandImportResult): void {
