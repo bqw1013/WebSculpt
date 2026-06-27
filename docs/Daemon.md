@@ -209,7 +209,7 @@ daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium
 |--------|------|
 | `DAEMON_START_FAILED` | daemon 启动失败 |
 | `DAEMON_UNREACHABLE` | daemon 已启动但无法连接 |
-| `SOCKET_TIMEOUT` | 客户端 socket 请求超时（60 秒） |
+| `SOCKET_TIMEOUT` | 客户端 socket 请求超时（20 分钟，与命令执行超时一致） |
 
 ---
 

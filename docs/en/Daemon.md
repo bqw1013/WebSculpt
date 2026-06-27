@@ -209,7 +209,7 @@ After accumulating 2000 command executions, the daemon is marked as `restartPend
 |------------|----------|
 | `DAEMON_START_FAILED` | Daemon failed to start |
 | `DAEMON_UNREACHABLE` | Daemon is started but unreachable |
-| `SOCKET_TIMEOUT` | Client socket request timeout (60 seconds) |
+| `SOCKET_TIMEOUT` | Client socket request timeout (20 minutes, aligned with command execution timeout) |
 
 ---
 

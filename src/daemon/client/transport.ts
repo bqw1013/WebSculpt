@@ -1,7 +1,9 @@
 import { createConnection } from "node:net";
 import { type SocketResponse, splitLines } from "./protocol.js";
 
-const REQUEST_TIMEOUT_MS = 60000;
+// Align with the daemon's command execution timeout so long-running commands
+// (e.g. video downloads) are not aborted while the daemon is still working.
+const REQUEST_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
 
 /**
  * Sends a single JSON-RPC-style request to the daemon over its local socket.
