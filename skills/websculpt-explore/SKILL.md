@@ -71,7 +71,7 @@ websculpt explore new <name> --intent "<目标描述>"
 
 选择工具并开始探索（参见「工具选择」）。将每次工具调用的关键发现实时写入 `trace.md`，**必须包含实际获取到的结构化数据样本**（如 JSON 片段、提取的文本内容、选择器匹配结果），不能只写"尝试了 X"或"访问了 Y"。若多次尝试均未能提取到符合目标的数据，如实记录失败原因，这对后续评估同样关键。
 
-若使用浏览器自动化，必须先阅读 SKILL.md 同目录下的 `references/access/playwright-cli-guide.md`，并在 `trace.md` 的 `Protocol` 中记录已读。未记录前严禁执行 `playwright-cli`。
+若使用浏览器自动化，必须先阅读 SKILL.md 同目录下的 `references/access/playwright-cli-guide.md`，并在 `trace.md` 的 `Protocol` 中写入：`已阅读 guide.md`。未记录前严禁执行 `playwright-cli`。
 
 ### Step 4: 评估与记录
 

@@ -71,7 +71,7 @@ Write the library check conclusion into `trace.md`'s `Library Check` section.
 
 Select tools and begin exploration (see "Tool Selection"). Record key findings from each tool invocation to `trace.md` in real time, **and must include actual structured data samples obtained** (e.g., JSON fragments, extracted text content, selector match results). Do not just write "tried X" or "visited Y". If multiple attempts fail to extract data matching the target, record the failure reasons truthfully — this is equally critical for subsequent evaluation.
 
-If using browser automation, you must first read `references/access/playwright-cli-guide.md` in the same directory as SKILL.md, and record the reading in `trace.md`'s `Protocol`. Do not execute `playwright-cli` before recording.
+If using browser automation, you must first read `references/access/playwright-cli-guide.md` in the same directory as SKILL.md, and write the following in `trace.md`'s `Protocol`: `Read guide.md`. Do not execute `playwright-cli` before recording.
 
 ### Step 4: Evaluate and Record
 

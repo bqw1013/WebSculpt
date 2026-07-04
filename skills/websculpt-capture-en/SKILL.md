@@ -33,7 +33,7 @@ CaptureSession:
 
 - When `exploreVerified` is `false`, **forbidden** to execute `capture new`. Must first confirm the path has been verified by explore (`explore assess` returned `status: passed`); if not, must first load `websculpt-explore` to complete exploration, fill in `trace.md`, and pass the audit.
 - When `contractRead` is `false`, **forbidden** to edit or modify `draft/command.js`. Must first read the contract document for the corresponding runtime and set to `true`.
-- When `testScenarios` is empty, **forbidden** to execute `capture finalize`. Before finalize, you must list the specific commands for 4 test groups, covering happy path, generalized parameters, boundary parameters, and error scenarios.
+- When `testScenarios` is empty, **forbidden** to execute `capture finalize`. Before finalize, you must list the specific test commands, covering happy path, generalized parameters, boundary parameters, and error scenarios; use 4 groups as the baseline, and add more for more complex commands.
 - When `testResults` length < 4, **forbidden** to report "tests passed" or "testing complete".
 - During repair loops, `repairStep` must advance in order; skipping steps is prohibited:
   1. `null` → modify draft file → `modify`
@@ -41,14 +41,14 @@ CaptureSession:
   3. `status1` → execute `capture validate` → `validate`
   4. `validate` → execute `capture status` → `status2`
   5. `status2` → execute `capture finalize --force` → `finalize`
-  6. `finalize` → reset to `null`, `repairCount += 1`, re-execute all 4 test groups
+  6. `finalize` → reset to `null`, `repairCount += 1`, re-execute all designed tests
 - When `repairCount >= 3`, **must** stop the automatic loop, report the issue to the user, and hand the decision to the user.
 
 ### Update Timing
 
 - After confirming the path has been verified by explore: set `exploreVerified` to `true`
 - After reading the contract document for the corresponding runtime: set `contractRead` to `true`
-- Before finalize: design 4 test groups, write into `testScenarios`
+- Before finalize: write the designed test commands into `testScenarios`
 - After each test group execution: record results to `testResults`
 - When entering repair loop: `repairCount += 1`, set `repairStep` to `modify`
 - After each repair action completes: update `repairStep` in order
@@ -143,7 +143,7 @@ If a command returns `BROWSER_ATTACH_REQUIRED` during testing, in addition to co
 
 ### 4. Post-Installation Testing
 
-After installation is complete, must execute **at least 4 groups of real command invocations**, mandatorily covering the following scenarios:
+After installation is complete, must execute **at least 4 groups of real command invocations**. 4 groups is the baseline; determine the actual number based on command complexity, adding more when the command has more parameter combinations, branches, or error scenarios. These tests must cover the following scenarios:
 
 | # | Scenario | Purpose |
 |---|----------|---------|
@@ -161,7 +161,7 @@ websculpt <domain> <action> --param1 ""
 websculpt <domain> <action> --invalid-param value
 ```
 
-Before finalize, first write the specific commands for the 4 test groups into `testScenarios`, confirm coverage is complete, then execute `capture finalize`.
+Before finalize, first write the specific commands for these tests into `testScenarios`, confirm coverage is complete, then execute `capture finalize`.
 
 After testing completes, report results to the user:
 
@@ -175,7 +175,7 @@ After testing completes, report results to the user:
 3. Update `repairStep` to `validate`, execute `capture validate <name>`.
 4. Update `repairStep` to `status2`, execute `capture status <name>`.
 5. Update `repairStep` to `finalize`, execute `capture finalize <name> --force`.
-6. Reset `repairStep` to `null`, re-execute all 4 test groups, record results to `testResults`.
+6. Reset `repairStep` to `null`, re-execute all designed tests, record results to `testResults`.
 7. **Circuit breaker**: when `repairCount >= 3`, stop automatic loop, report issue to user, and hand decision to user.
 
 ## Evidence Writing Specifications
@@ -186,7 +186,7 @@ The original template already contains writing prompts for each heading; only su
 
 - URLs in `Verified URLs` must include the protocol.
 - `Structural Evidence` is the implementation basis for `command.js`; proven structural facts must be clearly written.
-- `browser` runtime needs to explain in `Exploration Path` whether `guide.md` was consulted.
+- `browser` runtime must write the following in `Exploration Path`: `Read guide.md`.
 - Missing headings or empty content under a heading will block audit; keyword gaps will not block, only serve as a warning.
 
 ## Draft Implementation Specifications
