@@ -78,7 +78,7 @@ Select `runtime` based on the tools used during the exploration phase:
 |-------------|---------|
 | HTTP requests, public APIs, data cleaning | `node` |
 | DOM operations, page navigation, screenshots, reusing login state | `browser` |
-| Needs both browser and local filesystem simultaneously | Split into multiple commands, or ask user to confirm boundaries |
+| Needs both browser and local filesystem simultaneously | Use `browser` runtime and resolve relative paths via the `cwd` parameter |
 
 A command can only declare one runtime.
 

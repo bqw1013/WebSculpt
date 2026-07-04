@@ -78,7 +78,7 @@ websculpt capture new <name> --domain <domain> --action <action> --runtime <runt
 |------|---------|
 | HTTP 请求、公开 API、数据清洗 | `node` |
 | DOM 操作、页面导航、截图、复用登录态 | `browser` |
-| 同时需要浏览器和本地文件系统 | 拆成多个命令，或要求用户确认边界 |
+| 同时需要浏览器和本地文件系统 | 使用 `browser` runtime，并通过 `cwd` 参数解析相对路径 |
 
 一个命令只能声明一种 runtime。
 
