@@ -44,7 +44,6 @@ Note: `page.evaluate(callback)` executes in the browser process and cannot use N
 
 Restrictions:
 
-- Do not read or write the local file system.
 - `console.log` outputs to the daemon process; CLI users usually cannot see it; debugging information should be carried out through the return value.
 
 ## 4. Code Compliance Constraints
