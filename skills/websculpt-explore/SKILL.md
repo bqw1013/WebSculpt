@@ -100,7 +100,7 @@ websculpt explore assess <name>
 
 若 Step 4 已识别候选（非 `"No candidate identified"`），交付时按以下流程处理：
 1. 执行 `websculpt explore assess <name>`，**预期会因 Confirmation 缺失而失败**。根据返回的错误修正其他问题（如缺少子节、内容为空、Candidate 格式错误等），但**仍不填写 Confirmation**。
-2. 确认其他项无误后，必须先将完整契约展示给用户。把命令名称、功能、参数、输出格式、前置条件等以用户语言清晰呈现，明确请求用户对契约内容的同意。
+2. 确认其他项无误后，必须先将完整契约展示给用户。展示时必须包含一条端到端演示：以 `websculpt <domain> <action> --参数` 的命令行形式，配上 Tool Trace 中已验证提取的真实输出数据，让用户一眼看到"执行什么、得到什么"。同时说明命令名称、功能、参数、输出格式、前置条件等，明确请求用户对契约内容的同意。
 3. 用户明确同意后，把讨论摘要和用户决策记录到 `### Confirmation`；若用户拒绝，将拒绝原因记录到 `### Confirmation` 中。
 4. 重新执行 `websculpt explore assess <name>`，确保全部通过。
 5. 建议进入 `websculpt-capture`。若用户拒绝，explore 阶段即告结束。

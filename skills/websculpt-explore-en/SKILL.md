@@ -100,7 +100,7 @@ websculpt explore assess <name>
 
 If Step 4 identified a candidate (not `"No candidate identified"`), handle delivery with the following flow:
 1. Execute `websculpt explore assess <name>`, **expecting it to fail due to missing Confirmation**. Correct other issues based on returned errors (e.g., missing subsections, empty content, invalid Candidate format), but **still do not fill in Confirmation**.
-2. After confirming other items are correct, you must present the full contract to the user first. Present the command name, functionality, parameters, output format, prerequisites, etc., in the user's language clearly, and explicitly request the user's agreement on the contract content.
+2. After confirming other items are correct, you must present the full contract to the user first. The presentation must include an end-to-end demo: a command line of the form `websculpt <domain> <action> --param`, paired with the real output data verified and extracted in the Tool Trace, so the user can see at a glance "what to run and what you get." Also explain the command name, functionality, parameters, output format, prerequisites, etc., and explicitly request the user's agreement on the contract content.
 3. After the user explicitly agrees, record the discussion summary and user decision in `### Confirmation`; if the user refuses, record the refusal reason in `### Confirmation`.
 4. Re-execute `websculpt explore assess <name>` to ensure it fully passes.
 5. Suggest entering `websculpt-capture`. If the user refuses, the explore phase ends.
