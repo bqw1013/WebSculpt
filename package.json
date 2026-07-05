@@ -1,6 +1,6 @@
 {
   "name": "websculpt",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "WebSculpt CLI",
   "type": "module",
   "main": "./dist/cli/index.js",
