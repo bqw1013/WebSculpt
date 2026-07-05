@@ -1,6 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { handleCommandDraft, parseParamSpec } from "../../../../src/cli/meta/command/draft.js";
+import { generateBrowserTemplate } from "../../../../src/cli/meta/lib/draft-templates.js";
 
 describe("parseParamSpec", () => {
 	it("parses a plain name as optional parameter without default", () => {
@@ -90,6 +91,11 @@ describe("handleCommandDraft", () => {
 		const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
 		expect(manifest.requiresBrowser).toBe(false);
 		expect(manifest.authRequired).toBe("unknown");
+	});
+
+	it("generates browser command template with (page, params, cwd) signature", () => {
+		const template = generateBrowserTemplate([{ name: "url", required: true }]);
+		expect(template).toContain("async (page, params, cwd) => {");
 	});
 
 	it("generates manifest with requiresBrowser true for browser runtime", async () => {

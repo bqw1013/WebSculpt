@@ -142,7 +142,7 @@ describe("capture new", () => {
 		expect(result.exitCode).toBe(0);
 		expect(payload.success).toBe(true);
 		expect(payload.capture?.runtime).toBe("browser");
-		expect(commandJs).toContain("export default async (page, params)");
+		expect(commandJs).toContain("export default async (page, params, cwd)");
 	});
 
 	it("rejects invalid capture names", async () => {

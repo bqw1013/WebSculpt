@@ -8,7 +8,7 @@ export interface DaemonClient {
 	/**
 	 * Sends a run request to the daemon to execute the command module at the given path.
 	 */
-	run(commandPath: string, params: Record<string, string>): Promise<unknown>;
+	run(commandPath: string, params: Record<string, string>, cwd?: string): Promise<unknown>;
 }
 
 /**
@@ -21,9 +21,9 @@ export function createClient(
 ): DaemonClient {
 	const { socketPath, pid: recordedPid } = state;
 	return {
-		async run(commandPath: string, params: Record<string, string>): Promise<unknown> {
+		async run(commandPath: string, params: Record<string, string>, cwd?: string): Promise<unknown> {
 			try {
-				const result = await sendRequest(socketPath, "run", { commandPath, params });
+				const result = await sendRequest(socketPath, "run", { commandPath, params, cwd });
 				// The daemon wraps successful results as { success: true, data: ... }
 				if (result && typeof result === "object" && "success" in result) {
 					return (result as { success: boolean; data: unknown }).data;
@@ -65,7 +65,7 @@ export function createClient(
 
 					// Retry once with a fresh daemon
 					const freshClient = await ensureClient();
-					return await freshClient.run(commandPath, params);
+					return await freshClient.run(commandPath, params, cwd);
 				}
 
 				throw err;

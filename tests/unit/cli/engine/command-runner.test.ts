@@ -16,6 +16,17 @@ const mockManifest = (runtime: string) => ({
 	parameters: [],
 });
 
+describe("runCommand browser cwd forwarding", () => {
+	it("passes process.cwd() as third argument to daemon client run", async () => {
+		const mockRun = vi.fn().mockResolvedValue("ok");
+		vi.mocked(ensureDaemonClient).mockResolvedValue({ run: mockRun });
+
+		await runCommand(mockManifest("browser") as never, "/tmp/cmd.js", {});
+
+		expect(mockRun).toHaveBeenCalledWith("/tmp/cmd.js", {}, process.cwd());
+	});
+});
+
 describe("runCommand browser timeout classification", () => {
 	it("classifies SOCKET_TIMEOUT as TIMEOUT", async () => {
 		const timeoutError = new Error("Socket request timed out");

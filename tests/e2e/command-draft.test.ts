@@ -76,7 +76,7 @@ describe("command draft", () => {
 		expect(manifest.authRequired).toBe("unknown");
 
 		const code = await readFile(join(payload.draftPath, "command.js"), "utf-8");
-		expect(code).toContain("export default async (page, params)");
+		expect(code).toContain("export default async (page, params, cwd)");
 		expect(code).not.toContain("import");
 	});
 

@@ -42,7 +42,7 @@ const INFRASTRUCTURE_CODES = new Set(["DAEMON_START_FAILED", "DAEMON_UNREACHABLE
 async function runPlaywrightDaemonCommand(commandPath: string, params: Record<string, string>): Promise<unknown> {
 	try {
 		const client = await ensureDaemonClient();
-		return await client.run(commandPath, params);
+		return await client.run(commandPath, params, process.cwd());
 	} catch (err) {
 		const execErr = err as Error & { code?: string };
 		const code = execErr.code;

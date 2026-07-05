@@ -118,6 +118,18 @@ describe("socket-server page limit", () => {
 		expect(parsed.error.code).toBe("DAEMON_PAGE_LIMIT");
 	});
 
+	it("forwards cwd from request params to executeCommand", async () => {
+		const { executeCommand } = await import("../../../../src/daemon/server/executor/executor.js");
+
+		await sendRequest(socketPath, {
+			id: 1,
+			method: "run",
+			params: { commandPath: "/tmp/test.js", params: {}, cwd: "/home/user/project" },
+		});
+
+		expect(executeCommand).toHaveBeenCalledWith("/tmp/test.js", {}, "/home/user/project");
+	});
+
 	it("accepts run requests when page count is below the limit", async () => {
 		mockPageCount = 49;
 

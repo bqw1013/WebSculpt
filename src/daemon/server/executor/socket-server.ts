@@ -50,6 +50,7 @@ async function handleRunRequest(
 ): Promise<SocketResponse> {
 	const commandPath = req.params?.commandPath as string | undefined;
 	const params = (req.params?.params as Record<string, string>) ?? {};
+	const cwd = req.params?.cwd as string | undefined;
 
 	if (!commandPath || typeof commandPath !== "string") {
 		return {
@@ -89,7 +90,7 @@ async function handleRunRequest(
 	recordExecutionStart(activeSessions);
 	let executionSuccess = false;
 	try {
-		const data = await executeCommand(commandPath, params);
+		const data = await executeCommand(commandPath, params, cwd);
 		executionSuccess = true;
 		logEvent("INFO", "req_end", { method: "run", duration_ms: Date.now() - startTime, success: true });
 		return { id: requestId, result: { success: true, data } };

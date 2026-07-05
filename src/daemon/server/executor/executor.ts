@@ -23,7 +23,11 @@ function createTimeoutError(): Error & { code: string } {
  * within that window, the page is forcibly closed so the session slot is
  * released and the daemon does not leak resources.
  */
-export async function executeCommand(commandPath: string, params: Record<string, string>): Promise<unknown> {
+export async function executeCommand(
+	commandPath: string,
+	params: Record<string, string>,
+	cwd?: string,
+): Promise<unknown> {
 	return withBrowser(async () => {
 		let page: Page | undefined;
 		let timeoutHandle: NodeJS.Timeout | null = null;
@@ -47,7 +51,7 @@ export async function executeCommand(commandPath: string, params: Record<string,
 				throw new Error(`Command module at ${commandPath} does not export a default function`);
 			}
 
-			const result = await handler(page, params);
+			const result = await handler(page, params, cwd);
 			if (timedOut) {
 				throw createTimeoutError();
 			}

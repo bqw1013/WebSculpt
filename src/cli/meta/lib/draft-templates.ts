@@ -22,7 +22,7 @@ export default async function(params) {
 `;
 
 const BROWSER_COMMAND_TEMPLATE = `// Helper functions can be defined above export default
-export default async (page, params) => {
+export default async (page, params, cwd) => {
 {{PARAM_LINES}}
 	// TODO: implement command logic using page
 	return { ok: true };

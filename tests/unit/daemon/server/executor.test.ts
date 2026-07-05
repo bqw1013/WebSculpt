@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Page } from "playwright-core";
@@ -62,11 +62,44 @@ describe("executeCommand timeout", () => {
 		await expect(executeCommand(hangingPath, {})).rejects.toThrow("Command execution timed out");
 	});
 
+	it("passes cwd as the third argument to the command handler", async () => {
+		const cwdPath = join(tempDir, "cwd-cmd.js");
+		writeFileSync(cwdPath, "export default async (page, params, cwd) => cwd;", "utf-8");
+
+		const result = await executeCommand(cwdPath, {}, "/custom/cwd");
+		expect(result).toBe("/custom/cwd");
+	});
+
 	it("clears the timeout when the command completes before the deadline", async () => {
 		const quickPath = join(tempDir, "quick.js");
 		writeFileSync(quickPath, "export default async () => 'ok';", "utf-8");
 
 		const result = await executeCommand(quickPath, {});
 		expect(result).toBe("ok");
+	});
+
+	it("resolves file I/O relative to cwd using path.resolve", async () => {
+		const outputDir = mkdtempSync(join(tmpdir(), "ws-cwd-"));
+		const outputFile = "result.txt";
+		const cmdPath = join(tempDir, "file-cmd.js");
+		const code = [
+			`import { writeFileSync } from "node:fs";`,
+			`import { resolve } from "node:path";`,
+			`export default async (page, params, cwd) => {`,
+			`  const filePath = resolve(cwd, params.output);`,
+			`  writeFileSync(filePath, "hello from cwd");`,
+			`  return "written";`,
+			`};`,
+		].join("\n");
+		writeFileSync(cmdPath, code, "utf-8");
+
+		const result = await executeCommand(cmdPath, { output: outputFile }, outputDir);
+
+		expect(result).toBe("written");
+		const expectedPath = join(outputDir, outputFile);
+		expect(existsSync(expectedPath)).toBe(true);
+		expect(readFileSync(expectedPath, "utf-8")).toBe("hello from cwd");
+
+		rmSync(outputDir, { recursive: true, force: true });
 	});
 });

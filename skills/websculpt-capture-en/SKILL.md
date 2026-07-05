@@ -221,7 +221,7 @@ Key constraints:
 
 **Reading prerequisite**: Before editing `draft/command.js`, you **must** read the contract document for the corresponding runtime (`skills/websculpt-capture-en/references/node-contract.md` or `browser-contract.md`). After reading, set `CaptureSession.contractRead` to `true`. When `contractRead` is `false`, editing or modifying `command.js` is prohibited.
 
-Export format: `export default async function(params)` (node) or `export default async (page, params)` (browser).
+Export format: `export default async function(params)` (node) or `export default async (page, params, cwd)` (browser).
 
 Core constraints:
 - Parameter values are all strings; use `parseInt`/`parseFloat` for numbers, `=== "true"` for booleans.
