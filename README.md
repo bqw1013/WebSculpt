@@ -7,6 +7,7 @@
 <p align="center">
   <img src="docs/assets/tagline-zh.svg" width="80%" alt="一套自进化的 Browser Use Harness，以 CLI 程序性记忆为核心 — 把 Agent 在浏览器中探索成功的路径沉淀为本地命令，命令库随使用自动增长，Agent 越用越聪明。">
 </p>
+
 [![npm version](https://img.shields.io/npm/v/websculpt)](https://www.npmjs.com/package/websculpt)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Node Version](https://img.shields.io/node/v/websculpt)](package.json)
