@@ -86,13 +86,13 @@ if (fs.existsSync(docsDir)) {
 
 // 3. Check root README files exist
 const readmePath = path.join(root, "README.md");
-const readmeZhPath = path.join(root, "README_zh.md");
+const readmeEnPath = path.join(root, "README_en.md");
 
 if (!fs.existsSync(readmePath)) {
 	errors.push("Missing root README.md");
 }
-if (!fs.existsSync(readmeZhPath)) {
-	errors.push("Missing root README_zh.md");
+if (!fs.existsSync(readmeEnPath)) {
+	errors.push("Missing root README_en.md");
 }
 
 // Report
