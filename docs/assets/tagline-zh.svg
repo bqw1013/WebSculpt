@@ -1,8 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="130" viewBox="0 0 1000 130">
-  <text x="500" y="50" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" fill="#1f2937">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="180" viewBox="0 0 1200 180">
+  <text x="600" y="52" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="700" fill="#1f2937">
     以 CLI 程序性记忆为核心的一套自进化 Browser Use Harness
   </text>
-  <text x="500" y="100" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#6b7280">
-    把 Agent 在浏览器中探索成功的路径沉淀为本地 domain/action 命令，命令库随使用自动增长，Agent 越用越聪明。
+  <text x="600" y="105" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#6b7280">
+    把 Agent 在浏览器中探索成功的路径沉淀为本地 domain/action 命令，
+  </text>
+  <text x="600" y="140" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#6b7280">
+    命令库随使用自动增长，Agent 越用越聪明。
   </text>
 </svg>
