@@ -37,14 +37,28 @@
 
 **Prerequisites**: Node.js >= 22
 
-```bash
-# 1. Install CLI tool
-npm install -g @playwright/cli@0.1.13 websculpt
+1. Install CLI tool:
 
-# 2. Install Skills for Agent
-websculpt skill install --lang en       # Current project
-# websculpt skill install --global --lang en   # Global scope
-```
+   ```bash
+   npm install -g @playwright/cli@0.1.13 websculpt
+   ```
+
+2. Install Skills for Agent:
+
+   ```bash
+   websculpt skill install --lang en       # Current project
+   # websculpt skill install --global --lang en   # Global scope
+   ```
+
+3. Install Playwright Extension:
+
+   WebSculpt connects to your currently open Chrome through the Playwright Extension, reusing login state, cookies, and browser fingerprint. Please install it in Chrome from:
+
+   ```text
+   https://chromewebstore.google.com/detail/playwright-extension/mmlmfjhmonkocbjadbfplnigmagldckm
+   ```
+
+   After installation, simply keep Chrome open. No remote debugging or extra configuration is needed.
 
 ## 2. Usage
 
@@ -195,7 +209,7 @@ WebSculpt's functionality is divided into four sequentially connected Skills —
 
 ### 5.2 Explore: Document Soft Constraints + Filesystem Truth
 
-Explore constrains the Agent's tool selection: must check the command library first for reuse, only allowed to explore new paths when no match exists; when browser automation is needed, converge to the single protocol of Playwright CDP connecting to the current browser.
+Explore constrains the Agent's tool selection: must check the command library first for reuse, only allowed to explore new paths when no match exists; when browser automation is needed, converge to the single protocol of the Playwright Extension connecting to the current browser.
 
 Constraints are enforced through two mechanisms:
 - **Document soft constraints**: Skill documents define protocol flows; the Agent follows the rules.

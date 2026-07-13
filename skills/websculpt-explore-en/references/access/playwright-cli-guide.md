@@ -4,7 +4,7 @@
 
 ## 1. Positioning
 
-`@playwright/cli` is the browser automation tool for the explore phase. It connects to the user's already-open Chrome via CDP attach, reusing the real browser environment's login state, cookies, localStorage, and browser fingerprint.
+`@playwright/cli` is the browser automation tool for the explore phase. It connects to the user's already-open Chrome via the Playwright Extension, reusing the real browser environment's login state, cookies, localStorage, and browser fingerprint.
 
 Applicable scenarios include login-state pages, JS-rendered content, multi-step interactions, tasks that require simulating real user browsing and clicks, and sites where static scraping fails or anti-bot measures are strong.
 
@@ -39,30 +39,57 @@ Choose the corresponding operation based on output:
 - Other open sessions exist but no `default` → close residual sessions first, then re-attach
 - No open sessions → establish connection following these steps:
 
-  1. Guide the user to open `chrome://inspect/#remote-debugging` in Chrome, check "Allow remote debugging", and keep the browser open
-
-  2. Inform the user of risks:
+  1. Inform the user of risks:
 
      ```text
      Some sites have strict browser automation detection, and there is a risk of account risk control or banning. WebSculpt will try to reuse the real browser environment and reduce operation frequency, but it cannot completely avoid risks.
      ```
 
-  3. Attach to the default session:
+  2. Try attaching to the default session:
 
      ```bash
-     playwright-cli attach --cdp=chrome --session=default
+     playwright-cli attach --extension=chrome --session=default
      ```
 
-     > **Windows note**: `attach` on this platform often appears to hang or time out, but the CDP connection is usually already established in the background.
-     > After a timeout, run `playwright-cli list` to verify. If the `default` session already exists in the list, the connection is successful and subsequent commands can be used directly without repeating `attach`.
+     - If attach succeeds → proceed directly to step 3 to confirm
+     - If it errors with `Playwright Extension not found in "..."` → the extension is not installed; guide the user to install it:
 
-  4. Confirm attach success:
+       ```text
+       Please install the Playwright Extension from https://chromewebstore.google.com/detail/playwright-extension/mmlmfjhmonkocbjadbfplnigmagldckm and let me know when done.
+       ```
+
+       After the user installs it, re-run the attach command in this step.
+
+  3. Confirm attach success:
 
      ```bash
      playwright-cli list
      ```
 
      You should see the `default` session in open status.
+
+### Skip the Connection Approval Dialog
+
+When attaching via the extension for the first time, Chrome shows a connection approval page that requires the user to click Allow. Subsequent attaches can skip this dialog by using the `PLAYWRIGHT_MCP_EXTENSION_TOKEN` environment variable.
+
+Before attaching, check whether `PLAYWRIGHT_MCP_EXTENSION_TOKEN` is configured:
+
+- If configured, attach with the token:
+
+   ```bash
+   PLAYWRIGHT_MCP_EXTENSION_TOKEN="$PLAYWRIGHT_MCP_EXTENSION_TOKEN" \
+     playwright-cli attach --extension=chrome --session=default
+   ```
+
+- If not configured, attach without the token:
+
+   ```bash
+   playwright-cli attach --extension=chrome --session=default
+   ```
+
+After a successful attach without a token, the connect page displays the `PLAYWRIGHT_MCP_EXTENSION_TOKEN` value. Prompt the user to copy it, then configure it as an environment variable for the current session and persist it in the user's current shell configuration.
+
+Subsequent attaches will detect the environment variable and run with the token directly, so the user no longer needs to click Allow.
 
 ## 3. Operation Status Confirmation (BrowserSession)
 
@@ -213,7 +240,7 @@ If the page shows CAPTCHA, 403/429, content is human-visible but automation retr
 
 ## 8. Performance and Speed
 
-After a browser session has been attached for a long time, Chrome memory and CDP connection overhead will continuously accumulate, causing operations to slow down or even freeze the system. The following practices can alleviate performance degradation **without re-attaching** or **closing the session**.
+After a browser session has been attached for a long time, Chrome memory and extension bridge overhead will continuously accumulate, causing operations to slow down or even freeze the system. The following practices can alleviate performance degradation **without re-attaching** or **closing the session**.
 
 ### `eval` over `snapshot`
 
@@ -268,24 +295,59 @@ After cleanup completes, re-attach following the steps in Section 2 "Environment
 
 ## 10. Troubleshooting
 
-### Commands Keep Timing Out (session open but eval/snapshot unresponsive)
+### Attach Fails
 
-**Symptoms**: `attach` reports success, `playwright-cli list` shows session open, but all subsequent browser commands (`eval`, `snapshot`, `goto`, etc.) time out. Rebuilding the daemon via `close` + `attach` does not fix the issue.
+**Symptoms**: Running `playwright-cli attach --extension=chrome --session=default` produces an error.
 
-**Root cause**: After Chrome runs for an extended period, its CDP WebSocket service may degrade and become unresponsive. The TCP port still shows as Listening, but the CDP protocol layer is dead. The daemon can start but cannot communicate with the browser.
+**Agent self-check and handling**:
 
-**Diagnosis**: Locate Chrome's `DevToolsActivePort` file (typically under the Chrome user data directory), read the port number from the first line, then verify CDP liveness:
+1. Run `playwright-cli list --all` to check the Chrome extension status.
+2. If the output shows `attach (extension): install at https://chromewebstore.google.com/...`, the extension is not installed → enter the "guide user to install extension" flow.
+3. If Chrome is not running → prompt the user to start Chrome.
+4. If the extension is installed and Chrome is running → try re-attaching:
 
-```bash
-curl http://localhost:<port>/json/version
-```
+   ```bash
+   playwright-cli -s=default close
+   playwright-cli attach --extension=chrome --session=default
+   ```
 
-- Returns JSON (containing `webSocketDebuggerUrl`) → CDP is healthy, the issue lies elsewhere
-- Returns 404, empty response, or connection refused → **CDP is degraded**, Chrome restart required
+**Fixes requiring user action**:
 
-> The `DevToolsActivePort` path varies by platform — use `find`/`ls` to locate it, or infer from the platform's Chrome user data directory convention. This file is written by Chrome when remote debugging is enabled.
+- If the extension is not installed, ask the user to install it from:
 
-**Fix**: Tell the user that Chrome's remote debugging service has become unresponsive. They need to restart Chrome, re-enable remote debugging (`chrome://inspect/#remote-debugging`), then re-attach. `close`/`kill-all`/re-`attach` cannot substitute for restarting Chrome.
+  ```text
+  https://chromewebstore.google.com/detail/playwright-extension/mmlmfjhmonkocbjadbfplnigmagldckm
+  ```
+
+- After installation, the agent re-runs attach.
+
+---
+
+### Commands Unresponsive or Timing Out
+
+**Symptoms**: Attach succeeds, `playwright-cli list` shows the session as open, but `goto` / `snapshot` / `eval` time out.
+
+**Agent-executable steps**:
+
+1. Try closing and re-creating the session:
+
+   ```bash
+   playwright-cli -s=default close
+   playwright-cli attach --extension=chrome --session=default
+   ```
+
+2. If it still times out, try cleaning up residual daemons:
+
+   ```bash
+   playwright-cli kill-all
+   playwright-cli attach --extension=chrome --session=default
+   ```
+
+**Fixes requiring user action**:
+
+- If the steps above fail, the extension or browser may be in an abnormal state. Ask the user to **restart Chrome**, then re-attach.
+
+> Extension mode does not depend on `DevToolsActivePort` or remote debugging switches, so there is no need to check port files.
 
 ---
 
