@@ -190,6 +190,12 @@ export interface CommandListResult {
 	}>;
 }
 
+/** Result shape for a successful command domains listing. */
+export interface CommandDomainsResult {
+	success: true;
+	domains: string[];
+}
+
 /** Result shape for a successful command show. */
 export interface CommandShowResult {
 	success: true;
@@ -335,6 +341,7 @@ export type MetaCommandResult =
 	| CommandCreateResult
 	| CommandRemoveResult
 	| CommandListResult
+	| CommandDomainsResult
 	| ConfigInitResult
 	| DaemonStopResult
 	| DaemonStatusResult

@@ -205,19 +205,43 @@ websculpt daemon stop
 
 ### 4.3 `command`
 
-#### `command list`
+#### `command list [<domain>]`
 
 列出当前环境中可用的扩展命令，并标注来源（builtin / user）。
 
 默认情况下，若当前工作目录或其祖先目录存在 `.websculpt/scope.json`，仅返回白名单内的命令；无 scope 时返回全部。使用 `--all` 可绕过 scope 过滤。
 
+提供 `[domain]` 位置参数时，在 scope 过滤之后追加 domain 精确匹配过滤，只列出该 domain 下的命令。`--all` 只绕过 scope 过滤，不影响 domain 过滤。未知 domain 返回空列表（退出码 0），不报错。
+
 ```bash
-websculpt command list [--all]
+websculpt command list [<domain>] [--all]
+```
+
+| 参数/选项 | 说明 |
+|------|------|
+| `[domain]` | 可选，只列出指定 domain 的命令（精确匹配） |
+| `--all` | 显示全部命令，忽略 scope 白名单 |
+
+---
+
+#### `command domains`
+
+列出当前可见命令集合中的全部 domain，去重并按字母序排序。
+
+默认受 scope 约束：domain 列表从 scope 过滤后的命令集合中提取，scope 白名单中声明但无实际命令的 domain 不会出现在输出中。使用 `--all` 可绕过 scope 过滤，列出注册表中的全部 domain。
+
+```bash
+websculpt command domains [--all]
 ```
 
 | 选项 | 说明 |
 |------|------|
-| `--all` | 显示全部命令，忽略 scope 白名单 |
+| `--all` | 显示全部 domain，忽略 scope 白名单 |
+
+**输出**
+
+- human：计数标题 + 逗号分隔列表（自动换行），如 `Domains (7):`
+- JSON：`{ "success": true, "domains": ["bilibili", "zhihu", ...] }`
 
 ---
 
@@ -557,7 +581,7 @@ websculpt skill status
 
 ### 4.7 `scope`
 
-管理项目级命令可见性。通过在当前目录维护 `scope.json` 白名单，控制 `command list` 和 CLI 帮助中显示的扩展命令。
+管理项目级命令可见性。通过在当前目录维护 `scope.json` 白名单，控制 `command list`、`command domains` 和 CLI 帮助中显示的扩展命令。`command list <domain>` 的 domain 过滤在 scope 过滤之后执行；两个命令的 `--all` 都只绕过 scope 过滤。
 
 ```bash
 websculpt scope init

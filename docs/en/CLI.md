@@ -205,19 +205,43 @@ Returns `DAEMON_STOP_FAILED` on failure (only when the process resists force ter
 
 ### 4.3 `command`
 
-#### `command list`
+#### `command list [<domain>]`
 
 List available extension commands in the current environment, annotated with source (builtin / user).
 
 By default, if a `.websculpt/scope.json` exists in the current working directory or any ancestor directory, only whitelisted commands are returned; when no scope is found, all commands are returned. Use `--all` to bypass scope filtering.
 
+When the `[domain]` positional argument is given, an exact-match domain filter is applied after scope filtering, listing only commands under that domain. `--all` bypasses only the scope filter, not the domain filter. An unknown domain returns an empty list (exit code 0) without an error.
+
 ```bash
-websculpt command list [--all]
+websculpt command list [<domain>] [--all]
+```
+
+| Argument/Option | Description |
+|------|------|
+| `[domain]` | Optional; list only commands of the given domain (exact match) |
+| `--all` | Show all commands, ignoring the scope whitelist |
+
+---
+
+#### `command domains`
+
+List all domains in the currently visible command set, deduplicated and sorted alphabetically.
+
+Scope-constrained by default: the domain list is derived from the command set after scope filtering, so domains declared in the scope whitelist without an installed command do not appear in the output. Use `--all` to bypass scope filtering and list every domain in the registry.
+
+```bash
+websculpt command domains [--all]
 ```
 
 | Option | Description |
 |------|------|
-| `--all` | Show all commands, ignoring the scope whitelist |
+| `--all` | Show all domains, ignoring the scope whitelist |
+
+**Output**
+
+- human: count header + comma-separated list (wrapped), e.g. `Domains (7):`
+- JSON: `{ "success": true, "domains": ["bilibili", "zhihu", ...] }`
 
 ---
 
@@ -555,7 +579,7 @@ websculpt skill status
 
 ### 4.7 `scope`
 
-Manage project-level command visibility. By maintaining a `scope.json` whitelist in the current directory, control which extension commands appear in `command list` and CLI help.
+Manage project-level command visibility. By maintaining a `scope.json` whitelist in the current directory, control which extension commands appear in `command list`, `command domains`, and CLI help. For `command list <domain>`, the domain filter is applied after scope filtering; `--all` on both commands bypasses only the scope filter.
 
 ```bash
 websculpt scope init

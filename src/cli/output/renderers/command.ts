@@ -1,6 +1,7 @@
 import { formatRow, printKeyValue, printWarnings } from "../formatters.js";
 import type {
 	CommandCreateResult,
+	CommandDomainsResult,
 	CommandDraftResult,
 	CommandExportResult,
 	CommandImportResult,
@@ -82,6 +83,31 @@ export function renderListResult(result: CommandListResult): void {
 			console.log("");
 		}
 	}
+}
+
+export function isCommandDomainsResult(r: MetaCommandResult): r is CommandDomainsResult {
+	return r.success && "domains" in r && Array.isArray((r as CommandDomainsResult).domains);
+}
+
+export function renderDomainsResult(result: CommandDomainsResult): void {
+	if (result.domains.length === 0) {
+		console.log("No domains available.");
+		return;
+	}
+
+	console.log(`Domains (${result.domains.length}):`);
+	const indent = "  ";
+	const maxWidth = 80;
+	let line = indent;
+	for (const [i, domain] of result.domains.entries()) {
+		const text = i < result.domains.length - 1 ? `${domain}, ` : domain;
+		if (line !== indent && line.length + text.length > maxWidth) {
+			console.log(line.trimEnd());
+			line = indent;
+		}
+		line += text;
+	}
+	console.log(line.trimEnd());
 }
 
 export function isCommandShowResult(r: MetaCommandResult): r is CommandShowResult {

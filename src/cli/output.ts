@@ -6,6 +6,7 @@ export type {
 	CaptureRestoreResult,
 	CaptureStatusResult,
 	CommandCreateResult,
+	CommandDomainsResult,
 	CommandDraftResult,
 	CommandListResult,
 	CommandRemoveResult,

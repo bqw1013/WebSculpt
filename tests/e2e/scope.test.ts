@@ -349,6 +349,128 @@ describe("scope", () => {
 			expect(payload.commands[0].domain).toBe(target.domain);
 			expect(payload.commands[0].action).toBe(target.action);
 		});
+
+		it("applies the domain filter after scope filtering", async () => {
+			const homeDir = await createIsolatedHome();
+			const workDir = await createIsolatedHome();
+			tempDirs.push(homeDir, workDir);
+
+			await registerUserCommand(homeDir, "notes-save", notesSavePackage);
+			await registerUserCommand(homeDir, "notes-delete", notesDeletePackage);
+
+			const scopePath = join(workDir, ".websculpt", "scope.json");
+			await mkdir(join(workDir, ".websculpt"), { recursive: true });
+			await writeFile(scopePath, JSON.stringify({ commands: ["notes/save"] }), "utf8");
+
+			const result = await runSourceCli(["command", "list", "notes", "--format", "json"], homeDir, { cwd: workDir });
+			const payload = parseJsonOutput<{ success: boolean; commands: Array<{ domain: string; action: string }> }>(
+				result.stdout,
+			);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.commands.map((c) => `${c.domain}/${c.action}`)).toEqual(["notes/save"]);
+		});
+
+		it("bypasses scope but not the domain filter with --all", async () => {
+			const homeDir = await createIsolatedHome();
+			const workDir = await createIsolatedHome();
+			tempDirs.push(homeDir, workDir);
+
+			await registerUserCommand(homeDir, "notes-save", notesSavePackage);
+			await registerUserCommand(homeDir, "notes-delete", notesDeletePackage);
+
+			const scopePath = join(workDir, ".websculpt", "scope.json");
+			await mkdir(join(workDir, ".websculpt"), { recursive: true });
+			await writeFile(scopePath, JSON.stringify({ commands: ["notes/save"] }), "utf8");
+
+			const result = await runSourceCli(["command", "list", "notes", "--all", "--format", "json"], homeDir, {
+				cwd: workDir,
+			});
+			const payload = parseJsonOutput<{ success: boolean; commands: Array<{ domain: string; action: string }> }>(
+				result.stdout,
+			);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.commands.map((c) => `${c.domain}/${c.action}`)).toEqual(["notes/delete", "notes/save"]);
+		});
+	});
+
+	describe("command domains with scope", () => {
+		it("lists only domains of commands visible under the active scope", async () => {
+			const homeDir = await createIsolatedHome();
+			const workDir = await createIsolatedHome();
+			tempDirs.push(homeDir, workDir);
+
+			await registerUserCommand(homeDir, "notes-save", notesSavePackage);
+
+			const scopePath = join(workDir, ".websculpt", "scope.json");
+			await mkdir(join(workDir, ".websculpt"), { recursive: true });
+			await writeFile(scopePath, JSON.stringify({ commands: ["notes/save"] }), "utf8");
+
+			const result = await runSourceCli(["command", "domains", "--format", "json"], homeDir, { cwd: workDir });
+			const payload = parseJsonOutput<{ success: boolean; domains: string[] }>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.domains).toEqual(["notes"]);
+		});
+
+		it("bypasses scope filtering with --all", async () => {
+			const homeDir = await createIsolatedHome();
+			const workDir = await createIsolatedHome();
+			tempDirs.push(homeDir, workDir);
+
+			await registerUserCommand(homeDir, "notes-save", notesSavePackage);
+
+			const scopePath = join(workDir, ".websculpt", "scope.json");
+			await mkdir(join(workDir, ".websculpt"), { recursive: true });
+			await writeFile(scopePath, JSON.stringify({ commands: ["notes/save"] }), "utf8");
+
+			const result = await runSourceCli(["command", "domains", "--all", "--format", "json"], homeDir, {
+				cwd: workDir,
+			});
+			const payload = parseJsonOutput<{ success: boolean; domains: string[] }>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.domains.length).toBeGreaterThan(1);
+			expect(payload.domains).toContain("notes");
+			expect(payload.domains).toContain("bilibili");
+		});
+
+		it("shows no domains when the scope is empty", async () => {
+			const homeDir = await createIsolatedHome();
+			const workDir = await createIsolatedHome();
+			tempDirs.push(homeDir, workDir);
+
+			await runSourceCli(["scope", "init"], homeDir, { cwd: workDir });
+
+			const result = await runSourceCli(["command", "domains", "--format", "json"], homeDir, { cwd: workDir });
+			const payload = parseJsonOutput<{ success: boolean; domains: string[] }>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.domains).toHaveLength(0);
+		});
+
+		it("omits domains whose scope entries have no installed command", async () => {
+			const homeDir = await createIsolatedHome();
+			const workDir = await createIsolatedHome();
+			tempDirs.push(homeDir, workDir);
+
+			const scopePath = join(workDir, ".websculpt", "scope.json");
+			await mkdir(join(workDir, ".websculpt"), { recursive: true });
+			await writeFile(scopePath, JSON.stringify({ commands: ["notes/missing"] }), "utf8");
+
+			const result = await runSourceCli(["command", "domains", "--format", "json"], homeDir, { cwd: workDir });
+			const payload = parseJsonOutput<{ success: boolean; domains: string[] }>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.domains).not.toContain("notes");
+		});
 	});
 
 	describe("capture finalize auto-adds to scope", () => {

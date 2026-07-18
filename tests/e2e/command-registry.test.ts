@@ -171,6 +171,83 @@ describe("command registry", () => {
 		});
 	});
 
+	describe("command list <domain>", () => {
+		it("filters commands by exact domain match, preserving the standard fields", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			await registerUserCommand(homeDir, "notes-save", notesSavePackage);
+			await registerUserCommand(homeDir, "notes-delete", notesDeletePackage);
+
+			const result = await runSourceCli(["command", "list", "notes", "--format", "json"], homeDir);
+			const payload = parseJsonOutput<{
+				success: boolean;
+				commands: Array<{
+					domain: string;
+					action: string;
+					type: string;
+					id: string;
+					description: string;
+					requiresBrowser: boolean;
+				}>;
+			}>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.commands.map((c) => `${c.domain}/${c.action}`)).toEqual(["notes/delete", "notes/save"]);
+			expect(payload.commands[0]).toEqual(
+				expect.objectContaining({
+					type: "user",
+					id: "notes-delete",
+					description: "Delete a note",
+					requiresBrowser: false,
+				}),
+			);
+		});
+
+		it("returns an empty list with exit 0 for an unknown domain", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const result = await runSourceCli(["command", "list", "unknown-domain", "--format", "json"], homeDir);
+			const payload = parseJsonOutput<{ success: boolean; commands: Array<unknown> }>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.commands).toHaveLength(0);
+		});
+	});
+
+	describe("command domains", () => {
+		it("lists unique domains sorted alphabetically", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			await registerUserCommand(homeDir, "notes-save", notesSavePackage);
+			await registerUserCommand(homeDir, "notes-delete", notesDeletePackage);
+
+			const result = await runSourceCli(["command", "domains", "--format", "json"], homeDir);
+			const payload = parseJsonOutput<{ success: boolean; domains: string[] }>(result.stdout);
+
+			expect(result.exitCode).toBe(0);
+			expect(payload.success).toBe(true);
+			expect(payload.domains).toEqual([...payload.domains].sort());
+			expect(new Set(payload.domains).size).toBe(payload.domains.length);
+			expect(payload.domains).toContain("notes");
+		});
+
+		it("prints a count header in human mode", async () => {
+			const homeDir = await createIsolatedHome();
+			tempDirs.push(homeDir);
+
+			const result = await runSourceCli(["command", "domains"], homeDir);
+
+			expect(result.exitCode).toBe(0);
+			expect(result.stdout).toMatch(/^Domains \(\d+\):/m);
+			expect(result.stdout).toContain("bilibili");
+		});
+	});
+
 	describe("user command execution", () => {
 		it("executes a created user command with passed parameters", async () => {
 			const homeDir = await createIsolatedHome();

@@ -151,6 +151,9 @@ websculpt scope add github list-trending  # Add a single command
 websculpt scope remove github           # Remove
 websculpt scope show                    # View current whitelist
 websculpt scope destroy                 # Disable
+
+websculpt command domains               # Browse visible domains (scope-aware)
+websculpt command list github           # List commands under one domain
 ```
 
 **Export / Import — Migration and Sharing**

@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { getFormat } from "../shared.js";
 import { registerCreate } from "./create.js";
+import { registerDomains } from "./domains.js";
 import { registerDraft } from "./draft.js";
 import { registerExport } from "./export.js";
 import { registerImport } from "./import.js";
@@ -15,6 +16,7 @@ export function registerCommandMeta(program: Command): void {
 	const group = program.command("command").description("Manage extension command registry");
 
 	registerList(group, format);
+	registerDomains(group, format);
 	registerShow(group, format);
 	registerRemove(group, format);
 	registerCreate(group, format);

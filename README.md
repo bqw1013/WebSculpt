@@ -151,6 +151,9 @@ websculpt scope add zhihu get-hot       # 添加单个命令
 websculpt scope remove zhihu            # 移除
 websculpt scope show                    # 查看当前白名单
 websculpt scope destroy                 # 停用
+
+websculpt command domains               # 浏览当前可见的 domain（受 scope 约束）
+websculpt command list zhihu            # 只看 zhihu 域下的命令
 ```
 
 **Export / Import — 迁移与分享**

@@ -29,6 +29,7 @@ import {
 } from "./renderers/capture.js";
 import {
 	isCommandCreateResult,
+	isCommandDomainsResult,
 	isCommandDraftResult,
 	isCommandExportResult,
 	isCommandImportResult,
@@ -37,6 +38,7 @@ import {
 	isCommandShowResult,
 	isCommandValidateResult,
 	renderCreateResult,
+	renderDomainsResult,
 	renderDraftResult,
 	renderExportResult,
 	renderImportResult,
@@ -96,6 +98,7 @@ export const renderers: AnyRenderer[] = [
 	register(isCommandExportResult, renderExportResult),
 	register(isCommandImportResult, renderImportResult),
 	register(isCommandListResult, renderListResult),
+	register(isCommandDomainsResult, renderDomainsResult),
 	register(isDaemonStatusResult, renderDaemonStatus),
 	register(isDaemonLogsResult, renderDaemonLogs),
 	register(isSkillStatusResult, renderSkillStatus),
