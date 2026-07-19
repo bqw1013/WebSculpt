@@ -287,6 +287,8 @@ WebSculpt/
 ├── skills/                     # agent skill deliverables
 │   ├── websculpt-explore/      # explore stage skill (includes access references)
 │   └── websculpt-capture/      # capture stage skill (includes authoring contracts)
+├── websculpt/                  # marketplace bootstrap skill (Chinese), not shipped in the npm package
+├── websculpt-en/               # marketplace bootstrap skill (English)
 ├── openspec/                   # OpenSpec change management
 ├── tests/                      # test suite (CLI engine, meta commands, and daemon)
 │   ├── e2e/

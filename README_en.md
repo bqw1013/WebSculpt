@@ -104,6 +104,8 @@ Connect the four Skills together, and you get a self-evolving command library:
 - **User overrides Builtin: the library improves.** For the same `github/list-trending`, your distilled version replaces the builtin one. Library quality improves with use, not with releases.
 - **Maintain → Capture overwrite: the library self-heals.** When a website redesign breaks a command, Maintain pulls it back into a workspace, re-explores the page structure, repairs it, and overwrites the installed version. Commands don't rot — they evolve alongside their target websites.
 
+In addition, the `websculpt/` and `websculpt-en/` directories at the repository root are bootstrap skills (Chinese/English) distributed through skill marketplaces; they are not part of the lifecycle above. Their only job is to probe the environment on the Agent's first trigger, install the CLI, and land the four lifecycle skills via `skill install`, after which they go dormant. They are not shipped with the npm package and are not managed by `skill install`, which is why they live outside `skills/`.
+
 ### 3.2 Commands
 
 WebSculpt has two types of commands:

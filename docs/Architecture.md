@@ -284,6 +284,8 @@ WebSculpt/
 ├── skills/                     # Agent skill 交付物
 │   ├── websculpt-explore/      # 探索阶段 skill（含 access 参考）
 │   └── websculpt-capture/      # 沉淀阶段 skill（含编写契约）
+├── websculpt/                  # Skill 市场引导 skill（中文），仅此渠道分发，不进 npm 包
+├── websculpt-en/               # Skill 市场引导 skill（英文）
 ├── openspec/                   # OpenSpec 变更管理
 ├── tests/                      # 测试套件（CLI 引擎、Meta 命令与 daemon）
 │   ├── e2e/
