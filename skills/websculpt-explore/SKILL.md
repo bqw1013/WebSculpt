@@ -25,7 +25,17 @@ WebSculpt 命令的本质是将探索过程中验证成功的路径转换为 CLI
 
 明确用户要获取的信息、时间范围、来源偏好和输出形式。
 
-先检查命令库是否有可用命令：
+先检查命令库是否有可用命令。若任务描述中包含明确的平台或领域倾向，先查看可用平台并定位到该平台：
+
+```bash
+# 列出当前可用的平台（domain）
+websculpt command domains
+
+# 只列出指定平台下的命令
+websculpt command list <domain>
+```
+
+若任务描述为通用需求、无明确平台倾向，直接查看全部命令：
 
 ```bash
 websculpt command list

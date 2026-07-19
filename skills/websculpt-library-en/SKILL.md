@@ -40,7 +40,7 @@ websculpt scope remove github
 
 ### Key behaviors
 
-- `scope` only changes what `websculpt command list` and help **display**. It does not change whether a command exists or can be run. Commands outside the allow-list can still be executed directly.
+- `scope` only changes what `websculpt command list`, `websculpt command domains`, and help **display**. It does not change whether a command exists or can be run. Commands outside the allow-list can still be executed directly.
 - To temporarily see all commands, use `websculpt command list --all`.
 - If the current directory has no scope, the nearest ancestor scope is used; if none exist, all commands are shown.
 - `scope add` / `scope remove` accept an `identifier` of either `domain/action` (a single command) or `domain` (all existing commands in that domain).
@@ -111,6 +111,7 @@ If the exported package contains `evidence.md`, the export command emits an `EVI
 | Start a new project and show only relevant commands | `scope init` → `scope add <commands you need>` |
 | `command list` is too noisy | `scope show` to review → `scope remove <commands you do not need>` |
 | Temporarily view all commands | `websculpt command list --all` |
+| Quickly see available platforms | `websculpt command domains` |
 | Back up all commands to a directory | `command export --to <dir>` |
 | Export only commands in a specific domain | `command export <domain> --to <dir>` |
 | Export only commands in the current scope | `scope show` to review the allow-list → manually `command export <domain> <domain/action>... --to <dir>` |

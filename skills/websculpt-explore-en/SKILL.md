@@ -25,7 +25,17 @@ Your core task is to solve the user's current information acquisition needs. If 
 
 Clarify the information the user wants, time range, source preferences, and output format.
 
-First, check if the command library has available commands:
+First, check if the command library has available commands. If the task description contains a clear platform or domain preference, first list available platforms and narrow down to that platform:
+
+```bash
+# List currently available platforms (domains)
+websculpt command domains
+
+# List only commands under the specified platform
+websculpt command list <domain>
+```
+
+If the task is a general need without a clear platform preference, list all commands directly:
 
 ```bash
 websculpt command list

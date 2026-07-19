@@ -40,7 +40,7 @@ websculpt scope remove github
 
 ### scope 的关键行为
 
-- `scope` 只改变 `websculpt command list` 和帮助的**显示**，不改变命令是否存在或可执行。白名单外的命令仍可直接执行。
+- `scope` 只改变 `websculpt command list`、`websculpt command domains` 和帮助的**显示**，不改变命令是否存在或可执行。白名单外的命令仍可直接执行。
 - 想临时看到全部命令，用 `websculpt command list --all`。
 - 当前目录没有 scope 时，会自动向上查找**最近**的祖先 scope；都没有时才显示全部命令。
 - `scope add` / `scope remove` 的 `identifier` 可以是 `domain/action`（单个命令）或 `domain`（该域下全部现有命令）。
@@ -111,6 +111,7 @@ websculpt command import --from ./my-commands --force
 | 新项目只想看到相关命令 | `scope init` → `scope add <需要的命令>` |
 | `command list` 列出的命令太杂 | `scope show` 查看 → `scope remove <不需要的>` |
 | 想临时查看全部命令 | `websculpt command list --all` |
+| 快速查看当前可用平台 | `websculpt command domains` |
 | 把全部命令备份到目录 | `command export --to <目录>` |
 | 只导出某个域的命令 | `command export <domain> --to <目录>` |
 | 只想导出 scope 内的命令 | `scope show` 查看白名单 → 手动 `command export <domain> <domain/action>... --to <目录>` |
