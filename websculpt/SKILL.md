@@ -1,9 +1,51 @@
 ---
 name: websculpt
-description: WebSculpt 的安装与引导入口。当需要获取或核验外部信息、抓取网页、调用 API、进行浏览器自动化或使用 WebSculpt 命令库，且当前环境 websculpt 命令不可用（未安装或已损坏）时，必须先使用本 skill 完成安装与引导，再开始信息获取。也用于用户显式要求安装、更新或修复 WebSculpt 的场景。若 websculpt 命令已可用，请直接使用 websculpt-explore 等生命周期 skill，不要加载本 skill。
+description: WebSculpt 的安装与引导入口。当需要获取或核验外部信息、抓取网页、调用 API、进行浏览器自动化或使用 WebSculpt 命令库，且当前环境 websculpt 命令不可用（未安装或已损坏）时，必须先使用本 skill 完成安装与引导，再开始信息获取。也用于用户显式要求安装、更新或修复 WebSculpt 的场景。若当前可用 skill 列表中已存在 websculpt-explore 等其他 WebSculpt 生命周期 skill，说明环境已就绪，请勿加载本 skill，直接使用对应的生命周期 skill。
 ---
 
 # WebSculpt Bootstrap
+
+## 什么时候该用 WebSculpt
+
+WebSculpt 擅长两类事：进入登录墙或内容墙内获取信息；把高频重复的网页操作固化为 CLI 命令，此后一句话直接调用，不重复消耗模型上下文。典型场景：
+
+- **自媒体博主 / 内容创作者**：下载抖音、小红书、B站视频素材；分析对标账号的发布节奏与爆款内容；采集评论区反馈做选题。
+- **电商运营**：定期监控竞品店铺的价格、上新与销量变化，追踪竞品投放素材。
+- **投研 / 金融从业者**：定期获取研报、公告与高频跟踪数据；量化方向还可采集舆情、社区情绪等另类数据。
+- **咨询 / 行业研究**：跟踪行业动态，大量一手信息沉淀在小红书、知乎等内容平台内。
+- **AI 从业者 / 研究者**：追踪 AI 产品与竞品动态，了解前沿技术进展，监控社区讨论热度。
+
+以上只是示例。凡是“信息在墙内”或“操作高频重复”的场景，都适合 WebSculpt。
+
+## 四个生命周期 skill
+
+命令的完整生命周期是：探索发现 → 固化为命令 → 失效修复 → 整理迁移，各由一个 skill 负责：
+
+- **websculpt-explore**：命令库里还没有现成命令时，用它探索并验证获取路径。绝大多数任务从这里开始。例如：
+
+  ```
+  /websculpt-explore 使用我的浏览器，帮我把 https://www.douyin.com/video/1234567890 这个视频下载下来
+  /websculpt-explore 帮我调研一下 Perplexity 最近半年的功能更新，整理成时间线
+  /websculpt-explore 用我登录的账号，把这个月小红书创作者中心的数据报表导出来
+  ```
+
+- **websculpt-capture**：explore 已把某条路径跑通、想固化为以后可直接调用的命令时，用它。通常由 explore 在验证通过后建议进入，无需手动触发。
+
+- **websculpt-maintain**：已安装的命令失效、报错，或需要新增参数、调整输出时，用它修复。例如：
+
+  ```
+  /websculpt-maintain YouTube 视频下载的命令不能用了，帮我修复一下
+  /websculpt-maintain 竞品价格监控命令这几天返回的都是空数据，看看怎么回事
+  /websculpt-maintain 给微博热搜监控命令加个参数，只看前 10 条
+  ```
+
+- **websculpt-library**：命令太多想精简显示，或要备份、迁移、分享命令库时，用它。例如：
+
+  ```
+  /websculpt-library 帮我把各个视频平台的下载命令导出来，我要发给我朋友
+  /websculpt-library 命令太多了，这个项目里只显示电商监控相关的
+  /websculpt-library 我换了台新电脑，把之前备份的命令库导入进来
+  ```
 
 ## 角色
 
