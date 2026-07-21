@@ -9,10 +9,10 @@ description: Setup and bootstrap entry point for WebSculpt. Use when you need to
 
 WebSculpt is good at two things: getting information from behind login walls and content walls, and turning high-frequency, repetitive web operations into CLI commands that you can later invoke in one sentence without re-spending model context. Typical scenarios:
 
-- **Content creators / self-media bloggers**: download video clips from Douyin, Xiaohongshu, or Bilibili; analyze benchmark accounts' posting cadence and viral content; harvest comment-section feedback for topic ideas.
+- **Content creators / self-media bloggers**: download video clips from TikTok, YouTube, or Instagram; analyze benchmark accounts' posting cadence and viral content; harvest comment-section feedback for topic ideas.
 - **E-commerce operators**: regularly monitor competitor stores' pricing, new listings, and sales changes; track competitor ad creatives.
 - **Investment research / finance professionals**: regularly pull research reports, filings, and high-frequency tracking data; quant teams can also harvest alternative data such as sentiment and community buzz.
-- **Consultants / industry researchers**: track industry developments — much first-hand information sits inside content platforms like Xiaohongshu and Zhihu.
+- **Consultants / industry researchers**: track industry developments — much first-hand information sits inside content platforms like Reddit and X.
 - **AI practitioners / researchers**: track AI products and competitor moves, follow frontier technology progress, and monitor community discussion heat.
 
 These are only examples. Any scenario where "the information is behind a wall" or "the operation repeats frequently" is a good fit for WebSculpt.
@@ -24,9 +24,9 @@ A command's full lifecycle is: discover through exploration → solidify into a 
 - **websculpt-explore**: when the command library has no ready-made command for what you need, use it to explore and validate an acquisition path. Most tasks start here. For example:
 
   ```
-  /websculpt-explore Use my browser to download the video at https://www.douyin.com/video/1234567890
+  /websculpt-explore Use my browser to download the video at https://www.tiktok.com/@creator/video/1234567890
   /websculpt-explore Research Perplexity's feature updates over the past six months and organize them into a timeline
-  /websculpt-explore Use my logged-in account to export this month's creator-center data report from Xiaohongshu
+  /websculpt-explore Use my logged-in account to export this month's analytics report from YouTube Studio
   ```
 
 - **websculpt-capture**: once explore has proven a path end-to-end and you want to solidify it into a reusable command, use this. It is usually suggested by explore after validation passes; no manual triggering needed.
@@ -36,7 +36,7 @@ A command's full lifecycle is: discover through exploration → solidify into a 
   ```
   /websculpt-maintain The YouTube video download command stopped working — please fix it
   /websculpt-maintain The competitor price monitoring command has been returning empty data for days — take a look
-  /websculpt-maintain Add a parameter to the Weibo hot-search monitoring command so it only shows the top 10
+  /websculpt-maintain Add a parameter to the X trending monitor so it only shows the top 10
   ```
 
 - **websculpt-library**: when there are too many commands and you want to narrow the display, or you need to back up, migrate, or share the command library. For example:
