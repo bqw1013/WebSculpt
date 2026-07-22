@@ -27,9 +27,10 @@
 - [3. Core Concepts](#3-core-concepts)
 - [4. AnyTrend Case Study](#4-anytrend-case-study)
 - [5. Key Design Choices](#5-key-design-choices)
-- [6. Documentation](#6-documentation)
-- [7. Usage Statement](#7-usage-statement)
-- [8. License](#8-license)
+- [6. Community](#6-community)
+- [7. Documentation](#7-documentation)
+- [8. Usage Statement](#8-usage-statement)
+- [9. License](#9-license)
 
 ---
 
@@ -219,7 +220,18 @@ Maintain doesn't invent a separate mechanism — it's essentially a Capture work
 
 ---
 
-## 6. Documentation
+## 6. Community
+
+Join the WebSculpt community to share usage tips, distilled commands, and feedback:
+
+- International users: [Discord](https://discord.gg/R3tuUFUYm)
+- Chinese users: [Feishu](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=b47ubdc2-dc5e-4d63-b173-215eeef93984)
+
+If a link expires, please open an issue on [GitHub Issues](https://github.com/bqw1013/WebSculpt/issues) and we'll update it.
+
+---
+
+## 7. Documentation
 
 **Usage**
 - [`docs/CLI.md`](docs/CLI.md) — Usage, parameters, and output contracts for all commands
@@ -231,11 +243,11 @@ Maintain doesn't invent a separate mechanism — it's essentially a Capture work
 
 ---
 
-## 7. Usage Statement
+## 8. Usage Statement
 
 When using WebSculpt, please comply with the target website's robots.txt and Terms of Service. Use it only on publicly accessible data you are permitted to access; unauthorized data collection is prohibited.
 
-## 8. License
+## 9. License
 
 Apache-2.0
 
