@@ -47,6 +47,22 @@ websculpt skill install --lang en       # Current project
 # websculpt skill install --global --lang en   # Global scope
 ```
 
+`skill install` installs the Skills into Agent directories. By default it installs into every Agent directory detected in the current project (`.claude/`, `.codex/`, `.agents/`, `.workbuddy/`).
+
+```bash
+# Install only to specific agents (claude / codex / agents / workbuddy, comma-separated)
+websculpt skill install --agents claude --lang en
+
+# Install globally to a specific agent; --global without --agents creates all 4 global directories
+websculpt skill install --global --agents claude --lang en
+
+# Check installation status / uninstall (also supports --agents and --global)
+websculpt skill status
+websculpt skill uninstall --agents claude
+```
+
+See the `skill` section in [`docs/CLI.md`](docs/CLI.md) for the full option reference.
+
 ## 2. Usage
 
 ### 2.1 Via Agent

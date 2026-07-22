@@ -47,6 +47,22 @@ websculpt skill install --lang zh       # 当前项目
 # websculpt skill install --global --lang zh   # 全局生效
 ```
 
+`skill install` 将 Skill 安装到 Agent 目录，默认装进当前项目下检测到的所有 Agent 目录（`.claude/`、`.codex/`、`.agents/`、`.workbuddy/`）。
+
+```bash
+# 只装到指定 Agent（支持 claude / codex / agents / workbuddy，逗号分隔多个）
+websculpt skill install --agents claude --lang zh
+
+# 全局安装到指定 Agent；--global 不带 --agents 时会创建全部 4 个全局目录
+websculpt skill install --global --agents claude --lang zh
+
+# 查看安装状态 / 卸载（同样支持 --agents 与 --global）
+websculpt skill status
+websculpt skill uninstall --agents claude
+```
+
+完整参数说明见 [`docs/CLI.md`](docs/CLI.md) 的 `skill` 章节。
+
 ## 2. 用法
 
 ### 2.1 通过 Agent 使用
