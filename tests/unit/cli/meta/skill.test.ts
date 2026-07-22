@@ -155,6 +155,7 @@ describe("handleSkillInstall", () => {
 				{ agent: "claude", skill: "source", status: "installed" },
 				{ agent: "codex", skill: "source", status: "installed" },
 				{ agent: "agents", skill: "source", status: "installed" },
+				{ agent: "workbuddy", skill: "source", status: "installed" },
 			],
 		});
 	});
@@ -163,6 +164,7 @@ describe("handleSkillInstall", () => {
 		existingPaths.add(path.join(MOCK_HOME, ".claude", "skills", "source"));
 		existingPaths.add(path.join(MOCK_HOME, ".codex", "skills", "source"));
 		existingPaths.add(path.join(MOCK_HOME, ".agents", "skills", "source"));
+		existingPaths.add(path.join(MOCK_HOME, ".workbuddy", "skills", "source"));
 		const result = handleSkillInstall({ from: MOCK_SOURCE, global: true });
 		expect(result).toEqual({
 			success: true,
@@ -170,6 +172,7 @@ describe("handleSkillInstall", () => {
 				{ agent: "claude", skill: "source", status: "skipped" },
 				{ agent: "codex", skill: "source", status: "skipped" },
 				{ agent: "agents", skill: "source", status: "skipped" },
+				{ agent: "workbuddy", skill: "source", status: "skipped" },
 			],
 		});
 	});
@@ -183,6 +186,7 @@ describe("handleSkillInstall", () => {
 				{ agent: "claude", skill: "source", status: "replaced" },
 				{ agent: "codex", skill: "source", status: "installed" },
 				{ agent: "agents", skill: "source", status: "installed" },
+				{ agent: "workbuddy", skill: "source", status: "installed" },
 			],
 		});
 	});
@@ -206,6 +210,19 @@ describe("handleSkillInstall", () => {
 		});
 	});
 
+	it("installs to .workbuddy when filtered via --agents workbuddy", () => {
+		const result = handleSkillInstall({ from: MOCK_SOURCE, global: true, agents: "workbuddy" });
+		expect(result).toEqual({
+			success: true,
+			results: [{ agent: "workbuddy", skill: "source", status: "installed" }],
+		});
+		expect(fs.cpSync).toHaveBeenCalledWith(
+			path.resolve(MOCK_SOURCE),
+			path.join(MOCK_HOME, ".workbuddy", "skills", "source"),
+			expect.objectContaining({ recursive: true }),
+		);
+	});
+
 	it("installs a single skill by name", () => {
 		existingPaths.add(path.join(MOCK_CWD, "skills"));
 		existingPaths.add(path.join(MOCK_CWD, "skills", "websculpt-capture-en"));
@@ -218,6 +235,7 @@ describe("handleSkillInstall", () => {
 				{ agent: "claude", skill: "websculpt-capture", status: "installed" },
 				{ agent: "codex", skill: "websculpt-capture", status: "installed" },
 				{ agent: "agents", skill: "websculpt-capture", status: "installed" },
+				{ agent: "workbuddy", skill: "websculpt-capture", status: "installed" },
 			],
 		});
 	});
@@ -261,6 +279,10 @@ describe("handleSkillUninstall", () => {
 				{ agent: "agents", skill: "websculpt-capture", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-library", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-maintain", status: "not_found" },
+				{ agent: "workbuddy", skill: "websculpt-explore", status: "not_found" },
+				{ agent: "workbuddy", skill: "websculpt-capture", status: "not_found" },
+				{ agent: "workbuddy", skill: "websculpt-library", status: "not_found" },
+				{ agent: "workbuddy", skill: "websculpt-maintain", status: "not_found" },
 			],
 		});
 	});
@@ -282,6 +304,10 @@ describe("handleSkillUninstall", () => {
 				{ agent: "agents", skill: "websculpt-capture", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-library", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-maintain", status: "not_found" },
+				{ agent: "workbuddy", skill: "websculpt-explore", status: "not_found" },
+				{ agent: "workbuddy", skill: "websculpt-capture", status: "not_found" },
+				{ agent: "workbuddy", skill: "websculpt-library", status: "not_found" },
+				{ agent: "workbuddy", skill: "websculpt-maintain", status: "not_found" },
 			],
 		});
 	});
@@ -296,6 +322,7 @@ describe("handleSkillUninstall", () => {
 				{ agent: "claude", skill: "websculpt-capture", status: "removed" },
 				{ agent: "codex", skill: "websculpt-capture", status: "not_found" },
 				{ agent: "agents", skill: "websculpt-capture", status: "not_found" },
+				{ agent: "workbuddy", skill: "websculpt-capture", status: "not_found" },
 			],
 		});
 	});
@@ -335,6 +362,11 @@ describe("handleSkillStatus", () => {
 				"  websculpt-library      not installed",
 				"  websculpt-maintain     not installed",
 				"agents:",
+				"  websculpt-explore      not installed",
+				"  websculpt-capture      not installed",
+				"  websculpt-library      not installed",
+				"  websculpt-maintain     not installed",
+				"workbuddy:",
 				"  websculpt-explore      not installed",
 				"  websculpt-capture      not installed",
 				"  websculpt-library      not installed",

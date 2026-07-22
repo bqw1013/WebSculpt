@@ -524,7 +524,7 @@ websculpt skill install [name] [options]
 | Option | Description |
 |------|------|
 | `-g, --global` | Install to the global agent directory |
-| `-a, --agents <agents>` | Specify target agents, comma-separated (`claude`, `codex`, `agents`, `all`) |
+| `-a, --agents <agents>` | Specify target agents, comma-separated (`claude`, `codex`, `agents`, `workbuddy`, `all`) |
 | `--from <path>` | Explicitly specify the skill source directory, overriding automatic detection |
 | `--lang <lang>` | Language version: `en` (default) or `zh` |
 | `--force` | Overwrite existing installation |

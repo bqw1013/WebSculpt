@@ -7,7 +7,7 @@ import type { MetaCommandResult, SkillUninstallResult } from "../output.js";
 import { renderOutput } from "../output.js";
 import { getFormat } from "./shared.js";
 
-const AGENTS = ["claude", "codex", "agents"] as const;
+const AGENTS = ["claude", "codex", "agents", "workbuddy"] as const;
 type Agent = (typeof AGENTS)[number];
 
 function isAgent(value: string): value is Agent {
@@ -191,7 +191,7 @@ export function handleSkillInstall(options: {
 					error: {
 						code: "AGENT_DIRS_NOT_FOUND",
 						message:
-							"No agent directories found in the current directory. Supported: .claude/, .codex/, .agents/. Run this command inside a project with agent configurations, or use --global.",
+							"No agent directories found in the current directory. Supported: .claude/, .codex/, .agents/, .workbuddy/. Run this command inside a project with agent configurations, or use --global.",
 					},
 				};
 			}
@@ -338,7 +338,7 @@ export function registerSkillMeta(program: Command): void {
 		.description("Install WebSculpt skills to agent directories")
 		.argument("[name]", "Skill name to install (e.g., capture, explore)")
 		.option("-g, --global", "Install to global agent directories")
-		.option("-a, --agents <agents>", "Target specific agents (claude,codex,agents,all)")
+		.option("-a, --agents <agents>", "Target specific agents (claude,codex,agents,workbuddy,all)")
 		.option("--from <path>", "Explicit skill source path")
 		.option("--lang <lang>", "Language: en (default) or zh")
 		.option("--force", "Replace existing installation")

@@ -526,7 +526,7 @@ websculpt skill install [name] [options]
 | 选项 | 说明 |
 |------|------|
 | `-g, --global` | 安装到全局 agent 目录 |
-| `-a, --agents <agents>` | 指定目标 agent，逗号分隔（`claude`、`codex`、`agents`、`all`） |
+| `-a, --agents <agents>` | 指定目标 agent，逗号分隔（`claude`、`codex`、`agents`、`workbuddy`、`all`） |
 | `--from <path>` | 显式指定 skill 源目录，覆盖自动检测 |
 | `--lang <lang>` | 语言版本：`en`（默认）或 `zh` |
 | `--force` | 覆盖已存在的安装 |
