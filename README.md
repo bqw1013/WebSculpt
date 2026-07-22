@@ -42,26 +42,17 @@
 # 1. 安装 CLI 工具
 npm install -g @playwright/cli@0.1.13 websculpt
 
-# 2. 为 Agent 安装 Skill
-websculpt skill install --lang zh       # 当前项目
-# websculpt skill install --global --lang zh   # 全局生效
+# 2. 为 Agent 安装 Skill（装入全部 Agent 的全局目录，对所有项目生效）
+websculpt skill install --global --lang zh
+
+# 可选：只装到指定 Agent（claude / codex / agents / workbuddy，逗号分隔）
+# websculpt skill install --global --agents claude --lang zh
+
+# 可选：只装到当前项目
+# websculpt skill install --lang zh
 ```
 
-`skill install` 将 Skill 安装到 Agent 目录，默认装进当前项目下检测到的所有 Agent 目录（`.claude/`、`.codex/`、`.agents/`、`.workbuddy/`）。
-
-```bash
-# 只装到指定 Agent（支持 claude / codex / agents / workbuddy，逗号分隔多个）
-websculpt skill install --agents claude --lang zh
-
-# 全局安装到指定 Agent；--global 不带 --agents 时会创建全部 4 个全局目录
-websculpt skill install --global --agents claude --lang zh
-
-# 查看安装状态 / 卸载（同样支持 --agents 与 --global）
-websculpt skill status
-websculpt skill uninstall --agents claude
-```
-
-完整参数说明见 [`docs/CLI.md`](docs/CLI.md) 的 `skill` 章节。
+安装状态与卸载用 `websculpt skill status` / `websculpt skill uninstall`，完整参数说明见 [`docs/CLI.md`](docs/CLI.md) 的 `skill` 章节。
 
 ## 2. 用法
 

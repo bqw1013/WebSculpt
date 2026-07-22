@@ -42,26 +42,17 @@
 # 1. Install CLI tool
 npm install -g @playwright/cli@0.1.13 websculpt
 
-# 2. Install Skills for Agent
-websculpt skill install --lang en       # Current project
-# websculpt skill install --global --lang en   # Global scope
+# 2. Install Skills for Agent (installs into all global Agent directories)
+websculpt skill install --global --lang en
+
+# Optional: install only to specific agents (claude / codex / agents / workbuddy, comma-separated)
+# websculpt skill install --global --agents claude --lang en
+
+# Optional: install only for the current project
+# websculpt skill install --lang en
 ```
 
-`skill install` installs the Skills into Agent directories. By default it installs into every Agent directory detected in the current project (`.claude/`, `.codex/`, `.agents/`, `.workbuddy/`).
-
-```bash
-# Install only to specific agents (claude / codex / agents / workbuddy, comma-separated)
-websculpt skill install --agents claude --lang en
-
-# Install globally to a specific agent; --global without --agents creates all 4 global directories
-websculpt skill install --global --agents claude --lang en
-
-# Check installation status / uninstall (also supports --agents and --global)
-websculpt skill status
-websculpt skill uninstall --agents claude
-```
-
-See the `skill` section in [`docs/CLI.md`](docs/CLI.md) for the full option reference.
+Manage with `websculpt skill status` / `websculpt skill uninstall`. See the `skill` section in [`docs/CLI.md`](docs/CLI.md) for full options.
 
 ## 2. Usage
 
