@@ -54,7 +54,9 @@ Choose the corresponding operation based on output:
      ```
 
      > **Windows note**: `attach` on this platform often appears to hang or time out, but the CDP connection is usually already established in the background.
-     > After a timeout, run `playwright-cli list` to verify. If the `default` session already exists in the list, the connection is successful and subsequent commands can be used directly without repeating `attach`.
+     > The hang may last several minutes (after startup, the daemon automatically performs a full snapshot and sends CDP evaluations to all tabs);
+     > the `attach` client process may also exit with a `Session closed` error, but the daemon has often already connected.
+     > In all cases, trust `playwright-cli list`: if the `default` session already exists, the connection is successful and subsequent commands can be used directly without repeating `attach` or giving up because of the error.
 
   4. Confirm attach success:
 
@@ -236,11 +238,15 @@ This encourages Chrome to release the previous page's rendering process, V8 Heap
 
 ### Control concurrent tabs
 
-The more tabs opened simultaneously, the greater the Chrome rendering process overhead, and each `tab-new` / `tab-close` executes a `headerSnapshot()` poll on all existing tabs. Recommendations:
+The more tabs opened simultaneously, the greater the Chrome rendering process overhead, and **every command** (including read-only commands like `tab-list`) executes a `headerSnapshot()` poll on all existing tabs. Recommendations:
 
 - **Self-created tabs open simultaneously should not exceed 2.**
 - Periodically execute `tab-list` to check and promptly close tabs for completed tasks.
 - For consecutive tasks under the same site, if currently already in a **self-created tab**, prefer using `goto` to switch URLs rather than creating additional new tabs.
+
+### Batch operations to reduce command count
+
+Since every command sends a round of CDP evaluations to **all** attached tabs, the more commands you issue, the higher the chance that one unresponsive tab blocks the whole command. Prefer combining multi-step operations into a single `run-code` / `eval` execution instead of splitting them into many small commands.
 
 ## 9. Environment Cleanliness
 
@@ -264,6 +270,8 @@ playwright-cli kill-all
 
 After cleanup completes, re-attach following the steps in Section 2 "Environment Preparation".
 
+> Note: close + re-attach only rebuilds the daemon (clears daemon-side state) and does not affect Chrome itself. If the problem lies on the Chrome side (e.g., tabs are frozen; see Section 10), this operation has limited effect.
+
 > Forcibly terminating browser processes may lose user data; you must obtain the user's explicit authorization first.
 
 ## 10. Troubleshooting
@@ -274,18 +282,35 @@ After cleanup completes, re-attach following the steps in Section 2 "Environment
 
 **Root cause**: After Chrome runs for an extended period, its CDP WebSocket service may degrade and become unresponsive. The TCP port still shows as Listening, but the CDP protocol layer is dead. The daemon can start but cannot communicate with the browser.
 
-**Diagnosis**: Locate Chrome's `DevToolsActivePort` file (typically under the Chrome user data directory), read the port number from the first line, then verify CDP liveness:
+**Diagnosis**: Locate Chrome's `DevToolsActivePort` file (typically under the Chrome user data directory), read the port number from the first line and the browser path ID from the second line, then verify CDP liveness:
 
 ```bash
-curl http://localhost:<port>/json/version
+curl -i -N -m 10 \
+  -H "Connection: Upgrade" -H "Upgrade: websocket" \
+  -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  http://localhost:<port>/devtools/browser/<id>
 ```
 
-- Returns JSON (containing `webSocketDebuggerUrl`) → CDP is healthy, the issue lies elsewhere
-- Returns 404, empty response, or connection refused → **CDP is degraded**, Chrome restart required
+- Returns `101 WebSocket Protocol Handshake` → CDP is healthy, the issue lies elsewhere
+- Connection refused, no response, or handshake failure → **CDP is degraded**, Chrome restart required
+
+> Note: `/json/*` HTTP endpoints (e.g., `/json/version`) may return 404 when debugging is enabled via the `chrome://inspect` UI. **Do not** treat this as a degraded CDP; the WebSocket handshake is the authoritative check.
 
 > The `DevToolsActivePort` path varies by platform — use `find`/`ls` to locate it, or infer from the platform's Chrome user data directory convention. This file is written by Chrome when remote debugging is enabled.
 
 **Fix**: Tell the user that Chrome's remote debugging service has become unresponsive. They need to restart Chrome, re-enable remote debugging (`chrome://inspect/#remote-debugging`), then re-attach. `close`/`kill-all`/re-`attach` cannot substitute for restarting Chrome.
+
+### Commands Take Minutes But Eventually Succeed
+
+**Symptoms**: Commands do not error, but each one hangs for 1-5 minutes before returning the correct result; after running several commands in a row, response times become progressively shorter until they return in seconds. Common after Chrome has been running for a long time with many tabs.
+
+**Possible causes** (not fully verified): Background tabs are being throttled or frozen by Chrome or the OS (e.g., Windows 11 Efficiency Mode, Chrome Energy Saver). Because every CLI command sends CDP evaluations to all tabs, a single unresponsive tab blocks the entire command. The slow command itself may wake the frozen tab, so repeated execution appears to self-heal. When this happens again, open `chrome://discards` to inspect each tab's Lifecycle State, or check whether Chrome renderer processes are marked as Efficiency Mode in Task Manager.
+
+**Remediation** (try in order; none of these manipulate the user's tabs):
+
+1. **Warm-up retry**: Execute 2-3 lightweight commands (e.g., `tab-list`) and accept that the first one may take minutes — it is also the thawing process; subsequent commands usually recover on their own.
+2. **close + re-attach**: If warm-up does not help, use this to clear accumulated daemon-side state.
+3. **Ask the user to restart Chrome**: If the above fails, instruct the user to restart Chrome and re-enable remote debugging.
 
 ---
 

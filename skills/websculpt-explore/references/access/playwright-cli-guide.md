@@ -54,8 +54,10 @@ playwright-cli list
      ```
 
      > **Windows 注意**：`attach` 在该平台常表现为挂起或超时，但 CDP 连接通常已在后台成功建立。
-     > 超时后执行 `playwright-cli list` 验证。若列表中已存在 `default` 会话，即表示连接成功，
-     > 后续命令可直接使用，无需重复 `attach`。
+     > 挂起可能长达数分钟（daemon 启动后会自动执行一次全量 snapshot，并对所有标签页发起 CDP 求值）；
+     > attach 客户端进程也可能以 `Session closed` 报错退出，但 daemon 往往已建连成功。
+     > 以上情况都以 `playwright-cli list` 为准：列表中已存在 `default` 会话即表示连接成功，
+     > 后续命令可直接使用，无需重复 `attach`，也不要因报错而放弃。
 
   4. 确认 attach 成功：
 
@@ -237,11 +239,15 @@ playwright-cli goto about:blank
 
 ### 控制并发标签页
 
-同时打开的标签页越多，Chrome 渲染进程开销越大，且每次 `tab-new` / `tab-close` 都会对所有现存 tab 执行 `headerSnapshot()` 轮询。建议：
+同时打开的标签页越多，Chrome 渲染进程开销越大，且**每条命令**（包括 `tab-list` 等只读命令）都会对所有现存 tab 执行 `headerSnapshot()` 轮询。建议：
 
 - **同时打开的自建标签页不超过 2 个。**
 - 定期执行 `tab-list` 检查，及时关闭已完成任务的标签页。
 - 同一站点下的连续任务，若当前已在**自建标签页**中，优先用 `goto` 切换 URL，而非额外新建标签页。
+
+### 合并操作，减少命令条数
+
+既然每条命令都会对**所有**已 attach 的标签页发起一轮 CDP 求值，命令条数越多，被某个无响应标签拖住的概率就越高。多步操作尽量合并进一次 `run-code` / `eval` 执行，避免拆成大量小命令。
 
 ## 9. 环境整洁
 
@@ -265,6 +271,8 @@ playwright-cli kill-all
 
 清理完成后，按第2节"环境准备"中的步骤重新 attach。
 
+> 注意：close + 重新 attach 只重建 daemon（清理 daemon 侧状态），不影响 Chrome 本身。若问题出在 Chrome 侧（如标签页被冻结，见第10节），此操作效果有限。
+
 > 强制终止浏览器进程可能丢失用户数据，必须先获得用户明确授权。
 
 ## 10. 故障排查
@@ -275,18 +283,35 @@ playwright-cli kill-all
 
 **根因**：Chrome 长时间运行后，CDP WebSocket 服务可能退化僵死。此时 TCP 端口仍处于 Listen 状态，但 CDP 协议层已无响应，daemon 虽能启动却无法与浏览器通信。
 
-**诊断**：找到 Chrome 的 `DevToolsActivePort` 文件（通常位于 Chrome 用户数据目录下），读取首行端口号，然后验证 CDP 是否存活：
+**诊断**：找到 Chrome 的 `DevToolsActivePort` 文件（通常位于 Chrome 用户数据目录下），读取首行端口号和第二行的浏览器路径 ID，然后验证 CDP 是否存活：
 
 ```bash
-curl http://localhost:<port>/json/version
+curl -i -N -m 10 \
+  -H "Connection: Upgrade" -H "Upgrade: websocket" \
+  -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+  http://localhost:<port>/devtools/browser/<id>
 ```
 
-- 返回 JSON（含 `webSocketDebuggerUrl`）→ CDP 正常，问题在其他环节
-- 返回 404、空响应或连接拒绝 → **CDP 已僵死**，需重启 Chrome
+- 返回 `101 WebSocket Protocol Handshake` → CDP 正常，问题在其他环节
+- 连接拒绝、无响应或握手失败 → **CDP 已僵死**，需重启 Chrome
+
+> 注意：`/json/*` HTTP 端点（如 `/json/version`）在通过 `chrome://inspect` UI 开启调试时本就返回 404，**不能**作为 CDP 僵死的判据，必须以 WebSocket 握手为准。
 
 > 不同平台 `DevToolsActivePort` 路径不同，可搜索 `find`/`ls` 定位，或直接根据 Chrome 用户数据目录惯例推断。该文件由 Chrome 在开启远程调试时自动写入。
 
 **修复**：告知用户 Chrome 的远程调试服务已失效，需重启 Chrome 浏览器并重新开启远程调试（`chrome://inspect/#remote-debugging`），然后重新 `attach`。`close`/`kill-all`/重新 `attach` 均无法替代重启 Chrome。
+
+### 命令分钟级延迟，但最终成功返回
+
+**症状**：命令不报错，但每条挂起 1-5 分钟才返回正确结果；连续执行后逐次变快，最终恢复秒回。常见于 Chrome 长时间运行、标签页较多时。
+
+**可能原因**（尚未完全验证）：后台标签页被 Chrome 或系统限流/冻结（如 Windows 11 效率模式、Chrome 节能模式），而 CLI 每条命令都会对所有标签页发起 CDP 求值，整条命令被一个无响应的标签拖住；慢命令本身会触发标签唤醒，因此连续执行后自愈。下次出现时可在变慢状态下打开 `chrome://discards` 查看各标签的 Lifecycle State 佐证，或检查任务管理器中 Chrome 进程是否被系统置为效率模式。
+
+**处置**（按序尝试，均不涉及操作用户的标签页）：
+
+1. **预热重试**：连续执行 2-3 条轻量命令（如 `tab-list`），容忍第一条的分钟级延迟——它同时是解冻过程，之后通常自行恢复。
+2. **close + 重新 attach**：预热无效时执行，清理 daemon 侧累积的状态。
+3. **请用户重启浏览器**：以上均无效时，告知用户重启 Chrome 并重新开启远程调试。
 
 ---
 
