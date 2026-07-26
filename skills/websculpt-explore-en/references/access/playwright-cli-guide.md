@@ -28,43 +28,55 @@ If not installed, guide the user to execute:
 npm install -g @playwright/cli
 ```
 
-**2. Check and handle sessions**
+**2. Create an independent session for this explore**
+
+Before running any browser command, generate a unique session name for this explore, for example:
+
+```text
+ws-<explore-name>-<short-suffix>
+```
+
+Use only lowercase letters, digits, and hyphens. The name should identify the explore workspace and include a short random suffix to avoid conflicts with other tasks. Record it in `BrowserSession.sessionName` and in the Protocol section of `trace.md`; do not change it after attach succeeds.
 
 ```bash
 playwright-cli list
 ```
 
-Choose the corresponding operation based on output:
-- `default: status: open` exists → reuse that session directly
-- Other open sessions exist but no `default` → close residual sessions first, then re-attach
-- No open sessions → establish connection following these steps:
+Other sessions in the list may belong to other agents or tasks. Treat them as unrelated resources: do not reuse, close, or clean them up. If the selected name already exists and was not previously created by this explore, generate another name.
 
-  1. Guide the user to open `chrome://inspect/#remote-debugging` in Chrome, check "Allow remote debugging", and keep the browser open
+Establish the connection as follows:
 
-  2. Inform the user of risks:
+1. If remote debugging is not already enabled, guide the user to open `chrome://inspect/#remote-debugging` in Chrome, check "Allow remote debugging", and keep the browser open. Do not ask again when it is already enabled.
 
-     ```text
-     Some sites have strict browser automation detection, and there is a risk of account risk control or banning. WebSculpt will try to reuse the real browser environment and reduce operation frequency, but it cannot completely avoid risks.
-     ```
+2. Inform the user of risks:
 
-  3. Attach to the default session:
+   ```text
+   Some sites strictly detect browser automation, which may trigger account restrictions or bans. WebSculpt reuses the real browser environment and reduces operation frequency where possible, but cannot eliminate this risk.
+   ```
 
-     ```bash
-     playwright-cli attach --cdp=chrome --session=default
-     ```
+3. Use the same unique name for both the CLI session and the attach session:
 
-     > **Windows note**: `attach` on this platform often appears to hang or time out, but the CDP connection is usually already established in the background.
-     > The hang may last several minutes (after startup, the daemon automatically performs a full snapshot and sends CDP evaluations to all tabs);
-     > the `attach` client process may also exit with a `Session closed` error, but the daemon has often already connected.
-     > In all cases, trust `playwright-cli list`: if the `default` session already exists, the connection is successful and subsequent commands can be used directly without repeating `attach` or giving up because of the error.
+   ```bash
+   playwright-cli -s=<session> attach --cdp=chrome --session=<session>
+   ```
 
-  4. Confirm attach success:
+   > **Windows note**: `attach` on this platform often appears to hang or time out, although the CDP connection has usually been established in the background.
+   > The hang may last several minutes because the daemon performs an initial full snapshot and sends CDP evaluations to all tabs.
+   > The `attach` client may also exit with `Session closed` even though the daemon connected successfully.
+   > Treat `playwright-cli list` as authoritative: if the selected session exists and is open, attach succeeded.
+   > Continue using that session without repeating `attach`.
 
-     ```bash
-     playwright-cli list
-     ```
+4. Confirm attach success:
 
-     You should see the `default` session in open status.
+   ```bash
+   playwright-cli list
+   ```
+
+   The selected session should be open.
+
+Then set `sessionOwned` and `attached` to `true`, and record `Playwright session: <session>` in the Protocol section of `trace.md`.
+
+Except for `playwright-cli list`, every subsequent browser command must explicitly include `-s=<session>`. Supplying `--session` only during attach and then omitting `-s` can route later commands to another session.
 
 ## 3. Operation Status Confirmation (BrowserSession)
 
@@ -72,9 +84,13 @@ When `ExploreSession.guideRead` is `true`, append the following status block aft
 
 ```yaml
 BrowserSession:
+  sessionName: null
+  sessionOwned: false
   attached: false
   newTabUsed: false
+  ownTabVerified: false
   ownTabsClosed: false
+  detached: false
   userRiskAck: false
   antiCrawlDetected: false
   evidenceRecorded: false
@@ -82,14 +98,21 @@ BrowserSession:
 
 **Field Descriptions**
 
+- `sessionName`: The unique Playwright CLI session name used by this explore.
+- `sessionOwned`: Whether the current explore created this session or confirmed that it belongs to this explore.
 - `attached`: Whether a browser session has been successfully attached.
-- `newTabUsed`: Whether a new page has been opened via `tab-new` this time (executed at least once is `true`, quantity is not tracked).
+- `newTabUsed`: Whether this explore opened its own page through `tab-new`.
+- `ownTabVerified`: Whether the current tab has been confirmed as belonging to this explore by checking its URL/title.
 - `ownTabsClosed`: If `newTabUsed` is `true`, confirm all self-created tabs have been closed.
+- `detached`: Whether this explore detached from its session after finishing.
 - `userRiskAck`: For operations involving login or high risk, whether the user has been informed of risks and confirmed.
 - `antiCrawlDetected`: Whether anti-bot or access restriction signals have been observed.
 - `evidenceRecorded`: Whether key evidence (URLs, selectors, APIs, steps, failure signals) has been recorded.
 
 **Key Rules**
+
+- `sessionOwned` is `false` → do not reuse, close, or detach that session.
+  The session list may contain connections owned by other agents or tasks; an existing name does not grant ownership.
 
 - `attached` is `false` → prohibit any page operations.
   Executing commands without attaching will directly error, or accidentally operate the user's locally opened browser instance, causing unexpected page navigation or data loss.
@@ -97,8 +120,14 @@ BrowserSession:
 - `newTabUsed` is `false` → prohibit operating on the user's existing tabs.
   Reusing the user's tabs will pollute their browsing state, possibly overwriting or closing content they are currently viewing, violating the "do not disturb the user" principle.
 
-- `newTabUsed` is `true` → `ownTabsClosed` must be `true` before the reply ends.
+- `ownTabVerified` is `false` → do not navigate, interact with, or close the current tab.
+  After `tab-new <url>`, read the current URL/title to verify ownership. Do not infer ownership from a global tab index that may change.
+
+- `newTabUsed` is `true` → `ownTabsClosed` must be `true` before final delivery or the end of the explore.
   Tabs left unclosed will continuously occupy browser resources, long-term accumulation will cause user browser chaos, and may leak context for subsequent tasks.
+
+- If the explore attached, `detached` must be `true` when the explore ends.
+  After closing the self-created tab, detach only this session; do not close the browser or clean up other sessions.
 
 - `userRiskAck` is `false` → prohibit continuing login or high-risk operations.
   Automated operations without the user's informed consent may trigger platform risk control, leading to user account bans or privacy leaks.
@@ -113,6 +142,8 @@ BrowserSession:
 
 > When any command's parameters or behavior are uncertain, use `playwright-cli --help <command>` to view the full signature and available options. This is the most efficient and accurate usage source, prioritized over guessing or memory.
 
+In the table below, always replace `<session>` with `BrowserSession.sessionName`. Do not omit `-s=<session>` except when running `list`.
+
 Playwright CLI commands are divided into the following categories by function. Each category usually contains multiple subcommands. The explore phase mainly uses commands in the Core, Tabs, and Navigation categories, but when encountering specific needs (such as viewing network requests, operating cookies, generating element locators), you can first locate the corresponding category, then use `--help` to view the complete commands under that category.
 
 | Category | Typical Usage |
@@ -125,26 +156,28 @@ Playwright CLI commands are divided into the following categories by function. E
 | Storage | Read/write cookies, localStorage, sessionStorage |
 | Network | View requests/responses, intercept network, set offline status |
 | DevTools | Execute Playwright code, view console, generate locators |
-| Browser sessions | Session list, cleanup residuals |
+| Browser sessions | Session list, attach, and detach |
 
 The following are frequently used commands in the explore phase for quick reference:
 
 | Type | Command | Usage |
 |------|---------|-------|
-| Navigation | `goto <url>` | Open target page |
-| Perception | `snapshot [target]` | Get page structured snapshot and temporary ref |
-| Perception | `eval <func> [target]` | Quickly probe DOM or extract data in page context |
-| Interaction | `click <target> [button]` | Click element |
-| Interaction | `fill <target> <text>` | Input text |
-| Interaction | `press <key>` | Press key |
-| Advanced | `run-code [code]` | Execute complex Playwright logic |
-| Output | `screenshot [target]` | Screenshot |
-| Tabs | `tab-new [url]` | New tab |
-| Tabs | `tab-close [index]` | Close tab |
+| Navigation | `playwright-cli -s=<session> goto <url>` | Open a target page in the current session tab |
+| Perception | `playwright-cli -s=<session> snapshot [target]` | Get a structured page snapshot and temporary ref |
+| Perception | `playwright-cli -s=<session> eval <func> [target]` | Probe the DOM or extract data in page context |
+| Interaction | `playwright-cli -s=<session> click <target> [button]` | Click an element |
+| Interaction | `playwright-cli -s=<session> fill <target> <text>` | Enter text |
+| Interaction | `playwright-cli -s=<session> press <key>` | Press a key |
+| Advanced | `playwright-cli -s=<session> run-code [code]` | Execute complex Playwright logic |
+| Output | `playwright-cli -s=<session> screenshot [target]` | Take a screenshot |
+| Tabs | `playwright-cli -s=<session> tab-new [url]` | Create and select the tab owned by this session |
+| Tabs | `playwright-cli -s=<session> tab-close` | Close the current tab of this session |
 
 ## 5. Exploration and Evidence
 
 ### Quick Probing
+
+**Structure confirmation takes precedence over data extraction**: first clarify the position of result elements, their semantics, and structural changes under different states, then write extraction logic.
 
 After entering the target page, simultaneously complete status judgment and clue identification:
 
@@ -231,18 +264,19 @@ For all other situations (checking whether an element exists, extracting known f
 After completing information extraction on a page, there is no need to immediately `tab-close` and create a new tab. First navigate the current tab to a blank page:
 
 ```bash
-playwright-cli goto about:blank
+playwright-cli -s=<session> goto about:blank
 ```
 
 This encourages Chrome to release the previous page's rendering process, V8 Heap, and GPU textures, and is lighter than `tab-new` / `tab-close`. After buffering, you can directly use `goto <url>` to continue the next task; **no re-attachment is needed**.
 
-### Control concurrent tabs
+### Maintain one self-created tab
 
 The more tabs opened simultaneously, the greater the Chrome rendering process overhead, and **every command** (including read-only commands like `tab-list`) executes a `headerSnapshot()` poll on all existing tabs. Recommendations:
 
-- **Self-created tabs open simultaneously should not exceed 2.**
-- Periodically execute `tab-list` to check and promptly close tabs for completed tasks.
+- **Maintain exactly one self-created tab per explore session.**
+- Prefer the current tab of this session; do not rely on global indexes returned by `tab-list`.
 - For consecutive tasks under the same site, if currently already in a **self-created tab**, prefer using `goto` to switch URLs rather than creating additional new tabs.
+- If a page interaction unexpectedly opens a new tab, treat it as a resource created by this explore. Verify its URL/title, handle or close it, and do not keep two tabs open.
 
 ### Batch operations to reduce command count
 
@@ -252,33 +286,31 @@ Since every command sends a round of CDP evaluations to **all** attached tabs, t
 
 - **Do not reuse the user's existing tabs.** Reusing user tabs will pollute their browsing state, violating the "do not disturb the user" principle.
 - **AI self-created tabs can be reused through `goto` during task gaps** to reduce `tab-new` overhead; after the task ultimately ends, you must close the tabs you created.
-- Do not actively disconnect an available `default` session.
+- Treat every other session as an unrelated resource regardless of status. Do not reuse, close, or detach it.
 
-If attach status is abnormal, first check connection status:
+At the end of the task, clean up only the resources owned by this explore, in this order:
+
+```bash
+playwright-cli -s=<session> eval "() => ({ url: location.href, title: document.title })"
+playwright-cli -s=<session> tab-close
+playwright-cli -s=<session> detach
+```
+
+When no index is supplied, `tab-close` closes the current tab of this session, avoiding accidental closure caused by changing global tab indexes. If URL/title cannot confirm that the current tab belongs to this explore, do not close it; still detach this session and report the leftover tab to the user.
+
+If this session is unhealthy, first inspect connection status:
 
 ```bash
 playwright-cli list
 ```
 
-If still unable to recover, clean up sessions and re-establish connection:
-
-```bash
-playwright-cli close-all
-# or
-playwright-cli kill-all
-```
-
-After cleanup completes, re-attach following the steps in Section 2 "Environment Preparation".
-
-> Note: close + re-attach only rebuilds the daemon (clears daemon-side state) and does not affect Chrome itself. If the problem lies on the Chrome side (e.g., tabs are frozen; see Section 10), this operation has limited effect.
-
-> Forcibly terminating browser processes may lose user data; you must obtain the user's explicit authorization first.
+Only detach and re-attach the session owned by the current explore. After re-attaching, set `ownTabVerified` to `false` and verify URL/title again before any page operation. Do not use `close`, `close-all`, or `kill-all` for ordinary recovery; those commands may close the user's browser or sessions owned by other tasks. Re-attaching the current session also has limited value when the fault is in Chrome itself, such as a frozen tab (see Section 10).
 
 ## 10. Troubleshooting
 
 ### Commands Keep Timing Out (session open but eval/snapshot unresponsive)
 
-**Symptoms**: `attach` reports success, `playwright-cli list` shows session open, but all subsequent browser commands (`eval`, `snapshot`, `goto`, etc.) time out. Rebuilding the daemon via `close` + `attach` does not fix the issue.
+**Symptoms**: `attach` reports success and `playwright-cli list` shows the session open, but all subsequent browser commands that include `-s=<session>` (`eval`, `snapshot`, `goto`, etc.) time out. Detaching and re-attaching the current session does not fix the issue.
 
 **Root cause**: After Chrome runs for an extended period, its CDP WebSocket service may degrade and become unresponsive. The TCP port still shows as Listening, but the CDP protocol layer is dead. The daemon can start but cannot communicate with the browser.
 
@@ -298,7 +330,7 @@ curl -i -N -m 10 \
 
 > The `DevToolsActivePort` path varies by platform — use `find`/`ls` to locate it, or infer from the platform's Chrome user data directory convention. This file is written by Chrome when remote debugging is enabled.
 
-**Fix**: Tell the user that Chrome's remote debugging service has become unresponsive. They need to restart Chrome, re-enable remote debugging (`chrome://inspect/#remote-debugging`), then re-attach. `close`/`kill-all`/re-`attach` cannot substitute for restarting Chrome.
+**Fix**: Tell the user that Chrome's remote debugging service has become unresponsive. They need to restart Chrome, re-enable remote debugging (`chrome://inspect/#remote-debugging`), then re-attach using the original session name. Cleaning up Playwright CLI sessions cannot substitute for restarting Chrome.
 
 ### Commands Take Minutes But Eventually Succeed
 
@@ -308,8 +340,8 @@ curl -i -N -m 10 \
 
 **Remediation** (try in order; none of these manipulate the user's tabs):
 
-1. **Warm-up retry**: Execute 2-3 lightweight commands (e.g., `tab-list`) and accept that the first one may take minutes — it is also the thawing process; subsequent commands usually recover on their own.
-2. **close + re-attach**: If warm-up does not help, use this to clear accumulated daemon-side state.
+1. **Warm-up retry**: Run 2-3 lightweight `eval` commands on the current session's self-created tab and accept that the first may take minutes; it also acts as the thawing process, and subsequent commands usually recover.
+2. **Detach and re-attach the current session**: If warm-up does not help, rebuild only this explore's connection.
 3. **Ask the user to restart Chrome**: If the above fails, instruct the user to restart Chrome and re-enable remote debugging.
 
 ---

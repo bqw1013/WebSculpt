@@ -28,44 +28,55 @@ playwright-cli --version
 npm install -g @playwright/cli
 ```
 
-**2. 检查并处理会话**
+**2. 为本次 explore 创建独立会话**
+
+在执行任何浏览器命令前，为本次 explore 生成唯一的 session 名称，例如：
+
+```text
+ws-<explore-name>-<short-suffix>
+```
+
+名称只使用小写字母、数字和连字符，应能关联当前 explore 工作区，并包含短随机后缀以避免与其他任务冲突。选定后，将名称记录到 `BrowserSession.sessionName` 和 `trace.md` 的 Protocol；attach 成功后，本次 explore 中不得更换。
 
 ```bash
 playwright-cli list
 ```
 
-根据输出选择对应操作：
-- 存在 `default: status: open` → 直接复用该会话
-- 存在其他 open 会话但无 `default` → 先关闭残留会话，再重新 attach
-- 无 open 会话 → 按以下步骤建立连接：
+列表中的其他 session 可能属于其他 agent 或任务，必须视为无关资源，不得复用、关闭或清理。若选定名称已经存在，但不是当前 explore 此前创建的 session，生成一个新名称。
 
-  1. 引导用户在 Chrome 中打开 `chrome://inspect/#remote-debugging`，勾选允许远程调试并保持浏览器打开
+按以下步骤建立连接：
 
-  2. 告知用户风险：
+1. 若用户尚未开启远程调试，引导其在 Chrome 中打开 `chrome://inspect/#remote-debugging`，勾选允许远程调试并保持浏览器打开。若已开启，无需重复要求。
 
-     ```text
-     部分站点对浏览器自动化检测严格，存在账号风控或封禁风险。WebSculpt 会尽量复用真实浏览器环境并降低操作频率，但无法完全避免风险。
-     ```
+2. 告知用户风险：
 
-  3. Attach 到默认会话：
+   ```text
+   部分站点对浏览器自动化检测严格，存在账号风控或封禁风险。WebSculpt 会尽量复用真实浏览器环境并降低操作频率，但无法完全避免风险。
+   ```
 
-     ```bash
-     playwright-cli attach --cdp=chrome --session=default
-     ```
+3. 使用同一个唯一名称同时指定 CLI session 和 attach session：
 
-     > **Windows 注意**：`attach` 在该平台常表现为挂起或超时，但 CDP 连接通常已在后台成功建立。
-     > 挂起可能长达数分钟（daemon 启动后会自动执行一次全量 snapshot，并对所有标签页发起 CDP 求值）；
-     > attach 客户端进程也可能以 `Session closed` 报错退出，但 daemon 往往已建连成功。
-     > 以上情况都以 `playwright-cli list` 为准：列表中已存在 `default` 会话即表示连接成功，
-     > 后续命令可直接使用，无需重复 `attach`，也不要因报错而放弃。
+   ```bash
+   playwright-cli -s=<session> attach --cdp=chrome --session=<session>
+   ```
 
-  4. 确认 attach 成功：
+   > **Windows 注意**：`attach` 在该平台常表现为挂起或超时，但 CDP 连接通常已在后台成功建立。
+   > 挂起可能长达数分钟（daemon 启动后会自动执行一次全量 snapshot，并对所有标签页发起 CDP 求值）；
+   > attach 客户端进程也可能以 `Session closed` 报错退出，但 daemon 往往已建连成功。
+   > 以上情况都以 `playwright-cli list` 为准：列表中已存在本次选定的 session 且状态为 open，即表示连接成功。
+   > 后续命令直接使用该 session，无需重复 `attach`，也不要因 attach 客户端报错而放弃。
 
-     ```bash
-     playwright-cli list
-     ```
+4. 确认 attach 成功：
 
-     应看到 `default` 会话处于 open 状态。
+   ```bash
+   playwright-cli list
+   ```
+
+   应看到本次选定的 session 处于 open 状态。
+
+确认后将 `sessionOwned` 和 `attached` 设为 `true`，并在 `trace.md` 的 Protocol 中记录 `Playwright session: <session>`。
+
+除 `playwright-cli list` 外，后续每条浏览器命令都必须显式携带 `-s=<session>`。只在 attach 时指定 `--session`、后续省略 `-s`，会把命令路由到其他会话。
 
 ## 3. 操作状态确认（BrowserSession）
 
@@ -73,9 +84,13 @@ playwright-cli list
 
 ```yaml
 BrowserSession:
+  sessionName: null
+  sessionOwned: false
   attached: false
   newTabUsed: false
+  ownTabVerified: false
   ownTabsClosed: false
+  detached: false
   userRiskAck: false
   antiCrawlDetected: false
   evidenceRecorded: false
@@ -83,14 +98,21 @@ BrowserSession:
 
 **字段说明**
 
+- `sessionName`：本次 explore 唯一使用的 Playwright CLI session 名称。
+- `sessionOwned`：该 session 是否由当前 explore 创建或确认属于当前 explore。
 - `attached`：是否已成功 attach 到浏览器会话。
-- `newTabUsed`：本次是否通过 `tab-new` 打开过新页面（执行过至少一次即为 `true`，不追踪数量）。
+- `newTabUsed`：本次是否通过 `tab-new` 打开过自建页面。
+- `ownTabVerified`：当前 tab 是否已通过 URL/title 检查确认属于本次 explore。
 - `ownTabsClosed`：若 `newTabUsed` 为 `true`，确认所有自创建的标签页均已关闭。
+- `detached`：探索结束后是否已从当前 session detach。
 - `userRiskAck`：涉及登录或高风险操作时，用户是否已被告知风险并确认。
 - `antiCrawlDetected`：是否观察到反爬或访问限制信号。
 - `evidenceRecorded`：是否已沉淀关键证据（URL、选择器、API、步骤、失败信号）。
 
 **关键规则**
+
+- `sessionOwned` 为 `false` → 禁止复用、关闭或 detach 该 session。
+  session 列表可能同时包含其他 agent 或任务的连接；名称存在不代表可以接管。
 
 - `attached` 为 `false` → 禁止任何页面操作。  
   未 attach 时执行命令会直接报错，或误操作用户本地已打开的浏览器实例，造成不可预期的页面跳转或数据丢失。
@@ -98,8 +120,14 @@ BrowserSession:
 - `newTabUsed` 为 `false` → 禁止在用户已有标签页上执行操作。  
   复用用户的标签页会污染其浏览状态，可能覆盖或关闭用户正在查看的内容，违反"不干扰用户"原则。
 
-- `newTabUsed` 为 `true` → 回复结束前 `ownTabsClosed` 必须为 `true`。  
+- `ownTabVerified` 为 `false` → 禁止导航、交互或关闭当前 tab。
+  执行 `tab-new <url>` 后，先读取当前 URL/title 完成归属确认。不要使用可能变化的全局 tab index 猜测所有权。
+
+- `newTabUsed` 为 `true` → 最终交付或 explore 结束前 `ownTabsClosed` 必须为 `true`。
   遗留未关闭的标签页会持续占用浏览器资源，长期累积会导致用户浏览器混乱，且可能泄露后续任务的上下文。
+
+- 若曾 attach，explore 结束 → `detached` 必须为 `true`。
+  关闭自建 tab 后，只 detach 当前 session；不得关闭浏览器或清理其他 session。
 
 - `userRiskAck` 为 `false` → 禁止继续登录或高风险操作。  
   未经用户知情同意的自动化操作可能触发平台风控，导致用户账号被封禁或产生隐私泄露风险。
@@ -114,6 +142,8 @@ BrowserSession:
 
 > 任何命令的参数或行为不确定时，第一时间使用 `playwright-cli --help <command>` 查看完整签名和可用选项。这是最高效、最准确的用法来源，优先于猜测或记忆。
 
+下表中的 `<session>` 始终替换为 `BrowserSession.sessionName`。除 `list` 外，不得省略 `-s=<session>`。
+
 Playwright CLI 的命令按功能分为以下类别。每个类别下通常包含多个子命令，explore 阶段主要使用 Core、Tabs 和 Navigation 类别中的命令，但遇到特定需求时（如查看网络请求、操作 Cookie、生成元素定位器），可先定位到对应类别，再用 `--help` 查看该类别下的完整命令。
 
 | 类别 | 典型用途 |
@@ -126,26 +156,28 @@ Playwright CLI 的命令按功能分为以下类别。每个类别下通常包�
 | Storage | Cookie、LocalStorage、SessionStorage 的读写 |
 | Network | 查看请求/响应、拦截网络、设置离线状态 |
 | DevTools | 执行 Playwright 代码、查看控制台、生成定位器 |
-| Browser sessions | 会话列表、清理残留 |
+| Browser sessions | 会话列表、attach 和 detach |
 
 以下是 explore 阶段高频使用的命令速查：
 
 | 类型 | 命令 | 用途 |
 |------|------|------|
-| 导航 | `goto <url>` | 打开目标页面 |
-| 感知 | `snapshot [target]` | 获取页面结构化快照和临时 ref |
-| 感知 | `eval <func> [target]` | 在页面上下文中快速探测 DOM 或提取数据 |
-| 交互 | `click <target> [button]` | 点击元素 |
-| 交互 | `fill <target> <text>` | 输入文本 |
-| 交互 | `press <key>` | 按键 |
-| 高级 | `run-code [code]` | 执行复杂 Playwright 逻辑 |
-| 输出 | `screenshot [target]` | 截图 |
-| 标签页 | `tab-new [url]` | 新建标签页 |
-| 标签页 | `tab-close [index]` | 关闭标签页 |
+| 导航 | `playwright-cli -s=<session> goto <url>` | 在当前 session 的 tab 中打开目标页面 |
+| 感知 | `playwright-cli -s=<session> snapshot [target]` | 获取页面结构化快照和临时 ref |
+| 感知 | `playwright-cli -s=<session> eval <func> [target]` | 在页面上下文中快速探测 DOM 或提取数据 |
+| 交互 | `playwright-cli -s=<session> click <target> [button]` | 点击元素 |
+| 交互 | `playwright-cli -s=<session> fill <target> <text>` | 输入文本 |
+| 交互 | `playwright-cli -s=<session> press <key>` | 按键 |
+| 高级 | `playwright-cli -s=<session> run-code [code]` | 执行复杂 Playwright 逻辑 |
+| 输出 | `playwright-cli -s=<session> screenshot [target]` | 截图 |
+| 标签页 | `playwright-cli -s=<session> tab-new [url]` | 新建并选中属于当前 session 的 tab |
+| 标签页 | `playwright-cli -s=<session> tab-close` | 关闭当前 session 的 current tab |
 
 ## 5. 探索与证据
 
 ### 快速探测
+
+**结构确认优先于数据提取**：先明确结果元素的位置、语义及不同状态下的结构变化，再编写提取逻辑。
 
 进入目标页面后，同步完成状态判断和线索识别：
 
@@ -232,18 +264,19 @@ Playwright CLI 的命令按功能分为以下类别。每个类别下通常包�
 完成一个页面的信息提取后，不必立刻 `tab-close` 再新建标签页。先将当前 tab 导航至空白页：
 
 ```bash
-playwright-cli goto about:blank
+playwright-cli -s=<session> goto about:blank
 ```
 
 这能促使 Chrome 释放上一页的渲染进程、V8 Heap 和 GPU 纹理，且比 `tab-new` / `tab-close` 更轻量。缓冲后可直接用 `goto <url>` 继续下一任务，**不需要重新 attach**。
 
-### 控制并发标签页
+### 只维护一个自建标签页
 
 同时打开的标签页越多，Chrome 渲染进程开销越大，且**每条命令**（包括 `tab-list` 等只读命令）都会对所有现存 tab 执行 `headerSnapshot()` 轮询。建议：
 
-- **同时打开的自建标签页不超过 2 个。**
-- 定期执行 `tab-list` 检查，及时关闭已完成任务的标签页。
+- **每个 explore session 只维护 1 个自建标签页。**
+- 优先使用当前 session 的 current tab，不依赖 `tab-list` 返回的全局 index。
 - 同一站点下的连续任务，若当前已在**自建标签页**中，优先用 `goto` 切换 URL，而非额外新建标签页。
+- 若页面交互意外打开新 tab，将其视为当前 explore 创建的资源；先校验 URL/title，处理或关闭后再继续，不得长期保留两个 tab。
 
 ### 合并操作，减少命令条数
 
@@ -253,33 +286,31 @@ playwright-cli goto about:blank
 
 - **不要复用用户已有的标签页。** 复用用户标签页会污染其浏览状态，违反"不干扰用户"原则。
 - **AI 自建的标签页可在任务间隙通过 `goto` 复用**，以减少 `tab-new` 开销；任务最终结束后必须关闭自己创建的标签页。
-- 不主动断开可用的 `default` 会话。
+- 其他 session 无论状态如何都视为无关资源，不得复用、关闭或 detach。
 
-若 attach 状态异常，先检查连接状态：
+任务结束时按以下顺序清理当前 explore 自己的资源：
+
+```bash
+playwright-cli -s=<session> eval "() => ({ url: location.href, title: document.title })"
+playwright-cli -s=<session> tab-close
+playwright-cli -s=<session> detach
+```
+
+`tab-close` 不传 index 时关闭当前 session 的 current tab，可避免全局 tab index 变化导致误关。若 URL/title 无法确认当前 tab 属于本次 explore，禁止关闭该 tab，仍应 detach 当前 session，并向用户报告遗留 tab。
+
+若当前 session 状态异常，先检查连接状态：
 
 ```bash
 playwright-cli list
 ```
 
-若仍无法恢复，清理会话后重新建立连接：
-
-```bash
-playwright-cli close-all
-# 或
-playwright-cli kill-all
-```
-
-清理完成后，按第2节"环境准备"中的步骤重新 attach。
-
-> 注意：close + 重新 attach 只重建 daemon（清理 daemon 侧状态），不影响 Chrome 本身。若问题出在 Chrome 侧（如标签页被冻结，见第10节），此操作效果有限。
-
-> 强制终止浏览器进程可能丢失用户数据，必须先获得用户明确授权。
+只允许 detach 并重新 attach 当前 explore 的 session。重新 attach 后先将 `ownTabVerified` 设为 `false`，重新校验 URL/title，再执行任何页面操作。禁止使用 `close`、`close-all` 或 `kill-all` 处理普通故障；这些命令可能关闭用户浏览器或其他任务的 session。若问题出在 Chrome 侧（如标签页被冻结，见第10节），重新 attach 当前 session 的效果也有限。
 
 ## 10. 故障排查
 
 ### 命令持续超时（session open 但 eval/snapshot 无响应）
 
-**症状**：`attach` 提示成功、`playwright-cli list` 显示 session open，但后续所有浏览器命令（`eval`、`snapshot`、`goto` 等）均超时。`close` + `attach` 重建 daemon 后问题依旧。
+**症状**：`attach` 提示成功、`playwright-cli list` 显示 session open，但后续所有带 `-s=<session>` 的浏览器命令（`eval`、`snapshot`、`goto` 等）均超时。detach 并重新 attach 当前 session 后问题依旧。
 
 **根因**：Chrome 长时间运行后，CDP WebSocket 服务可能退化僵死。此时 TCP 端口仍处于 Listen 状态，但 CDP 协议层已无响应，daemon 虽能启动却无法与浏览器通信。
 
@@ -299,7 +330,7 @@ curl -i -N -m 10 \
 
 > 不同平台 `DevToolsActivePort` 路径不同，可搜索 `find`/`ls` 定位，或直接根据 Chrome 用户数据目录惯例推断。该文件由 Chrome 在开启远程调试时自动写入。
 
-**修复**：告知用户 Chrome 的远程调试服务已失效，需重启 Chrome 浏览器并重新开启远程调试（`chrome://inspect/#remote-debugging`），然后重新 `attach`。`close`/`kill-all`/重新 `attach` 均无法替代重启 Chrome。
+**修复**：告知用户 Chrome 的远程调试服务已失效，需重启 Chrome 浏览器并重新开启远程调试（`chrome://inspect/#remote-debugging`），然后使用原 session 名重新 `attach`。清理 Playwright CLI session 无法替代重启 Chrome。
 
 ### 命令分钟级延迟，但最终成功返回
 
@@ -309,8 +340,8 @@ curl -i -N -m 10 \
 
 **处置**（按序尝试，均不涉及操作用户的标签页）：
 
-1. **预热重试**：连续执行 2-3 条轻量命令（如 `tab-list`），容忍第一条的分钟级延迟——它同时是解冻过程，之后通常自行恢复。
-2. **close + 重新 attach**：预热无效时执行，清理 daemon 侧累积的状态。
+1. **预热重试**：在当前 session 的自建 tab 上连续执行 2-3 条轻量 `eval`，容忍第一条的分钟级延迟——它同时是解冻过程，之后通常自行恢复。
+2. **detach + 重新 attach 当前 session**：预热无效时执行，只重建当前 explore 的连接。
 3. **请用户重启浏览器**：以上均无效时，告知用户重启 Chrome 并重新开启远程调试。
 
 ---
