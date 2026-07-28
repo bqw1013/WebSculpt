@@ -1,4 +1,4 @@
-import { chromium } from "playwright-core";
+import { type Browser, type BrowserContext, chromium, type Page } from "playwright-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../../../src/daemon/server/config/limits.js", () => ({
@@ -29,30 +29,66 @@ vi.mock("playwright-core", () => ({
 	},
 }));
 
-function mockPage(): import("playwright-core").Page {
+function mockPage(): Page {
 	return {
 		goto: vi.fn().mockResolvedValue(undefined),
 		close: vi.fn().mockResolvedValue(undefined),
 		isClosed: vi.fn().mockReturnValue(false),
-	} as unknown as import("playwright-core").Page;
+	} as unknown as Page;
 }
 
-function mockContext(): import("playwright-core").BrowserContext {
+function mockContext(): BrowserContext {
 	return {
 		newPage: vi.fn().mockImplementation(async () => {
 			return mockPage();
 		}),
 		pages: vi.fn().mockReturnValue([]),
-	} as unknown as import("playwright-core").BrowserContext;
+	} as unknown as BrowserContext;
 }
 
-function mockBrowser(contexts: import("playwright-core").BrowserContext[] = []): import("playwright-core").Browser {
+function mockBrowser(contexts: BrowserContext[] = []): Browser {
 	return {
 		close: vi.fn().mockResolvedValue(undefined),
 		isConnected: vi.fn().mockReturnValue(true),
 		contexts: vi.fn().mockReturnValue(contexts),
-	} as unknown as import("playwright-core").Browser;
+	} as unknown as Browser;
 }
+
+describe("browser connection lifecycle", () => {
+	beforeEach(async () => {
+		vi.clearAllMocks();
+		await closeBrowser();
+	});
+
+	it("allows a new connection attempt after CDP attach fails", async () => {
+		const browser = mockBrowser();
+		vi.mocked(chromium.connectOverCDP)
+			.mockRejectedValueOnce(new Error("attach denied"))
+			.mockResolvedValueOnce(browser);
+
+		await expect(getBrowser()).rejects.toMatchObject({ code: "BROWSER_ATTACH_REQUIRED" });
+		await expect(getBrowser()).resolves.toBe(browser);
+
+		expect(chromium.connectOverCDP).toHaveBeenCalledTimes(2);
+	});
+
+	it("shares one CDP connection attempt across concurrent callers", async () => {
+		const browser = mockBrowser();
+		let resolveConnection: ((value: Browser) => void) | undefined;
+		vi.mocked(chromium.connectOverCDP).mockReturnValue(
+			new Promise<Browser>((resolve) => {
+				resolveConnection = resolve;
+			}),
+		);
+
+		const first = getBrowser();
+		const second = getBrowser();
+		expect(chromium.connectOverCDP).toHaveBeenCalledTimes(1);
+
+		resolveConnection?.(browser);
+		await expect(Promise.all([first, second])).resolves.toEqual([browser, browser]);
+	});
+});
 
 describe("withBrowser stale connection detection", () => {
 	beforeEach(async () => {
@@ -239,7 +275,7 @@ describe("page pool", () => {
 		await getBrowser();
 		// Fill the pool to capacity by holding pages before releasing them,
 		// so that each acquire creates a distinct page.
-		const pages: import("playwright-core").Page[] = [];
+		const pages: Page[] = [];
 		for (let i = 0; i < DAEMON_LIMITS.maxConcurrentSessions; i++) {
 			pages.push(await acquirePage());
 		}
@@ -266,7 +302,7 @@ describe("page pool", () => {
 		vi.mocked(chromium.connectOverCDP).mockResolvedValue(browser);
 
 		await getBrowser();
-		const pages: import("playwright-core").Page[] = [];
+		const pages: Page[] = [];
 		for (let i = 0; i < 3; i++) {
 			const p = await acquirePage();
 			pages.push(p);

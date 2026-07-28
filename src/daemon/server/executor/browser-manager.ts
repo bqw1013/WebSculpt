@@ -22,7 +22,7 @@ export async function getBrowser(): Promise<Browser> {
 	cachedBrowser = null;
 
 	if (!connectingPromise) {
-		const promise = (async (): Promise<Browser> => {
+		connectingPromise = (async (): Promise<Browser> => {
 			try {
 				const browser = await chromium.connectOverCDP("chrome");
 				cachedBrowser = browser;
@@ -45,15 +45,16 @@ export async function getBrowser(): Promise<Browser> {
 				throw error;
 			}
 		})();
-		connectingPromise = promise;
-		promise.finally(() => {
-			if (connectingPromise === promise) {
-				connectingPromise = null;
-			}
-		});
 	}
 
-	return connectingPromise;
+	const promise = connectingPromise;
+	try {
+		return await promise;
+	} finally {
+		if (connectingPromise === promise) {
+			connectingPromise = null;
+		}
+	}
 }
 
 /**
