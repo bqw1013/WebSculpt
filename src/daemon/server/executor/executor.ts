@@ -12,6 +12,12 @@ function createTimeoutError(): Error & { code: string } {
 	return timeoutErr;
 }
 
+function createClientDisconnectedError(): Error & { code: string } {
+	const disconnectedError = new Error("Client disconnected before command completed") as Error & { code: string };
+	disconnectedError.code = "CLIENT_DISCONNECTED";
+	return disconnectedError;
+}
+
 /**
  * Dynamically imports a command module and executes its default export
  * inside a pooled browser page. This preserves the user's login state,
@@ -27,14 +33,24 @@ export async function executeCommand(
 	commandPath: string,
 	params: Record<string, string>,
 	cwd?: string,
+	signal?: AbortSignal,
 ): Promise<unknown> {
 	return withBrowser(async () => {
 		let page: Page | undefined;
 		let timeoutHandle: NodeJS.Timeout | null = null;
+		let abortHandler: (() => void) | null = null;
 		let timedOut = false;
 
 		try {
 			page = await acquirePage();
+			if (signal?.aborted) {
+				throw createClientDisconnectedError();
+			}
+
+			abortHandler = () => {
+				page?.close().catch(() => {});
+			};
+			signal?.addEventListener("abort", abortHandler, { once: true });
 
 			timeoutHandle = setTimeout(() => {
 				timedOut = true;
@@ -52,11 +68,17 @@ export async function executeCommand(
 			}
 
 			const result = await handler(page, params, cwd);
+			if (signal?.aborted) {
+				throw createClientDisconnectedError();
+			}
 			if (timedOut) {
 				throw createTimeoutError();
 			}
 			return result;
 		} catch (err) {
+			if (signal?.aborted) {
+				throw createClientDisconnectedError();
+			}
 			if (timedOut) {
 				throw createTimeoutError();
 			}
@@ -64,6 +86,9 @@ export async function executeCommand(
 		} finally {
 			if (timeoutHandle) {
 				clearTimeout(timeoutHandle);
+			}
+			if (abortHandler) {
+				signal?.removeEventListener("abort", abortHandler);
 			}
 			if (page) {
 				await releasePage(page).catch(() => {});

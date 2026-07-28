@@ -11,7 +11,7 @@ daemon 是 CLI 的命令执行引擎，负责通过 Playwright 在已有浏览�
 CLI 与 daemon 的分工：
 
 - **CLI**：命令的发现、解析、调度；按需拉起 daemon；通过 IPC 发送执行请求。
-- **daemon**：维护浏览器 CDP 连接；为每个命令创建隔离页面并执行；管理内存、会话和日志。
+- **daemon**：维护浏览器 CDP 连接；为每个命令分配独立使用的页面并执行；管理页面池、内存、会话和日志。
 
 > **与 `@playwright/cli` 的关系**：`@playwright/cli` 是 Agent 在**探索阶段**使用的独立 CLI 工具（提供 `attach`、`eval`、`snapshot` 等命令）。WebSculpt daemon 在**执行阶段**直接通过 `playwright-core` 的 `connectOverCDP` 连接浏览器，不依赖 `@playwright/cli` 包的任何进程或会话管理。
 
@@ -112,6 +112,7 @@ interface SocketResponse {
     memoryWarningMB: number;
     memoryLimitMB: number;
     memoryEmergencyMB: number;
+    memoryLimitConsecutiveSamples: number;
     restartAfterExecutions: number;
   };
 }
@@ -129,18 +130,21 @@ daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium
 
 - **惰性连接**：首次执行命令时才建立 CDP 连接。
 - **并发去重**：多个同时到达的请求共享同一次连接尝试，避免弹出多个浏览器窗口。
-- **自动重连**：`withBrowser` 包装器检测到连接断开（`TargetClosedError`、`ECONNRESET`、`ECONNREFUSED`、`EPIPE` 等）时，会关闭旧连接并重新连接一次。若浏览器未启动，则抛出 `BROWSER_ATTACH_REQUIRED`。
+- **按连接状态重连**：`withBrowser` 包装器遇到 `TargetClosedError`、`ECONNRESET`、`ECONNREFUSED`、`EPIPE` 等连接类错误时，会先检查 Browser CDP 连接本身是否仍然存活。只有整个连接已经断开时才清理缓存并重连一次；若只是单个 page/target 被关闭而 Browser 仍然连接，则原样返回该错误，不重建整个 CDP 连接，避免再次触发浏览器远程调试授权。
+- **附加失败可恢复**：若当前没有可用的浏览器 CDP 会话，则返回 `BROWSER_ATTACH_REQUIRED`。该错误不会关闭 daemon；用户完成远程调试授权后，后续请求会重新尝试连接。
 
 ### 4.2 页面隔离
 
 每个命令执行时：
 
 1. 复用浏览器的默认上下文（保留用户登录态、cookie、localStorage）
-2. 在该上下文中创建新页面（page）
+2. 优先从页面池取得空闲页面；没有可用页面时才在默认上下文中创建新页面
 3. 通过动态 `import()` 加载用户命令模块，在 Node.js 进程中执行其默认导出函数，通过 Playwright API 操控页面
-4. 执行完成后关闭页面
+4. 正常完成后将页面导航至 `about:blank` 并放回池中；页面异常、已关闭或页面池已满时直接关闭
 
-模块加载时使用 `?t=${Date.now()}` 绕过 ESM 缓存，确保命令文件修改后下次执行加载最新版本。
+页面在单次命令执行期间不会被其他命令共享。页面池最多保留与最大并发会话数相同数量的空闲页面；内存达到 warning 阈值时会清空空闲页面池。
+
+命令模块按文件修改时间（mtime）缓存。文件未修改时复用已加载模块；文件修改后使用 `?t=${mtime}` 重新加载，避免每次执行都在 Node.js ESM loader 中产生新的模块记录。
 
 ### 4.3 会话限制
 
@@ -155,6 +159,12 @@ daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium
 - 并发会话满 → `DAEMON_BUSY`
 - 总页面数满 → `DAEMON_PAGE_LIMIT`
 
+### 4.4 超时与客户端断连
+
+- 命令执行超过 20 分钟时，daemon 关闭对应页面并返回 `COMMAND_TIMEOUT`，随后释放会话。
+- IPC 客户端 socket 在命令完成前关闭时，daemon 会向该 socket 上仍在运行的请求发送取消信号并关闭对应页面。依赖页面的 Playwright 操作会因此终止；待命令处理函数退出后，会话与页面资源被释放。
+- 断连产生的内部错误码为 `CLIENT_DISCONNECTED`。由于客户端连接此时已经关闭，该错误通常只出现在 daemon 日志中，不会再通过原 socket 返回给客户端。
+
 ---
 
 ## 5. 资源管理与监控
@@ -165,11 +175,11 @@ daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium
 
 | 级别 | 阈值 | 行为 |
 |------|------|------|
-| Warning | 400 MB | 标记为 degraded 并记录 warning 日志；不影响请求处理，仅体现在 health 端点 |
-| Limit | 600 MB | 标记为 restartPending，进入 drain 模式（拒绝新请求，现有会话完成后关闭） |
-| Emergency | 1000 MB | 清理状态文件后强制退出，防止 OOM |
+| Warning | 500 MB | 标记为 degraded，记录包含 heap、external、arrayBuffers 的诊断日志，并尽力清空空闲页面池；继续处理请求 |
+| Limit | 800 MB | 连续 2 次采样达到阈值后标记为 restartPending，进入 drain 模式（拒绝新请求，现有会话完成后关闭） |
+| Emergency | 1200 MB | 单次采样达到阈值即清理状态文件并强制退出，防止 OOM |
 
-采样间隔为 60 秒。
+采样间隔为 60 秒。RSS 降回 800 MB 以下时，连续超限计数归零；因此一次短暂的序列化或外部内存峰值不会触发普通重启。daemon 重启会断开其持有的 CDP 连接，新实例在下一次浏览器命令到达时需要重新附加；浏览器是否再次要求远程调试授权取决于浏览器当前状态。
 
 ### 5.2 执行次数阈值
 
@@ -201,6 +211,7 @@ daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium
 | `DAEMON_PAGE_LIMIT` | 总页面数达到上限 |
 | `DAEMON_RESTARTING` | daemon 处于 restartPending  drain 状态 |
 | `COMMAND_TIMEOUT` | 命令执行超时（20 分钟） |
+| `CLIENT_DISCONNECTED` | 命令完成前客户端 socket 已关闭；通常只记录在 daemon 日志中 |
 | `BROWSER_ATTACH_REQUIRED` | 需要附加到现有 CDP 会话 |
 
 ### 客户端与通信层
@@ -223,4 +234,3 @@ daemon 内部通过 browser-manager 维护单一浏览器 CDP 连接（`chromium
 ### 容错重试
 
 客户端对 `DAEMON_UNREACHABLE` 和 `DAEMON_RESTARTING` 自动重试一次。对于 unreachable 场景，客户端会比对状态文件中的 PID：若与发起请求时记录的 PID 一致，则发送 `SIGTERM` 清理僵尸进程并删除状态文件，再拉起新实例；若 PID 已变更，说明已有其他进程完成了重启，则跳过清理直接使用新实例。
-

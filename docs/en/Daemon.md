@@ -11,7 +11,7 @@ The daemon is the command execution engine of the CLI, responsible for running u
 Division of labor between CLI and daemon:
 
 - **CLI**: Command discovery, parsing, and scheduling; launching the daemon on demand; sending execution requests via IPC.
-- **daemon**: Maintaining browser CDP connections; creating isolated pages for each command and executing them; managing memory, sessions, and logs.
+- **daemon**: Maintaining browser CDP connections; assigning a page for exclusive use by each command; managing the page pool, memory, sessions, and logs.
 
 > **Relationship with `@playwright/cli`**: `@playwright/cli` is a standalone CLI tool used by the Agent during the **exploration phase** (providing commands such as `attach`, `eval`, `snapshot`). The WebSculpt daemon connects directly to the browser via `connectOverCDP` from `playwright-core` during the **execution phase**, and does not depend on any process or session management from the `@playwright/cli` package.
 
@@ -112,6 +112,7 @@ interface SocketResponse {
     memoryWarningMB: number;
     memoryLimitMB: number;
     memoryEmergencyMB: number;
+    memoryLimitConsecutiveSamples: number;
     restartAfterExecutions: number;
   };
 }
@@ -129,18 +130,21 @@ The connection includes the following fault-tolerance mechanisms:
 
 - **Lazy connection**: The CDP connection is established only when a command is executed for the first time.
 - **Concurrent deduplication**: Multiple simultaneous requests share the same connection attempt, preventing multiple browser windows from popping up.
-- **Auto-reconnect**: When the `withBrowser` wrapper detects a disconnected connection (`TargetClosedError`, `ECONNRESET`, `ECONNREFUSED`, `EPIPE`, etc.), it closes the old connection and reconnects once. If the browser is not started, it throws `BROWSER_ATTACH_REQUIRED`.
+- **Connection-aware reconnect**: When the `withBrowser` wrapper encounters connection-related errors such as `TargetClosedError`, `ECONNRESET`, `ECONNREFUSED`, or `EPIPE`, it first checks whether the Browser CDP connection itself is still alive. It clears the cache and reconnects once only when the entire connection has been lost. If only a page or target was closed while the Browser remains connected, the original error is returned without rebuilding the CDP connection, avoiding another remote-debugging authorization prompt.
+- **Recoverable attach failure**: If no browser CDP session is available, the daemon returns `BROWSER_ATTACH_REQUIRED`. This error does not stop the daemon; after the user authorizes remote debugging, a later request attempts the connection again.
 
 ### 4.2 Page Isolation
 
 When each command is executed:
 
 1. Reuse the browser's default context (preserving user login state, cookies, localStorage).
-2. Create a new page within that context.
+2. Prefer an idle page from the pool; create a new page in the default context only when none is available.
 3. Load the user command module via dynamic `import()`, execute its default exported function in the Node.js process, and manipulate the page through the Playwright API.
-4. Close the page after execution completes.
+4. After successful execution, navigate the page to `about:blank` and return it to the pool; close it when it is invalid, already closed, or the pool is full.
 
-Module loading uses `?t=${Date.now()}` to bypass ESM caching, ensuring that modified command files are loaded as the latest version on the next execution.
+A page is not shared with another command during an execution. The pool retains at most as many idle pages as the maximum concurrent session count, and all idle pages are drained when memory reaches the warning threshold.
+
+Command modules are cached by file modification time (mtime). Unchanged files reuse the loaded module; modified files are reloaded with `?t=${mtime}`, avoiding a new Node.js ESM loader record on every execution.
 
 ### 4.3 Session Limits
 
@@ -155,6 +159,12 @@ When limits are reached, the daemon does not queue requests but returns errors d
 - Concurrent sessions full -> `DAEMON_BUSY`
 - Total pages full -> `DAEMON_PAGE_LIMIT`
 
+### 4.4 Timeout and Client Disconnect
+
+- When a command exceeds the 20-minute execution timeout, the daemon closes its page, returns `COMMAND_TIMEOUT`, and then releases the session.
+- If the IPC client socket closes before a command completes, the daemon signals cancellation to requests still running on that socket and closes their pages. Playwright operations that depend on the page terminate as a result; session and page resources are released after the command handler unwinds.
+- The internal error code for this condition is `CLIENT_DISCONNECTED`. Because the client connection is already closed, this error normally appears only in daemon logs and cannot be returned over the original socket.
+
 ---
 
 ## 5. Resource Management and Monitoring
@@ -165,11 +175,11 @@ Three-tier memory threshold (monitored object is daemon process RSS):
 
 | Level | Threshold | Behavior |
 |-------|-----------|----------|
-| Warning | 400 MB | Marked as degraded and a warning log is recorded; does not affect request processing, only reflected in the health endpoint |
-| Limit | 600 MB | Marked as restartPending, enters drain mode (rejects new requests, closes after existing sessions complete) |
-| Emergency | 1000 MB | Cleans up the status file and forces exit to prevent OOM |
+| Warning | 500 MB | Marks the daemon as degraded, logs diagnostics including heap, external, and array buffer usage, and makes a best-effort attempt to drain idle pages; request processing continues |
+| Limit | 800 MB | After 2 consecutive samples at or above the threshold, marks the daemon as restartPending and enters drain mode (rejects new requests and closes after existing sessions complete) |
+| Emergency | 1200 MB | A single sample at or above the threshold cleans up the state file and forces exit to prevent OOM |
 
-Sampling interval is 60 seconds.
+The sampling interval is 60 seconds. The consecutive over-limit count resets when RSS falls below 800 MB, so a single transient serialization or external-memory spike does not trigger a normal restart. Restarting the daemon drops its CDP connection; the new instance must attach again when the next browser command arrives. Whether the browser asks for remote-debugging authorization again depends on its current state.
 
 ### 5.2 Execution Count Threshold
 
@@ -201,6 +211,7 @@ After accumulating 2000 command executions, the daemon is marked as `restartPend
 | `DAEMON_PAGE_LIMIT` | Total page limit reached |
 | `DAEMON_RESTARTING` | Daemon is in restartPending drain state |
 | `COMMAND_TIMEOUT` | Command execution timeout (20 minutes) |
+| `CLIENT_DISCONNECTED` | Client socket closed before command completion; normally recorded only in daemon logs |
 | `BROWSER_ATTACH_REQUIRED` | Need to attach to an existing CDP session |
 
 ### Client and Communication Layer

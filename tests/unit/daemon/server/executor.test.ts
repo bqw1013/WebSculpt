@@ -1,8 +1,9 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Page } from "playwright-core";
+import type { Browser, Page } from "playwright-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type * as ExecutorModule from "../../../../src/daemon/server/executor/executor.js";
 
 vi.mock("../../../../src/daemon/server/executor/browser-manager.js", () => ({
 	withBrowser: vi.fn(),
@@ -15,7 +16,8 @@ import { acquirePage, withBrowser } from "../../../../src/daemon/server/executor
 describe("executeCommand timeout", () => {
 	let tempDir: string;
 	let rejectEvaluate: ((reason: Error) => void) | null = null;
-	let executeCommand: typeof import("../../../../src/daemon/server/executor/executor.js").executeCommand;
+	let mockPage: Page;
+	let executeCommand: typeof ExecutorModule.executeCommand;
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
@@ -23,7 +25,7 @@ describe("executeCommand timeout", () => {
 
 		tempDir = mkdtempSync(join(tmpdir(), "ws-test-"));
 
-		const mockPage = {
+		mockPage = {
 			close: vi.fn().mockImplementation(() => {
 				if (rejectEvaluate) {
 					const err = new Error("TargetClosedError");
@@ -42,7 +44,7 @@ describe("executeCommand timeout", () => {
 		vi.mocked(acquirePage).mockResolvedValue(mockPage);
 
 		vi.mocked(withBrowser).mockImplementation(async (fn) => {
-			return fn({} as import("playwright-core").Browser);
+			return fn({} as Browser);
 		});
 
 		vi.resetModules();
@@ -60,6 +62,19 @@ describe("executeCommand timeout", () => {
 		writeFileSync(hangingPath, "export default async (page) => await page.evaluate(() => {});", "utf-8");
 
 		await expect(executeCommand(hangingPath, {})).rejects.toThrow("Command execution timed out");
+	});
+
+	it("closes the page when the client disconnects", async () => {
+		const hangingPath = join(tempDir, "disconnect.js");
+		writeFileSync(hangingPath, "export default async (page) => await page.evaluate(() => {});", "utf-8");
+		const controller = new AbortController();
+
+		const execution = executeCommand(hangingPath, {}, undefined, controller.signal);
+		await vi.waitFor(() => expect(mockPage.evaluate).toHaveBeenCalled());
+		controller.abort();
+
+		await expect(execution).rejects.toMatchObject({ code: "CLIENT_DISCONNECTED" });
+		expect(mockPage.close).toHaveBeenCalled();
 	});
 
 	it("passes cwd as the third argument to the command handler", async () => {

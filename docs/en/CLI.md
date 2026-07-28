@@ -131,14 +131,18 @@ websculpt daemon status
 | `pid` | Process ID |
 | `uptime` | Uptime in seconds |
 | `healthy` | Overall health status |
-| `degraded` | Whether in degraded mode (set to true on memory warning or when restart threshold is reached) |
+| `degraded` | Whether the latest memory sample reached the warning threshold; unrelated to execution-count restarts |
 | `browser.connected` | Whether the browser is connected |
+| `browser.lazy` | Whether this daemon instance has never attempted a browser connection |
 | `browser.pages` | Current number of open tabs |
 | `sessions.active` | Current number of active sessions |
 | `sessions.max` | Maximum concurrent sessions |
+| `sessions.total` | Cumulative executions since this daemon instance started |
 | `resources.rssMB` | Process RSS memory in MB |
+| `resources.heapUsedMB` / `heapTotalMB` | Used and total V8 heap memory in MB |
+| `limits` | Effective timeout, concurrency, page, memory, and execution-count limits |
 
-In human mode, the currently effective resource limit configuration is also formatted and printed.
+JSON mode returns the complete `limits` object, including the 500/800/1200 MB memory thresholds and the consecutive-sample count for the Limit threshold. Human mode currently displays command timeout, maximum sessions, maximum pages, and the execution-count restart threshold; use JSON mode to inspect the complete memory limits.
 
 **Key behaviors**
 

@@ -131,14 +131,18 @@ websculpt daemon status
 | `pid` | 进程 ID |
 | `uptime` | 运行时长（秒） |
 | `healthy` | 整体健康状态 |
-| `degraded` | 是否处于降级模式（内存告警或达到重启阈值时置为 true） |
+| `degraded` | 最近一次内存采样是否达到 warning 阈值；与执行次数触发的重启无关 |
 | `browser.connected` | 浏览器是否已连接 |
+| `browser.lazy` | daemon 本次启动后是否从未尝试建立浏览器连接 |
 | `browser.pages` | 当前打开页签数 |
 | `sessions.active` | 当前活跃会话数 |
 | `sessions.max` | 最大并发会话数 |
+| `sessions.total` | daemon 本次启动后的累计执行数 |
 | `resources.rssMB` | 进程 RSS 内存（MB） |
+| `resources.heapUsedMB` / `heapTotalMB` | V8 heap 已用量与总量（MB） |
+| `limits` | 当前生效的超时、并发、页面、内存和执行次数限制 |
 
-human 模式下会同时格式化输出当前生效的资源限制配置。
+JSON 模式返回完整的 `limits` 对象，包括 500/800/1200 MB 内存阈值和 Limit 连续采样次数。human 模式目前显示命令超时、最大会话数、最大页面数和执行次数重启阈值；完整内存限制请使用 JSON 模式查看。
 
 **关键行为**
 

@@ -47,6 +47,7 @@ async function handleRunRequest(
 	options: SocketServerOptions,
 	drainState: DrainState,
 	requestId: number,
+	signal: AbortSignal,
 ): Promise<SocketResponse> {
 	const commandPath = req.params?.commandPath as string | undefined;
 	const params = (req.params?.params as Record<string, string>) ?? {};
@@ -90,7 +91,7 @@ async function handleRunRequest(
 	recordExecutionStart(activeSessions);
 	let executionSuccess = false;
 	try {
-		const data = await executeCommand(commandPath, params, cwd);
+		const data = await executeCommand(commandPath, params, cwd, signal);
 		executionSuccess = true;
 		logEvent("INFO", "req_end", { method: "run", duration_ms: Date.now() - startTime, success: true });
 		return { id: requestId, result: { success: true, data } };
@@ -112,6 +113,7 @@ async function handleRequest(
 	req: SocketRequest,
 	options: SocketServerOptions,
 	drainState: DrainState,
+	signal: AbortSignal,
 ): Promise<SocketResponse> {
 	options.onActivity?.();
 
@@ -119,7 +121,7 @@ async function handleRequest(
 
 	switch (req.method) {
 		case "run": {
-			return handleRunRequest(req, options, drainState, requestId);
+			return handleRunRequest(req, options, drainState, requestId, signal);
 		}
 
 		case "health": {
@@ -183,6 +185,30 @@ export function createSocketServer(socketPath: string, options: SocketServerOpti
 	const drainState: DrainState = { initiated: false };
 	const server = createServer((socket: Socket) => {
 		let buffer = "";
+		const activeRequests = new Set<AbortController>();
+
+		const dispatchRequest = (req: SocketRequest): void => {
+			const controller = new AbortController();
+			activeRequests.add(controller);
+			handleRequest(req, options, drainState, controller.signal)
+				.then((response) => {
+					if (!socket.destroyed) {
+						socket.write(`${JSON.stringify(response)}\n`);
+					}
+				})
+				.catch((err: Error) => {
+					if (!socket.destroyed) {
+						const response: SocketResponse = {
+							id: req.id,
+							error: { message: err.message, code: "INTERNAL_ERROR" },
+						};
+						socket.write(`${JSON.stringify(response)}\n`);
+					}
+				})
+				.finally(() => {
+					activeRequests.delete(controller);
+				});
+		};
 
 		socket.setEncoding("utf-8");
 
@@ -207,17 +233,7 @@ export function createSocketServer(socketPath: string, options: SocketServerOpti
 				}
 
 				// Dispatch asynchronously to keep the socket responsive to further data.
-				handleRequest(req, options, drainState)
-					.then((response) => {
-						socket.write(`${JSON.stringify(response)}\n`);
-					})
-					.catch((err: Error) => {
-						const response: SocketResponse = {
-							id: req.id,
-							error: { message: err.message, code: "INTERNAL_ERROR" },
-						};
-						socket.write(`${JSON.stringify(response)}\n`);
-					});
+				dispatchRequest(req);
 			}
 		});
 
@@ -226,16 +242,19 @@ export function createSocketServer(socketPath: string, options: SocketServerOpti
 			if (buffer.trim()) {
 				try {
 					const req = JSON.parse(buffer) as SocketRequest;
-					handleRequest(req, options, drainState)
-						.then((response) => socket.write(`${JSON.stringify(response)}\n`))
-						.catch(() => {
-							// Ignore errors during end-of-stream cleanup.
-						});
+					dispatchRequest(req);
 				} catch {
 					// Ignore trailing incomplete JSON.
 				}
 			}
 			buffer = "";
+		});
+
+		socket.on("close", () => {
+			for (const controller of activeRequests) {
+				controller.abort();
+			}
+			activeRequests.clear();
 		});
 
 		socket.on("error", (err) => {

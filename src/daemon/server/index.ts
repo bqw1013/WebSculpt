@@ -3,7 +3,7 @@ import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getDaemonStateDir, getSocketPath } from "../shared/paths.js";
 import { DAEMON_LIMITS } from "./config/limits.js";
-import { closeBrowser, getOpenPageCount } from "./executor/browser-manager.js";
+import { closeBrowser, drainPagePool, getOpenPageCount } from "./executor/browser-manager.js";
 import {
 	degraded,
 	restartPending,
@@ -93,20 +93,23 @@ async function main(): Promise<void> {
 		isDegraded: () => degraded,
 	});
 
-	startMemoryMonitoring(() => {
-		if (isShuttingDown) {
-			return;
-		}
-		isShuttingDown = true;
+	startMemoryMonitoring(
+		() => {
+			if (isShuttingDown) {
+				return;
+			}
+			isShuttingDown = true;
 
-		try {
-			unlinkSync(join(getDaemonStateDir(), "daemon.json"));
-		} catch {
-			// Ignore errors during emergency cleanup.
-		}
-		logEvent("ERROR", "daemon_shutdown", { reason: "memory_emergency" });
-		process.exit(1);
-	});
+			try {
+				unlinkSync(join(getDaemonStateDir(), "daemon.json"));
+			} catch {
+				// Ignore errors during emergency cleanup.
+			}
+			logEvent("ERROR", "daemon_shutdown", { reason: "memory_emergency" });
+			process.exit(1);
+		},
+		() => drainPagePool(),
+	);
 
 	// Persist daemon state so CLI processes can discover this instance.
 	// On Windows the CLI launcher (WScript.Shell COM object) cannot obtain

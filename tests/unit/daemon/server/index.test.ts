@@ -5,6 +5,7 @@ const mockUnlink = vi.fn().mockResolvedValue(undefined);
 const mockMkdir = vi.fn().mockResolvedValue(undefined);
 const mockWriteFile = vi.fn().mockResolvedValue(undefined);
 const mockCloseBrowser = vi.fn().mockResolvedValue(undefined);
+const mockDrainPagePool = vi.fn().mockResolvedValue(undefined);
 const mockServerClose = vi.fn();
 const mockServerOn = vi.fn();
 const mockCreateWriteStream = vi.fn().mockReturnValue({
@@ -28,6 +29,8 @@ vi.mock("node:fs/promises", async () => {
 
 vi.mock("../../../../src/daemon/server/executor/browser-manager.js", () => ({
 	closeBrowser: mockCloseBrowser,
+	drainPagePool: mockDrainPagePool,
+	getOpenPageCount: vi.fn().mockReturnValue(0),
 	isBrowserConnected: vi.fn().mockReturnValue(false),
 	withBrowser: vi.fn(),
 }));

@@ -6,8 +6,9 @@ export const DAEMON_LIMITS = {
 	commandTimeoutSec: 20 * 60,
 	maxConcurrentSessions: 20,
 	maxTotalPages: 50,
-	memoryWarningMB: 400,
-	memoryLimitMB: 600,
-	memoryEmergencyMB: 1000,
+	memoryWarningMB: 500,
+	memoryLimitMB: 800,
+	memoryEmergencyMB: 1200,
+	memoryLimitConsecutiveSamples: 2,
 	restartAfterExecutions: 2000,
 } as const;

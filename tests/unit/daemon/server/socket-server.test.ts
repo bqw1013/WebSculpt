@@ -36,6 +36,7 @@ vi.mock("../../../../src/daemon/server/executor/browser-manager.js", async () =>
 	};
 });
 
+import { executeCommand } from "../../../../src/daemon/server/executor/executor.js";
 import { createSocketServer } from "../../../../src/daemon/server/executor/socket-server.js";
 
 async function createTestSocketPath(): Promise<string> {
@@ -119,15 +120,13 @@ describe("socket-server page limit", () => {
 	});
 
 	it("forwards cwd from request params to executeCommand", async () => {
-		const { executeCommand } = await import("../../../../src/daemon/server/executor/executor.js");
-
 		await sendRequest(socketPath, {
 			id: 1,
 			method: "run",
 			params: { commandPath: "/tmp/test.js", params: {}, cwd: "/home/user/project" },
 		});
 
-		expect(executeCommand).toHaveBeenCalledWith("/tmp/test.js", {}, "/home/user/project");
+		expect(executeCommand).toHaveBeenCalledWith("/tmp/test.js", {}, "/home/user/project", expect.any(AbortSignal));
 	});
 
 	it("accepts run requests when page count is below the limit", async () => {
@@ -142,5 +141,39 @@ describe("socket-server page limit", () => {
 		const parsed = JSON.parse(response);
 		expect(parsed.error).toBeUndefined();
 		expect(parsed.result).toBeDefined();
+	});
+
+	it("aborts a running command when its client disconnects", async () => {
+		const aborted = vi.fn();
+		vi.mocked(executeCommand).mockImplementationOnce((_commandPath, _params, _cwd, signal) => {
+			return new Promise((_resolve, reject) => {
+				signal?.addEventListener(
+					"abort",
+					() => {
+						aborted();
+						reject(new Error("client disconnected"));
+					},
+					{ once: true },
+				);
+			});
+		});
+
+		const socket = createConnection(socketPath);
+		await new Promise<void>((resolve, reject) => {
+			socket.on("connect", resolve);
+			socket.on("error", reject);
+		});
+		socket.write(
+			`${JSON.stringify({
+				id: 2,
+				method: "run",
+				params: { commandPath: "/tmp/hang.js", params: {} },
+			})}\n`,
+		);
+		await vi.waitFor(() => expect(executeCommand).toHaveBeenCalled());
+
+		socket.destroy();
+
+		await vi.waitFor(() => expect(aborted).toHaveBeenCalledTimes(1));
 	});
 });

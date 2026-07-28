@@ -9,6 +9,27 @@ export let degraded = false;
 export let restartPending = false;
 let memoryCheckTimer: NodeJS.Timeout | null = null;
 let stopped = false;
+let consecutiveLimitSamples = 0;
+let cleanupInProgress = false;
+
+function toMB(bytes: number): number {
+	return Math.round(bytes / 1024 / 1024);
+}
+
+function requestMemoryCleanup(onMemoryPressure?: () => void | Promise<void>): void {
+	if (!onMemoryPressure || cleanupInProgress) {
+		return;
+	}
+
+	cleanupInProgress = true;
+	Promise.resolve(onMemoryPressure())
+		.catch(() => {
+			// Cleanup is best-effort; the next memory sample still enforces hard limits.
+		})
+		.finally(() => {
+			cleanupInProgress = false;
+		});
+}
 
 /**
  * Sets the restart-pending flag. Exported so callers outside this module
@@ -20,9 +41,11 @@ export function setRestartPending(value: boolean): void {
 
 /**
  * Starts a background timer that samples RSS every 60 seconds.
- * Triggers degraded/drain/emergency states based on configured thresholds.
+ * Triggers cleanup, degraded, drain, and emergency states based on configured thresholds.
+ * A normal restart requires consecutive over-limit samples so a transient
+ * serialization spike cannot force a new browser authorization cycle.
  */
-export function startMemoryMonitoring(onEmergency: () => void): void {
+export function startMemoryMonitoring(onEmergency: () => void, onMemoryPressure?: () => void | Promise<void>): void {
 	if (memoryCheckTimer) {
 		return;
 	}
@@ -33,7 +56,15 @@ export function startMemoryMonitoring(onEmergency: () => void): void {
 			return;
 		}
 
-		const rssMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
+		const memory = process.memoryUsage();
+		const rssMB = toMB(memory.rss);
+		const memoryDetails = {
+			rss_mb: rssMB,
+			heap_used_mb: toMB(memory.heapUsed),
+			heap_total_mb: toMB(memory.heapTotal),
+			external_mb: toMB(memory.external),
+			array_buffers_mb: toMB(memory.arrayBuffers),
+		};
 		recordPeakRss(rssMB);
 		recordPeakPages(getOpenPageCount());
 
@@ -44,20 +75,31 @@ export function startMemoryMonitoring(onEmergency: () => void): void {
 			return;
 		}
 
-		if (rssMB >= DAEMON_LIMITS.memoryLimitMB) {
-			if (!restartPending) {
-				restartPending = true;
-				logEvent("WARN", "daemon_shutdown", { reason: "memory_limit", rss_mb: rssMB });
-			}
-		} else if (rssMB >= DAEMON_LIMITS.memoryWarningMB) {
+		if (rssMB >= DAEMON_LIMITS.memoryWarningMB) {
+			requestMemoryCleanup(onMemoryPressure);
 			if (!degraded) {
 				degraded = true;
-				logEvent("WARN", "mem_high", { rss_mb: rssMB, threshold_mb: DAEMON_LIMITS.memoryWarningMB });
+				logEvent("WARN", "mem_high", {
+					...memoryDetails,
+					threshold_mb: DAEMON_LIMITS.memoryWarningMB,
+				});
+			}
+		} else if (degraded) {
+			degraded = false;
+		}
+
+		if (rssMB >= DAEMON_LIMITS.memoryLimitMB) {
+			consecutiveLimitSamples++;
+			if (consecutiveLimitSamples >= DAEMON_LIMITS.memoryLimitConsecutiveSamples && !restartPending) {
+				restartPending = true;
+				logEvent("WARN", "daemon_shutdown", {
+					reason: "memory_limit",
+					...memoryDetails,
+					consecutive_samples: consecutiveLimitSamples,
+				});
 			}
 		} else {
-			if (degraded) {
-				degraded = false;
-			}
+			consecutiveLimitSamples = 0;
 		}
 	}, MEMORY_CHECK_INTERVAL_MS);
 }
@@ -80,5 +122,7 @@ export function resetMonitorState(): void {
 	degraded = false;
 	restartPending = false;
 	stopped = false;
+	consecutiveLimitSamples = 0;
+	cleanupInProgress = false;
 	stopMemoryMonitoring();
 }

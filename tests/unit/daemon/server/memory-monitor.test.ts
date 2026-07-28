@@ -46,34 +46,54 @@ describe("memory monitor state transitions", () => {
 		expect(onEmergency).not.toHaveBeenCalled();
 	});
 
-	it("sets degraded to true when RSS exceeds warning threshold (400MB)", () => {
+	it("sets degraded and requests cleanup when RSS exceeds warning threshold", () => {
 		const onEmergency = vi.fn();
-		vi.spyOn(process, "memoryUsage").mockReturnValue({ rss: 450 * 1024 * 1024 } as NodeJS.MemoryUsage);
+		const onMemoryPressure = vi.fn();
+		vi.spyOn(process, "memoryUsage").mockReturnValue({ rss: 550 * 1024 * 1024 } as NodeJS.MemoryUsage);
 
-		startMemoryMonitoring(onEmergency);
+		startMemoryMonitoring(onEmergency, onMemoryPressure);
 		vi.advanceTimersByTime(60_000);
 
 		expect(degraded).toBe(true);
 		expect(restartPending).toBe(false);
 		expect(onEmergency).not.toHaveBeenCalled();
+		expect(onMemoryPressure).toHaveBeenCalledTimes(1);
 		expect(logEvent).toHaveBeenCalledWith("WARN", "mem_high", expect.any(Object));
 	});
 
-	it("sets restartPending to true when RSS exceeds limit threshold (600MB)", () => {
+	it("requires consecutive over-limit samples before requesting restart", () => {
 		const onEmergency = vi.fn();
-		vi.spyOn(process, "memoryUsage").mockReturnValue({ rss: 650 * 1024 * 1024 } as NodeJS.MemoryUsage);
+		vi.spyOn(process, "memoryUsage").mockReturnValue({ rss: 850 * 1024 * 1024 } as NodeJS.MemoryUsage);
 
 		startMemoryMonitoring(onEmergency);
 		vi.advanceTimersByTime(60_000);
+		expect(restartPending).toBe(false);
 
+		vi.advanceTimersByTime(60_000);
 		expect(restartPending).toBe(true);
 		expect(onEmergency).not.toHaveBeenCalled();
 		expect(logEvent).toHaveBeenCalledWith("WARN", "daemon_shutdown", expect.any(Object));
 	});
 
-	it("calls onEmergency when RSS exceeds emergency threshold (1000MB)", () => {
+	it("resets consecutive limit samples when RSS drops below the limit", () => {
 		const onEmergency = vi.fn();
-		vi.spyOn(process, "memoryUsage").mockReturnValue({ rss: 1100 * 1024 * 1024 } as NodeJS.MemoryUsage);
+		const memSpy = vi.spyOn(process, "memoryUsage");
+
+		memSpy.mockReturnValue({ rss: 850 * 1024 * 1024 } as NodeJS.MemoryUsage);
+		startMemoryMonitoring(onEmergency);
+		vi.advanceTimersByTime(60_000);
+
+		memSpy.mockReturnValue({ rss: 700 * 1024 * 1024 } as NodeJS.MemoryUsage);
+		vi.advanceTimersByTime(60_000);
+
+		memSpy.mockReturnValue({ rss: 850 * 1024 * 1024 } as NodeJS.MemoryUsage);
+		vi.advanceTimersByTime(60_000);
+		expect(restartPending).toBe(false);
+	});
+
+	it("calls onEmergency when RSS exceeds emergency threshold", () => {
+		const onEmergency = vi.fn();
+		vi.spyOn(process, "memoryUsage").mockReturnValue({ rss: 1250 * 1024 * 1024 } as NodeJS.MemoryUsage);
 
 		startMemoryMonitoring(onEmergency);
 		vi.advanceTimersByTime(60_000);
@@ -85,7 +105,7 @@ describe("memory monitor state transitions", () => {
 		const onEmergency = vi.fn();
 		const memSpy = vi.spyOn(process, "memoryUsage");
 
-		memSpy.mockReturnValue({ rss: 450 * 1024 * 1024 } as NodeJS.MemoryUsage);
+		memSpy.mockReturnValue({ rss: 550 * 1024 * 1024 } as NodeJS.MemoryUsage);
 		startMemoryMonitoring(onEmergency);
 		vi.advanceTimersByTime(60_000);
 		expect(degraded).toBe(true);
