@@ -38,6 +38,8 @@
 
 **环境要求**：Node.js >= 22
 
+### 1.1 通过 npm 安装
+
 ```bash
 # 1. 安装 CLI 工具
 npm install -g @playwright/cli@0.1.13 websculpt
@@ -53,6 +55,12 @@ websculpt skill install --global --lang zh
 ```
 
 安装状态与卸载用 `websculpt skill status` / `websculpt skill uninstall`，完整参数说明见 [`docs/CLI.md`](docs/CLI.md) 的 `skill` 章节。
+
+### 1.2 通过 OpenClaw Plugin 安装
+
+```bash
+openclaw plugins install clawhub:@bqw1013/websculpt-plugin --acknowledge-clawhub-risk
+```
 
 ## 2. 用法
 

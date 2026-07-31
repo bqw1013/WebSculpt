@@ -38,6 +38,8 @@
 
 **Prerequisites**: Node.js >= 22
 
+### 1.1 Via npm
+
 ```bash
 # 1. Install CLI tool
 npm install -g @playwright/cli@0.1.13 websculpt
@@ -53,6 +55,12 @@ websculpt skill install --global --lang en
 ```
 
 Manage with `websculpt skill status` / `websculpt skill uninstall`. See the `skill` section in [`docs/CLI.md`](docs/CLI.md) for full options.
+
+### 1.2 Via OpenClaw Plugin
+
+```bash
+openclaw plugins install clawhub:@bqw1013/websculpt-plugin --acknowledge-clawhub-risk
+```
 
 ## 2. Usage
 
