@@ -12,7 +12,7 @@
   <a href="https://www.npmjs.com/package/websculpt"><img src="https://img.shields.io/npm/v/websculpt?style=for-the-badge" alt="npm 版本"></a>
   <a href="https://www.npmjs.com/package/websculpt"><img src="https://img.shields.io/npm/dm/websculpt?style=for-the-badge" alt="npm 下载量"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg?style=for-the-badge" alt="Apache-2.0 许可证"></a>
-  <a href="https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=b47ubdc2-dc5e-4d63-b173-215eeef93984"><img src="https://img.shields.io/badge/Feishu-加入-3370FF?style=for-the-badge" alt="飞书"></a>
+  <a href="https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=317uf738-27e1-480c-be35-dfc9a889a86b"><img src="https://img.shields.io/badge/Feishu-加入-3370FF?style=for-the-badge" alt="飞书"></a>
   <a href="https://discord.gg/R3tuUFUYm"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=for-the-badge" alt="Discord"></a>
   <a href="README.md"><img src="https://img.shields.io/badge/🌐-English-007ACC?style=for-the-badge" alt="English"></a>
 </p>
