@@ -1,0 +1,19 @@
+{
+  "id": "websculpt-plugin",
+  "name": "WebSculpt",
+  "description": "Self-evolving browser automation command library for OpenClaw",
+  "version": "0.3.17",
+  "skills": [
+    "skills/websculpt-explore",
+    "skills/websculpt-capture",
+    "skills/websculpt-maintain",
+    "skills/websculpt-library"
+  ],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false
+  },
+  "activation": {
+    "onStartup": false
+  }
+}

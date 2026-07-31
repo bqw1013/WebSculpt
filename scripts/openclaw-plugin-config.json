@@ -1,0 +1,17 @@
+{
+  "version": "",
+  "keywords": [
+    "browser automation",
+    "web scraping",
+    "procedural memory",
+    "playwright",
+    "self-evolving"
+  ],
+  "includePlaywrightCli": true,
+  "skillSources": {
+    "websculpt-explore": "skills/websculpt-explore-en",
+    "websculpt-capture": "skills/websculpt-capture-en",
+    "websculpt-maintain": "skills/websculpt-maintain-en",
+    "websculpt-library": "skills/websculpt-library-en"
+  }
+}
