@@ -16,6 +16,7 @@ const PLUGIN_DESCRIPTION =
   "Self-evolving browser automation command library for OpenClaw";
 const DISPLAY_DESCRIPTION =
   "OpenClaw plugin for WebSculpt. Installs the WebSculpt CLI, @playwright/cli, and four lifecycle skills (explore, capture, maintain, library).";
+const PLUGIN_NPM_NAME = "@bqw1013/websculpt-plugin";
 const SOURCE_REPO = "https://github.com/bqw1013/WebSculpt.git";
 const WEBSCULPT_VERSION = "^0.3.10";
 const PLAYWRIGHT_CLI_VERSION = "0.1.13";
@@ -40,9 +41,31 @@ function bumpPatchVersion(version) {
   return parts.join(".");
 }
 
+function getLatestClawHubVersion(name) {
+  try {
+    const output = execSync(`clawhub package inspect ${name} --json`, {
+      cwd: ROOT_DIR,
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "ignore"],
+      timeout: 15000,
+    });
+    const data = JSON.parse(output);
+    return data.package?.latestVersion || null;
+  } catch {
+    return null;
+  }
+}
+
 function resolveVersion(config) {
   if (config.version) {
     return config.version;
+  }
+
+  // Prefer the latest version published on ClawHub so we never re-publish
+  // an existing version after a manual/web upload.
+  const latestPublished = getLatestClawHubVersion(PLUGIN_NPM_NAME);
+  if (latestPublished) {
+    return bumpPatchVersion(latestPublished);
   }
 
   const existingPackagePath = path.join(PLUGIN_DIR, "package.json");
@@ -140,7 +163,7 @@ function generatePackageJson(config, version) {
   }
 
   return {
-    name: "@bqw1013/websculpt-plugin",
+    name: PLUGIN_NPM_NAME,
     version,
     description: DISPLAY_DESCRIPTION,
     type: "module",
