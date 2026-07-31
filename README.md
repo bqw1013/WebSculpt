@@ -8,13 +8,14 @@
   <img src="docs/assets/tagline-en.svg" width="80%" alt="A Self-Evolving Browser Use Harness Built on CLI Procedural Memory — Distill successful browser exploration paths into local domain/action commands, the library grows with every use, making the Agent smarter over time.">
 </p>
 
-[![npm version](https://img.shields.io/npm/v/websculpt)](https://www.npmjs.com/package/websculpt)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-[![Node Version](https://img.shields.io/node/v/websculpt)](package.json)
-[![npm downloads](https://img.shields.io/npm/dm/websculpt)](https://www.npmjs.com/package/websculpt)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript)](https://www.typescriptlang.org/)
-
-[中文](README_zh.md)
+<p align="center">
+  <a href="https://www.npmjs.com/package/websculpt"><img src="https://img.shields.io/npm/v/websculpt?style=for-the-badge" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/websculpt"><img src="https://img.shields.io/npm/dm/websculpt?style=for-the-badge" alt="npm downloads"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg?style=for-the-badge" alt="Apache-2.0 License"></a>
+  <a href="https://discord.gg/R3tuUFUYm"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=for-the-badge" alt="Discord"></a>
+  <a href="https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=b47ubdc2-dc5e-4d63-b173-215eeef93984"><img src="https://img.shields.io/badge/Feishu-Join-3370FF?style=for-the-badge" alt="Feishu"></a>
+  <a href="README_zh.md"><img src="https://img.shields.io/badge/🌐-中文-007ACC?style=for-the-badge" alt="中文"></a>
+</p>
 
 ![WebSculpt Workflow](docs/assets/flow-en.svg)
 
@@ -27,10 +28,9 @@
 - [3. Core Concepts](#3-core-concepts)
 - [4. AnyTrend Case Study](#4-anytrend-case-study)
 - [5. Key Design Choices](#5-key-design-choices)
-- [6. Community](#6-community)
-- [7. Documentation](#7-documentation)
-- [8. Usage Statement](#8-usage-statement)
-- [9. License](#9-license)
+- [6. Documentation](#6-documentation)
+- [7. Usage Statement](#7-usage-statement)
+- [8. License](#8-license)
 
 ---
 
@@ -227,18 +227,7 @@ Maintain doesn't invent a separate mechanism — it's essentially a Capture work
 
 ---
 
-## 6. Community
-
-Join the WebSculpt community to share usage tips, distilled commands, and feedback:
-
-- International users: [Discord](https://discord.gg/R3tuUFUYm)
-- Chinese users: [Feishu](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=b47ubdc2-dc5e-4d63-b173-215eeef93984)
-
-If a link expires, please open an issue on [GitHub Issues](https://github.com/bqw1013/WebSculpt/issues) and we'll update it.
-
----
-
-## 7. Documentation
+## 6. Documentation
 
 **Usage**
 - [`docs/CLI.md`](docs/CLI.md) — Usage, parameters, and output contracts for all commands
@@ -250,11 +239,11 @@ If a link expires, please open an issue on [GitHub Issues](https://github.com/bq
 
 ---
 
-## 8. Usage Statement
+## 7. Usage Statement
 
 When using WebSculpt, please comply with the target website's robots.txt and Terms of Service. Use it only on publicly accessible data you are permitted to access; unauthorized data collection is prohibited.
 
-## 9. License
+## 8. License
 
 Apache-2.0
 

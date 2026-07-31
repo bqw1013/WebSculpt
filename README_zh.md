@@ -8,13 +8,14 @@
   <img src="docs/assets/tagline-zh.svg" width="80%" alt="一套自进化的 Browser Use Harness，以 CLI 程序性记忆为核心 — 把 Agent 在浏览器中探索成功的路径沉淀为本地命令，命令库随使用自动增长，Agent 越用越聪明。">
 </p>
 
-[![npm version](https://img.shields.io/npm/v/websculpt)](https://www.npmjs.com/package/websculpt)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-[![Node Version](https://img.shields.io/node/v/websculpt)](package.json)
-[![npm downloads](https://img.shields.io/npm/dm/websculpt)](https://www.npmjs.com/package/websculpt)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript)](https://www.typescriptlang.org/)
-
-[English](README.md)
+<p align="center">
+  <a href="https://www.npmjs.com/package/websculpt"><img src="https://img.shields.io/npm/v/websculpt?style=for-the-badge" alt="npm 版本"></a>
+  <a href="https://www.npmjs.com/package/websculpt"><img src="https://img.shields.io/npm/dm/websculpt?style=for-the-badge" alt="npm 下载量"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg?style=for-the-badge" alt="Apache-2.0 许可证"></a>
+  <a href="https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=b47ubdc2-dc5e-4d63-b173-215eeef93984"><img src="https://img.shields.io/badge/Feishu-加入-3370FF?style=for-the-badge" alt="飞书"></a>
+  <a href="https://discord.gg/R3tuUFUYm"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=for-the-badge" alt="Discord"></a>
+  <a href="README.md"><img src="https://img.shields.io/badge/🌐-English-007ACC?style=for-the-badge" alt="English"></a>
+</p>
 
 ![WebSculpt 工作流程](docs/assets/flow-zh.svg)
 
@@ -27,10 +28,9 @@
 - [3. 核心概念](#3-核心概念)
 - [4. AnyTrend 案例](#4-anytrend-案例)
 - [5. 关键设计选择](#5-关键设计选择)
-- [6. 社区交流](#6-社区交流)
-- [7. 文档](#7-文档)
-- [8. 使用声明](#8-使用声明)
-- [9. License](#9-license)
+- [6. 文档](#6-文档)
+- [7. 使用声明](#7-使用声明)
+- [8. License](#8-license)
 
 ---
 
@@ -227,18 +227,7 @@ Maintain 不另造机制——它本质上是带有初始上下文的 Capture �
 
 ---
 
-## 6. 社区交流
-
-欢迎加入 WebSculpt 交流群，分享使用心得、沉淀命令和反馈问题：
-
-- 国内用户：[飞书群](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=b47ubdc2-dc5e-4d63-b173-215eeef93984)
-- 海外用户：[Discord](https://discord.gg/R3tuUFUYm)
-
-如果链接失效，请在 [GitHub Issues](https://github.com/bqw1013/WebSculpt/issues) 留言更新。
-
----
-
-## 7. 文档
+## 6. 文档
 
 **使用**
 - [`docs/CLI.md`](docs/CLI.md) — 所有命令的用法、参数和输出契约
@@ -250,11 +239,11 @@ Maintain 不另造机制——它本质上是带有初始上下文的 Capture �
 
 ---
 
-## 8. 使用声明
+## 7. 使用声明
 
 使用 WebSculpt 请遵守目标网站的 robots.txt 及服务条款，仅对允许访问的公开数据使用，禁止用于未经授权的数据采集。
 
-## 9. License
+## 8. License
 
 Apache-2.0
 
