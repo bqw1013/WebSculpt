@@ -58,38 +58,74 @@ Manage with `websculpt skill status` / `websculpt skill uninstall`. See the `ski
 
 ### 2.1 Via Agent
 
-After installing the Skills, describe your needs to the Agent. It automatically checks the command library — reusing matching commands when available, exploring new paths when not, and suggesting distillation when a reusable path is found.
+After installation, you can invoke one of the following three Skills directly in your Agent. You can also simply describe what you need and let the Agent choose.
 
-**Reuse Existing Commands**
+**Explore: Get External Information**
+
+```text
+/websculpt-explore Use my browser to show me the top 5 repositories on GitHub Trending
+```
+
+If a relevant memory already exists as a local CLI command, the Agent reuses it directly instead of exploring the website again. This significantly reduces context and token usage while making execution faster and more reliable.
+
+Only when no matching command exists does the Agent explore a website, API, or browser session. If the path is worth reusing, it asks for your confirmation before distilling it into a new command.
+
+**Maintain: Repair or Extend a Command**
+
+```text
+/websculpt-maintain The GitHub Trending command stopped working. Please fix it
+```
+
+Use it to repair broken commands, add parameters, or adjust their output.
+
+**Library: Manage and Migrate the Command Library**
+
+```text
+/websculpt-library Export the GitHub Trending command to ./github-commands
+```
+
+```text
+/websculpt-library Import the commands from ./github-commands into my local command library
+```
+
+It can also narrow the commands shown in the current project, or back up, migrate, and share the entire library.
+
+### 2.2 CLI Commands: Executable Memory
+
+WebSculpt saves a verified information retrieval path as a local CLI command. For example:
+
+```bash
+websculpt github list-trending --limit 5
+```
+
+Here, `github/list-trending` stores the complete browser automation path for opening GitHub Trending and extracting repositories; `--limit 5` requests the first five results.
+
+Running this command directly reuses that browser automation memory, without analyzing the page or rediscovering the data path.
+
+```bash
+# List available commands
+websculpt command list
+
+# View command usage
+websculpt github list-trending --help
+
+# Reuse the command directly
+websculpt github list-trending --limit 5
+```
+
+### 2.3 Core Logic: Explore Once, Reuse Long Term
+
+**Existing Memory: Call It Directly**
+
+When the Agent finds a matching command, it calls it directly from the local command library.
 
 ![Reuse Existing Commands](docs/assets/agent-flow-reuse-en.png)
 
-**First-Time Explore and Distill**
+**No Existing Memory: Explore and Distill**
 
-When no matching command exists, the Agent explores the web page, extracts data, verifies the path, and suggests distilling it into a new command after confirmation. Next time the same need arises, it's back to the flow above.
+After completing the exploration and delivering the result, the Agent asks for your confirmation if the path is worth reusing. Once confirmed, the internal Capture pipeline generates and validates a new command so it can be called directly next time.
 
 ![First-Time Explore and Distill](docs/assets/agent-flow-explore-en.png)
-
-For websites requiring login state, the Agent automatically connects to your currently open Chrome, reusing existing login state and cookies — no need to provide credentials.
-
-### 2.2 Directly in Terminal
-
-Distilled commands are CLI commands — callable directly in the terminal, outputting structured JSON, ready for scripts, CI, or other systems.
-
-```bash
-# List all available commands
-websculpt command list
-
-# Zero-dependency commands (no browser needed)
-websculpt hackernews get-top --limit 5
-
-# Browser commands (reuse Chrome login state, keep browser open)
-websculpt github list-trending --language python --period weekly
-
-# Meta commands
-websculpt daemon start|status|stop
-websculpt command remove <domain> <action>
-```
 
 ---
 

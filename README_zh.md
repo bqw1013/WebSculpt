@@ -58,38 +58,74 @@ websculpt skill install --global --lang zh
 
 ### 2.1 通过 Agent 使用
 
-安装 Skill 后，直接向 Agent 描述需求。Agent 自动检查命令库，有匹配则直接调用，无匹配则探索新路径并建议沉淀。
+安装完成后，可以在 Agent 中直接调用以下三个 Skill。你也可以只描述需求，让 Agent 自动选择。
 
-**复用已有命令**
+**Explore：获取外部信息**
+
+```text
+/websculpt-explore 使用我的浏览器，帮我看一下知乎热榜
+```
+
+如果本地已有以 CLI 命令保存的相关记忆，Agent 会直接复用，无需重新探索网页。这能显著减少上下文和 Token 消耗，执行更快，结果也更稳定。
+
+没有匹配命令时，Agent 才会探索网页、API 或浏览器；如果路径值得复用，会在你确认后将其沉淀为新命令。
+
+**Maintain：修复或迭代命令**
+
+```text
+/websculpt-maintain 知乎热榜命令不能用了，帮我修复
+```
+
+用于修复失效命令，也可以新增参数或调整输出。
+
+**Library：管理和迁移命令库**
+
+```text
+/websculpt-library 帮我把知乎热榜命令导出到 ./zhihu-commands
+```
+
+```text
+/websculpt-library 帮我把 ./zhihu-commands 里的命令导入本地命令库
+```
+
+还可以精简当前项目显示的命令，或备份、迁移和分享整个命令库。
+
+### 2.2 CLI 命令：可执行的记忆
+
+WebSculpt 会把验证成功的信息获取路径保存为本地 CLI 命令。例如：
+
+```bash
+websculpt zhihu get-hot --limit 5
+```
+
+其中，`zhihu/get-hot` 保存了“如何通过浏览器打开知乎热榜并提取数据”的完整路径；`--limit 5` 表示只获取前 5 条。
+
+执行这条命令，就是直接复用这份浏览器自动化记忆，无需再次分析页面或重新寻找数据。
+
+```bash
+# 查看已有命令
+websculpt command list
+
+# 查看命令用法
+websculpt zhihu get-hot --help
+
+# 直接复用命令
+websculpt zhihu get-hot --limit 5
+```
+
+### 2.3 核心逻辑：探索一次，长期复用
+
+**已有记忆：直接调用**
+
+Agent 找到匹配命令后，直接从本地命令库调用。
 
 ![复用已有命令](docs/assets/agent-flow-reuse-zh.png)
 
-**首次探索与沉淀**
+**尚无记忆：探索并沉淀**
 
-命令库尚无匹配时，Agent 探索网页、提取数据、验证路径，确认后沉淀为新命令。下次同样需求，就回到上面的流程了。
+Agent 完成探索并交付结果后，如果路径值得复用，会请求你的确认。确认后，内部 Capture 流水线会将路径生成并验证为新命令；下次遇到同类需求时即可直接调用。
 
 ![首次探索与沉淀](docs/assets/agent-flow-explore-zh.png)
-
-需要登录态的网站，Agent 自动连接当前打开的 Chrome，复用登录态和 Cookie，无需提供账号密码。
-
-### 2.2 直接在终端使用
-
-沉淀后的命令本质上就是 CLI 命令，可以直接在终端调用，输出结构化 JSON，方便接入脚本、CI 或其他系统。
-
-```bash
-# 查看所有可用命令
-websculpt command list
-
-# 零依赖命令（无需浏览器）
-websculpt bilibili get-hot --limit 5
-
-# 浏览器命令（复用 Chrome 登录态，需保持浏览器打开）
-websculpt zhihu get-hot --limit 5
-
-# 元命令
-websculpt daemon start|status|stop
-websculpt command remove <domain> <action>
-```
 
 ---
 
