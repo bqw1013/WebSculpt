@@ -96,6 +96,14 @@ function cleanPluginDirectory() {
       fs.unlinkSync(path.join(PLUGIN_DIR, file));
     }
   }
+
+  // The published README is copied from the project root before packing.
+  // Any stale generated README is removed here so we do not accidentally
+  // ship an outdated copy.
+  const generatedReadmePath = path.join(PLUGIN_DIR, "README.md");
+  if (fs.existsSync(generatedReadmePath)) {
+    fs.unlinkSync(generatedReadmePath);
+  }
 }
 
 function copyDirectory(src, dest) {
@@ -246,8 +254,22 @@ function getGitCommitSha() {
   }).trim();
 }
 
+function copyRootReadme() {
+  const rootReadmePath = path.join(ROOT_DIR, "README.md");
+  if (!fs.existsSync(rootReadmePath)) {
+    log("Warning: project root README.md not found, skipping README copy");
+    return;
+  }
+
+  log("Copying project README.md into plugin directory...");
+  fs.copyFileSync(rootReadmePath, path.join(PLUGIN_DIR, "README.md"));
+}
+
 function packPlugin() {
   log("Packing plugin...");
+
+  // Use the project root README as the published plugin README.
+  copyRootReadme();
 
   // Remove inspector reports before packing; they should not be published.
   const reportsDir = path.join(PLUGIN_DIR, "reports");

@@ -35,6 +35,10 @@ coverage/
 # npm pack
 *.tgz
 
+# OpenClaw plugin: README.md is generated from the project root README during build.
+# Developer notes live in plugins/openclaw/DEV.md.
+plugins/openclaw/README.md
+
 # Cache / temp
 .cache/
 tmp/
