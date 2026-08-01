@@ -64,6 +64,17 @@ openclaw plugins install clawhub:@bqw1013/websculpt-plugin --acknowledge-clawhub
 
 ## 2. 用法
 
+### 2.0 前置条件：开启 Chrome 远程调试
+
+让 Agent 使用浏览器前：
+
+1. 在 Chrome 地址栏打开 `chrome://inspect/#remote-debugging`
+2. 勾选"允许远程调试"，并保持 Chrome 运行
+
+未开启时 Agent 无法连接浏览器。
+
+![Chrome 远程调试设置](docs/assets/Chrome%20DevTools%20Protocol.png)
+
 ### 2.1 通过 Agent 使用
 
 安装完成后，可以在 Agent 中直接调用以下三个 Skill。你也可以只描述需求，让 Agent 自动选择。

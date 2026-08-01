@@ -64,6 +64,17 @@ openclaw plugins install clawhub:@bqw1013/websculpt-plugin --acknowledge-clawhub
 
 ## 2. Usage
 
+### 2.0 Prerequisite: Enable Chrome Remote Debugging
+
+Before letting the Agent use your browser:
+
+1. Open `chrome://inspect/#remote-debugging` in the Chrome address bar
+2. Check "Allow remote debugging" and keep Chrome running
+
+Without this, the Agent cannot connect to your browser.
+
+![Chrome Remote Debugging settings](docs/assets/Chrome%20DevTools%20Protocol.png)
+
 ### 2.1 Via Agent
 
 After installation, you can invoke one of the following three Skills directly in your Agent. You can also simply describe what you need and let the Agent choose.
