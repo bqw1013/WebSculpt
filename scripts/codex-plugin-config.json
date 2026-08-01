@@ -4,6 +4,7 @@
   "description": "Browser automation with a CLI memory layer for Codex. Turn first-time exploration into reusable, high-speed commands.",
   "shortDescription": "Browser automation with a CLI memory layer — turn first-time exploration into reusable, high-speed commands.",
   "longDescription": "WebSculpt is a browser automation solution that gives Codex a CLI memory layer for fast, stable web access. It connects to your local browser over CDP, reuses your existing login state, and turns first-time exploration into reusable `websculpt <domain> <action>` commands.\n\nTypical workflows include competitor and industry monitoring, multi-platform account data tracking, video and article harvesting, and pulling login-gated reports. Instead of re-exploring the same site every time, Codex uses the four lifecycle skills — Explore, Capture, Maintain, and Library — to discover, solidify, repair, and migrate commands across projects and machines. After a path is captured, invoke it in one sentence; the command runs locally without re-consuming model context.",
+  "version": "0.1.0",
   "category": "Development",
   "keywords": [
     "browser automation",

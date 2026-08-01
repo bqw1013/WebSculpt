@@ -1,6 +1,6 @@
 {
   "name": "websculpt",
-  "version": "0.1.3",
+  "version": "0.1.0",
   "description": "Browser automation with a CLI memory layer for Codex. Turn first-time exploration into reusable, high-speed commands.",
   "author": {
     "name": "bqw1013",
