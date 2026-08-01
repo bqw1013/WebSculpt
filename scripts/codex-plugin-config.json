@@ -1,0 +1,33 @@
+{
+  "pluginName": "websculpt",
+  "displayName": "WebSculpt",
+  "description": "Browser automation with a CLI memory layer for Codex. Turn first-time exploration into reusable, high-speed commands.",
+  "shortDescription": "Browser automation with a CLI memory layer — turn first-time exploration into reusable, high-speed commands.",
+  "longDescription": "WebSculpt is a browser automation solution that gives Codex a CLI memory layer for fast, stable web access. It connects to your local browser over CDP, reuses your existing login state, and turns first-time exploration into reusable `websculpt <domain> <action>` commands.\n\nTypical workflows include competitor and industry monitoring, multi-platform account data tracking, video and article harvesting, and pulling login-gated reports. Instead of re-exploring the same site every time, Codex uses the four lifecycle skills — Explore, Capture, Maintain, and Library — to discover, solidify, repair, and migrate commands across projects and machines. After a path is captured, invoke it in one sentence; the command runs locally without re-consuming model context.",
+  "category": "Development",
+  "keywords": [
+    "browser automation",
+    "web scraping",
+    "procedural memory",
+    "playwright",
+    "command library"
+  ],
+  "defaultPrompts": [
+    "Use WebSculpt to download a TikTok video with my logged-in browser and turn it into a reusable command.",
+    "Use WebSculpt to track a competitor's product prices and build a command that runs daily.",
+    "Use WebSculpt to export this month's YouTube Studio analytics while I'm already logged in.",
+    "Use WebSculpt to repair a video download command that broke after the site updated."
+  ],
+  "websiteURL": "https://github.com/bqw1013/WebSculpt",
+  "supportURL": "https://github.com/bqw1013/WebSculpt/issues",
+  "privacyPolicyURL": "https://github.com/bqw1013/WebSculpt/blob/main/PRIVACY.md",
+  "termsOfServiceURL": "https://github.com/bqw1013/WebSculpt/blob/main/TERMS.md",
+  "websculptVersion": "^0.3.10",
+  "playwrightCliVersion": "0.1.13",
+  "skillSources": {
+    "websculpt-explore": "skills/websculpt-explore-en",
+    "websculpt-capture": "skills/websculpt-capture-en",
+    "websculpt-maintain": "skills/websculpt-maintain-en",
+    "websculpt-library": "skills/websculpt-library-en"
+  }
+}

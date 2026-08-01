@@ -43,7 +43,7 @@ function bumpPatchVersion(version) {
 
 function getLatestClawHubVersion(name) {
   try {
-    const output = execSync(`clawhub package inspect ${name} --json`, {
+    const output = execSync(`clawhub package inspect "${name}" --json`, {
       cwd: ROOT_DIR,
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "ignore"],
@@ -142,7 +142,7 @@ function replaceCommandPrefix(skillsDir) {
       continue;
     }
 
-    const content = fs.readFileSync(skillMdPath, "utf-8");
+    const content = fs.readFileSync(skillMdPath, "utf-8").replace(/\r\n/g, "\n");
     const lines = content.split("\n");
     const newLines = lines.map((line) => {
       if (line.match(/^websculpt\s/)) {
@@ -313,7 +313,7 @@ async function main() {
   writeJson(path.join(PLUGIN_DIR, "openclaw.plugin.json"), manifest);
 
   log("Validating plugin...");
-  runCommand(`clawhub package validate ${PLUGIN_DIR}`);
+  runCommand(`clawhub package validate "${PLUGIN_DIR}"`);
 
   const tarballPath = packPlugin();
   const commitSha = getGitCommitSha();
@@ -329,13 +329,13 @@ async function main() {
   if (!skipDryRun) {
     log("Running dry-run publish...");
     runCommand(
-      `clawhub package publish ${tarballPath} --dry-run --source-repo ${SOURCE_REPO} --source-commit ${commitSha}`,
+      `clawhub package publish "${tarballPath}" --dry-run --source-repo "${SOURCE_REPO}" --source-commit ${commitSha}`,
     );
   }
 
   log("Publishing to ClawHub...");
   runCommand(
-    `clawhub package publish ${tarballPath} --source-repo ${SOURCE_REPO} --source-commit ${commitSha}`,
+    `clawhub package publish "${tarballPath}" --source-repo "${SOURCE_REPO}" --source-commit ${commitSha}`,
   );
 
   log(`Published @bqw1013/websculpt-plugin@${version}`);

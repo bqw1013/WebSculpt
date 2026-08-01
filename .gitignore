@@ -39,6 +39,10 @@ coverage/
 # Developer notes live in plugins/openclaw/DEV.md.
 plugins/openclaw/README.md
 
+# Codex plugin: generated build artifacts and copied README.
+plugins/codex/dist/
+plugins/codex/websculpt/README.md
+
 # Cache / temp
 .cache/
 tmp/

@@ -1,0 +1,42 @@
+{
+  "name": "websculpt",
+  "version": "0.1.3",
+  "description": "Browser automation with a CLI memory layer for Codex. Turn first-time exploration into reusable, high-speed commands.",
+  "author": {
+    "name": "bqw1013",
+    "url": "https://github.com/bqw1013"
+  },
+  "homepage": "https://github.com/bqw1013/WebSculpt",
+  "repository": "https://github.com/bqw1013/WebSculpt",
+  "license": "Apache-2.0",
+  "keywords": [
+    "browser automation",
+    "web scraping",
+    "procedural memory",
+    "playwright",
+    "command library"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "WebSculpt",
+    "shortDescription": "Browser automation with a CLI memory layer — turn first-time exploration into reusable, high-speed commands.",
+    "longDescription": "WebSculpt is a browser automation solution that gives Codex a CLI memory layer for fast, stable web access. It connects to your local browser over CDP, reuses your existing login state, and turns first-time exploration into reusable `websculpt <domain> <action>` commands.\n\nTypical workflows include competitor and industry monitoring, multi-platform account data tracking, video and article harvesting, and pulling login-gated reports. Instead of re-exploring the same site every time, Codex uses the four lifecycle skills — Explore, Capture, Maintain, and Library — to discover, solidify, repair, and migrate commands across projects and machines. After a path is captured, invoke it in one sentence; the command runs locally without re-consuming model context.",
+    "developerName": "bqw1013",
+    "category": "Development",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/bqw1013/WebSculpt",
+    "privacyPolicyURL": "https://github.com/bqw1013/WebSculpt/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/bqw1013/WebSculpt/blob/main/TERMS.md",
+    "defaultPrompt": [
+      "Use WebSculpt to download a TikTok video with my logged-in browser and turn it into a reusable command.",
+      "Use WebSculpt to track a competitor's product prices and build a command that runs daily.",
+      "Use WebSculpt to export this month's YouTube Studio analytics while I'm already logged in.",
+      "Use WebSculpt to repair a video download command that broke after the site updated."
+    ],
+    "brandColor": "#10A37F"
+  }
+}

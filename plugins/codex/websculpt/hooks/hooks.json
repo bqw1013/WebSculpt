@@ -1,0 +1,19 @@
+{
+  "description": "Install WebSculpt runtime dependencies when a Codex session starts after the plugin is enabled.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/hooks/install.js\"",
+            "commandWindows": "node \"%PLUGIN_ROOT%\\hooks\\install.js\"",
+            "statusMessage": "Checking WebSculpt runtime",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}
