@@ -2,7 +2,7 @@
   "id": "websculpt-plugin",
   "name": "WebSculpt",
   "description": "Self-evolving browser automation command library for OpenClaw",
-  "version": "0.3.17",
+  "version": "0.3.21",
   "skills": [
     "skills/websculpt-explore",
     "skills/websculpt-capture",

@@ -1,6 +1,6 @@
 {
   "name": "@bqw1013/websculpt-plugin",
-  "version": "0.3.17",
+  "version": "0.3.21",
   "description": "OpenClaw plugin for WebSculpt. Installs the WebSculpt CLI, @playwright/cli, and four lifecycle skills (explore, capture, maintain, library).",
   "type": "module",
   "keywords": [
