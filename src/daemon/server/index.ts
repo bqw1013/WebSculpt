@@ -130,16 +130,31 @@ async function main(): Promise<void> {
 	process.on("SIGTERM", () => gracefulShutdown("signal"));
 	process.on("SIGINT", () => gracefulShutdown("signal"));
 
-	// Log uncaught exceptions and initiate graceful shutdown.
+	// Uncaught exceptions are logged and the daemon keeps running instead of
+	// crashing the shared process. A single request-level error — including a
+	// command bug that leaks an unhandled exception — must not take down every
+	// concurrent session. The browser page pool can be rebuilt and the error is
+	// observable via daemon.log.
 	process.on("uncaughtException", (err) => {
 		console.error("Uncaught exception:", err);
-		gracefulShutdown("error");
+		logEvent("ERROR", "daemon_uncaught_exception", {
+			message: err.message,
+			stack: err.stack,
+		});
 	});
 
-	// Log unhandled rejections and initiate graceful shutdown.
+	// Unhandled rejections are logged and the daemon keeps running instead of
+	// crashing. Node's default (throw mode) would crash the process; this
+	// handler deliberately overrides it because the previous
+	// graceful-shutdown-on-any-rejection let one command's fire-and-forget
+	// promise (e.g. a stray page.waitForResponse that was never awaited) kill
+	// the whole daemon and sever every concurrent browser session.
 	process.on("unhandledRejection", (reason) => {
 		console.error("Unhandled rejection:", reason);
-		gracefulShutdown("error");
+		logEvent("ERROR", "daemon_unhandled_rejection", {
+			message: (reason as Error)?.message ?? String(reason),
+			stack: (reason as Error)?.stack,
+		});
 	});
 }
 

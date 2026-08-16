@@ -5,6 +5,8 @@ export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
 export type LogEvent =
 	| "daemon_start"
 	| "daemon_shutdown"
+	| "daemon_uncaught_exception"
+	| "daemon_unhandled_rejection"
 	| "req_start"
 	| "req_end"
 	| "req_error"
