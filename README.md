@@ -10,7 +10,6 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/websculpt"><img src="https://img.shields.io/npm/v/websculpt?style=for-the-badge" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/websculpt"><img src="https://img.shields.io/npm/dm/websculpt?style=for-the-badge" alt="npm downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg?style=for-the-badge" alt="Apache-2.0 License"></a>
   <a href="https://discord.gg/R3tuUFUYm"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white&style=for-the-badge" alt="Discord"></a>
   <a href="https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=317uf738-27e1-480c-be35-dfc9a889a86b"><img src="https://img.shields.io/badge/Feishu-Join-3370FF?style=for-the-badge" alt="Feishu"></a>
