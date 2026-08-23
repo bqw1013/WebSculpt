@@ -1,0 +1,28 @@
+{
+  "id": "stocktwits-list-news",
+  "domain": "stocktwits",
+  "action": "list-news",
+  "runtime": "node",
+  "description": "List Stocktwits editorial market news (stocktwits.com/news-articles) via the site's own load-more JSON API. The default tab=stocktwits returns an array of the latest staff-written articles WITH FULL TEXT (content is a 3-6KB HTML body), plus headline, summary, related symbols (symbolCodes + symbolsMetadata), tags, source, author profile, and created/updated timestamps — one request, no detail page needed. tab selects the feed: stocktwits (default, array w/ full content) | trending | stocks (both symbol-grouped objects, summary-only) | crypto (array, summary-only) | watchlist (empty when anonymous, needs login). limit 1-50 (default 10, verified 50 in one call). after_sid is the pagination cursor = the previous page's last article sid. partial=true when fewer than limit were returned (end of feed). No login or browser required.",
+  "parameters": [
+    {
+      "name": "tab",
+      "description": "News tab enum. stocktwits (default — 编辑团队新闻，数组带全文 content 3-6KB) | trending（按 symbol 分组的对象 {symbol:[articles]}，摘要-only，content 为空字符串） | stocks（按 symbol 分组的对象，摘要-only，content 为空字符串） | crypto（数组，摘要-only，content 为空字符串，平台真实行为） | watchlist（匿名返回空数组，需登录）。对应站点 news-articles 页各 tab。",
+      "required": false,
+      "default": "stocktwits"
+    },
+    {
+      "name": "limit",
+      "description": "Max articles to return, integer 1-50, default 10. Verified that limit=50 returns 50 in a single request. 返回条数上限，默认 10，最大 50。",
+      "required": false,
+      "default": "10"
+    },
+    {
+      "name": "after_sid",
+      "description": "Pagination cursor: the sid of the last article of the previous page; pass it to fetch the next page of older articles (maps to the API's lastArticleSid param). Optional. 分页游标：上一页末篇的 sid，传入即取下一页更早的文章；可选。",
+      "required": false
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

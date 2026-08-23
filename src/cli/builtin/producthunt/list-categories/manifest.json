@@ -1,0 +1,17 @@
+{
+  "id": "producthunt-list-categories",
+  "domain": "producthunt",
+  "action": "list-categories",
+  "runtime": "browser",
+  "description": "List Product Hunt category options for use with get-best-products. By default returns compact top-level and nested category id, name, and slug values; pass --detailed true for descriptions, URLs, and source metadata. No Product Hunt login is required.",
+  "parameters": [
+    {
+      "name": "detailed",
+      "description": "Return nested subcategories, descriptions, URLs, retrieval time, and full pagination metadata in addition to compact category options. Pass true or false; default false.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

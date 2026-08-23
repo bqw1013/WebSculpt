@@ -1,0 +1,22 @@
+{
+  "id": "techmeme-search",
+  "domain": "techmeme",
+  "action": "search",
+  "runtime": "node",
+  "description": "Search Techmeme's news archive by keyword — the same corpus and ranking as the on-site search box (techmeme.com/search). Returns matching story cards with title, editor summary, author, source (name + homepage), original URL, publish time, story-cluster permalink, and image, newest first. Paginates internally (10 items/page) up to the requested limit (max 1000); partial=true on each item when the site runs out of matches or hits the ~1000-item pagination cap, and an empty search returns an empty list (not an error). q accepts plain multi-word queries (AND) and the site's native operators (sourceurl:, sourcename:, date:, author:, title:, body:, link:, + - AND OR NOT, quoted phrases). No login or browser required — anonymous static HTML.",
+  "parameters": [
+    {
+      "name": "q",
+      "description": "搜索关键词（必填）。支持空格分隔的多词（AND 式匹配，如 \"openai funding\"），也支持站点原生搜索运算符：sourceurl:（来源域名）/ sourcename:（来源名）/ date:（日期）/ author:（作者）/ title:（标题）/ body:（正文）/ link:（链接）、+ - AND OR NOT 布尔符、引号精确短语（如 'sourcename:\"The Information\"'）。q 原样传给服务器，无需自行构造；含空格/中文/& 等字符会自动 URL 编码。示例：anthropic、openai funding、sourcename:\"Bloomberg\"。",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "返回条数上限（可选，默认 20，范围 1-1000）。站点每页固定 10 条，命令内部自动续翻页取满；搜索结果实际可翻取上限约 1000 条，超出可用量时返回实际条数并给每条结果标记 partial:true。",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,26 @@
+{
+  "id": "medium-get-feed",
+  "domain": "medium",
+  "action": "get-feed",
+  "runtime": "browser",
+  "description": "Fetch the Medium homepage feed (https://medium.com/?feed=<feed>). feed=for-you (default) returns the personalized recommendation stream; feed=featured returns featured stories from the publications you follow (note: despite the older 'editorial picks' meaning, the current Featured tab is empty with 'No featured stories' when you follow no publications with featured stories — the command then returns an empty list with emptyReason). Returns story cards with title, subtitle, canonical URL, author, publication, publish date text, clap/response/repost counts, preview image, member-only flag, and the 'Because you follow' topic hint. The feed lazy-loads; the command scrolls as needed up to the limit. Requires a logged-in Medium session — the For You feed is personalized and meaningless without login.",
+  "parameters": [
+    {
+      "name": "feed",
+      "description": "Which homepage tab to read: for-you (personalized recommendations, default) | featured (featured stories from the publications YOU follow — Medium's current Featured tab semantics; returns an empty list with emptyReason when there are none, which is common). Any other value is rejected with INVALID_PARAM.",
+      "required": false,
+      "default": "for-you"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of story cards to return (1-100, default 20). The feed lazy-loads on scroll; the command scrolls until the limit is reached or the feed stops growing (then returns fewer items with partial=true). Values outside 1-100 are rejected with INVALID_PARAM.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required",
+  "prerequisites": [
+    "Requires Chrome or Edge running with remote debugging enabled, with a logged-in Medium session. The For You feed is personalized and meaningless without login."
+  ]
+}

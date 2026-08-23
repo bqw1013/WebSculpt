@@ -27,14 +27,14 @@ As your command library grows, `websculpt command list` can become crowded with 
 npx websculpt scope init
 
 # Add commands to the allow-list
-npx websculpt scope add github/list-trending
+npx websculpt scope add github/get-trending
 npx websculpt scope add github          # bulk-add all installed commands in the github domain
 
 # See what is currently active
 npx websculpt scope show
 
 # Remove commands from the allow-list
-npx websculpt scope remove github/list-trending
+npx websculpt scope remove github/get-trending
 npx websculpt scope remove github
 ```
 
@@ -68,7 +68,7 @@ Use these commands when you want to share commands with teammates, move to a new
 npx websculpt command export --to ./my-commands
 
 # Export specific commands or domains
-npx websculpt command export github/list-trending --to ./my-commands
+npx websculpt command export github/get-trending --to ./my-commands
 npx websculpt command export github --to ./my-commands  # export all commands in the github domain
 ```
 

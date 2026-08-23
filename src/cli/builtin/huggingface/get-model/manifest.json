@@ -1,0 +1,24 @@
+{
+  "id": "huggingface-get-model",
+  "domain": "huggingface",
+  "action": "get-model",
+  "runtime": "browser",
+  "description": "Fetch a Hugging Face model's full metadata by repo id, e.g. deepseek-ai/DeepSeek-R1 (or full URL https://huggingface.co/deepseek-ai/DeepSeek-R1). Returns downloads, likes, pipeline task, library, tags (including license and arXiv), model card data, safetensors size, file list (siblings), Spaces using this model, and created/updated dates. Pass --include_readme true to also return the README text. Reads the model via HF's internal API from the browser; no login required.",
+  "parameters": [
+    {
+      "name": "repo",
+      "type": "string",
+      "required": true,
+      "description": "Model repo as org/name (e.g. deepseek-ai/DeepSeek-R1) or full URL https://huggingface.co/deepseek-ai/DeepSeek-R1. (模型仓库标识：org/name 或完整 URL。)"
+    },
+    {
+      "name": "include_readme",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Set to true to also return the model README text (fetched separately, may fail for gated/private models). Default false. (是否同时返回 README 全文；README 单独获取，gated/私有模型可能取不到，默认 false。)"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

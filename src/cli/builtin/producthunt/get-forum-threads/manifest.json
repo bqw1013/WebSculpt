@@ -1,0 +1,29 @@
+{
+  "id": "producthunt-get-forum-threads",
+  "domain": "producthunt",
+  "action": "get-forum-threads",
+  "runtime": "browser",
+  "description": "List currently rendered discussion threads from a Product Hunt Topic Forum or Product Forum. The default forum is general; use detailed mode for bounded card text and engagement values. No login is required.",
+  "parameters": [
+    {
+      "name": "forum",
+      "description": "Product Hunt Topic Forum or Product Forum slug, such as general or openai.",
+      "required": false,
+      "default": "general"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of currently rendered threads to return; integer from 1 through 50.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "detailed",
+      "description": "Include bounded card text and raw engagement values; pass true or false.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

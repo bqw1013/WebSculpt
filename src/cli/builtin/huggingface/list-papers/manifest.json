@@ -1,0 +1,23 @@
+{
+  "id": "huggingface-list-papers",
+  "domain": "huggingface",
+  "action": "list-papers",
+  "runtime": "browser",
+  "description": "List trending AI research papers from Hugging Face Papers by period: daily (默认, 每日) | weekly (每周) | monthly (每月). Returns ranked papers with title, url, abstract, authors, publication date, upvotes, GitHub repo with stars (if any), arXiv link, organization, comment count, and submitter. Requires browser (Chrome/Edge with remote debugging); no login required.",
+  "parameters": [
+    {
+      "name": "period",
+      "description": "Trending period: daily (default, 每日) | weekly (每周) | monthly (每月). All accepted values: daily, weekly, monthly. Invalid values return INVALID_PARAM.",
+      "required": false,
+      "default": "daily"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum papers to return, integer between 1 and 100 (default 20). Daily lists are capped at 30 papers total; the actual returned count is reported when limit exceeds available papers.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

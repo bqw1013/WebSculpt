@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Expanded the builtin command library from 7 commands to 164 commands across 24 platforms (github, huggingface, hackernews, arxiv, reddit, producthunt, stocktwits, medium, twitch, techcrunch, quora, spotify, youtube, vimeo, dailymotion, pinterest, techmeme, substack, kickstarter, facebook, instagram, plus the existing bilibili, weibo, zhihu). Commands whose primary behavior reproduces copyrighted media or bypasses platform access controls are excluded; open-access downloads (e.g. `arxiv/download-paper`) are included.
+- Added an integration test (`tests/integration/cli/meta/builtin-validation.test.ts`) that statically validates every command under `src/cli/builtin/` with L1-L3 checks, enforcing the library quality gate in CI.
+- Documented the builtin command library (platforms and command counts) in `README.md` and `README_zh.md`.
+
+### Changed
+
+- `github get-trending` now runs on the `browser` runtime against the real GitHub trending page instead of the node Search-API approximation; the `--period` parameter is replaced by `--since` (and `--language`).
+- Replaced superseded builtin commands with their improved user versions: `hackernews/get-top` → `get-front-page`, `reddit/get-hot` → `get-feed`, `arxiv/search-papers` → `search`. The old command names no longer exist.
+
 ## [0.3.0] - 2026-06-12
 
 ### Changed

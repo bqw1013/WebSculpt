@@ -1,0 +1,40 @@
+{
+  "id": "vimeo-get-video",
+  "domain": "vimeo",
+  "action": "get-video",
+  "runtime": "browser",
+  "description": "Fetch a Vimeo video's full metadata from its watch page (vimeo.com/{id}): title, description, duration, dimensions, upload time, privacy level, thumbnails, and uploader, plus exact views/likes. --include-transcript returns the subtitles/transcript when the video provides one (not all do). --include-comments fetches the comment thread (comments are uploader-enabled — when a video has comments off, the command returns an empty list with commentsDisabled=true). Comment ordering maps to the page's sort dropdown (default newest). Requires a browser session; public videos need no login.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Video URL (https://vimeo.com/1188438376) or just the numeric ID. Channel-context URLs (vimeo.com/channels/staffpicks/{id}) are also accepted — the canonical video page is resolved automatically. URLs come from vimeo/search, get-category, get-channel, get-trending, or get-user results.",
+      "required": true
+    },
+    {
+      "name": "include_transcript",
+      "description": "Set to true to also return the video's transcript/subtitles when available. Default false.",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "include_comments",
+      "description": "Set to true to also fetch the comment thread under the video. Comments are enabled per-video by the uploader; videos without comments return an empty list with commentsDisabled=true. Default false.",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "comment_limit",
+      "description": "Maximum comments to return (1-100, default 20). Only used when include_comments is true; partial=true when the thread is exhausted.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "comment_sort",
+      "description": "Comment ordering matching the page's sort dropdown: newest (default) | oldest.",
+      "required": false,
+      "default": "newest"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

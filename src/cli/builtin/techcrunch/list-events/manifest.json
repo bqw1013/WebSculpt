@@ -1,0 +1,23 @@
+{
+  "id": "techcrunch-list-events",
+  "domain": "techcrunch",
+  "action": "list-events",
+  "runtime": "node",
+  "description": "List TechCrunch events (Disrupt, StrictlyVC, Sessions, etc.) from the public WordPress REST API that powers the events page (techcrunch.com/events/ — reached via the Events link in the site nav). The page has two blocks, Upcoming Events and Past Events; use --type to choose which to list: upcoming (即将举办, default), past (已结束), or all (全部, upcoming first). Returns each event's name, URL, date, and location when the card shows one, plus a status field (upcoming/past). Past events paginate internally up to the limit (max 100); partial=true when the list is exhausted. Event detail pages are custom-built per event, so this command intentionally returns cards only. No authentication required.",
+  "parameters": [
+    {
+      "name": "type",
+      "description": "Which events to list. Available: upcoming (即将举办 — future events, default), past (已结束 — finished events), all (全部 — both, upcoming first).",
+      "required": false,
+      "default": "upcoming"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of events to return (1-100, default 20). Upcoming events are few (about 4 on the current site); past events paginate internally, and partial=true when the list is exhausted before reaching the limit.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

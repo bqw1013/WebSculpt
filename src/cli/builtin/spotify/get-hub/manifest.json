@@ -1,0 +1,10 @@
+{
+  "id": "spotify-get-hub",
+  "domain": "spotify",
+  "action": "get-hub",
+  "runtime": "browser",
+  "description": "Fetch Spotify's podcast hub page (open.spotify.com/genre/0JQ5DArNBzkmxXHCqFLx2J — reached via 浏览播客 in the homepage sidebar). Returns every shelf on the page with its name, page URL, and item cards (kind podcast/episode/category, id, url, title, subtitle, cover), scrolling internally to trigger lazy-loaded shelves. Verified 2026-08-20: the hub currently renders a single 'Categories' shelf of category cards (no editorial shelves, no language filter in the tested market); the output adapts if more shelves appear. Runs in a browser context; public browsing needs no login. The returned show/episode urls feed spotify/get-podcast and spotify/get-episode; genre urls feed spotify/list-categories and spotify/get-category.",
+  "parameters": [],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

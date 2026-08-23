@@ -1,0 +1,16 @@
+{
+  "id": "techmeme-get-story",
+  "domain": "techmeme",
+  "action": "get-story",
+  "runtime": "node",
+  "description": "获取单个 Techmeme 故事簇的完整详情：主报道（标题/摘要/作者/来源/原文链接/配图）+ More: 相关报道列表 + X/LinkedIn/Bluesky/Mastodon/Forums 社媒讨论链接 + Techmeme 官号帖子。输入故事簇永久链接 https://www.techmeme.com/{yymmdd}/p<N>（来自 techmeme get-feed/get-timeline/search 的 permalink 字段），返回可序列化 JSON。",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "故事簇永久链接，形如 https://www.techmeme.com/260818/p29（6 位日期 yymmdd + p 故事 id）。应使用 techmeme get-feed / get-timeline / search 输出的 permalink 字段，不要手拼。日期无效或故事 id 不存在返回 NOT_FOUND。",
+      "required": true
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

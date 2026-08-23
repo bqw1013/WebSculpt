@@ -1,0 +1,17 @@
+{
+  "id": "hackernews-get-new",
+  "domain": "hackernews",
+  "action": "get-new",
+  "runtime": "node",
+  "description": "Fetch newest Hacker News story submissions in chronological order through the official public API. Returns structured story cards with links, author, submission time, score, and comment count; supports a bounded result limit.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of newest eligible stories to return (1-50).",
+      "required": false,
+      "default": 15
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

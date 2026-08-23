@@ -1,0 +1,34 @@
+{
+  "id": "github-search",
+  "domain": "github",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search GitHub from https://github.com/search. type=repositories (default, 仓库) | users (用户) | issues (issue) | pull-requests (PR) switches the result tab (pull-requests maps to the URL value 'pullrequests'); sort=best-match (default, 最佳匹配) | stars (最多 star, repositories only) | updated (最近更新) orders results — sort is only effective for repositories (GitHub ignores it for other types). limit (default 10, 1-50) caps results; >10 paginates via ?p=N. Returns matched entries with name/login/title, URL, description/bio, language, stars/followers, update/created time (fields vary by type), plus GitHub's total result_count. Reads the rendered search page; no login required.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keyword, e.g. rust. Non-empty required.（搜索关键词，如 rust，必填。）",
+      "required": true
+    },
+    {
+      "name": "type",
+      "description": "Result type: repositories (default, 仓库) | users (用户) | issues (issue) | pull-requests (PR). The pull-requests value is sent to GitHub as 'pullrequests' (the hyphenated form silently falls back to repositories).",
+      "required": false,
+      "default": "repositories"
+    },
+    {
+      "name": "sort",
+      "description": "Sort order: best-match (default, 最佳匹配) | stars (most stars / 最多 star) | updated (recently updated / 最近更新). Only effective for type=repositories; for users/issues/pull-requests GitHub ignores sort and returns best-match.",
+      "required": false,
+      "default": "best-match"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results to return (1-50, default 10). Values above 10 paginate through the search page (?p=N).（条数上限。）",
+      "required": false,
+      "default": "10"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

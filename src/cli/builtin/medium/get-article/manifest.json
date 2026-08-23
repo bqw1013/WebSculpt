@@ -1,0 +1,34 @@
+{
+  "id": "medium-get-article",
+  "domain": "medium",
+  "action": "get-article",
+  "runtime": "browser",
+  "description": "Fetch the full structured content of a single Medium article by URL. Returns title, subtitle, author, publication, publish dates, reading time, clap/response counts, tags, preview image, and body text/HTML. Pass --include-responses true to also load the article's responses (Medium's comments, each itself a short post) via Medium's PagedThreadedPostResponsesQuery GraphQL endpoint. Pass --expand-responses true for contract compatibility; it has no effect because the GraphQL endpoint already returns full response bodies. Data is extracted from the page's embedded Apollo state. Member-only articles return their free preview with isMemberOnly=true. No login required.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Full Medium article URL. Both forms are supported: https://medium.com/@<user>/<slug>-<postId> (personal) and https://medium.com/<publication>/<slug>-<postId> (publication). The postId is the 12-character hexadecimal string at the end of the URL.",
+      "required": true
+    },
+    {
+      "name": "include_responses",
+      "description": "Set to true to also return the article's responses. Default false. Responses are loaded via Medium's PagedThreadedPostResponsesQuery GraphQL endpoint.",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "responses_limit",
+      "description": "Maximum number of responses to return (1-200, default 50). Only used when include_responses is true.",
+      "required": false,
+      "default": "50"
+    },
+    {
+      "name": "expand_responses",
+      "description": "Accepted for contract compatibility but has no effect. The GraphQL endpoint already returns the full response body, so no additional expansion is required. Only used when include_responses is true. Default false.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

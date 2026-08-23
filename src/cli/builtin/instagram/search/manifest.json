@@ -1,0 +1,29 @@
+{
+  "id": "instagram-search",
+  "domain": "instagram",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search Instagram. type=media (default) searches the media grid — the same results as the keyword search page (instagram.com/explore/search/keyword/?q=...), which is also where hashtag pages redirect, so searching \"#ai\" or \"ai\" browses that tag. type=accounts searches accounts via the search-box suggestion API, returning username, display name, avatar, follower-count text, and verification badge. Media results preserve native post fields with cursor pagination; partial=true when the stream is exhausted. Requires a logged-in Instagram session.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search query. For type=media, keywords or hashtags (with or without \"#\"); for type=accounts, a name or username fragment. (搜索词：media 模式关键词或话题标签，# 可带可不带；accounts 模式搜账号名/用户名)",
+      "required": true
+    },
+    {
+      "name": "type",
+      "description": "What to search: media (default, posts/reels grid — also covers hashtag browsing since instagram.com/explore/tags/{tag}/ redirects to keyword search) | accounts (user profiles via the search suggestion API). (搜索类型：media=帖子/Reels 网格（默认，含标签浏览）；accounts=账号搜索)",
+      "required": false,
+      "default": "media"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results (1-100, default 20). Media paginates by cursor internally; accounts returns the API's top suggestions (usually 5) and marks partial=true when the limit cannot be reached. (返回条数上限；media 内部游标分页；accounts 固定返回 top-5，无法满足 limit 时标记 partial)",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

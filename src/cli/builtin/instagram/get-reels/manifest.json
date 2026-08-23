@@ -1,0 +1,17 @@
+{
+  "id": "instagram-get-reels",
+  "domain": "instagram",
+  "action": "get-reels",
+  "runtime": "browser",
+  "description": "Fetch Instagram's Reels feed (instagram.com/reels/) — the algorithmic short-video stream. Returns reel cards with author, caption, like/comment/share counts, and video URL; paginates internally up to 100 items, partial=true when the stream stalls. This is a list command: to read a reel's comments, pass its URL to instagram/get-post (reels are structurally posts). Requires a logged-in Instagram session.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of reels to return (1-100, default 20). Paginates internally; partial=true when the feed stalls.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

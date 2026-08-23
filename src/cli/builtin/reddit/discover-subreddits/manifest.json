@@ -1,0 +1,28 @@
+{
+  "id": "reddit-discover-subreddits",
+  "domain": "reddit",
+  "action": "discover-subreddits",
+  "runtime": "browser",
+  "description": "Discover subreddits from Reddit's /explore/ page. Supports recommendations, most popular, curated picks, and category-specific discovery with adjustable result limit.",
+  "parameters": [
+    {
+      "name": "section",
+      "description": "Discovery block to return: recommended, popular, curated, or category",
+      "required": false,
+      "default": "recommended"
+    },
+    {
+      "name": "category",
+      "description": "Category name when section=category. Read dynamically from the /explore/ sidebar. Supports case-insensitive and partial matching; if no match, CATEGORY_NOT_FOUND lists the available categories.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of subreddits to return (1-100)",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

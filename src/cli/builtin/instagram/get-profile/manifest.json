@@ -1,0 +1,28 @@
+{
+  "id": "instagram-get-profile",
+  "domain": "instagram",
+  "action": "get-profile",
+  "runtime": "browser",
+  "description": "Fetch an Instagram profile: account metadata (username, display name, bio, external link, avatar, post/follower/following counts, verification, private flag) plus a media grid from one of its tabs — posts (default), reels, reposts, or tagged. Mirrors the tabs on instagram.com/{user}/ and its /reels/, /reposts/, /tagged/ sub-paths. The grid lazy-loads internally up to 100 items; partial=true when the tab is exhausted. Follower/following full lists are NOT included (Instagram restricts them to the account owner). Requires a logged-in Instagram session.",
+  "parameters": [
+    {
+      "name": "user",
+      "description": "Username as it appears in the profile URL: instagram.com/{user}/ (e.g. \"shopify\"). Discovery: click any author avatar/name, or use instagram/search --type accounts.",
+      "required": true
+    },
+    {
+      "name": "tab",
+      "description": "Profile content tab: posts (default, the main grid) | reels (short videos) | reposts (reposted content) | tagged (posts this account is tagged in). Mirrors the tabs on the profile page.",
+      "required": false,
+      "default": "posts"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of grid items to return (1-100, default 20). Scrolls internally; partial=true when the grid is exhausted.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

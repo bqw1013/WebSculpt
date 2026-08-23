@@ -1,0 +1,27 @@
+{
+  "id": "github-get-issue",
+  "domain": "github",
+  "action": "get-issue",
+  "runtime": "browser",
+  "description": "Fetch a single GitHub issue by number, e.g. https://github.com/facebook/react/issues/123. Returns number, title, state, author, full body text, labels, assignees, milestone, comment count, and created/closed dates. Pass --include_comments true to also return the comment thread (author/body/created_at); comments may require following timeline pagination (?timeline_page=N) for very long threads, making the command slower. Reads the rendered issue page; no login required.",
+  "parameters": [
+    {
+      "name": "repo",
+      "description": "Repository as owner/repo (e.g. facebook/react) or its full URL https://github.com/facebook/react.（仓库标识：`owner/repo` 或完整 URL，如 `facebook/react`。）",
+      "required": true
+    },
+    {
+      "name": "number",
+      "description": "Issue number, e.g. 123 in https://github.com/facebook/react/issues/123.（issue 编号，即该 URL 中 /issues/ 后的数字。）",
+      "required": true
+    },
+    {
+      "name": "include_comments",
+      "description": "Set to true to also return the issue's comments. Default false. Comments may lazy-load via timeline pagination near the bottom, so enabling this makes the command slower.（是否同时抓评论，默认 false；评论需分页加载，开启会变慢。）",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

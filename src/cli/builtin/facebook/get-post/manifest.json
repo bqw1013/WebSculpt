@@ -1,0 +1,28 @@
+{
+  "id": "facebook-get-post",
+  "domain": "facebook",
+  "action": "get-post",
+  "runtime": "browser",
+  "description": "Fetch a single Facebook post with its full text, author, time, media, and engagement stats, optionally including comments with nested replies. Accepts any Facebook post URL: /permalink.php?story_fbid=...&id=..., /{user-or-page}/posts/{id}, /groups/{id}/permalink/{id}, /groups/{id}/posts/{id} (emitted by facebook/get-group), /videos/{id}, /reel/{id}, or /watch/?v={id} (the video permalink form emitted by facebook/get-feed). Comments load via the \"view more comments\" paging control up to 100; set include_comments=false to fetch only the post (much faster). Requires an active Facebook login.",
+  "parameters": [
+    {
+      "name": "url",
+      "required": true,
+      "description": "Full URL of the Facebook post. Supported forms: /permalink.php?story_fbid={pfbid}&id={authorId}; /{user-or-page}/posts/{pfbid}; /groups/{groupId}/permalink/{postId}/; /groups/{groupId}/posts/{postId}/ (emitted by facebook/get-group); /videos/{id}; /reel/{id}; /watch/?v={id} (video permalink emitted by facebook/get-feed). Tracking params (__cft__ etc.) may be included or stripped.（帖子完整 URL；多种形态都支持，跟踪参数有无均可；permalink.php 用 pfbid 时页面会显示内容不可用，命令返回 NOT_FOUND）"
+    },
+    {
+      "name": "include_comments",
+      "required": false,
+      "default": "true",
+      "description": "Whether to also extract comments (default true). Set false to fetch only the post itself, which is much faster.（是否提取评论，默认 true；设为 false 只抓主帖，显著更快）"
+    },
+    {
+      "name": "comment_limit",
+      "required": false,
+      "default": "20",
+      "description": "Maximum comments to return (1-100, default 20), nested replies included. Only effective when include_comments is true; comments load incrementally via the page's \"view more comments\" control, nested replies included.（评论数量上限，含嵌套回复；仅 include_comments=true 时生效）"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

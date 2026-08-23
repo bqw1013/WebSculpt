@@ -1,0 +1,28 @@
+{
+  "id": "twitch-get-channel-clips",
+  "domain": "twitch",
+  "action": "get-channel-clips",
+  "runtime": "browser",
+  "description": "List a Twitch channel's clips — the Clips tab at twitch.tv/{channel}/clips. Clips are short (up to ~60s) viewer-created highlight snippets ranked by popularity within a time window; use --range to choose 24h (热门24小时), 7d (热门7天, default), 30d (热门30天), or all (热门所有). Returns clip cards with title, URL, view count, clipper name, duration, and creation date (ISO 8601). Fetches via Twitch's internal GraphQL in the user's browser; no login required.",
+  "parameters": [
+    {
+      "name": "channel",
+      "description": "Channel login name — the path segment in twitch.tv/{channel} (e.g. \"xqc\" from twitch.tv/xqc, \"lck\" from twitch.tv/lck). Lowercase. Found in any clip/video URL or via twitch/search --type channel.",
+      "required": true
+    },
+    {
+      "name": "range",
+      "description": "Time window for clip ranking: 24h (热门24小时) | 7d (热门7天, default) | 30d (热门30天) | all (热门所有). Maps to the range dropdown on the Clips tab and to GraphQL filter LAST_DAY / LAST_WEEK / LAST_MONTH / ALL_TIME.",
+      "required": false,
+      "default": "7d"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of clips to return (1-100, default 20). Single GraphQL request, no internal pagination; partial=true when the server returns fewer than limit.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

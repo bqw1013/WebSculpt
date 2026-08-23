@@ -1,0 +1,16 @@
+{
+  "id": "huggingface-get-collection",
+  "domain": "huggingface",
+  "action": "get-collection",
+  "runtime": "browser",
+  "description": "Fetch a Hugging Face collection by user/slug (e.g. deepseek-ai/deepseek-v4) or full URL https://huggingface.co/collections/deepseek-ai/deepseek-v4. Returns the collection title, description, author, upvotes, last updated time, and all items (models, datasets, Spaces, papers, buckets) with per-item type, id, url, likes, and downloads. No login required.",
+  "parameters": [
+    {
+      "name": "collection",
+      "description": "Collection as user/slug (e.g. deepseek-ai/deepseek-v4) or full URL https://huggingface.co/collections/deepseek-ai/deepseek-v4. 收藏集标识：user/slug 或完整 URL 两种形式均接受，命令会自动解析出 user/slug。",
+      "required": true
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

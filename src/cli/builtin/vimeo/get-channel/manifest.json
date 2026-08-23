@@ -1,0 +1,29 @@
+{
+  "id": "vimeo-get-channel",
+  "domain": "vimeo",
+  "action": "get-channel",
+  "runtime": "node",
+  "description": "List videos in a Vimeo channel — human-curated collections, the flagship being Vimeo Staff Picks (default channel). Any channel slug works (vimeo.com/channels/{channel}): sub-channels premieres, bestofstaffpicks, thedecade, or user-created channels such as music. Returns the channel profile (name, url, description, video/follower/moderator counts, owner, id) plus video cards with title, url, duration, author, views, likes, comments, thumbnail and description. sort=preset keeps the curator's ordering; other orders are date, alphabetical, plays, likes, duration. Paginates internally up to the limit (max 100, 12 per page); partial=true when the listing is exhausted. Public content, no login needed.",
+  "parameters": [
+    {
+      "name": "channel",
+      "description": "Channel slug from the channel URL: vimeo.com/channels/{channel} (default 'staffpicks' — Vimeo Staff Picks). Related picks: premieres, bestofstaffpicks, thedecade. Discovery: vimeo/search --type channel.",
+      "required": false,
+      "default": "staffpicks"
+    },
+    {
+      "name": "sort",
+      "description": "Listing order: preset (default, the curator's ordering) | date (newest) | alphabetical | plays (most viewed) | likes | duration.",
+      "required": false,
+      "default": "preset"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum videos to return (1-100, default 20). The channel lists 12 per page; the command paginates internally, partial=true when exhausted.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

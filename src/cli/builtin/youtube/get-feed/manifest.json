@@ -1,0 +1,23 @@
+{
+  "id": "youtube-get-feed",
+  "domain": "youtube",
+  "action": "get-feed",
+  "runtime": "browser",
+  "description": "Fetch the YouTube homepage video feed (the ranked recommendation stream at youtube.com), as a substitute for the Trending page which redirects to the homepage in some regions. The homepage has a filter chip bar (e.g. 全部/音乐/直播/播客/最近上传/发现新视频) whose tabs are personalized and change over time — pass any tab text and the command matches it against the live chip bar; on mismatch it errors and lists the tabs currently available. Returns video cards with title, channel, view count, publish time, duration, and URL. Scrolls internally up to the limit (max 100); partial=true when the stream ends early. No authentication required.",
+  "parameters": [
+    {
+      "name": "tab",
+      "description": "Homepage filter chip text to match, e.g. \"全部\" (default), \"音乐\", \"直播\", \"播客\", \"最近上传\". These chips are personalized per account/session — the examples are common values, not a fixed enum. If the text doesn't match any live chip, the command fails and lists the chips currently present on the page.",
+      "required": false,
+      "default": "全部"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of videos to return (1-100, default 20). The feed lazy-loads on scroll; the command scrolls until the limit is reached or the stream is exhausted (partial=true).",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

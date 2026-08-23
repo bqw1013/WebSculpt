@@ -1,0 +1,28 @@
+{
+  "id": "stocktwits-get-post",
+  "domain": "stocktwits",
+  "action": "get-post",
+  "runtime": "node",
+  "description": "Fetch a single Stocktwits post by numeric id — full body, time, sentiment tag (Bullish/Bearish/null), like count, reply count, author (username, name, avatar, followers, ideas count), and mentioned symbols. likeCount/replyCount are null on regular posts: the public API only exposes like/reply counts on discussion/poll posts (discussion=true), so regular posts return null for both. The id comes from the id field of get-symbol-posts / get-feed / get-user, or the messageId field of list-polls. --include_replies true also fetches the reply thread (author, time, likes per reply) up to --reply_limit (max 100); partial=true when the thread runs deeper than the limit. Replies are returned oldest-first via cursor pagination (30 per API page). Anonymous public API — no login, no browser needed.",
+  "parameters": [
+    {
+      "name": "id",
+      "description": "Numeric Stocktwits post id, e.g. 662401099. Take it from the id field of get-symbol-posts / get-feed / get-user output, or the messageId field of list-polls. Must be a positive integer; nonexistent ids return NOT_FOUND.（帖子数字 id，来自各流命令的 id 字段或 list-polls 的 messageId；必须为正整数，不存在返回 NOT_FOUND。）",
+      "required": true
+    },
+    {
+      "name": "include_replies",
+      "description": "Set true to also fetch the reply thread under this post. Default false. Only true/false are accepted.（是否同时抓回复线程，默认 false；仅接受 true/false。）",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "reply_limit",
+      "description": "Maximum replies to return (1-100, default 20). Only used when include_replies=true; partial=true when the thread runs deeper. The API serves 30 per page; the command paginates internally with the since cursor.（回复条数上限 1-100，默认 20，仅 include_replies=true 时生效；内部按 30/页 + since 游标翻页。）",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

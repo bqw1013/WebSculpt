@@ -1,0 +1,34 @@
+{
+  "id": "dailymotion-get-video",
+  "domain": "dailymotion",
+  "action": "get-video",
+  "runtime": "node",
+  "description": "Fetch full metadata for a single Dailymotion video by URL (dailymotion.com/video/{id}) or ID: title, description, duration, publish time, view/like counts, tags, topic channel, language, thumbnail, and uploader (whose ID feeds dailymotion/get-user). Uses the public API, which covers everything the video page shows. --include_comments true fetches comments via an API-only endpoint (the site has no comment UI; most videos have none — an empty list is normal). --include_subtitles true returns subtitle tracks. No login or browser required.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Video URL (https://www.dailymotion.com/video/xaxueoe) or just the ID (xaxueoe). IDs come from any dailymotion list/search result or the video page URL. 视频 URL 或 ID，可从任何列表/搜索结果或视频页 URL 获得。",
+      "required": true
+    },
+    {
+      "name": "include_comments",
+      "description": "Set to true to also fetch comments (API-only data; the website shows no comment section). Default false. Most videos have zero comments — empty is normal, not an error. 是否抓评论——这是 API 独有数据，网站本身没有评论区；多数视频评论为空，空列表是常态。",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "comment_limit",
+      "description": "Maximum comments to return (1-100, default 20). Only used when include_comments is true. 评论条数上限，仅开启时生效。",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "include_subtitles",
+      "description": "Set to true to also return subtitle tracks (language + URL). Default false; most videos have none. 是否返回字幕轨道（语言+地址）；多数视频无字幕。",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

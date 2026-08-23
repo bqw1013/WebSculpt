@@ -1,0 +1,22 @@
+{
+  "id": "github-get-repo",
+  "domain": "github",
+  "action": "get-repo",
+  "runtime": "browser",
+  "description": "Fetch a GitHub repository's full metadata by owner/repo or URL, e.g. https://github.com/facebook/react. Returns owner, description (About), homepage, clone URLs (HTTPS and SSH), star/fork/watcher counts, open issues, language, license, topics, archived flag, default branch, and created/updated/pushed dates. Pass --include_readme true to also return the README text. Reads the rendered repository page; no login required.",
+  "parameters": [
+    {
+      "name": "repo",
+      "description": "Repository as owner/repo (e.g. facebook/react) or its full URL https://github.com/facebook/react.（仓库标识：`owner/repo` 或完整 URL，如 `facebook/react`。）",
+      "required": true
+    },
+    {
+      "name": "include_readme",
+      "description": "Set to true to also return the repository README text. Default false.（是否同时返回 README 全文，默认 false。）",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

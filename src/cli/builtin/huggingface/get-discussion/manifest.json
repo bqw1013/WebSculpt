@@ -1,0 +1,23 @@
+{
+  "id": "huggingface-get-discussion",
+  "domain": "huggingface",
+  "action": "get-discussion",
+  "runtime": "browser",
+  "description": "Fetch a single community discussion of a Hugging Face repo by number, e.g. deepseek-ai/DeepSeek-R1 discussion 255. repo is the model/dataset/Space repo id as org/name (e.g. deepseek-ai/DeepSeek-R1, HuggingFaceFW/fineweb, multimodalart/minimax-h3) or a full URL; number is the discussion number taken from the /discussions/{num} URL or the list-discussions output. Returns title, author, open time, opening-post body, reply comment thread, and — for pull-request discussions only — a file-changes summary parsed from the diff (files_changed is null for normal discussions). Reads HF's internal discussion API from the browser; no login required.",
+  "parameters": [
+    {
+      "name": "repo",
+      "type": "string",
+      "required": true,
+      "description": "Repo id of a model/dataset/Space as org/name (e.g. deepseek-ai/DeepSeek-R1, HuggingFaceFW/fineweb, multimodalart/minimax-h3) or a full URL https://huggingface.co/... . The repo type (model/dataset/space) is auto-detected by probing the models, then datasets, then spaces API prefixes. (模型/数据集/Space 的仓库标识：org/name 或完整 URL；类型自动探测。)"
+    },
+    {
+      "name": "number",
+      "type": "integer",
+      "required": true,
+      "description": "Discussion number, e.g. 255 (from the URL /discussions/255). Can be taken from the list-discussions output's number field. (讨论编号，取自 URL /discussions/255；可用 list-discussions 输出的 number 字段链式传入。)"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

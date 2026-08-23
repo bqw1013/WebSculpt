@@ -1,0 +1,41 @@
+{
+  "id": "pinterest-list-trends",
+  "domain": "pinterest",
+  "action": "list-trends",
+  "runtime": "browser",
+  "description": "Fetch trending-keyword rankings from Pinterest Trends (https://trends.pinterest.com/), Pinterest's official trends tool. Three ranking types: featured (top trending search terms with month-over-month growth, filterable by region and interest category, default), shopping (trending product categories by outbound-click growth), and search (keyword table with weekly/monthly/yearly change; use --sort to pick the growth / seasonal / monthly-best / yearly-best tab). Requires a logged-in browser session.",
+  "parameters": [
+    {
+      "name": "type",
+      "description": "Which ranking to return: featured (top trends by Pin-save growth, default) | shopping (trending shopping product categories) | search (search-keyword trend table).",
+      "required": false,
+      "default": "featured"
+    },
+    {
+      "name": "region",
+      "description": "Region code (default us). Countries: us, uk, ca, de, fr, it, es, br, mx, ar, co, au, my, ph, th, eg, tr, kr. Regional groups: south-europe, germanic, nordic, benelux, eastern-europe, hispanic-latam, latam-caribbean, east-europe-med.",
+      "required": false,
+      "default": "us"
+    },
+    {
+      "name": "interest",
+      "description": "Interest category filter, only used when type=featured: all (default) or one of animals, weddings, home-decor, architecture, health, education, travel, beauty, fashion, food-drink, event-planning, art, parenting, gardening, diy-crafts.",
+      "required": false,
+      "default": "all"
+    },
+    {
+      "name": "sort",
+      "description": "Search-trends tab, only used when type=search: growth (fastest-growing, default) | seasonal | monthly (best of the month) | yearly (best of the year).",
+      "required": false,
+      "default": "growth"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of entries to return (1-100, default 20). Note: featured is capped at 5 and shopping at 20 by the site.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

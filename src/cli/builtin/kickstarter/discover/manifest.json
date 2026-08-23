@@ -1,0 +1,50 @@
+{
+  "id": "kickstarter-discover",
+  "domain": "kickstarter",
+  "action": "discover",
+  "runtime": "browser",
+  "description": "Discover and search Kickstarter projects — the same backend as the Discover page and search box (kickstarter.com/discover). Without term, browses projects with filters; with term, searches by keyword. Supports category/subcategory filtering (slugs from kickstarter/list-categories), state filtering (upcoming/live/successful/late_pledge), staff picks, and six native sort orders including most_funded (all-time funding ranking) and most_backed. Paginates internally up to limit (max 100, per-page cap 48); partial=true when results run out. Browser session, no login required.",
+  "parameters": [
+    {
+      "name": "term",
+      "description": "Search keywords (e.g. '3d printer'). Omit to browse without searching — the same as entering the Discover page from the category menu. 中文：搜索关键词。不传就是浏览模式，等价于从类别菜单进发现页。",
+      "required": false
+    },
+    {
+      "name": "category",
+      "description": "Top-level category slug (e.g. 'technology', 'film & video'). Valid values come from kickstarter/list-categories; resolved internally to a numeric category_id. Omit for all categories. 中文：一级类目 slug，15 个取值来自 list-categories；不传=全类目。",
+      "required": false
+    },
+    {
+      "name": "subcategory",
+      "description": "Subcategory slug (e.g. '3d printing' under technology, 'graphic novels' under comics). Must be used together with its parent category (slugs collide across top levels). 中文：子类目 slug，必须与父 category 同用。",
+      "required": false
+    },
+    {
+      "name": "sort",
+      "description": "Native sort order: magic (relevance, default), popularity (popularity), newest (newest), end_date (ending soon), most_funded (highest pledged — the all-time funding ranking), most_backed (most backers). 中文：排序。magic 相关度/popularity 热门度/newest 最新/end_date 即将结束/most_funded 筹款最多(历史总榜)/most_backed 支持者最多。",
+      "required": false,
+      "default": "magic"
+    },
+    {
+      "name": "state",
+      "description": "Project state filter, comma-separated for multiple: upcoming (pre-launch pages, not yet live), live (funding now), successful (ended and funded), late_pledge (ended but still accepting late pledges). Empty = site default (upcoming+live+late_pledge). 中文：项目状态，逗号分隔可多选。upcoming 预启动/live 进行中/successful 已成功结束/late_pledge 后期认捐；空=站点默认。",
+      "required": false,
+      "default": ""
+    },
+    {
+      "name": "staff_picks",
+      "description": "true to show only 'Projects We Love' (Kickstarter editorial picks). Default false. 中文：是否只看官方编辑精选（我们喜爱的项目）。",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of projects to return (1-100, default 12). Internal pagination (per-page cap 48); returns partial=true when the result stream is exhausted before reaching limit. 中文：条数上限 1-100，默认 12；内部翻页，流耗尽返回 partial=true。",
+      "required": false,
+      "default": "12"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "reddit-get-feed",
+  "domain": "reddit",
+  "action": "get-feed",
+  "runtime": "browser",
+  "description": "Fetch Reddit front-page feed via browser automation. Supports best, hot, top, rising, and new sorting with adjustable result limit.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of posts to return (1-100)",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "sort",
+      "description": "Sort order: best, hot, top, rising, or new",
+      "required": false,
+      "default": "best"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,40 @@
+{
+  "id": "reddit-get-post",
+  "domain": "reddit",
+  "action": "get-post",
+  "runtime": "browser",
+  "description": "Fetch a single Reddit post detail page via browser automation, returning post metadata, body or external link, and comments as a nested reply tree. Supports comment sorting, limit, and depth filtering.",
+  "parameters": [
+    {
+      "name": "permalink",
+      "description": "Post permalink: full URL (https://www.reddit.com/r/...) or path starting with /r/",
+      "required": true
+    },
+    {
+      "name": "sort",
+      "description": "Comment sort order: best, top, new, controversial, qa",
+      "required": false,
+      "default": "best"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of comments to return (0 means all currently loaded)",
+      "required": false,
+      "default": "0"
+    },
+    {
+      "name": "depth",
+      "description": "Only return comments with depth <= this value (0 means no depth limit)",
+      "required": false,
+      "default": "0"
+    },
+    {
+      "name": "include_comments",
+      "description": "Whether to include comments in the output: true or false",
+      "required": false,
+      "default": "true"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

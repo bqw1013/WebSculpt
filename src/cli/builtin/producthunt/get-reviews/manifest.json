@@ -1,0 +1,28 @@
+{
+  "id": "producthunt-get-reviews",
+  "domain": "producthunt",
+  "action": "get-reviews",
+  "runtime": "browser",
+  "description": "Fetch the currently rendered Reviews for a public Product Hunt product by slug. Compact output returns product review cards and product review metadata; detailed mode adds review tags, raw card text, and nested review-page comments and threads. Verified filter values are all, founder, and informative. The command intentionally does not expose an unverified page or limit parameter.",
+  "parameters": [
+    {
+      "name": "slug",
+      "description": "Required Product Hunt product slug, such as linear or jupitrr.",
+      "required": true
+    },
+    {
+      "name": "filter",
+      "description": "Verified Reviews view: all, founder, or informative.",
+      "required": false,
+      "default": "all"
+    },
+    {
+      "name": "detailed",
+      "description": "Add review pros/cons, raw card text, and nested review-page comments and threads. Pass true or false.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,22 @@
+{
+  "id": "reddit-search-subreddits",
+  "domain": "reddit",
+  "action": "search-subreddits",
+  "runtime": "browser",
+  "description": "Search Reddit communities (subreddits) by keyword in an attached browser. Returns subreddit id, name, display name, nsfw/quarantined flags, description, weekly visitors/contributions (formatted and raw), permalink, and icon.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keyword for finding subreddits",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of subreddits to return (1-100)",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

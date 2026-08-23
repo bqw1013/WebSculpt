@@ -1,0 +1,28 @@
+{
+  "id": "stocktwits-get-user",
+  "domain": "stocktwits",
+  "action": "get-user",
+  "runtime": "node",
+  "description": "Fetch a Stocktwits user's profile and posts (the equivalent of opening stocktwits.com/{username}). Returns profile fields (username, display name, avatar, join date, followers/following counts, ideas count, total likes received, premium tier, badges) plus their post stream (id, URL, body, time, sentiment tag Bullish/Bearish/null, like count, author summary, mentioned symbols), paginating internally up to --limit (max 100); partial=true when the stream is exhausted. filter picks the feed view: top (default, 热门) | bullish (看涨, only Bullish-tagged posts) | bearish (看跌, only Bearish-tagged posts) | all (全部, newest). A pinned message is included when the account has one. Anonymous public API — no login, no browser needed. Usernames come from stocktwits/search or the user field of any post.",
+  "parameters": [
+    {
+      "name": "username",
+      "description": "The user's handle, e.g. \"fredwilson\" or \"Stocktwits\" (case-sensitive). Take it from stocktwits/search user results or the user.username field of any post.",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Max posts to return (1-100, default 20). The API serves 30 per page; the command paginates internally, partial=true when the stream runs out before the limit.",
+      "required": false,
+      "default": 20
+    },
+    {
+      "name": "filter",
+      "description": "Feed view: top (default, 热门 — the site's ranked view) | bullish (看涨, only Bullish-tagged posts) | bearish (看跌, only Bearish-tagged posts) | all (全部, newest). Note: 'latest' is NOT valid for user streams (HTTP 400), unlike symbol streams.",
+      "required": false,
+      "default": "top"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

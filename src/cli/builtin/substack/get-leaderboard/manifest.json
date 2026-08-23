@@ -1,0 +1,23 @@
+{
+  "id": "substack-get-leaderboard",
+  "domain": "substack",
+  "action": "get-leaderboard",
+  "runtime": "browser",
+  "description": "Get Substack author leaderboards. Defaults to global New Bestsellers; supports category leaderboards (technology, business, etc.) and personalized For You. Returns ranked authors with publication, avatar, and subscriber info. Requires Chrome remote debugging.",
+  "parameters": [
+    {
+      "name": "category",
+      "description": "Leaderboard category slug. Use 'new-bestsellers' for the global New Bestsellers list, 'for-you' for personalized recommendations (requires login), or any category slug such as technology, business, finance, culture, news, science, etc.",
+      "required": false,
+      "default": "new-bestsellers"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of leaderboard entries to return (1-200). The command aggregates API pages internally because the API does not support a limit parameter.",
+      "required": false,
+      "default": "25"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

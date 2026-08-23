@@ -1,0 +1,22 @@
+{
+  "id": "techcrunch-get-author",
+  "domain": "techcrunch",
+  "action": "get-author",
+  "runtime": "node",
+  "description": "Fetch a TechCrunch author's profile and article list from their server-rendered archive page (techcrunch.com/author/{slug}/). Returns author name, avatar, bio, and their articles newest-first as cards with title, URL, date, featured image, and category slugs. Paginates internally up to the limit (max 100); partial=true when the archive is exhausted. The archive cards do not render excerpts, so the excerpt field is always empty. No authentication required.",
+  "parameters": [
+    {
+      "name": "author",
+      "description": "Author slug as it appears in the author page URL: techcrunch.com/author/{slug}/ (e.g. \"lucas-ropek\" or \"margaux-macColl\"). Hyphenated words, may contain capital letters. Discovery: click the author byline on any article, or use the author.slug field from techcrunch/get-article.",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of articles to return (1-100, default 20). Paginates the archive internally; partial=true when the archive is exhausted.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

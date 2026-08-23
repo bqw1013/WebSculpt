@@ -1,0 +1,16 @@
+{
+  "id": "github-get-user",
+  "domain": "github",
+  "action": "get-user",
+  "runtime": "browser",
+  "description": "Fetch a GitHub user's or organization's public profile by username or profile URL, e.g. https://github.com/torvalds. Returns login, name, type (User/Organization), avatar, bio, company, blog, location, email, X/Twitter handle, all social accounts, exact public repo/gist counts, follower/following counts, and account creation date. Reads the rendered profile page and enriches exact counts from the GitHub API; no login required.",
+  "parameters": [
+    {
+      "name": "user",
+      "description": "GitHub username (e.g. torvalds) or the full profile URL https://github.com/torvalds.（用户名或主页完整 URL，如 torvalds 或 https://github.com/torvalds；用户与组织均支持。）",
+      "required": true
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

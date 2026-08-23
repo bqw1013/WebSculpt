@@ -1,0 +1,39 @@
+{
+  "id": "spotify-get-podcast",
+  "domain": "spotify",
+  "action": "get-podcast",
+  "runtime": "browser",
+  "description": "Fetch a Spotify podcast show (open.spotify.com/show/{id}) — the podcast itself, i.e. the continuing series, NOT a single episode (use spotify/get-episode for that). Returns title, publisher, full description, listener rating and rating count, category tags, explicit flag, cover art, total episode count, and the episode list (id, title, date, duration, description, explicit/video flags, 30-second mp3 preview URL), paginating internally up to --limit (max 100; partial=true when the show has fewer episodes than requested). --include-related adds the page's \"More like this\" show recommendations. Runs in a browser context (Spotify's GraphQL API is not anonymously callable); browsing public shows needs no login. Show URLs/ids come from spotify/search, spotify/get-podcast-chart, spotify/get-category, or spotify/get-hub results.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Podcast show URL, e.g. https://open.spotify.com/show/4rOoJ6Egrf8K2IrywzwOMk. Take it from any show card on Spotify, or from the url field of spotify/search, get-podcast-chart, get-category, get-hub results.",
+      "required": false
+    },
+    {
+      "name": "id",
+      "description": "The 22-character show id from the /show/ URL segment (e.g. 4rOoJ6Egrf8K2IrywzwOMk). Alternative to --url.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Max number of episodes to return, 1-100, default 20. The show page loads episodes in batches (first GraphQL page is 50); the command paginates internally, partial=true when the show runs out of episodes.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "include_episodes",
+      "description": "Whether to return the episode list. Default true — the episode list is the main content of a show page; set false to fetch metadata only.",
+      "required": false,
+      "default": "true"
+    },
+    {
+      "name": "include_related",
+      "description": "Set true to also return the page's \"More like this\" show recommendations (id/url/title/publisher/cover). Default false.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

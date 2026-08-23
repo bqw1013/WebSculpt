@@ -1,0 +1,17 @@
+{
+  "id": "facebook-get-feed",
+  "domain": "facebook",
+  "action": "get-feed",
+  "runtime": "browser",
+  "description": "Fetch the Facebook home feed (首页信息流): the algorithmic timeline shown at facebook.com. Returns structured posts with author, text, permalink, time, media, and like/comment/share counts. Scrolls internally to load more posts, up to 100; partial=true when the stream ends early. Requires an active Facebook login.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum posts to return (1-100, default 20). The feed loads more posts on scroll; the command scrolls internally until the limit is reached or the stream is exhausted (partial=true).（条数上限，内部滚动加载；信息流是算法排序，无排序/时间参数。）",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

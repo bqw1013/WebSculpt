@@ -1,0 +1,40 @@
+{
+  "id": "dailymotion-search",
+  "domain": "dailymotion",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search Dailymotion by keyword across the six on-site tabs: top results / videos / playlists / channels-as-uploaders / lives / hashtags. Reads the site's SEARCH_QUERY GraphQL API (search.dailymotion.com/v1) from the browser context and returns clean flat records; falls back to the visible search DOM if the API drifts. Supports real sorting (relevance/recent/viewed) and time range (all/day/week/month/year) mapped to the site's own filter controls.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keywords, e.g. \"ai news\". Behaves exactly like the on-site search box. (搜索关键词，与站内搜索框行为一致)",
+      "required": true
+    },
+    {
+      "name": "type",
+      "description": "What to search: video (default) | top | user | playlist | live | hashtag. Maps to the on-site tabs: video=视频(默认), top=热门结果, user=频道(返回上传者，链接为 /user/，不是 get-channel-videos 的 17 个主题频道), playlist=播放列表, live=直播(常为空), hashtag=标签.",
+      "required": false,
+      "default": "video"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results to return (1-100, default 20). Paginates internally via the API page variable; partial=true when results run out.",
+      "required": false,
+      "default": 20
+    },
+    {
+      "name": "sort",
+      "description": "Video ordering: relevance (default) | recent | viewed. Maps to GraphQL sortByVideos (RECENT / VIEW_COUNT). Only applies to type=video/top; other types record non-default values in ignoredParams.",
+      "required": false,
+      "default": "relevance"
+    },
+    {
+      "name": "time",
+      "description": "Video time range: all (default) | day | week | month | year. Maps to GraphQL createdAfterVideos. Only applies to type=video/top; other types record non-default values in ignoredParams.",
+      "required": false,
+      "default": "all"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

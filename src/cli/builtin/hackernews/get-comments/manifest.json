@@ -1,0 +1,17 @@
+{
+  "id": "hackernews-get-comments",
+  "domain": "hackernews",
+  "action": "get-comments",
+  "runtime": "browser",
+  "description": "Fetch the newest Hacker News comments from the comments navigation view, preserving HN order, comment text, author/time, parent/context links, and story metadata. Uses cursor pagination when the requested limit exceeds one page.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of newest comments to return (1-50).",
+      "required": false,
+      "default": 15
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

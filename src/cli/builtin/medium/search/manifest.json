@@ -1,0 +1,41 @@
+{
+  "id": "medium-search",
+  "domain": "medium",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search public Medium posts, people, publications, topics, or lists with native GraphQL fields, internal pagination, and a visible DOM fallback.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Medium search query",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results, strict positive integer from 1 to 100",
+      "required": false,
+      "default": 20
+    },
+    {
+      "name": "type",
+      "description": "Search result type: posts, people, publications, topics, or lists",
+      "required": false,
+      "default": "posts"
+    },
+    {
+      "name": "sort",
+      "description": "Standard sort: default, latest, or popular; Medium currently reports non-default values in ignoredParams",
+      "required": false,
+      "default": "default"
+    },
+    {
+      "name": "time",
+      "description": "Standard time range: all, day, week, month, or year; Medium currently reports non-all values in ignoredParams",
+      "required": false,
+      "default": "all"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

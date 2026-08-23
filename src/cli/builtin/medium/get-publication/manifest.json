@@ -1,0 +1,28 @@
+{
+  "id": "medium-get-publication",
+  "domain": "medium",
+  "action": "get-publication",
+  "runtime": "browser",
+  "description": "Fetch articles from a Medium publication (a multi-author magazine-like space, e.g. https://medium.com/grepsr-blog) by its slug. section=home returns the curated homepage selection; section=all returns the full story stream in the order Medium lists it on /<slug>/all (by listing date, newest listed first — a story's firstPublishedAt can predate its listing, so publishedAt values are not guaranteed to be monotonically decreasing; the /latest URL redirects to /all). Also returns publication metadata including name, tagline, description, follower count and avatar. Data comes from Medium's own GraphQL endpoint (the one the site uses for its scroll-loading), so articles include full metadata: title, subtitle, author, publish dates, clap/response counts, reading time, preview image and member-only flag. No login required.",
+  "parameters": [
+    {
+      "name": "slug",
+      "description": "Publication slug (required), i.e. the first path segment of the publication URL https://medium.com/<slug>. Letters, digits and hyphens only. Examples: grepsr-blog, ux-planet, better-programming, data-science-collective. Find publications with: websculpt medium search --query <name> --type publications.",
+      "required": true
+    },
+    {
+      "name": "section",
+      "description": "Which view to return: home (curated homepage selection, in editorial order with per-article section names, default) | all (full chronological stream, newest first; internally paginates the same connection the page's scroll-loading uses).",
+      "required": false,
+      "default": "home"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of articles to return (1-100, default 20). When the stream/list ends earlier, the command returns what exists and marks partial=true.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

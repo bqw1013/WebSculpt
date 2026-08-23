@@ -1,0 +1,16 @@
+{
+  "id": "twitch-get-channel",
+  "domain": "twitch",
+  "action": "get-channel",
+  "runtime": "node",
+  "description": "Fetch a Twitch channel's profile and current live status via Twitch's internal GraphQL (no login). Returns display name, follower count, description, avatar, and — when the channel is broadcasting — live title, category, viewer count, and start time. Use twitch/get-channel-videos and twitch/get-channel-clips for the channel's content lists. No login required.",
+  "parameters": [
+    {
+      "name": "channel",
+      "description": "Channel login name — the path segment in twitch.tv/{channel} (e.g. \"gorgc\" from twitch.tv/gorgc). Case-insensitive (\"LCK\" resolves to \"lck\"). Found in any live card, video, or clip URL, or via twitch/search --type channel. Non-existent channels return CHANNEL_NOT_FOUND.",
+      "required": true
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,27 @@
+{
+  "id": "spotify-get-category",
+  "domain": "spotify",
+  "action": "get-category",
+  "runtime": "browser",
+  "description": "Fetch a Spotify podcast category page (open.spotify.com/genre/{id}, e.g. 喜剧 Comedy) — reached by clicking a category card on the podcast hub. Returns the category name and its content shelves, most importantly the '热门{类别}播客' (top shows in this category) section: show cards with id/url/title/publisher/cover, scrolling internally up to --limit (max 100; partial=true when exhausted). Valid genre ids are opaque strings — discover them with spotify/list-categories. Runs in a browser context (Spotify's GraphQL API is not anonymously callable); no login needed. 中文：按垂类浏览 Spotify 播客热门节目。给定类别页 /genre/{id} 或 genre_id，返回类别名、主题歌单货架与「热门{类别}播客」节目区（id/url/title/publisher/cover），节目区内部滚动加载最多到 limit（最大 100，耗尽标记 partial=true）。genre_id 不透明字符串，须来自 spotify/list-categories 输出的 genreId 字段。",
+  "parameters": [
+    {
+      "name": "genre_id",
+      "description": "The category's opaque genre id (e.g. 0JQ5DAqbMKFNr6gDrHHVKL for 喜剧/Comedy). These are not guessable — get them from the genreId field of spotify/list-categories output. Either --genre-id or --url is required. 中文：类别 id，不透明字符串，必须从 spotify/list-categories 输出的 genreId 字段取，不可猜测。与 --url 二选一必填。",
+      "required": false
+    },
+    {
+      "name": "url",
+      "description": "Category page URL, e.g. https://open.spotify.com/genre/0JQ5DAqbMKFNr6gDrHHVKL. Either --url or --genre-id is required. 中文：类别页 URL，与 --genre-id 二选一必填。",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Max shows to return from the '热门{类别}播客' section, 1-100, default 20. The show section lazy-loads on scroll; partial=true when exhausted before reaching limit. 中文：节目数上限 1-100，默认 20；节目区滚动加载，耗尽标记 partial=true。",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

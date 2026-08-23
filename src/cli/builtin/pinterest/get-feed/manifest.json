@@ -1,0 +1,17 @@
+{
+  "id": "pinterest-get-feed",
+  "domain": "pinterest",
+  "action": "get-feed",
+  "runtime": "browser",
+  "description": "Fetch the logged-in user's personalized Pinterest home feed — the masonry stream of Pins shown at https://www.pinterest.com/. Returns each Pin's id, title, description, full-resolution image URL (or HLS playlist URL for video Pins), outbound source link, creator (username + display name), and Pin page URL. Scrolls to load more up to the limit. Requires a logged-in browser session.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of Pins to return (1-100, default 20). The feed lazy-loads on scroll; the command scrolls until the limit is reached or the feed is exhausted (then returns fewer with partial=true).",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

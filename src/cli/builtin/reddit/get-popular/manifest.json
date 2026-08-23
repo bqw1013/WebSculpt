@@ -1,0 +1,29 @@
+{
+  "id": "reddit-get-popular",
+  "domain": "reddit",
+  "action": "get-popular",
+  "runtime": "browser",
+  "description": "Fetch Reddit /r/popular/ feed via browser automation. Supports best, hot, top, rising, and new sorting, optional top time range, and adjustable result limit.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of posts to return (1-100). Default is 20.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "sort",
+      "description": "Sort order for the /r/popular/ feed: best, hot, top, rising, or new. Default is best.",
+      "required": false,
+      "default": "best"
+    },
+    {
+      "name": "time",
+      "description": "Time range for sort=top: hour, day, week, month, year, or all. Default is day. Ignored for other sort values.",
+      "required": false,
+      "default": "day"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

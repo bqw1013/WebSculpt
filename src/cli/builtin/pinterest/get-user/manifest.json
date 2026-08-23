@@ -1,0 +1,28 @@
+{
+  "id": "pinterest-get-user",
+  "domain": "pinterest",
+  "action": "get-user",
+  "runtime": "browser",
+  "description": "Fetch a Pinterest user's public profile and one content tab. Always returns profile metadata (display name, bio, avatar, follower/following counts, monthly views, external links). The tab parameter selects what else to load: saved (the user's Boards — their curated Pin collections, default) or created (Pins the user originally published). Requires a logged-in browser session.",
+  "parameters": [
+    {
+      "name": "username",
+      "description": "Pinterest username — the segment in the profile URL https://www.pinterest.com/<username>/. Obtain it from search --type user results or the creator field of get-pin / get-feed output.",
+      "required": true
+    },
+    {
+      "name": "tab",
+      "description": "Which profile tab to return: saved (Boards the user saves Pins into — the profile default view) | created (Pins the user originally published, at /<username>/_created/).",
+      "required": false,
+      "default": "saved"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of boards (tab=saved) or Pins (tab=created) to return (1-100, default 20). Lazy-loads on scroll; returns fewer with partial=true if the feed is exhausted.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

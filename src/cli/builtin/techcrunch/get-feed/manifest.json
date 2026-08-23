@@ -1,0 +1,22 @@
+{
+  "id": "techcrunch-get-feed",
+  "domain": "techcrunch",
+  "action": "get-feed",
+  "runtime": "node",
+  "description": "Fetch TechCrunch's latest article stream via the public WordPress REST API — the same chronological feed shown on the 'Latest' page and every category page. Optionally filter by one of 23 editorial categories (AI, startups, venture, security, etc.). Returns article cards with title, URL, date, excerpt, featured image, and categories. Paginates internally up to the limit (max 100); partial=true when the stream ends early. No authentication required. To follow a specific company or topic label (e.g. apple, openai), use techcrunch/get-topic instead.",
+  "parameters": [
+    {
+      "name": "category",
+      "description": "Editorial category slug to filter by. Available: artificial-intelligence, startups, venture, security, apps, climate, biotech-health, commerce, cryptocurrency, enterprise, fintech, fundraising, gadgets, gaming, government-policy, hardware, media-entertainment, privacy, real-estate, robotics, social, space, transportation. Omit for all categories. These are TechCrunch's fixed editorial sections (the nav-bar items); for free-form topic/company labels use techcrunch/get-topic.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of articles to return (1-100, default 20). The command paginates the API internally until the limit is reached or the stream is exhausted (partial=true).",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

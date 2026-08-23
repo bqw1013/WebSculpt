@@ -1,0 +1,17 @@
+{
+  "id": "techcrunch-get-popular",
+  "domain": "techcrunch",
+  "action": "get-popular",
+  "runtime": "node",
+  "description": "Fetch TechCrunch's \"Most Popular\" module — the most-read articles of the last few days shown in the sidebar of the techcrunch.com homepage. Unlike techcrunch/get-feed (chronological), this ranks by reader popularity. The module is server-rendered only on the homepage (no standalone page, no API), so this command parses the homepage HTML. It holds only about 5-10 items, so the limit is capped at 20. Returns each article's title, URL, and author (name + profile URL); the module shows no publish date, so date is always null. Sends a single request with a randomized 200-700ms delay for polite pacing. No authentication required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of articles to return (1-20, default 10). The Most Popular module only contains about 5-10 items, so any value above the actual module size simply returns everything available with partial=true. The cap of 20 exists because the module is a small fixed homepage block and can never exceed that many items.",
+      "required": false,
+      "default": "10"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

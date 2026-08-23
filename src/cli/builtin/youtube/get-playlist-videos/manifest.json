@@ -1,0 +1,23 @@
+{
+  "id": "youtube-get-playlist-videos",
+  "domain": "youtube",
+  "action": "get-playlist-videos",
+  "runtime": "browser",
+  "description": "List the videos in a YouTube playlist — an ordered video collection, the equivalent of a Bilibili 收藏夹/合集. The url parameter accepts a full playlist URL (youtube.com/playlist?list=...) or just the list ID (PL..., UU..., etc.). Returns playlist title and channel plus video entries (video ID, title, URL, duration). Scrolls internally up to the limit (max 100); partial=true when the list is exhausted. When logged in, the built-in personal lists also work: list=WL (Watch Later 稍后观看) and list=LL (Liked videos 赞过的视频). No authentication required for public playlists.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Playlist URL (youtube.com/playlist?list=PL...) or bare list ID. Discovery: a channel's Playlists tab (/@handle/playlists), the save/share dialog on any video, or the special IDs WL (Watch Later) and LL (Liked videos) when logged in.",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of videos to return (1-100, default 50). Scrolls internally; partial=true when the playlist ends.",
+      "required": false,
+      "default": 50
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

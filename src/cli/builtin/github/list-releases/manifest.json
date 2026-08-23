@@ -1,0 +1,22 @@
+{
+  "id": "github-list-releases",
+  "domain": "github",
+  "action": "list-releases",
+  "runtime": "browser",
+  "description": "List a GitHub repository's releases from https://github.com/<owner>/<repo>/releases. Returns releases with tag name, title, draft/prerelease flags, publish date, release notes (body), and downloadable assets (name/size/download URL). Reads the rendered releases page; no login required.",
+  "parameters": [
+    {
+      "name": "repo",
+      "description": "Repository as owner/repo (e.g. facebook/react) or its full URL https://github.com/facebook/react. (仓库标识：owner/repo 或完整 URL，如 facebook/react。)",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum releases to return (1-100, default 10). The page lists 10 per page; the command fetches additional pages until the limit is met. If the repository has fewer releases than requested, partial=true is returned. (条数上限，默认 10；页面每页 10 条，超出则按 ?page=N 翻页；仓库 releases 不足请求数时 partial=true 说明结果被截断。)",
+      "required": false,
+      "default": "10"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

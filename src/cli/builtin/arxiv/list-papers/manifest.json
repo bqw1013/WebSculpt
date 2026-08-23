@@ -1,0 +1,33 @@
+{
+  "id": "arxiv-list-papers",
+  "domain": "arxiv",
+  "action": "list-papers",
+  "runtime": "node",
+  "description": "List papers in an arXiv category — the same listings as the category pages' \"new\" / \"recent\" views and monthly archives (arxiv.org/list/{category}/new etc.). period=new returns today's listing in three groups (new submissions, cross-lists, replacements, with inline abstracts); period=recent returns the past week's submissions grouped by day; period=month returns a monthly archive of papers submitted in that month (use --month, e.g. 2026-07; sourced from the Atom API with precise submission timestamps and abstracts). Returns paper cards with arXiv ID, title, authors, categories, date, abstract (where the source provides it), and abs/PDF links. Each call is a single request; respects arXiv's >=3s request-spacing etiquette at the caller level. No authentication required.",
+  "parameters": [
+    {
+      "name": "category",
+      "description": "arXiv category ID, e.g. \"cs.AI\", \"cs.LG\", \"astro-ph.CO\", \"hep-th\". Required. Case-sensitive: the archive part is lowercase and the subcategory suffix is uppercase (\"cs.ai\" is invalid). ~155 valid values exist; run arxiv/list-categories to enumerate them, or copy the ID from any category page URL (arxiv.org/list/{category}/new).",
+      "required": true
+    },
+    {
+      "name": "period",
+      "description": "Listing type. Allowed values: new = today's new/cross/replacement submissions, split into three sections with inline abstracts (default); recent = the past week, grouped by day (title-only cards, no abstracts); month = a monthly archive of papers submitted in that month, newest first (requires --month).",
+      "required": false,
+      "default": "new"
+    },
+    {
+      "name": "month",
+      "description": "Archive month in YYYY-MM format (e.g. \"2026-07\"), defaults to the previous month. Only used when period=month.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of papers to return, 1-200 (default 50). For period=new the limit applies per section (new/cross/replacements each return up to limit). When a listing is exhausted (fewer than limit available), partial=true is returned.",
+      "required": false,
+      "default": "50"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -690,7 +690,7 @@ websculpt scope remove <identifier>
 ### 5.1 调用一个 builtin 命令
 
 ```bash
-websculpt github list-trending
+websculpt github get-trending
 ```
 
 ### 5.2 查看帮助
@@ -700,7 +700,7 @@ websculpt github list-trending
 ```bash
 websculpt --help
 websculpt github --help
-websculpt github list-trending --help
+websculpt github get-trending --help
 ```
 
 ---

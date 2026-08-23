@@ -1,0 +1,22 @@
+{
+  "id": "arxiv-download-paper",
+  "domain": "arxiv",
+  "action": "download-paper",
+  "runtime": "node",
+  "description": "Download an arXiv paper's PDF to a local folder, named after the paper title. Accepts an arXiv ID (new-style 2601.00001, old-style hep-th/9901001, optional version suffix vN) or an abs/PDF URL; saves the PDF into --output (default: current directory) as \"{sanitized title}.pdf\". Returns the resolved id, title, absolute file path, and size in bytes. Requests are spaced >=3s per arXiv API policy. No authentication required.",
+  "parameters": [
+    {
+      "name": "id",
+      "description": "arXiv paper ID or abs/PDF URL. Accepted forms: new-style ID (\"2601.00001\"), new-style with version suffix (\"2601.00001v2\"), old-style ID (\"hep-th/9901001\"), old-style with version suffix (\"hep-th/9901001v2\"), abstract URL (\"https://arxiv.org/abs/2601.00001\"), or PDF URL (\"https://arxiv.org/pdf/2601.00001\"). The version suffix is passed through unchanged. IDs appear in results of arxiv/list-papers, arxiv/search, and arxiv/get-author-papers.",
+      "required": true
+    },
+    {
+      "name": "output",
+      "description": "Local folder to save the PDF into (default: current working directory). Relative paths are resolved against the directory where the command is run; absolute paths are used as-is; the folder is created automatically if it does not exist. The file is named \"{sanitized title}.pdf\": filesystem-unsafe characters are replaced with underscores, Windows reserved device names are prefixed with an underscore, and the name is truncated to 200 characters.",
+      "required": false,
+      "default": "."
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -1,124 +1,158 @@
-import https from "https";
+// github/get-trending — real GitHub trending ranking from github.com/trending (browser runtime)
+// Data path: same-origin fetch() of the raw SSR HTML + DOMParser.
+// Rationale: the hydrated DOM of /trending is broken by a React error boundary
+// ("Sorry, something went wrong." fallback), but the raw SSR HTML is complete.
 
-function getDateOffset(daysAgo) {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().split("T")[0];
-}
+const SINCE_VALUES = ["daily", "weekly", "monthly"];
 
-function buildQuery(params) {
-  const parts = [];
+const randomInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
 
-  const period = params.period || "weekly";
-  let days = 7;
-  if (period === "daily") days = 1;
-  else if (period === "weekly") days = 7;
-  else if (period === "monthly") days = 30;
+export default async (page, params, cwd) => {
+  const since = params.since;
+  const language = (params.language || "").trim() || null;
+  const limitStr = params.limit;
 
-  const dateStr = getDateOffset(days);
-  parts.push(`pushed:>${dateStr}`);
+  // --- Parameter validation (before any page access) ---
+  if (!SINCE_VALUES.includes(since)) {
+    const err = new Error(
+      `[INVALID_PARAM] since must be one of: daily (今日), weekly (本周), monthly (本月). Got: "${since}"`
+    );
+    err.code = "INVALID_PARAM";
+    throw err;
+  }
 
-  const language = params.language ? params.language.trim() : "";
+  if (!/^\d+$/.test(limitStr)) {
+    const err = new Error(
+      `[INVALID_PARAM] limit must be an integer between 1 and 25. Got: "${params.limit}"`
+    );
+    err.code = "INVALID_PARAM";
+    throw err;
+  }
+  const limit = parseInt(limitStr, 10);
+  if (limit < 1 || limit > 25) {
+    const err = new Error(
+      `[INVALID_PARAM] limit must be an integer between 1 and 25. Got: ${limit}`
+    );
+    err.code = "INVALID_PARAM";
+    throw err;
+  }
+
+  // --- Build URL: language -> /trending/{language} path; since -> ?since= ---
+  let path = "/trending";
   if (language) {
-    parts.push(`language:${language}`);
+    path += "/" + encodeURIComponent(language);
+  }
+  if (since !== "daily") {
+    path += (path.includes("?") ? "&" : "?") + "since=" + since;
+  }
+  const url = "https://github.com" + path;
+
+  // --- Navigate to establish github.com origin (cookies + same-origin fetch) ---
+  try {
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+  } catch (e) {
+    const err = new Error(`[NETWORK_ERROR] Failed to load ${url}: ${e.message}`);
+    err.code = "NETWORK_ERROR";
+    throw err;
   }
 
-  // Ensure we only get repositories with some community traction
-  parts.push("stars:>10");
+  // --- Light polite-pacing gestures (random, must not slow down meaningfully) ---
+  try {
+    await page.mouse.move(randomInt(30, 500), randomInt(30, 500));
+    await page.mouse.wheel(0, randomInt(0, 300));
+  } catch (_) {
+    /* non-fatal */
+  }
+  await new Promise((r) => setTimeout(r, randomInt(120, 350)));
 
-  return parts.join(" ");
-}
+  // --- Fetch raw SSR HTML (same origin) and extract cards ---
+  const parsed = await page.evaluate(async () => {
+    const resp = await fetch(location.pathname + location.search, {
+      credentials: "same-origin",
+    });
+    const status = resp.status;
+    const html = await resp.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
 
-function fetchJson(url) {
-  return new Promise((resolve, reject) => {
-    const req = https.get(url, { headers: { "User-Agent": "websculpt-github-get-trending" } }, (res) => {
-      let data = "";
-      res.on("data", chunk => { data += chunk; });
-      res.on("end", () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          try {
-            resolve(JSON.parse(data));
-          } catch (e) {
-            const err = new Error("[PARSE_ERROR] Failed to parse GitHub API response");
-            err.code = "PARSE_ERROR";
-            reject(err);
-          }
-        } else if (res.statusCode === 403 || res.statusCode === 429) {
-          const err = new Error("[RATE_LIMIT] GitHub API rate limit exceeded. Please try again later.");
-          err.code = "RATE_LIMIT";
-          reject(err);
-        } else if (res.statusCode === 422) {
-          const err = new Error("[INVALID_QUERY] GitHub API rejected the search query. Check your parameters.");
-          err.code = "INVALID_QUERY";
-          reject(err);
-        } else {
-          const err = new Error(`[API_ERROR] GitHub API returned HTTP ${res.statusCode}`);
-          err.code = "API_ERROR";
-          reject(err);
-        }
-      });
+    const title = doc.title || "";
+    const bodyText = doc.body ? doc.body.innerText.slice(0, 600) : "";
+    const antiBot =
+      status === 429 ||
+      status === 403 ||
+      /whoa there|captcha|rate limit|access denied|unusual traffic/i.test(
+        title + " " + bodyText
+      );
+
+    const cards = [...doc.querySelectorAll("article.Box-row")];
+    const items = cards.map((card, i) => {
+      const a = card.querySelector("h2 a");
+      const descP = card.querySelector("p.col-9");
+      const langEl = card.querySelector('[itemprop="programmingLanguage"]');
+      const starA = card.querySelector('a[href*="/stargazers"]');
+      const forkA = card.querySelector('a[href*="/forks"]');
+      const meta = card.querySelector("div.f6");
+      const gainSpan = meta
+        ? [...meta.querySelectorAll("span")].find((s) =>
+            /stars?\s+(today|this week|this month)/i.test(s.textContent || "")
+          )
+        : null;
+      const builders = [
+        ...card.querySelectorAll('a[data-hovercard-type="user"]'),
+      ].map((b) => (b.getAttribute("href") || "").replace(/^\//, ""));
+
+      return {
+        rank: i + 1,
+        full_name: a ? a.innerText.replace(/\s+/g, " ").trim() : null,
+        html_url: a ? "https://github.com" + a.getAttribute("href") : null,
+        description: descP
+          ? descP.innerText.replace(/\s+/g, " ").trim() || null
+          : null,
+        language: langEl ? langEl.innerText.trim() || null : null,
+        stars: starA
+          ? parseInt(starA.innerText.replace(/[^\d]/g, ""), 10) || 0
+          : 0,
+        stars_gained: gainSpan
+          ? parseInt(gainSpan.textContent.replace(/[^\d]/g, ""), 10) || 0
+          : 0,
+        forks: forkA
+          ? parseInt(forkA.innerText.replace(/[^\d]/g, ""), 10) || 0
+          : 0,
+        builders,
+      };
     });
-    req.on("error", (e) => {
-      const err = new Error(`[NETWORK_ERROR] ${e.message}`);
-      err.code = "NETWORK_ERROR";
-      reject(err);
-    });
-    req.setTimeout(15000, () => {
-      req.destroy();
-      const err = new Error("[TIMEOUT] Request to GitHub API timed out");
-      err.code = "TIMEOUT";
-      reject(err);
-    });
+
+    return { status, antiBot, available: items.length, items };
   });
-}
 
-export default async function(params) {
-  const limitRaw = params.limit || "10";
-  const limit = parseInt(limitRaw, 10);
-  if (isNaN(limit) || limit < 1 || limit > 50) {
-    const err = new Error("[INVALID_PARAM] limit must be an integer between 1 and 50");
-    err.code = "INVALID_PARAM";
+  if (parsed.antiBot) {
+    const err = new Error(
+      `[NETWORK_ERROR] GitHub rate-limit or bot check detected (HTTP ${parsed.status}). Please slow down and retry later.`
+    );
+    err.code = "NETWORK_ERROR";
     throw err;
   }
 
-  const period = (params.period || "weekly").toLowerCase();
-  if (!["daily", "weekly", "monthly"].includes(period)) {
-    const err = new Error("[INVALID_PARAM] period must be one of: daily, weekly, monthly");
-    err.code = "INVALID_PARAM";
-    throw err;
-  }
-
-  const query = buildQuery(params);
-  const encodedQuery = encodeURIComponent(query);
-  const url = `https://api.github.com/search/repositories?q=${encodedQuery}&sort=stars&order=desc&per_page=${limit}`;
-
-  const data = await fetchJson(url);
-
-  if (!data.items || !Array.isArray(data.items)) {
-    const err = new Error("[EMPTY_RESULT] No repositories found for the given criteria");
+  if (parsed.available === 0) {
+    const err = new Error(
+      `[EMPTY_RESULT] No trending repositories found for since=${since}` +
+        (language ? `, language=${language}` : "") +
+        "."
+    );
     err.code = "EMPTY_RESULT";
     throw err;
   }
 
-  const repositories = data.items.map((item, index) => ({
-    rank: index + 1,
-    name: item.name,
-    full_name: item.full_name,
-    owner: item.owner ? item.owner.login : null,
-    owner_avatar: item.owner ? item.owner.avatar_url : null,
-    description: item.description || "",
-    stars: item.stargazers_count || 0,
-    language: item.language || "",
-    url: item.html_url,
-    created_at: item.created_at,
-    pushed_at: item.pushed_at,
-  }));
+  const available = parsed.available;
+  const repositories = parsed.items.slice(0, limit);
+  const partial = limit < available;
 
   return {
-    total_count: data.total_count || 0,
-    query: query,
-    period: period,
-    limit: limit,
-    repositories: repositories,
+    source: "github.com/trending",
+    since,
+    language,
+    count: repositories.length,
+    available,
+    partial,
+    repositories,
   };
-}
+};

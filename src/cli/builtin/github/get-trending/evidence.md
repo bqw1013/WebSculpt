@@ -4,66 +4,53 @@ This document records the research and validation evidence for the `github/get-t
 
 ## Exploration Path
 
-1. Checked WebSculpt command library — no existing commands related to GitHub trending or repository search.
-2. Used WebSearch to discover potential data sources for GitHub trending repositories.
-3. Evaluated `trendshift.io` as a candidate source. Verified it is a Next.js SSR-rendered page with complex DOM structure, making it unsuitable for reliable `node` runtime extraction without browser automation.
-4. Evaluated `ossinsight.io` as a candidate source. It provides trending rankings but does not expose a simple, documented public API for direct HTTP fetching.
-5. Selected the **GitHub Search API** (`https://api.github.com/search/repositories`) as the primary data source. It is a stable, well-documented, public REST API that requires no authentication for basic usage and returns structured JSON.
-6. To approximate "trending" behavior, the command uses `sort=stars` combined with `pushed:>{recent_date}` qualifiers to surface recently active, highly-starred repositories.
+This command is a **redo** of the existing `github/get-trending` (node runtime, GitHub Search API approximation with 10 req/min anonymous rate limit). Replaced with a browser-runtime command that reads the real `github.com/trending` ranked list. Explore phase assess passed 2026-08-09, candidate `github/get-trending`.
+
+Tools: `@playwright/cli` attach to user Chrome (CDP); all verification used the browser.
+
+Key finding: the rendered DOM of `/trending` is **broken by React hydration** (card titles get replaced with a hidden "Sorry, something went wrong." error-boundary fallback). The raw SSR HTML obtained via **same-origin `fetch()`** is complete and stable. Implementation MUST use `page.evaluate` → `fetch(location.pathname + location.search, {credentials:'same-origin'})` → `DOMParser`, never the hydrated DOM.
 
 ## Verified URLs
 
-- `https://api.github.com/search/repositories?q=stars:>1000&sort=stars&order=desc&per_page=10`
-- `https://trendshift.io/` (explored but not used as primary source)
+- `https://github.com/trending` — daily (default) first-party test: 12 cards; card structure/selectors and `stars today` label verified.
+- `https://github.com/trending?since=weekly` — weekly: 16 cards, title `...this week`, label `stars this week`.
+- `https://github.com/trending?since=monthly` — monthly: 24 cards, title `...this month`, label `stars this month`.
+- `https://github.com/trending/python` — language filter: 19 Python cards.
+- `https://github.com/trending/python?since=weekly` — language + since combined: 17 Python cards.
+- `https://github.com/trending/c++` — special slug: 18 C++ cards; URL path `/trending/c++` works directly.
+- `https://github.com/trending/not-a-real-language-xyz123` — invalid language: HTTP 200, title reverts to no-language, 0 cards → EMPTY_RESULT signal.
 
 ## Structural Evidence
 
-The GitHub Search API returns a JSON object with the following structure:
+Raw SSR HTML (same-origin fetch) — the only reliable data source (hydrated DOM breaks). Parse with `new DOMParser().parseFromString(html, 'text/html')`.
 
-```json
-{
-  "total_count": 61586,
-  "incomplete_results": false,
-  "items": [
-    {
-      "name": "build-your-own-x",
-      "full_name": "codecrafters-io/build-your-own-x",
-      "description": "Master programming by recreating your favorite technologies from scratch.",
-      "stargazers_count": 500024,
-      "language": "Markdown",
-      "html_url": "https://github.com/codecrafters-io/build-your-own-x",
-      "owner": {
-        "login": "codecrafters-io",
-        "avatar_url": "https://avatars.githubusercontent.com/u/58904235?v=4"
-      },
-      "created_at": "2018-05-09T12:03:18Z",
-      "pushed_at": "2026-02-21T09:34:54Z"
-    }
-  ]
-}
-```
+Card container: `article.Box-row`. Each card also contains hidden error-boundary fallback markup (e.g. `h2.f5.mt-2` text `Sorry, something went wrong.`, `p.color-fg-muted.my-2.mb-2.ws-normal` text `There was an error...`, `p.blankslate-description`) — extraction MUST use the precise selectors below and ignore fallback elements.
 
-Key fields used by the command:
-- `items` (array): list of repositories
-- `items[].name` (string): repository name
-- `items[].full_name` (string): owner/name
-- `items[].description` (string|null): description
-- `items[].stargazers_count` (number): star count
-- `items[].language` (string|null): primary language
-- `items[].html_url` (string): GitHub URL
-- `items[].owner.login` (string): owner name
-- `items[].owner.avatar_url` (string): owner avatar
-- `items[].created_at` (string): ISO 8601 creation time
-- `items[].pushed_at` (string): ISO 8601 last push time
+| Field | Selector | Sample |
+|---|---|---|
+| full_name | `h2 a` innerText (collapse whitespace, `owner / repo`) | `PrimeIntellect-ai / prime-agent` |
+| html_url | `"https://github.com"` + `h2 a[href]` | `https://github.com/PrimeIntellect-ai/prime-agent` |
+| description | `p.col-9` (class `col-9 color-fg-muted my-1 tmp-pr-4`; may be null) | `A self-improving RLM agent...` |
+| language | `span[itemprop="programmingLanguage"]` | `TypeScript` |
+| stars (total) | `a[href*="/stargazers"]` innerText, strip non-digits | `9,460` → 9460 |
+| forks | `a[href*="/forks"]` innerText, strip non-digits | `914` |
+| stars_gained | inside `div.f6`, first span matching `/stars?\s+(today|this week|this month)/i`, strip non-digits | `2,483 stars today` → 2483 |
+| builders | `a[data-hovercard-type="user"]` href (strip leading `/`) | `["kevinjosethomas","snimu",...]` |
+
+Param → URL mapping (verified):
+- `since`: `?since=daily|weekly|monthly`; default daily equals no param. Period label on gain stars changes (`stars today` / `stars this week` / `stars this month`).
+- `language`: path segment `/trending/{language}` (URL-encoded), e.g. `/trending/python`, `/trending/c++`. Combined with since: `/trending/python?since=weekly`.
+- Page count is NOT fixed (12 daily / 16 weekly / 24 monthly / 19 python / 17 python-weekly / 18 c++); max observed 24. `limit` truncates; `available` reflects the true page count.
 
 ## Failure Signals
 
-- **Rate limiting**: GitHub Search API has a rate limit of 10 requests per minute for unauthenticated requests. If exceeded, API returns HTTP 403 with `X-RateLimit-Remaining: 0`.
-- **Not strictly "trending"**: The GitHub Search API with `sort=stars` returns repositories with the highest total star counts, not necessarily those with the fastest recent growth. This is a known approximation.
-- **Empty results**: Query combinations may return zero results. The API returns `total_count: 0` and `items: []`.
-- **API drift**: GitHub may deprecate or change the Search API behavior, though this is low-frequency.
-- **Authentication**: No login required, but authenticated requests have higher rate limits (30 requests per minute).
+- **Invalid language** → HTTP 200, title without language name, `article.Box-row` count = 0 → `EMPTY_RESULT`.
+- **Rate limit / bot check** → detect HTTP 429/403 or body matching `/whoa there|captcha|rate limit|access denied|unusual traffic/i` → `NETWORK_ERROR`.
+- **Hydration break** is NOT a failure signal for this command (we never read the hydrated DOM).
+- **Network failure** (page.goto or fetch rejects) → `NETWORK_ERROR`.
+- **Bad params** (since not in daily/weekly/monthly; limit not integer 1-25) → `INVALID_PARAM`.
+- No CAPTCHA/429/403 observed during ~10 spaced same-origin fetches on 2026-08-09.
 
 ## Capture Assessment
 
-This command should be captured. The GitHub Search API is a stable, public, documented REST API that provides structured JSON data. It is suitable for `node` runtime execution and can be parameterized effectively for language filtering, time-based recency, and result limits. While it approximates "trending" rather than providing native trending metrics, it delivers high-quality, actionable results for the target use case.
+Capture as `github/get-trending` (browser runtime), overwriting the existing node runtime version via `capture finalize --force`. The real ranked list from `github.com/trending` is accurate, free of API rate limits, and the same-origin SSR fetch is stable and fast (single request, ~2s). Reusable, parameterizable (since/language/limit), and satisfies the stability/pacing requirements.

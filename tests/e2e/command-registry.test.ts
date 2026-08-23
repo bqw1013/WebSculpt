@@ -348,8 +348,7 @@ describe("command registry", () => {
 			const listResult = await runSourceCli(["command", "list"], homeDir);
 
 			expect(listResult.exitCode).toBe(0);
-			expect(listResult.stdout).not.toContain("notes");
-			expect(listResult.stdout).not.toContain("delete");
+			expect(listResult.stdout).not.toContain("websculpt notes delete");
 		});
 	});
 
@@ -447,8 +446,7 @@ describe("command registry", () => {
 			// Populate the index cache.
 			const listBefore = await runSourceCli(["command", "list"], homeDir);
 			expect(listBefore.exitCode).toBe(0);
-			expect(listBefore.stdout).toContain("notes");
-			expect(listBefore.stdout).toContain("delete");
+			expect(listBefore.stdout).toContain("websculpt notes delete");
 
 			// Manually delete the command directory behind the CLI's back.
 			const actionDir = websculptPath(homeDir, "commands", "notes", "delete");
@@ -456,8 +454,7 @@ describe("command registry", () => {
 
 			const listAfter = await runSourceCli(["command", "list"], homeDir);
 			expect(listAfter.exitCode).toBe(0);
-			expect(listAfter.stdout).not.toContain("notes");
-			expect(listAfter.stdout).not.toContain("delete");
+			expect(listAfter.stdout).not.toContain("websculpt notes delete");
 		});
 
 		it("returns NOT_FOUND when removing a manually deleted user command", async () => {

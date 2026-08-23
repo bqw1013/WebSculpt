@@ -1,0 +1,34 @@
+{
+  "id": "quora-get-answer",
+  "domain": "quora",
+  "action": "get-answer",
+  "runtime": "browser",
+  "description": "Fetch the full content of a single Quora answer by its URL. Returns the answer text, author info, upvote/comment/view counts, About the Author stats, and optionally the comment thread. Requires a browser session; a logged-in Quora account is recommended.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Full Quora answer URL, e.g. https://www.quora.com/<question-slug>/answer/<author-slug> or a Space subdomain answer URL.",
+      "required": true
+    },
+    {
+      "name": "include_comments",
+      "description": "Set to true to also load the answer's comment thread. Comments are loaded in batches, so enabling this makes the command slower.",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "comment_limit",
+      "description": "Maximum number of top-level comments to return (1-100, default 20). Only used when include_comments is true.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "include_html",
+      "description": "Set to true to also return the raw HTML of the answer body.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

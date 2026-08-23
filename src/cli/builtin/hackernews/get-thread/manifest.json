@@ -1,0 +1,27 @@
+{
+  "id": "hackernews-get-thread",
+  "domain": "hackernews",
+  "action": "get-thread",
+  "runtime": "node",
+  "description": "Read one Hacker News story by ID or item URL, returning story metadata, self-post text, and a bounded nested discussion thread.",
+  "parameters": [
+    {
+      "name": "id",
+      "description": "Hacker News story ID; provide exactly one of id or url.",
+      "required": false
+    },
+    {
+      "name": "url",
+      "description": "Hacker News item URL; provide exactly one of url or id.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of live comments to return (1-200).",
+      "required": false,
+      "default": 50
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "unknown"
+}

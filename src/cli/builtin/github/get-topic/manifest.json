@@ -1,0 +1,22 @@
+{
+  "id": "github-get-topic",
+  "domain": "github",
+  "action": "get-topic",
+  "runtime": "browser",
+  "description": "Fetch a GitHub topic's popular repositories from https://github.com/topics/<topic> (e.g. /topics/rust). Returns the topic description and the featured repo cards with full_name, description, language, and star count. Discover topics with: websculpt github list-topics. Reads the rendered topic page; no login required.",
+  "parameters": [
+    {
+      "name": "topic",
+      "description": "Topic slug, i.e. the last path segment of https://github.com/topics/<topic>. Examples: rust, machine-learning. Discover available topics with: websculpt github list-topics.（话题 slug，即 /topics/<topic> 末段路径，如 rust、machine-learning；可用 websculpt github list-topics 查看。）",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum repositories to return (1-100, default 20). The topic page shows a fixed list of up to 20 featured repositories; limit only truncates it.（条数上限；话题页固定展示最多 20 个热门仓库，limit 只做截断。）",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,34 @@
+{
+  "id": "producthunt-get-best-products",
+  "domain": "producthunt",
+  "action": "get-best-products",
+  "runtime": "browser",
+  "description": "Fetch Product Hunt's current Top reviewed Best Products ranking for a required top-level or subcategory slug. Returns one upstream page of up to 15 products with source pagination and yearly snapshot metadata; use --detailed true for descriptions, dates, ratings, categories, images, and maker details. Product Hunt login is not required.",
+  "parameters": [
+    {
+      "name": "category",
+      "description": "Required Product Hunt top-level or subcategory slug from list-categories, for example productivity or ai-meeting-notetakers.",
+      "required": true
+    },
+    {
+      "name": "page",
+      "description": "1-based upstream result page. Product Hunt currently returns 15 ranked products per page.",
+      "required": false,
+      "default": "1"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of products to return from the selected page; integer from 1 through 15.",
+      "required": false,
+      "default": "15"
+    },
+    {
+      "name": "detailed",
+      "description": "Return additional JSON-LD and card metadata. Pass true or false; default false.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

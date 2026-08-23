@@ -1,0 +1,28 @@
+{
+  "id": "substack-get-feed",
+  "domain": "substack",
+  "action": "get-feed",
+  "runtime": "browser",
+  "description": "Fetch Substack personal feed (requires login) or category feed (public). Returns a normalized list of posts and notes with author, publication, URL, engagement counts, and timestamps.",
+  "parameters": [
+    {
+      "name": "category",
+      "description": "Category slug for the public category feed. Omit to fetch the personal 'For you' feed. Available slugs: technology, us-politics, political-philosophy, hobbies-interests, us-government-policy, football-(soccer), programming-development, investigative-journalism, physics-chemistry, online-learning, software-apps, video-games, local-news, k-12-education, sports, health-politics, national-news, international, cultural-commentary, us-political-satire, sustainable-living, banking-credit, marketing, photography, ux/ui-design, comics, humor, travel, business, fiction, literature, faith, world-politics, food, fashionandbeauty, design, music, culture, history, finance, news, film-and-tv, art, climate, parenting, science, health, home-garden, crypto, philosophy, education.",
+      "required": false
+    },
+    {
+      "name": "sort",
+      "description": "Sort order for category feed. 'recent' for newest notes/posts, 'posts' for long-form posts only. Ignored when category is not set.",
+      "required": false,
+      "default": "recent"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of items to return. The command follows Substack's cursor pagination internally and truncates to this limit. Max 100.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

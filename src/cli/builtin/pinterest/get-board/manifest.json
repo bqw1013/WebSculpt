@@ -1,0 +1,22 @@
+{
+  "id": "pinterest-get-board",
+  "domain": "pinterest",
+  "action": "get-board",
+  "runtime": "browser",
+  "description": "Fetch a Pinterest Board and its Pins. A Board is a user-curated collection (like a bookmark folder or album) that groups saved Pins by theme — this command returns the board's metadata (name, description, total Pin count, owner) plus the Pins inside it, scrolling to load more up to the limit. Requires a logged-in browser session.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Board URL in the form https://www.pinterest.com/<username>/<board-slug>/. Obtain it from get-user --tab saved output or search --type board results.（图板链接，形如 /<用户名>/<图板名>/；可从 get-user --tab saved 或 search --type board 的输出拿到。）",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of Pins to return from the board (1-100, default 20). Boards can contain thousands of Pins; the command scrolls until the limit is reached or the board is exhausted (then returns fewer with partial=true).（返回图板内 Pin 数上限；图板可能有几千张 Pin，内部滚动加载，耗尽时标 partial=true。）",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

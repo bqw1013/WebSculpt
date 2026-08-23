@@ -45,11 +45,11 @@ async function run() {
 
 	// --- Builtin commands ---
 	const promises = [
-		runBg("arxiv-search-papers", ["arxiv", "search-papers", "--query", "machine learning", "--limit", "3"]),
+		runBg("arxiv-search", ["arxiv", "search", "--query", "machine learning", "--limit", "3"]),
 		runBg("bilibili-get-hot", ["bilibili", "get-hot", "--limit", "5"]),
-		runBg("github-get-trending", ["github", "get-trending", "--limit", "3"]),
-		runBg("hackernews-get-top", ["hackernews", "get-top", "--limit", "3"]),
-		runBg("reddit-get-hot", ["reddit", "get-hot", "--limit", "3"]),
+		runBg("github-get-trending", ["github", "get-trending", "--since", "daily", "--limit", "3"]),
+		runBg("hackernews-get-front-page", ["hackernews", "get-front-page", "--limit", "3"]),
+		runBg("reddit-get-feed", ["reddit", "get-feed", "--limit", "3"]),
 		runBg("weibo-get-hot-search", ["weibo", "get-hot-search", "--limit", "5"]),
 		runBg("zhihu-get-hot", ["zhihu", "get-hot", "--limit", "3"]),
 

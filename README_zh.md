@@ -132,7 +132,29 @@ websculpt zhihu get-hot --help
 websculpt zhihu get-hot --limit 5
 ```
 
-### 2.3 核心逻辑：探索一次，长期复用
+### 2.3 内置命令库
+
+WebSculpt 内置命令库开箱即用：**24 个平台 / 164 条命令**的已验证信息获取路径。
+
+| 平台 | # | 平台 | # | 平台 | # |
+|------|---|------|---|------|---|
+| 🐙 github | 15 | ❓ quora | 7 | 💌 substack | 6 |
+| 🧠 huggingface | 13 | 🎵 spotify | 7 | 📡 techmeme | 6 |
+| 🚀 producthunt | 10 | 📄 arxiv | 6 | 🎥 vimeo | 6 |
+| 📈 stocktwits | 10 | 🎬 dailymotion | 6 | ▶️ youtube | 6 |
+| ✍️ medium | 10 | 👥 facebook | 6 | 💰 kickstarter | 4 |
+| 💬 hackernews | 9 | 📸 instagram | 6 | 📺 bilibili | 1 |
+| 📰 techcrunch | 8 | 📌 pinterest | 6 | 🔥 weibo | 1 |
+| 🎮 twitch | 8 | 👽 reddit | 6 | 💡 zhihu | 1 |
+
+运行时查看完整清单：
+
+```bash
+websculpt command domains               # 所有可用平台
+websculpt command list github           # 单个平台下的命令
+```
+
+### 2.4 核心逻辑：探索一次，长期复用
 
 **已有记忆：直接调用**
 

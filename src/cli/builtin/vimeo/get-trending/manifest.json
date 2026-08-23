@@ -1,0 +1,17 @@
+{
+  "id": "vimeo-get-trending",
+  "domain": "vimeo",
+  "action": "get-trending",
+  "runtime": "node",
+  "description": "Fetch Vimeo's trending videos — the \"See what's trending\" block on the public discovery homepage vimeo.com/watch (nav: Watch). Unlike the editorial Staff Picks channels, this ranks by current viewer popularity. Each result carries title, URL, duration, upload date, view count, thumbnail, and author; the command paginates the trending API internally up to the limit (max 100). Public data needs no login and no browser session.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum videos to return (1-100, default 20). The trending API exposes up to 2000 videos, so the limit is always satisfied; partial=true only appears if the API side runs out of data.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "twitch-get-channel-videos",
+  "domain": "twitch",
+  "action": "get-channel-videos",
+  "runtime": "node",
+  "description": "List a Twitch channel's videos (VOD archive) — the Videos tab at twitch.tv/{channel}/videos. Videos are the channel's own long-form content: past broadcasts (full stream replays), highlights, and uploads — distinct from clips (viewer-created snippets). Filter by video type with --type (all | past-broadcasts | highlights | uploads). Returns cards with title, URL, duration, view count, absolute publish date, category (name + slug), and thumbnail. Queries Twitch's internal GraphQL directly over HTTP; no login or browser required. Paginates by setting the API limit directly up to 100; partial=true when the channel has more videos than returned.",
+  "parameters": [
+    {
+      "name": "channel",
+      "description": "Channel login name from twitch.tv/{channel} (e.g. \"lck\"). Lowercase.",
+      "required": true
+    },
+    {
+      "name": "type",
+      "description": "Video type filter: all (默认, all types) | past-broadcasts (过往直播, full stream replays, -> ARCHIVE) | highlights (精选内容, -> HIGHLIGHT) | uploads (上传, -> UPLOAD). Maps to the filter dropdown on the Videos tab. The page's extra '播放列表' (collections) option is a separate content type and is not covered.",
+      "required": false,
+      "default": "all"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of videos to return (1-100, default 20). Sets the GraphQL limit directly; no page turn needed. partial=true when the channel has more.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

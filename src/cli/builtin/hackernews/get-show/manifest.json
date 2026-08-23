@@ -1,0 +1,17 @@
+{
+  "id": "hackernews-get-show",
+  "domain": "hackernews",
+  "action": "get-show",
+  "runtime": "browser",
+  "description": "Fetch the current Hacker News Show HN listing in page rank order through an attached browser. Returns project and discussion links, authors, timestamps, scores, comment counts, and text-post flags; supports up to 50 results across Show HN pagination.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of Show HN stories to return (1-50).",
+      "required": false,
+      "default": 15
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,34 @@
+{
+  "id": "dailymotion-get-user",
+  "domain": "dailymotion",
+  "action": "get-user",
+  "runtime": "browser",
+  "description": "Fetch a Dailymotion uploader's page as shown on the site (dailymotion.com/user/{username}): header profile (screenname, @username, avatar, description, follower/video/playlist/view counts, verified, joined date) plus one sub-page list. tab picks the sub-page: videos (视频, default) | feed (最新动态, activity timeline; currently identical to videos — 最新动态 is the default sort, not a separate page) | playlists (播放列表, the profile's featured playlists). sort recent (最新动态, default) / visited (观看最多的, ?sort=visited) applies to videos/feed only. The user parameter accepts both ID (x1vy1cl) and username (beinsports-hk) — an ID is resolved to its username via the public API before navigating (the site 404s on ID-form URLs). Scrolls internally up to the limit (max 100); partial=true when the stream is exhausted. Uses the public API for header counts (the page header shows no counts) and the live DOM for the lists. Requires a browser session; login recommended.",
+  "parameters": [
+    {
+      "name": "user",
+      "description": "User ID (e.g. \"x1vy1cl\") or username (e.g. \"beinsports-hk\" from dailymotion.com/user/{username}). Both forms resolve to the same uploader; an ID is converted to its username via the public API before navigating. Found via dailymotion/search --type user or any video's uploader link.",
+      "required": true
+    },
+    {
+      "name": "tab",
+      "description": "Which sub-page: videos (default, 视频, /user/{u}/videos) | feed (最新动态, root /user/{u}; currently renders the same video grid as videos) | playlists (播放列表, /user/{u}/playlists; the profile shows only non-empty/featured playlists). Header profile fields are always returned.",
+      "required": false,
+      "default": "videos"
+    },
+    {
+      "name": "sort",
+      "description": "Video-list ordering: recent (default, 最新动态) | visited (观看最多的, most viewed, ?sort=visited). Only used when tab is videos or feed.",
+      "required": false,
+      "default": "recent"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum items to return (1-100, default 20). Scrolls internally up to the limit; partial=true when the stream is exhausted.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

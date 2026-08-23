@@ -1,0 +1,17 @@
+{
+  "id": "hackernews-get-jobs",
+  "domain": "hackernews",
+  "action": "get-jobs",
+  "runtime": "browser",
+  "description": "Read Hacker News YC startup job postings in the /jobs page order, following More pagination up to a bounded limit and enriching each row with Firebase job metadata.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of jobs to return (1-50).",
+      "required": false,
+      "default": 15
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

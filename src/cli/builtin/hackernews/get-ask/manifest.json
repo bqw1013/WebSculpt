@@ -1,0 +1,17 @@
+{
+  "id": "hackernews-get-ask",
+  "domain": "hackernews",
+  "action": "get-ask",
+  "runtime": "node",
+  "description": "Fetch the Hacker News Ask feed in HN order through the public Firebase API, returning bounded story cards with self-post text and Ask/Tell/other title labels.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of Ask feed stories to return (1-50).",
+      "required": false,
+      "default": "15"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

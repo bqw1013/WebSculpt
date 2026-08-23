@@ -1,0 +1,29 @@
+{
+  "id": "twitch-search",
+  "domain": "twitch",
+  "action": "search",
+  "runtime": "node",
+  "description": "Search Twitch channels, categories, or videos by keyword via Twitch's internal GraphQL (operation SearchResultsPage_SearchResults) — equivalent to the search box at the top of twitch.tv (result views: Channels / Categories / Videos). Returns result cards: channels (login, display name, follower count, live status plus live title/category/viewers), categories (name, slug usable as twitch/get-feed's category, live viewer count, tags), videos (title, URL, channel, view count, publish date). Paginates internally 15 per page up to the limit (max 100); partial=true when fewer results exist than requested. Twitch search exposes no sorting or time filtering, so no such parameters exist. No login or browser required.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keyword, e.g. \"lck\" or \"league of legends\". Plain text, same as the on-site search box. (搜索关键词，与站内搜索框行为一致。)",
+      "required": true
+    },
+    {
+      "name": "type",
+      "description": "Result type — all 3 values: channel = 主播频道/直播 (streamer accounts and live streams, default) / category = 游戏/分类 (games/topics, slug usable by twitch/get-feed's category parameter) / video = 视频 (VODs and uploads). Maps to the GraphQL target index CHANNEL|GAME|VOD.",
+      "required": false,
+      "default": "channel"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of results to return (1-100, default 20). Paginates internally by 15 per page via the response cursor; partial=true when fewer results exist than requested. (返回条数上限，内部自动翻页；结果不足时标记 partial。)",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

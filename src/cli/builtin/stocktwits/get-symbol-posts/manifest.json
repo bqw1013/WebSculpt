@@ -1,0 +1,28 @@
+{
+  "id": "stocktwits-get-symbol-posts",
+  "domain": "stocktwits",
+  "action": "get-symbol-posts",
+  "runtime": "node",
+  "description": "Fetch the discussion post stream for a Stocktwits symbol (the feed on stocktwits.com/symbol/{symbol}, e.g. AAPL or BTC.X). filter picks the page's tabs: top (default, the site's ranked view) | all (newest first; the API rejects \"latest\" with 400, so all is the newest view) | bullish (only Bullish-tagged posts) | bearish (only Bearish-tagged posts). Returns the symbol summary (id, symbol, title, exchange, region, watchlist count, logo, instrument class) plus messages with id, url (https://stocktwits.com/{username}/message/{id}), body, createdAt, sentiment tag (Bullish/Bearish/null), like count, author (username, name, avatar, followers, ideas), and mentioned symbols. Paginates internally (30 per API page via the max cursor) up to --limit (1-100, default 20); partial=true when the stream is exhausted. Anonymous public API — no login, no browser needed.",
+  "parameters": [
+    {
+      "name": "symbol",
+      "description": "The cashtag symbol without the $, e.g. \"AAPL\" or \"BTC.X\" for crypto. Take it from stocktwits/search, stocktwits/list-rankings, or the symbols field of any post. 标的代码，不带 $，如 AAPL（股票）或 BTC.X（加密货币）；可来自 search/list-rankings/任意帖子的 symbols 字段。",
+      "required": true
+    },
+    {
+      "name": "filter",
+      "description": "Feed tab, default top: top (热门, the site's own default ranked tab) | all (最新, newest first, unfiltered) | bullish (看涨, only Bullish-tagged posts) | bearish (看跌, only Bearish-tagged posts). Note \"latest\" is NOT valid — the Stocktwits API rejects it with HTTP 400; use all for the newest view. 流的筛选 tab，对应标的页 热门/最新/看涨/看跌；API 拒绝 latest（400），最新视图请用 all。",
+      "required": false,
+      "default": "top"
+    },
+    {
+      "name": "limit",
+      "description": "Max posts to return, 1-100, default 20. The API serves 30 per page; the command paginates internally with the max cursor, partial=true when the stream is exhausted. 返回帖子上限，1-100，默认 20；API 每页最多 30 条，命令内部用 max 游标翻页，流耗尽时 partial=true。",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

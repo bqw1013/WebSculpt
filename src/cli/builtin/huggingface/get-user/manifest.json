@@ -1,0 +1,16 @@
+{
+  "id": "huggingface-get-user",
+  "domain": "huggingface",
+  "action": "get-user",
+  "runtime": "browser",
+  "description": "Fetch a Hugging Face user or organization profile: display name, PRO flag, follower/following counts, avatar URL, and the profile's published models plus dataset and Space counts. user accepts a HF username or organization name (e.g. deepseek-ai or HuggingFaceFW). Reads the profile page DOM plus HF's internal author API from the browser; no login required.",
+  "parameters": [
+    {
+      "name": "user",
+      "description": "HF username or organization name (e.g. deepseek-ai).",
+      "required": true
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

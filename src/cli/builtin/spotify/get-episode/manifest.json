@@ -1,0 +1,27 @@
+{
+  "id": "spotify-get-episode",
+  "domain": "spotify",
+  "action": "get-episode",
+  "runtime": "browser",
+  "description": "Fetch a single Spotify podcast episode (open.spotify.com/episode/{id}) — one installment of a podcast, NOT the podcast itself (use spotify/get-podcast for that). Returns title, parent show (id/url/title), publish date, duration (ms), full episode description, explicit flag, video-episode flag, cover art, and the 30-second mp3 preview URL. --include-related adds the page's 'More like this' episode recommendations. Runs in a browser context (Spotify's GraphQL API is not anonymously callable); browsing public episodes needs no login. Episode URLs/ids come from spotify/search, spotify/get-podcast episode lists, or spotify/list-new-releases.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Episode URL, e.g. https://open.spotify.com/episode/7CJ7dioRxLKDCIsK2K0c7y. Take it from the episodes array of spotify/get-podcast, spotify/search (type=episodes), or spotify/list-new-releases results. Mutually exclusive with --id (one is required).",
+      "required": false
+    },
+    {
+      "name": "id",
+      "description": "The 22-character episode id from the /episode/ URL segment, e.g. 7CJ7dioRxLKDCIsK2K0c7y. Mutually exclusive with --url (one is required).",
+      "required": false
+    },
+    {
+      "name": "include_related",
+      "description": "Set true to also return 'More like this' episode recommendations (id/url/title/show). Default false.",
+      "required": false,
+      "default": false
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

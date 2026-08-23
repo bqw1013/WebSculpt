@@ -1,0 +1,22 @@
+{
+  "id": "hackernews-get-past",
+  "domain": "hackernews",
+  "action": "get-past",
+  "runtime": "browser",
+  "description": "Fetch a historical Hacker News front-page snapshot for a date (or HN's default latest complete day) through the public HN page and Firebase item API in an attached browser. Returns the snapshot date and ordered story cards with links, authors, timestamps, scores, and comment counts.",
+  "parameters": [
+    {
+      "name": "date",
+      "description": "Historical snapshot date in strict YYYY-MM-DD format; omit to use HN's default latest complete day.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Number of eligible stories to return (1-50).",
+      "required": false,
+      "default": 15
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

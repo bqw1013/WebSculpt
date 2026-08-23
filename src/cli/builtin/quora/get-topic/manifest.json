@@ -1,0 +1,28 @@
+{
+  "id": "quora-get-topic",
+  "domain": "quora",
+  "action": "get-topic",
+  "runtime": "browser",
+  "description": "Fetch a Quora topic page by slug: returns topic metadata and one of three sections — Read (mixed answer/question feed), top_questions (open questions), or writers (most viewed writers by 30-day answer views). Uses GraphQL when available and falls back to visible DOM extraction if the page structure drifts.",
+  "parameters": [
+    {
+      "name": "topic",
+      "description": "Topic slug, i.e. the last path segment of https://www.quora.com/topic/<slug>. Examples: Technology, Artificial-Intelligence, Creative-Writing.",
+      "required": true
+    },
+    {
+      "name": "section",
+      "description": "Which topic tab to return: read (default, mixed answer/question feed), top_questions (open questions in this topic), or writers (most viewed writers ranked by 30-day answer views).",
+      "required": false,
+      "default": "read"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of items to return (1-100, default 20). read and top_questions lazy-load; writers is a fixed short list and will return all available if fewer than limit.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "hackernews-search",
+  "domain": "hackernews",
+  "action": "search",
+  "runtime": "node",
+  "description": "Search HackerNews stories, comments, Ask HN, and Show HN posts via the public Algolia API (no key, no login, no browser). Takes a required keyword query and returns structured results with title, URL, author, publish time, points/comment metrics, and type-specific fields. Supports content type filter, relevance or latest-date sorting, and time range filtering; requests above the maxLimit of 1000 are rejected.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keyword",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "返回数量，上限 1000",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "type",
+      "description": "内容类型：story / comment / ask_hn / show_hn",
+      "required": false,
+      "default": "story"
+    },
+    {
+      "name": "sort",
+      "description": "排序：default（相关性）/ latest（时间倒序）；popular 不支持，会被忽略并标注 ignoredParams",
+      "required": false,
+      "default": "default"
+    },
+    {
+      "name": "time",
+      "description": "时间范围：day / week / month / year / all",
+      "required": false,
+      "default": "all"
+    }
+  ],
+  "maxLimit": 1000,
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "arxiv-list-categories",
+  "domain": "arxiv",
+  "action": "list-categories",
+  "runtime": "node",
+  "description": "List arXiv's category taxonomy (155 categories, source: arxiv.org/category_taxonomy) — the valid values for the --category parameter of arxiv/list-papers, arxiv/search, and arxiv/get-author-papers. Returns {id, name, group} triplets: category ID (e.g. \"cs.AI\"), English name (\"Artificial Intelligence\"), and top-level group (\"cs\"). Use --group to list only one subject area; omit to list all 155 categories. Single request, no authentication required. 枚举 arXiv 全部分类（当前实测 155 个，来源页 arxiv.org/category_taxonomy），返回 {id, name, group} 三元组（id=分类 ID 如 cs.AI，name=英文全名，group=顶层学科）。可用 --group 过滤单一学科，省略则列出全部 155 个。单请求、无需登录。",
+  "parameters": [
+    {
+      "name": "group",
+      "required": false,
+      "description": "Top-level subject area to filter by. Valid values (all 8): cs (Computer Science), econ (Economics), eess (Electrical Engineering and Systems Science), math (Mathematics), physics (Physics), q-bio (Quantitative Biology), q-fin (Quantitative Finance), stat (Statistics). Omit to list all 155 categories. Matching uses the explicit group field (not an id prefix), so --group physics also returns astro-ph.*, hep-th, quant-ph, cond-mat.*, gr-qc, nlin.*, nucl-*, math-ph. 按顶层学科过滤，8 个可取值：cs（计算机科学）、econ（经济学）、eess（电气工程与系统科学）、math（数学）、physics（物理，含 astro-ph.*、hep-th、quant-ph、cond-mat.*、gr-qc、nlin.*、nucl-*、math-ph 等非 physics 前缀分类）、q-bio（定量生物学）、q-fin（定量金融）、stat（统计学）。省略则列出全部 155 个分类。"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

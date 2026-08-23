@@ -1,0 +1,28 @@
+{
+  "id": "facebook-get-page",
+  "domain": "facebook",
+  "action": "get-page",
+  "runtime": "browser",
+  "description": "Fetch a Facebook Page (公共主页, e.g. a brand, media outlet, or public figure) and its sub-pages. page is the vanity name from the Page URL (facebook.com/{page}). tab selects the sub-page: posts (default, the Page's post timeline), about (简介), photos (照片), reels (Reels), followers (粉丝). Implemented via path-based sub-URLs (/{page}/about etc.), unlike personal profiles which use sk= parameters. List tabs scroll internally up to 100 items, partial=true when exhausted. Requires an active Facebook login.",
+  "parameters": [
+    {
+      "name": "page",
+      "required": true,
+      "description": "Vanity name of the Facebook Page, i.e. the segment in facebook.com/{page}. Find it by opening the Page and copying from the address bar, or use facebook/search --type pages.（公共主页的 vanity 名，即 URL 中 facebook.com/ 后面那段；用 search --type pages 可查找。）"
+    },
+    {
+      "name": "tab",
+      "required": false,
+      "default": "posts",
+      "description": "Page sub-page: posts (default, 帖子 timeline) | about (简介) | photos (照片) | reels (Reels) | followers (粉丝, may show only a subset). Maps to the tabs under the Page header; implemented via path-based URLs: posts=帖子(/{page}/)、about=简介(/{page}/about)、photos=照片(/{page}/photos)、reels=Reels(/{page}/reels_tab，重定向 /reels/)、followers=粉丝(/{page}/followers)。注意与个人主页的 sk= 机制不同。"
+    },
+    {
+      "name": "limit",
+      "required": false,
+      "default": 20,
+      "description": "Maximum items to return (1-100, default 20). Applies to feed/list tabs (posts/photos/reels/followers); ignored for about (简介不适用). Scrolls internally; partial=true when the list ends early.（条数上限，仅帖子流/列表类子页生效，about 不适用。）"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

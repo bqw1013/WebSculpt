@@ -1,0 +1,34 @@
+{
+  "id": "github-list-repos",
+  "domain": "github",
+  "action": "list-repos",
+  "runtime": "browser",
+  "description": "List a GitHub user's or organization's public repositories from their profile repositories tab. type=owner (default, 自己创建) | fork (fork 的) | member (参与的) filters by relation; sort=stars (default, 最多 star) | updated (最近更新) | created (最新创建) | name (名称) orders the list. Returns repo cards with full_name, description, language, star/fork counts, archived flag, and last-updated ISO timestamp. Note: GitHub's page has no native 'member' filter (falls back to all public repos) and no 'created' sort (falls back to recent update). Reads the rendered tab; no login required.",
+  "parameters": [
+    {
+      "name": "user",
+      "description": "GitHub username or organization name, e.g. facebook or torvalds. A full profile URL like https://github.com/facebook is also accepted.（用户名或组织名，如 facebook、torvalds。）",
+      "required": true
+    },
+    {
+      "name": "type",
+      "description": "Which repositories to list: owner (default, repos they created / 自己创建) | fork (repos they forked / fork 的) | member (repos they participate in / 参与的; GitHub has no native member filter, falls back to all public repos).",
+      "required": false,
+      "default": "owner"
+    },
+    {
+      "name": "sort",
+      "description": "Sort order: stars (default, most stars first / 最多 star) | updated (recently updated / 最近更新) | created (newest first / 最新创建; GitHub has no native created sort, falls back to recent update) | name (alphabetical / 名称).",
+      "required": false,
+      "default": "stars"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum repositories to return (1-100, default 20).（条数上限。）",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

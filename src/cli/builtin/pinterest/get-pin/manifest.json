@@ -1,0 +1,35 @@
+{
+  "id": "pinterest-get-pin",
+  "domain": "pinterest",
+  "action": "get-pin",
+  "runtime": "browser",
+  "description": "Fetch full details of a single Pinterest Pin (an image or video post) by URL or Pin id. Returns title, description, full-resolution image (or HLS playlist URL for video Pins), outbound source link, creator, reaction/comment counts. Pass --include_comments true to also load comments, and --related_limit N to also return N related Pins from the \"More like this\" section. Requires a logged-in browser session.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Pin URL (https://www.pinterest.com/pin/<id>/) or a bare numeric Pin id. Pin URLs appear in the output of search, get-feed, get-board and get-user.",
+      "required": true
+    },
+    {
+      "name": "include_comments",
+      "description": "Set to true to also return the Pin's comments. Default false. Comments lazy-load, so enabling this makes the command slower.",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "comment_limit",
+      "description": "Maximum number of comments to return (1-100, default 20). Only used when include_comments is true.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "related_limit",
+      "description": "Number of related Pins to also return (0-50, default 0 = disabled). Related Pins are the \"More like this\" recommendations below the Pin.",
+      "required": false,
+      "default": "0"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

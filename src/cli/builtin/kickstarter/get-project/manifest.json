@@ -1,0 +1,40 @@
+{
+  "id": "kickstarter-get-project",
+  "domain": "kickstarter",
+  "action": "get-project",
+  "runtime": "browser",
+  "description": "Return a Kickstarter project's full detail (funding stats, story, risks, rewards, tags, creator, location, category, counts) from a project URL or creator/slug. Optional --include_comments / --include_updates load the comments/updates tabs via GraphQL. Runs in browser because node/curl are blocked by Cloudflare.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Project URL (https://www.kickstarter.com/projects/{creator}/{slug}) or creator/slug short form",
+      "required": true
+    },
+    {
+      "name": "include_comments",
+      "description": "Load the comments tab via GraphQL CommentsQuery",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "comment_limit",
+      "description": "Number of top-level comments to load (1-100)",
+      "required": false,
+      "default": "25"
+    },
+    {
+      "name": "include_updates",
+      "description": "Load the updates tab via GraphQL PostsFeed timeline",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "update_limit",
+      "description": "Number of timeline items (updates) to load (1-100)",
+      "required": false,
+      "default": "10"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

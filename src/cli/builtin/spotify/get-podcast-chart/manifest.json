@@ -1,0 +1,10 @@
+{
+  "id": "spotify-get-podcast-chart",
+  "domain": "spotify",
+  "action": "get-podcast-chart",
+  "runtime": "browser",
+  "description": "Fetch Spotify's in-app podcast chart (播客排行榜, open.spotify.com/genre/0JQ5DAB3zgCauRwnvdEQjJ — reached from the podcast hub's chart card). A single fixed top-20 ranked list of podcast shows with rank, show id/url, title, publisher, and cover; no pagination and no parameters (the page has none). Note: the standalone charts.spotify.com site requires login and is NOT used. Runs in a browser context; the chart is read through a fresh anonymous context (a logged-in account can get an empty chart), so no login is needed. Pass show urls/ids to spotify/get-podcast for details.",
+  "parameters": [],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

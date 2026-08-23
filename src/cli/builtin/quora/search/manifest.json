@@ -1,0 +1,41 @@
+{
+  "id": "quora-search",
+  "domain": "quora",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search Quora public questions, answers, posts, profiles, topics, or Spaces while preserving native GraphQL fields and using a visible DOM fallback when page data drifts.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Quora search query",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results, strict positive integer from 1 to 100",
+      "required": false,
+      "default": 20
+    },
+    {
+      "name": "type",
+      "description": "Search result type: all, question, answer, post, profile, topic, or tribe (Spaces)",
+      "required": false,
+      "default": "all"
+    },
+    {
+      "name": "sort",
+      "description": "Standard sort: default or latest; popular is accepted and reported as ignored because Quora exposes relevance/recent only",
+      "required": false,
+      "default": "default"
+    },
+    {
+      "name": "time",
+      "description": "Standard time range: all, hour, day, week, month, or year. Maps to Quora's search page \"By time\" filter (Past hour / Past day / Past week / Past month / Past year).",
+      "required": false,
+      "default": "all"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "unknown"
+}

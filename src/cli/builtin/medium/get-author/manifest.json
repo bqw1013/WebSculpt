@@ -1,0 +1,28 @@
+{
+  "id": "medium-get-author",
+  "domain": "medium",
+  "action": "get-author",
+  "runtime": "browser",
+  "description": "Fetch a Medium author's public profile and one content section. Always returns profile metadata (name, bio, avatar, follower/following counts). The section parameter selects what else to load: home (published stories, default), reposts, activity, lists (the author's bookmark lists), or about (long bio). Profile subpages live under https://medium.com/@<username>/<section>. Data comes from the page's embedded Apollo state plus DOM cards for scroll-loaded entries. No login required.",
+  "parameters": [
+    {
+      "name": "username",
+      "description": "Medium username without the @ prefix, i.e. the segment after @ in the profile URL https://medium.com/@<username>. A leading @ is tolerated and stripped. Matching is case-insensitive.",
+      "required": true
+    },
+    {
+      "name": "section",
+      "description": "Which profile tab to return. One of: home (author's stories, default) | reposts (stories the author reposted; empty for most users) | activity (recent public activity, e.g. claps) | lists (bookmark lists created by the author) | about (long-form bio; limit is ignored).",
+      "required": false,
+      "default": "home"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of entries to return for list-like sections home/reposts/activity/lists (1-100, default 20). List sections lazy-load on scroll; the command scrolls until the limit is reached or the stream is exhausted, then returns fewer items with partial=true. Ignored when section=about.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

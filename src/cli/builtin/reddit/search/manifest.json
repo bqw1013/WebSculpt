@@ -1,0 +1,52 @@
+{
+  "id": "reddit-search",
+  "domain": "reddit",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search Reddit's native public web interface for posts or comments by keyword in an attached browser. Supports query, optional subreddit scope, limit, post/comment type, latest/popular sorting, and standard time ranges; returns visible native fields plus explicit partial and relevance metadata.",
+  "parameters": [
+    {
+      "name": "query",
+      "type": "string",
+      "required": true,
+      "description": "Reddit search keyword or phrase"
+    },
+    {
+      "name": "subreddit",
+      "type": "string",
+      "required": false,
+      "description": "Restrict search to a specific subreddit (e.g. programming or r/programming)"
+    },
+    {
+      "name": "limit",
+      "type": "integer",
+      "required": false,
+      "default": 20,
+      "description": "Maximum number of results to return (1-100)"
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "required": false,
+      "default": "post",
+      "description": "Result type: post or comment"
+    },
+    {
+      "name": "sort",
+      "type": "string",
+      "required": false,
+      "default": "default",
+      "description": "Sort mode: default, latest, or popular"
+    },
+    {
+      "name": "time",
+      "type": "string",
+      "required": false,
+      "default": "all",
+      "description": "Time range: day, week, month, year, or all"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

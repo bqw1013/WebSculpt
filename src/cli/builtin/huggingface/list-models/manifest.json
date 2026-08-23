@@ -1,0 +1,44 @@
+{
+  "id": "huggingface-list-models",
+  "domain": "huggingface",
+  "action": "list-models",
+  "runtime": "browser",
+  "description": "List Hugging Face models with filtering by task (pipeline_tag), sort order, keyword search, and author. pipeline_tag accepts all 47 HF task slugs (any-to-any, audio-text-to-text, ... reinforcement-learning, see full list in parameter description); sort is trending (default, 趋势) | likes (点赞) | downloads (下载) | created (最新创建) | modified (最近更新); search does a keyword filter (对应 models 页搜索框); author lists one user/organization's models. Returns ranked items with id, url, likes, downloads, trendingScore, pipeline_tag, library_name, tags, created/updated dates. Default sort=trending covers the old get-trending scenario. Requires browser; no login.",
+  "parameters": [
+    {
+      "name": "pipeline_tag",
+      "type": "string",
+      "required": false,
+      "description": "Filter by task type. All 47 HF task slugs (verified against the /tasks page): any-to-any(任意到任意多模态), audio-text-to-text(音频文本到文本), document-question-answering(文档问答), visual-document-retrieval(视觉文档检索), image-text-to-text(图像文本到文本), image-text-to-image(图像文本到图像), image-text-to-video(图像文本到视频), video-text-to-text(视频文本到文本), visual-question-answering(视觉问答), feature-extraction(特征提取), fill-mask(掩码填充), question-answering(问答), sentence-similarity(句间相似度), summarization(摘要生成), table-question-answering(表格问答), text-classification(文本分类), text-generation(文本生成), text-ranking(文本排序), token-classification(词元分类), translation(翻译), zero-shot-classification(零样本分类), depth-estimation(深度估计), image-classification(图像分类), image-feature-extraction(图像特征提取), image-segmentation(图像分割), image-to-image(图像到图像), image-to-text(图像到文本), image-to-video(图像到视频), keypoint-detection(关键点检测), mask-generation(掩码生成), object-detection(目标检测), video-classification(视频分类), text-to-image(文本到图像), text-to-video(文本到视频), unconditional-image-generation(无条件图像生成), video-to-video(视频到视频), zero-shot-image-classification(零样本图像分类), zero-shot-object-detection(零样本目标检测), text-to-3d(文本到3D), image-to-3d(图像到3D), audio-classification(音频分类), audio-to-audio(音频到音频), automatic-speech-recognition(自动语音识别), text-to-speech(文本到语音), tabular-classification(表格分类), tabular-regression(表格回归), reinforcement-learning(强化学习). (按任务类型过滤模型，对应 models 页左侧任务分类。)"
+    },
+    {
+      "name": "sort",
+      "type": "string",
+      "required": false,
+      "default": "trending",
+      "description": "Sort order: trending (default, 趋势) | likes (点赞最多) | downloads (下载最多) | created (最新创建) | modified (最近更新). Internally mapped to HF API keys: trending→trendingScore, likes→likes, downloads→downloads, created→createdAt, modified→lastModified."
+    },
+    {
+      "name": "search",
+      "type": "string",
+      "required": false,
+      "description": "Keyword search within models, matching the search box on the /models page (URL ?search=). (在模型索引内按关键词过滤，对应 models 页搜索框。)"
+    },
+    {
+      "name": "author",
+      "type": "string",
+      "required": false,
+      "description": "List all models by one author/organization (URL ?author=). Returns full model metadata for each. (列出某作者/组织发布的所有模型。)"
+    },
+    {
+      "name": "limit",
+      "type": "integer",
+      "required": false,
+      "default": "20",
+      "description": "Maximum models to return (1-100, default 20). (返回条数上限，1-100，默认 20。)"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

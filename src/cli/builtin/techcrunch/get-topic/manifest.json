@@ -1,0 +1,22 @@
+{
+  "id": "techcrunch-get-topic",
+  "domain": "techcrunch",
+  "action": "get-topic",
+  "runtime": "node",
+  "description": "Fetch the article stream under a TechCrunch topic/company tag — the same list shown on tag pages like techcrunch.com/tag/apple/. Tags are TechCrunch's free-form labels, mostly company, people, and product names (apple, openai, spacex, elon-musk...), distinct from the 23 fixed editorial categories in techcrunch/get-feed. The topic parameter is the tag slug from the tag page URL; you can also copy slugs from the tags field returned by techcrunch/get-article. Returns the tag's total article count plus article cards (title, URL, date, excerpt, featured image, categories). Paginates internally up to the limit (max 100); partial=true when the stream is exhausted. No authentication required.",
+  "parameters": [
+    {
+      "name": "topic",
+      "description": "Tag slug as it appears in tag page URLs: techcrunch.com/tag/{slug}/ (e.g. \"apple\", \"openai\", \"cloud-computing\"). Lowercase, words joined with hyphens. Discovery: open any article and check its tag links, or use the tags array from techcrunch/get-article.",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of articles to return (1-100, default 20). Paginates internally; partial=true when the tag stream is exhausted.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

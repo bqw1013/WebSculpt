@@ -77,7 +77,7 @@ describe("command import", () => {
 		tempDirs.push(sourceHome);
 		await registerUserCommand(sourceHome, "note-save-package", notesSavePackage);
 		await registerUserCommand(sourceHome, "note-delete-package", notesDeletePackage);
-		const exportDir = await createExportPackage(sourceHome, "export-pkg");
+		const exportDir = await createExportPackage(sourceHome, "export-pkg", ["notes/save", "notes/delete"]);
 
 		// Pre-register one of the commands in the target home
 		const targetHome = await createIsolatedHome();

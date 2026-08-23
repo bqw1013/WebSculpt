@@ -1,0 +1,16 @@
+{
+  "id": "twitch-get-clip",
+  "domain": "twitch",
+  "action": "get-clip",
+  "runtime": "node",
+  "description": "Fetch details of a single Twitch clip by URL or bare slug via Twitch's internal GraphQL (no login, no browser). Clips are short viewer-created highlights; returns title, owning channel, game/category, view count, clipper name, duration, creation date, thumbnail, and the source VOD reference when available (sourceVideoUrl is null when the clip has no accessible source broadcast). The clip's chat is a real-time message stream and is intentionally not included. Input URLs come from twitch/get-channel-clips results. Returns NOT_FOUND for nonexistent slugs.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Full clip URL (https://www.twitch.tv/{channel}/clip/{slug}) or a bare clip slug ({slug}). The slug is the true identifier, so the channel segment is ignored; a trailing ?range= query string (e.g. ?range=7d) is stripped automatically. Examples: \"https://www.twitch.tv/lck/clip/ObeseDarkLapwingPartyTime-sYFEmpufSo89ELev\" or \"ObeseDarkLapwingPartyTime-sYFEmpufSo89ELev\". URLs come from twitch/get-channel-clips results.",
+      "required": true
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

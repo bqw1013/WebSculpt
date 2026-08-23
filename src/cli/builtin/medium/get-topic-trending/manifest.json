@@ -1,0 +1,22 @@
+{
+  "id": "medium-get-topic-trending",
+  "domain": "medium",
+  "action": "get-topic-trending",
+  "runtime": "browser",
+  "description": "Fetch trending articles for a Medium topic. Reads the topic's recommended stream (https://medium.com/tag/<slug>/recommended) and scrolls to load more, up to 100 items. Returns ranked articles with title, subtitle, author, publication, clap count, response count, tags, reading time, publish date, preview image, and topic metadata. No API key required.",
+  "parameters": [
+    {
+      "name": "topic",
+      "description": "Topic slug (required), i.e. the last path segment of the topic page URL https://medium.com/tag/<slug>. Examples: artificial-intelligence, programming, technology, machine-learning. Discover slugs with: websculpt medium list-topics [--query <name>].",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Number of items to return (1-100, default 20). The recommended stream lazy-loads; the command scrolls until the limit is reached or the stream is exhausted (then returns fewer items with partial=true).",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

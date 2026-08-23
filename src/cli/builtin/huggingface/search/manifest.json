@@ -1,0 +1,28 @@
+{
+  "id": "huggingface-search",
+  "domain": "huggingface",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search across Hugging Face models, datasets, and Spaces by keyword (matches the search box on /models, /datasets, /spaces; not README full-text). type filters to all (default, 全部) | model (模型) | dataset (数据集) | space (Space); limit (1-100, default 20) caps results per type. Returns merged items with type, id, url, likes, downloads, tags (pipeline_tag for models, sdk for Spaces). Reads HF list APIs in the browser; no login required.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keyword, e.g. vision transformer. Non-empty required.（搜索关键词，如 vision transformer，必填。）",
+      "required": true
+    },
+    {
+      "name": "type",
+      "description": "Result type: all (default, 全部) | model (模型) | dataset (数据集) | space (Space). all merges the three list APIs; a single type queries only that API.（结果类型。）",
+      "required": false,
+      "default": "all"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results per type (1-100, default 20).（每种类型返回条数上限。）",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

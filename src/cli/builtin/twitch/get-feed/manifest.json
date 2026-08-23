@@ -1,0 +1,33 @@
+{
+  "id": "twitch-get-feed",
+  "domain": "twitch",
+  "action": "get-feed",
+  "runtime": "browser",
+  "description": "Browse live Twitch channels — the live-channel grid on twitch.tv/directory/all (all channels) or twitch.tv/directory/category/{slug} (a specific game/category). Returns live cards: channel login, stream title, category name+slug, live viewer count, thumbnail, URL. Filter by category slug, broadcaster language (34 options), and sort order (recommended | viewers | viewers-asc | recent — the four options in the page's sort dropdown). Note: Twitch's server silently ignores the 'viewers' (VIEWER_COUNT) sort value, so that order is applied client-side over the fetched page — semantics are 'top N by viewers within the returned set'. Anonymous sessions cap at roughly 30–34 channels (cursor pagination is blocked by Twitch's integrity challenge); partial=true is returned when the grid is exhausted. No login required.",
+  "parameters": [
+    {
+      "name": "category",
+      "description": "Category (game) slug as it appears in category page URLs: twitch.tv/directory/category/{slug}/ (e.g. league-of-legends, just-chatting). Omit to browse all live channels. Discovery: twitch/search --type category returns slugs.",
+      "required": false
+    },
+    {
+      "name": "language",
+      "description": "Broadcaster language filter: zh(中文) | en | id(Bahasa Indonesia) | ca(Català) | da(Dansk) | de(Deutsch) | es(Español) | fr(Français) | it(Italiano) | hu(Magyar) | nl(Nederlands) | no(Norsk) | pl(Polski) | pt(Português) | ro(Română) | sk(Slovenčina) | fi(Suomi) | sv(Svenska) | tl(Tagalog) | vi(Tiếng Việt) | tr(Türkçe) | cs(Čeština) | el(Ελληνικά) | bg(Български) | ru(Русский) | uk(Українська) | ar(العربية) | ms(بهاس ملايو) | hi(मानक हिन्दी) | th(ภาษาไทย) | ja(日本語) | ko(한국어) | asl(American Sign Language) | other. Omit for all languages. Maps to the language filter chips on directory pages.",
+      "required": false
+    },
+    {
+      "name": "sort",
+      "description": "Sort order: recommended (default, 为您推荐, Twitch's For You ranking) | viewers (观众人数高到低, highest live viewer count first) | viewers-asc (观众人数低到高) | recent (最近开始). These are the four options in the page's sort dropdown. Note: 'viewers' and 'viewers-asc' are applied client-side over the fetched page (Twitch's server ignores the VIEWER_COUNT descending enum), so 'viewers' means 'top N by viewers within the returned set'.",
+      "required": false,
+      "default": "recommended"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of live channels to return (1-100, default 20). Anonymous sessions are capped at roughly 30-34 channels because cursor pagination is blocked by Twitch's integrity challenge; partial=true is returned when the grid is exhausted.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

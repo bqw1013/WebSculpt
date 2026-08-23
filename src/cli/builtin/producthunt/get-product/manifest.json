@@ -1,0 +1,22 @@
+{
+  "id": "producthunt-get-product",
+  "domain": "producthunt",
+  "action": "get-product",
+  "runtime": "browser",
+  "description": "Fetch one public Product Hunt product detail by its slug. Returns compact identity, description, categories, website, and review/follower stats by default; pass --detailed true for publication metadata, images, makers, the latest launch, and awards. Product Hunt login is not required.",
+  "parameters": [
+    {
+      "name": "slug",
+      "description": "Required Product Hunt product slug from search or a product-list command, for example linear or jupitrr.",
+      "required": true
+    },
+    {
+      "name": "detailed",
+      "description": "Return publication metadata, images, makers, latest launch, and awards in addition to the compact product record. Pass true or false.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

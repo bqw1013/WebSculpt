@@ -1,0 +1,41 @@
+{
+  "id": "producthunt-search",
+  "domain": "producthunt",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search Product Hunt's public products, launches, or users by query. Reads Apollo SSR search data first, follows numbered result pages serially, and falls back to visible search DOM when page data drifts.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Product Hunt search query",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results, strict positive integer from 1 to 100",
+      "required": false,
+      "default": 20
+    },
+    {
+      "name": "type",
+      "description": "Search result type: product, launch, or user",
+      "required": false,
+      "default": "product"
+    },
+    {
+      "name": "sort",
+      "description": "Standard sort: default, latest, or popular; unsupported Product Hunt values are reported in ignoredParams",
+      "required": false,
+      "default": "default"
+    },
+    {
+      "name": "time",
+      "description": "Standard time range: all, day, week, month, or year; Product Hunt search has no verified time filter and reports non-all values in ignoredParams",
+      "required": false,
+      "default": "all"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

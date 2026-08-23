@@ -1,0 +1,22 @@
+{
+  "id": "kickstarter-get-creator",
+  "domain": "kickstarter",
+  "action": "get-creator",
+  "runtime": "browser",
+  "description": "Fetch a Kickstarter creator's profile (name, bio, website, location, join date, backed count) plus their launched projects list with funding state and percent funded, from /profile/{name}. Supports profile slug or full profile URL, paginates projects beyond 32, and reports invalid creators (404) and Cloudflare blocks.",
+  "parameters": [
+    {
+      "name": "creator",
+      "description": "Creator profile name (slug) or full profile URL, e.g. baroque or https://www.kickstarter.com/profile/baroque",
+      "required": true
+    },
+    {
+      "name": "max_pages",
+      "description": "Max pages of created projects to fetch (32 projects per page; default 6, i.e. up to 192 projects). Stops early when all projects are collected.",
+      "required": false,
+      "default": 6
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,27 @@
+{
+  "id": "github-list-commits",
+  "domain": "github",
+  "action": "list-commits",
+  "runtime": "browser",
+  "description": "List a GitHub repository's commit history from https://github.com/<owner>/<repo>/commits[/<branch>]. branch defaults to the repository's default branch. Returns commits with sha, message, author, author avatar, authored date, and commit URL. The page renders 35 commits per page; for a higher limit the command follows the page's Next pagination link (?after cursor) until the limit is reached or the history ends, and reports partial=true when the list is truncated. Reads the rendered commits page (SSR embedded data); no login required.",
+  "parameters": [
+    {
+      "name": "repo",
+      "description": "Repository as owner/repo (e.g. facebook/react) or its full URL (e.g. https://github.com/facebook/react). Repository renames are followed via redirect (facebook/react -> react/react).（仓库标识：owner/repo 或完整 URL）",
+      "required": true
+    },
+    {
+      "name": "branch",
+      "description": "Branch name (e.g. main, master). Defaults to the repository's default branch when omitted.（分支名，缺省用仓库默认分支）",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum commits to return (1-100, default 20). The first page renders 35; higher limits paginate via the Next link and partial=true is returned when the list is truncated by this limit.（条数上限，默认 20；首屏 35 条，超过则分页加载，partial 指示是否被截断）",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

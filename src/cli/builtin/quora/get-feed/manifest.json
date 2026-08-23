@@ -1,0 +1,23 @@
+{
+  "id": "quora-get-feed",
+  "domain": "quora",
+  "action": "get-feed",
+  "runtime": "browser",
+  "description": "Fetch the Quora homepage or following feed as a mixed list of answers, questions, and Space posts. Requires a logged-in Quora session.",
+  "parameters": [
+    {
+      "name": "tab",
+      "description": "Which feed to read: home (personalized recommendations) or following (content from followed people/Spaces). The following feed uses DOM fallback because its GraphQL path was not verified for populated accounts.",
+      "required": false,
+      "default": "home"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of feed items to return (1-100). The feed loads in bundles, so results are truncated to this limit.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

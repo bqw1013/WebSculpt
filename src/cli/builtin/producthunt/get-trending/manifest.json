@@ -1,0 +1,22 @@
+{
+  "id": "producthunt-get-trending",
+  "domain": "producthunt",
+  "action": "get-trending",
+  "runtime": "browser",
+  "description": "Fetch the daily trending products leaderboard from Product Hunt. Defaults to today, automatically falling back to yesterday if today's leaderboard has not yet been published (common in non-PT timezones). Supports historical dates via --date. Returns ranked products with title, tagline, vote count, topic tags, slug, and product URL. No authentication required.",
+  "parameters": [
+    {
+      "name": "date",
+      "description": "Leaderboard date in YYYY-MM-DD format. Defaults to today with automatic fallback to yesterday if the leaderboard is not yet published.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of products to return.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

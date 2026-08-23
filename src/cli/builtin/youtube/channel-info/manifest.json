@@ -1,0 +1,16 @@
+{
+  "id": "youtube-channel-info",
+  "domain": "youtube",
+  "action": "channel-info",
+  "runtime": "browser",
+  "description": "Fetch a YouTube channel's profile card: name, @handle, channel ID, avatar, subscriber count, total video count, and full description. The channel parameter accepts an @handle (e.g. \"@ExampleChannel\") or any channel URL (/@handle, /channel/UC..., /c/...). Lightweight — does not fetch the content list (use youtube/channel-videos for that). No authentication required for public channels.",
+  "parameters": [
+    {
+      "name": "channel",
+      "description": "Channel @handle or channel URL. Four input forms: (1) @handle, e.g. \"@ExampleChannel\"; (2) youtube.com/@handle/ (trailing slash optional); (3) youtube.com/channel/UC... (channel ID URL); (4) youtube.com/c/... (legacy custom URL, only works for channels that own that alias). Discovery: click the channel name under any video, or use the channel.handle / channel.channelId field from youtube/get-video. A bare name without @ is also accepted and auto-completed to an @handle.",
+      "required": true
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

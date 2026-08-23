@@ -1,0 +1,28 @@
+{
+  "id": "instagram-get-post",
+  "domain": "instagram",
+  "action": "get-post",
+  "runtime": "browser",
+  "description": "Fetch a single Instagram post or reel by URL — both /p/{shortcode}/ and /reel/{shortcode}/ are accepted (reels are normalized to /p/ and structurally posts). Returns the full caption, author, like/comment counts, timestamp, and media URLs. Pass --include_comments true to also load the comment thread; nested replies (\"view all N replies\") are expanded automatically and count toward --comment_limit. Requires a logged-in Instagram session.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Post or reel URL: instagram.com/p/{shortcode}/, instagram.com/{user}/p/{shortcode}/ or instagram.com/reel/{shortcode}/. The shortcode is extracted and the reel form is normalized to /p/.",
+      "required": true
+    },
+    {
+      "name": "include_comments",
+      "description": "Set to true to also return comments. Default false. Comments paginate and nested replies expand one by one, so enabling this is noticeably slower on popular posts.",
+      "required": false,
+      "default": "false"
+    },
+    {
+      "name": "comment_limit",
+      "description": "Maximum number of comments to return (1-100, default 20), counting nested replies toward the total. Only used when include_comments is true.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

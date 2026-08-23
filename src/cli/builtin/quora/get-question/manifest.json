@@ -1,0 +1,34 @@
+{
+  "id": "quora-get-question",
+  "domain": "quora",
+  "action": "get-question",
+  "runtime": "browser",
+  "description": "Fetch a Quora question page: metadata (title, topics, answer count) plus a list of answer preview cards. Answers are returned as excerpts with author, credential, publish date, upvote/comment counts, and URL. Use --include-related true to also return the 'All related' question list. A logged-in Quora session is recommended.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Question page URL (https://www.quora.com/<slug>) or just the slug, e.g. 'How-do-I-write-a-diary-entry-from-a-characters-point-of-view'.",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of answer cards to return (1-100, default 20). The answer list lazy-loads on scroll.",
+      "required": false,
+      "default": 20
+    },
+    {
+      "name": "sort",
+      "description": "Answer ordering: recommended (Quora's default ranking) or recent (newest first).",
+      "required": false,
+      "default": "recommended"
+    },
+    {
+      "name": "include_related",
+      "description": "Set to true to also return the 'All related' section with merged/related questions. Default false.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

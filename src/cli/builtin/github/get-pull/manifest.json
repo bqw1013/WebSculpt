@@ -1,0 +1,27 @@
+{
+  "id": "github-get-pull",
+  "domain": "github",
+  "action": "get-pull",
+  "runtime": "browser",
+  "description": "Fetch a single GitHub pull request by number, e.g. https://github.com/facebook/react/pull/37251. Returns number, title, state (open/closed/merged), merged and mergeable flags, author, full body text, base/head refs, labels, assignees, commit/change/review counts, and created/closed/merged dates. Pass --include_files true to also load the Files changed list (each file with filename, status, additions and deletions). Reads the rendered PR page plus GitHub's own page_data endpoints; no login required.",
+  "parameters": [
+    {
+      "name": "repo",
+      "description": "Repository as owner/repo (e.g. facebook/react) or its full URL https://github.com/facebook/react. The owner/repo is parsed out; a repo alias (e.g. facebook/react -> react/react) is resolved automatically via GitHub's redirect.",
+      "required": true
+    },
+    {
+      "name": "number",
+      "description": "Pull request number, e.g. 37251 in https://github.com/react/react/pull/37251. Use a positive integer; obtain numbers from github list-pulls or the PR page URL.",
+      "required": true
+    },
+    {
+      "name": "include_files",
+      "description": "Set to true to also return the changed-files list from the Files changed tab, as an array of {filename, status, additions, deletions, changes}. Default false. Enabling loads the .diff endpoint so the command is slightly slower.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

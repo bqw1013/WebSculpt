@@ -1,0 +1,22 @@
+{
+  "id": "substack-get-publication",
+  "domain": "substack",
+  "action": "get-publication",
+  "runtime": "browser",
+  "description": "获取指定 Substack 出版物主页的文章列表，支持最新（latest）与热门（top）两种排序。出版物子域名如 bettermarkets。",
+  "parameters": [
+    {
+      "name": "publication",
+      "description": "出版物子域名，如 bettermarkets",
+      "required": true
+    },
+    {
+      "name": "tab",
+      "description": "文章列表排序，可选 latest（最新）或 top（热门）",
+      "required": false,
+      "default": "latest"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

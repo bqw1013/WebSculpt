@@ -1,0 +1,40 @@
+{
+  "id": "vimeo-search",
+  "domain": "vimeo",
+  "action": "search",
+  "runtime": "node",
+  "description": "Search Vimeo — equivalent to the search box at the top of every page (vimeo.com/search?q=...). Five result types matching the on-page tabs: video (default), ondemand, people, channel, group. Result cards carry title, URL, duration, author, view count, upload date, and like/comment counts. Supports real sort (relevance/popular/latest/title/name/duration, per-type) and upload-time filtering (video only). Paginates internally up to the limit (max 100); partial=true when results run out. Public search needs no login or browser.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keywords, e.g. \"short film\". Same behavior as the on-site search box.",
+      "required": true
+    },
+    {
+      "name": "type",
+      "description": "Result type: video (default) | ondemand | people | channel | group. Maps to the five tabs on the search results page, each showing a result count.",
+      "required": false,
+      "default": "video"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results to return (1-100, default 20). Paginates internally; partial=true when results run out.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "sort",
+      "description": "Sort order (default relevance). All types: relevance, popular. video/ondemand also: latest, title_asc, title_desc, longest, shortest. channel/group also: latest, name_asc, name_desc. people also: name_asc, name_desc. Invalid type+sort combinations are rejected.",
+      "required": false,
+      "default": "relevance"
+    },
+    {
+      "name": "time",
+      "description": "Upload time filter, video type only (default all). all | day (last 24h) | week | month | year. Non-video types only accept all.",
+      "required": false,
+      "default": "all"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

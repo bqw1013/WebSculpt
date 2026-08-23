@@ -1,0 +1,27 @@
+{
+  "id": "arxiv-get-author-papers",
+  "domain": "arxiv",
+  "action": "get-author-papers",
+  "runtime": "node",
+  "description": "List papers by an author's name from arXiv — equivalent to clicking an author's name on any abstract page (arXiv has no author profile pages; author links are author searches). Accepts a natural name ('Yann LeCun' or comma form 'LeCun, Yann') and converts it to an arXiv au: query on the family name. Note: arXiv does not disambiguate authors, so results may include namesakes — use --category to narrow down. Returns paper cards (arXiv ID, title, authors, categories, date, abstract, abs/PDF links), newest first. A single API request fills the requested limit (max 200); partial=true when arXiv has fewer matches than requested. No authentication required.",
+  "parameters": [
+    {
+      "name": "author",
+      "description": "Author name in natural form, e.g. \"Yann LeCun\", \"LeCun\", or comma form \"LeCun, Yann\". Converted internally to an arXiv au: query on the family name (the last token; the formal \"Last, F\" abbreviation is NOT used because it fails on the Atom API). arXiv does not disambiguate authors — same-name collisions are inherent, so results may include namesakes; combine with --category for precision. (作者姓名自然写法，如 \"Yann LeCun\" / \"LeCun\"，也兼容 \"LeCun, Yann\" 逗号式；内部取姓氏末词转为 au: 查询。arXiv 无同名消歧，同名干扰固有存在，建议配合 --category 收窄。)",
+      "required": true
+    },
+    {
+      "name": "category",
+      "description": "Restrict to one arXiv category (e.g. \"cs.CV\") to reduce namesake noise. Case-sensitive: the subcategory suffix is uppercase (cs.AI, not cs.ai). Run arxiv/list-categories to enumerate all ~176 values. (限定分类以减少同名干扰。大小写敏感：子类后缀大写；全部取值可用 arxiv/list-categories 枚举。)",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of papers to return (1-200, default 50). A single API request returns up to this many; partial=true when arXiv has fewer matches than requested. (返回条数上限，默认 50；单请求即拿满，不足请求数时 partial=true。)",
+      "required": false,
+      "default": "50"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

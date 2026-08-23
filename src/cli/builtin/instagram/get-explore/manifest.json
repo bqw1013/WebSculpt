@@ -1,0 +1,17 @@
+{
+  "id": "instagram-get-explore",
+  "domain": "instagram",
+  "action": "get-explore",
+  "runtime": "browser",
+  "description": "Fetch Instagram's Explore grid (instagram.com/explore/) — algorithmically recommended media from across the platform, personalized to the logged-in account. Returns media tiles with shortcode, URL, type (image/video/carousel), and thumbnail; scrolls internally via the explore_grid API up to 100 items, partial=true when the grid stops producing. Use instagram/get-post on any tile URL for caption and comments. Requires a logged-in Instagram session.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of tiles to return (1-100, default 20). Fetches additional pages via the explore_grid cursor until the limit is reached; partial=true when the grid stops loading before the limit.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

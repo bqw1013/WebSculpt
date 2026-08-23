@@ -1,0 +1,21 @@
+{
+  "id": "medium-list-topics",
+  "domain": "medium",
+  "action": "list-topics",
+  "runtime": "browser",
+  "description": "List Medium topics from the official directory at https://medium.com/explore-topics. Without a query, returns all topics grouped by category (Life, Work, Technology, etc.). With --query, uses the page's autocomplete to find matching topics by name. Each topic includes its slug for use with medium/get-topic-trending and medium/get-topic-info. No login required.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Optional topic name to search for via the directory's autocomplete (e.g. 'artificial' matches 'Artificial Intelligence'). Omit to get the full categorized directory.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of topics to return (1-500). In directory mode (no query) the default is all topics. In query mode the default is 20.",
+      "required": false
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

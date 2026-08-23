@@ -1,0 +1,39 @@
+{
+  "id": "producthunt-get-forum-thread",
+  "domain": "producthunt",
+  "action": "get-forum-thread",
+  "runtime": "browser",
+  "description": "Get one public Product Hunt forum thread by forum and thread slug, including its body and a bounded page of replies.",
+  "parameters": [
+    {
+      "name": "forum",
+      "description": "Forum slug from the Product Hunt thread URL, such as general or openai.",
+      "required": true
+    },
+    {
+      "name": "thread",
+      "description": "Thread slug from the Product Hunt thread URL.",
+      "required": true
+    },
+    {
+      "name": "page",
+      "description": "1-based replies page number, from 1 to 50.",
+      "required": false,
+      "default": 1
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of replies to return, from 1 to 50.",
+      "required": false,
+      "default": 20
+    },
+    {
+      "name": "detailed",
+      "description": "Return body blocks, reply products, page links, and full reply metadata when true.",
+      "required": false,
+      "default": false
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

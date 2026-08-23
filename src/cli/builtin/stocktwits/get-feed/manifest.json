@@ -1,0 +1,18 @@
+{
+  "id": "stocktwits-get-feed",
+  "domain": "stocktwits",
+  "action": "get-feed",
+  "runtime": "node",
+  "description": "Fetch Stocktwits' site-wide feed (what the anonymous homepage shows) — the trending posts across all symbols right now, each with id, URL, body, time, sentiment tag (Bullish/Bearish/null), like count, author info (username, name, avatar, followers, ideas count), and mentioned symbols. This is NOT personalized (no login involved). Paginates internally (30 per API page via the max cursor) up to --limit (max 100); partial=true when the stream is exhausted. Anonymous public API — no login, no browser needed. For one symbol's feed use stocktwits/get-symbol-posts; for the ranked symbol charts use stocktwits/list-rankings.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Max posts to return (1-100, default 20). The API serves 30 per page; the command paginates internally via the max cursor, so larger values fetch multiple pages. partial=true when the stream runs out before the limit. Valid values: integer 1-100.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

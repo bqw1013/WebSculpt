@@ -688,7 +688,7 @@ websculpt scope remove <identifier>
 ### 5.1 Invoke a builtin command
 
 ```bash
-websculpt github list-trending
+websculpt github get-trending
 ```
 
 ### 5.2 View help
@@ -698,7 +698,7 @@ Use `--help` to view global help or help for a specific command.
 ```bash
 websculpt --help
 websculpt github --help
-websculpt github list-trending --help
+websculpt github get-trending --help
 ```
 
 ---

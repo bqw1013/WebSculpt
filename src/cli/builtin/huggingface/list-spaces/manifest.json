@@ -1,0 +1,37 @@
+{
+  "id": "huggingface-list-spaces",
+  "domain": "huggingface",
+  "action": "list-spaces",
+  "runtime": "browser",
+  "description": "List Hugging Face Spaces with filtering by SDK type, keyword search, and author. sdk accepts gradio (Gradio 界面) | streamlit (Streamlit 界面) | static (静态页面) | docker (Docker 容器), default all; search does a keyword filter (对应 /spaces 页搜索框); author lists one user/organization's Spaces (URL ?author=); limit caps results (1-100, default 20). When sdk is set (without author) the command reads the /spaces?sdk= pages (the internal /api/spaces list API ignores the sdk param) as the base and enriches them from the API top-100 where ids overlap: title/description/lastModified/author/likes always present; createdAt/tags/trendingScore filled only for spaces that appear in the API top-100, null otherwise (e.g. most streamlit spaces). Without an sdk filter (or with author), results come from the internal /api/spaces list API: sdk/likes/createdAt/tags/trendingScore filled, title/description/lastModified null (the list API does not expose them). limit must be a plain positive integer 1-100. Requires browser; no login.",
+  "parameters": [
+    {
+      "name": "sdk",
+      "type": "string",
+      "required": false,
+      "description": "Filter by Space SDK type: gradio (Gradio 界面) | streamlit (Streamlit 界面) | static (静态页面) | docker (Docker 容器). Default all. Note: HF's /api/spaces list API ignores the sdk query param, so this command applies the sdk filter via the /spaces?sdk= page (verified) or client-side post-filter on author-narrowed API results. (按 Space 的 SDK 类型过滤：gradio(Gradio 界面)/streamlit(Streamlit 界面)/static(静态页面)/docker(Docker 容器)，默认全部。)"
+    },
+    {
+      "name": "search",
+      "type": "string",
+      "required": false,
+      "description": "Keyword search within Spaces (URL ?search=). (在 Space 索引内按关键词过滤，对应 /spaces 页搜索框。)"
+    },
+    {
+      "name": "author",
+      "type": "string",
+      "required": false,
+      "description": "List all Spaces by one author/organization (URL ?author=). The /spaces page ignores the author param, so author goes through the internal /api/spaces?author= list API. (列出某作者/组织发布的所有 Space。)"
+    },
+    {
+      "name": "limit",
+      "type": "integer",
+      "required": false,
+      "default": "20",
+      "description": "Maximum Spaces to return (a plain positive integer, 1-100, default 20). Non-integer strings such as 1.5/1e3/2abc are rejected. (返回条数上限，纯正整数 1-100，默认 20。非法字符串一律报错。)"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

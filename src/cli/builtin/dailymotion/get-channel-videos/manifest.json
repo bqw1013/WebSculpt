@@ -1,0 +1,28 @@
+{
+  "id": "dailymotion-get-channel-videos",
+  "domain": "dailymotion",
+  "action": "get-channel-videos",
+  "runtime": "node",
+  "description": "Fetch the video stream of a Dailymotion topic channel from the public API (api.dailymotion.com): 17 fixed topic channels (animals, auto, people, fun, creation, school, videogames, kids, lifestyle, shortfilms, music, news, sport, tech, travel, tv, webcam). Omit --channel for the site-wide trending stream. Returns video cards with id, title, url, duration, thumbnail, uploader, view count, publish time and relative age; sort=trending (default) | visited (most viewed) | recent (newest). NOTE: in Dailymotion 'channel' means one of 17 topic channels, NOT an uploader — uploaders are users (see dailymotion/get-user, dailymotion/search --type user). No login or browser required.",
+  "parameters": [
+    {
+      "name": "channel",
+      "description": "Topic channel slug, one of: animals=动物, auto=汽车, people=名人, fun=喜剧与娱乐, creation=创作, school=教育, videogames=游戏, kids=儿童, lifestyle=生活与教程, shortfilms=短片(电影), music=音乐, news=新闻, sport=体育, tech=科技, travel=旅行, tv=电视, webcam=网络摄像头. Omit for the site-wide trending stream. These are Dailymotion's fixed topic taxonomy (dailymotion.com/channel/{slug}), NOT uploaders — uploaders are users, see dailymotion/get-user or dailymotion/search --type user.",
+      "required": false
+    },
+    {
+      "name": "sort",
+      "description": "Stream ordering: trending=趋势 (default) | visited=观看最多 (most viewed) | recent=最新 (newest). Mirrors the channel page's sort control and maps to the API sort parameter.",
+      "required": false,
+      "default": "trending"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum videos to return (1-100, default 20). The API is paged internally; partial=true when the stream is exhausted before reaching the limit.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

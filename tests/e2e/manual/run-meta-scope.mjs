@@ -96,9 +96,9 @@ async function run() {
 	if (listAllPayload.commands.length === 0) stepFail("expected non-empty command list");
 	stepOk();
 
-	// scope add hackernews (builtin domain snapshot)
-	printSection("scope add hackernews (builtin domain)");
-	const addExample = await runSourceCli(["scope", "add", "hackernews"], homeDir, { cwd: workDir });
+	// scope add zhihu (builtin domain snapshot)
+	printSection("scope add zhihu (builtin domain)");
+	const addExample = await runSourceCli(["scope", "add", "zhihu"], homeDir, { cwd: workDir });
 	if (addExample.exitCode !== 0) stepFail(`exit ${addExample.exitCode}`);
 	stepOk();
 
@@ -113,7 +113,7 @@ async function run() {
 	const listFiltered = await runSourceCli(["command", "list", "--format", "json"], homeDir, { cwd: workDir });
 	const listFilteredPayload = parseJsonOutput(listFiltered.stdout);
 	const ids = listFilteredPayload.commands.map((c) => `${c.domain}/${c.action}`);
-	if (!ids.includes("hackernews/get-top")) stepFail("missing hackernews/get-top");
+	if (!ids.includes("zhihu/get-hot")) stepFail("missing zhihu/get-hot");
 	if (!ids.includes("notes/save")) stepFail("missing notes/save");
 	if (ids.includes("github/get-trending")) stepFail("github/get-trending should be filtered out");
 	stepOk();
@@ -122,8 +122,8 @@ async function run() {
 	printSection("scope show");
 	const showResult = await runSourceCli(["scope", "show", "--format", "json"], homeDir, { cwd: workDir });
 	const showPayload = parseJsonOutput(showResult.stdout);
-	if (!showPayload.scopeCommands?.some((c) => c.command === "hackernews/get-top" && c.valid)) {
-		stepFail("missing valid hackernews/get-top");
+	if (!showPayload.scopeCommands?.some((c) => c.command === "zhihu/get-hot" && c.valid)) {
+		stepFail("missing valid zhihu/get-hot");
 	}
 	if (!showPayload.scopeCommands?.some((c) => c.command === "notes/save" && c.valid)) {
 		stepFail("missing valid notes/save");
@@ -135,22 +135,22 @@ async function run() {
 	const listSub = await runSourceCli(["command", "list", "--format", "json"], homeDir, { cwd: subDir });
 	const listSubPayload = parseJsonOutput(listSub.stdout);
 	const subIds = listSubPayload.commands.map((c) => `${c.domain}/${c.action}`);
-	if (!subIds.includes("hackernews/get-top")) stepFail("missing hackernews/get-top in subdir");
+	if (!subIds.includes("zhihu/get-hot")) stepFail("missing zhihu/get-hot in subdir");
 	if (!subIds.includes("notes/save")) stepFail("missing notes/save in subdir");
 	stepOk();
 
-	// scope remove hackernews/get-top
-	printSection("scope remove hackernews/get-top");
-	const removeExample = await runSourceCli(["scope", "remove", "hackernews/get-top"], homeDir, { cwd: workDir });
+	// scope remove zhihu/get-hot
+	printSection("scope remove zhihu/get-hot");
+	const removeExample = await runSourceCli(["scope", "remove", "zhihu/get-hot"], homeDir, { cwd: workDir });
 	if (removeExample.exitCode !== 0) stepFail(`exit ${removeExample.exitCode}`);
 	stepOk();
 
 	// command list after remove
-	printSection("command list after removing hackernews/get-top");
+	printSection("command list after removing zhihu/get-hot");
 	const listAfterRemove = await runSourceCli(["command", "list", "--format", "json"], homeDir, { cwd: workDir });
 	const listAfterRemovePayload = parseJsonOutput(listAfterRemove.stdout);
 	const idsAfter = listAfterRemovePayload.commands.map((c) => `${c.domain}/${c.action}`);
-	if (idsAfter.includes("hackernews/get-top")) stepFail("hackernews/get-top should be removed");
+	if (idsAfter.includes("zhihu/get-hot")) stepFail("zhihu/get-hot should be removed");
 	if (!idsAfter.includes("notes/save")) stepFail("missing notes/save");
 	stepOk();
 

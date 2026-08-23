@@ -1,0 +1,22 @@
+{
+  "id": "facebook-get-group",
+  "domain": "facebook",
+  "action": "get-group",
+  "runtime": "browser",
+  "description": "Fetch a Facebook Group (小组): its name, member count, privacy (public/private), about text, and its post feed. group accepts a numeric group ID or a vanity name (both appear in group URLs: facebook.com/groups/{group}/). Public groups are readable without joining; private groups require membership. Post permalinks (/groups/{id}/posts/{id}/) can be fed directly to facebook/get-post for full text and comments. Scrolls internally to load more posts, up to 100; partial=true when the stream is exhausted. Requires an active Facebook login.",
+  "parameters": [
+    {
+      "name": "group",
+      "description": "Numeric group ID or vanity name, i.e. the segment in facebook.com/groups/{group}/. Find it by opening the group and copying from the address bar, or use facebook/search --type groups. (小组数字 ID 或 vanity 名；从小组页地址栏复制，或用 search --type groups 找小组。)",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum posts to return (1-100, default 20). The group feed loads more posts on scroll and virtualizes the DOM, so the command scrolls internally and extracts as it goes; partial=true when the stream is exhausted before reaching the limit. (帖子数量上限，内部滚动加载、边滚边提取；流耗尽返回 partial=true。)",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

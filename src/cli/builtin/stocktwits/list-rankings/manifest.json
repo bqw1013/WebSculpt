@@ -1,0 +1,35 @@
+{
+  "id": "stocktwits-list-rankings",
+  "domain": "stocktwits",
+  "action": "list-rankings",
+  "runtime": "node",
+  "description": "List one of Stocktwits' seven symbol rankings (the tabs on stocktwits.com/sentiment). type 七选一: trending 热议 (default, most-discussed by Stocktwits score) | most-active 最活跃 (highest message volume) | watchers 最多关注 (most-watched) | most-bullish 最看多 / most-bearish 最看空 (highest share of Bullish/Bearish-tagged posts) | top-gainers 涨幅榜 / top-losers 跌幅榜 (biggest price moves). class 三选一 filters instrument type: all 全部 (default) | equities 股票+ETF | crypto 加密货币 (stocks/etfs are NOT accepted). region is passed through but is a no-op (only US data exists). Returns ranked entries with rank, symbol, company name, exchange, sector/industry, watchlist count, trending score, trends summary, logo URL, plus price (open/high/low/last/change/percentChange/volume/previousClose) and fundamentals (name, business description, industry/sector) when the API provides them. Paginates internally (100 per API page via page_num) up to --limit (default 20); partial=true only when the ranking is exhausted (fewer than limit returned, ~630-660 items max). Anonymous public API — no login, no browser needed. Feed returned symbols to stocktwits/get-symbol-overview or stocktwits/get-symbol-posts.",
+  "parameters": [
+    {
+      "name": "type",
+      "description": "Which ranking to list. 七值枚举 (default trending): trending 热议 | most-active 最活跃 | watchers 最多关注 | most-bullish 最看多 | most-bearish 最看空 | top-gainers 涨幅榜 | top-losers 跌幅榜. Maps 1:1 to the tabs on stocktwits.com/sentiment and to the API files symbols_enhanced / most_active / top_watched / most_bullish / most_bearish / top_gainers / top_losers.",
+      "required": false,
+      "default": "trending"
+    },
+    {
+      "name": "class",
+      "description": "Instrument class filter. 三值枚举 (default all): all 全部 | equities 股票+ETF | crypto 加密货币. NOTE: stocks and etfs are silently ignored by the API and are rejected with INVALID_PARAM.",
+      "required": false,
+      "default": "all"
+    },
+    {
+      "name": "region",
+      "description": "Market region code, default US. Passed through as the API's regions parameter; verified to be a no-op — non-US values (CN/UK/DE) return the same US data without error, so filtering is not promised.",
+      "required": false,
+      "default": "US"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of symbols to return, 1-100 (default 20); values above 100 (up to 1000) are supported via internal page_num pagination. The API serves at most 100 per page and soft-ends around 630-660 total items; partial=true only when fewer than limit are returned (stream exhausted).",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

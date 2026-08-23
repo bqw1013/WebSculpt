@@ -1,0 +1,28 @@
+{
+  "id": "medium-get-topic-info",
+  "domain": "medium",
+  "action": "get-topic-info",
+  "runtime": "browser",
+  "description": "Fetch metadata and auxiliary views for a Medium topic (https://medium.com/tag/<slug>). section=info (default) returns follower count, post count, and related topics; section=who-to-follow returns the authors and publications Medium recommends for this topic; section=archive returns the chronological story stream, complementing the hot ranking from medium/get-topic-trending. No login required.",
+  "parameters": [
+    {
+      "name": "topic",
+      "description": "Topic slug, i.e. the last path segment of https://medium.com/tag/<slug>. Discover slugs with: websculpt medium list-topics [--query <name>].",
+      "required": true
+    },
+    {
+      "name": "section",
+      "description": "Which view to return: info (topic metadata: followers, post count, related topics; default) | who-to-follow (recommended authors and publications in this topic) | archive (chronological story stream).",
+      "required": false,
+      "default": "info"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum entries for who-to-follow and archive sections (1-100, default 20). Ignored when section=info.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

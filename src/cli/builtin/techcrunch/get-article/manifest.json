@@ -1,0 +1,16 @@
+{
+  "id": "techcrunch-get-article",
+  "domain": "techcrunch",
+  "action": "get-article",
+  "runtime": "node",
+  "description": "Fetch the full content of a single TechCrunch article by URL (or slug). Returns the complete body text (both HTML and plain text), author name with a profile link usable by techcrunch/get-author, publish/modified dates, excerpt, featured image, editorial category slugs, and topic tag slugs (usable by techcrunch/get-topic). Powered by the public WordPress REST API. TechCrunch has no comment system, so no comment options exist. No authentication required.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Full article URL (https://techcrunch.com/2026/08/13/some-article-slug/) or just the slug (\"some-article-slug\"). URLs come from techcrunch/get-feed, get-topic, search, get-author, or get-popular results.",
+      "required": true
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

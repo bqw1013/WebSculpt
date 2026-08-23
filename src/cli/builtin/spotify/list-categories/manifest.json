@@ -1,0 +1,10 @@
+{
+  "id": "spotify-list-categories",
+  "domain": "spotify",
+  "action": "list-categories",
+  "runtime": "browser",
+  "description": "List Spotify's full podcast category tree (所有播客类别, /genre/0JQ5DArNBzkmxXHCqFLx2U). Returns every category with name, opaque genre id (e.g. 0JQ5DAqbMKFNr6gDrHHVKL), page URL, and parent category name (null for the 8 top-level ones). Single page load, no pagination, no parameters. The genreId values are the accepted input for spotify/get-category's --genre-id. Runs in a browser context; no login needed.",
+  "parameters": [],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

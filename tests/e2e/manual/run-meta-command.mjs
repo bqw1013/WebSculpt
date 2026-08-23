@@ -57,8 +57,8 @@ async function run() {
 	if (show1.exitCode !== 0) stepFail(`exit ${show1.exitCode}`);
 	stepOk();
 
-	printSection("command show hackernews get-top --include-readme");
-	const show2 = await runSourceCli(["command", "show", "hackernews", "get-top", "--include-readme"]);
+	printSection("command show zhihu get-hot --include-readme");
+	const show2 = await runSourceCli(["command", "show", "zhihu", "get-hot", "--include-readme"]);
 	console.log(show2.stdout);
 	if (show2.exitCode !== 0) stepFail(`exit ${show2.exitCode}`);
 	stepOk();
@@ -113,8 +113,8 @@ async function run() {
 		stepFail(e.message);
 	}
 
-	printSection("prepare validate target (copy builtin hackernews/get-top)");
-	const builtinDir = resolve(REPO_ROOT, "src/cli/builtin/hackernews/get-top");
+	printSection("prepare validate target (copy builtin zhihu/get-hot)");
+	const builtinDir = resolve(REPO_ROOT, "src/cli/builtin/zhihu/get-hot");
 	const validateDir = `${TMP_DIR}/validate-cmd`;
 	await mkdir(validateDir, { recursive: true });
 	// Node >=16.7.0 supports fs.cp via fs/promises in Node 18+

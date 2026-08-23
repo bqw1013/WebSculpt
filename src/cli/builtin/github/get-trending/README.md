@@ -1,63 +1,61 @@
 # github/get-trending
 
-A `node` runtime command that fetches trending GitHub repositories based on recent activity and star count.
-
 ## Description
 
-This command queries the GitHub Search API to find repositories that have been recently pushed to (active) and ranks them by total star count. It approximates "trending" behavior by combining recency filters with popularity sorting.
+Fetch the **real** GitHub trending repositories from `https://github.com/trending`, returning the actual ranked cards (this replaces the previous Search-API approximation, which was rate-limited to 10 req/min and did not match the real ranking).
+
+Requires Chrome or Edge running with remote debugging enabled. No login required.
 
 ## Parameters
 
-- `period` (string, optional): Time range for recent activity. One of `daily`, `weekly`, `monthly`. Default: `weekly`.
-- `language` (string, optional): Filter by primary programming language, e.g. `python`, `javascript`, `rust`, `go`.
-- `limit` (integer, optional): Number of repositories to return. Range: 1–50. Default: `10`.
+| Parameter | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `--since` | enum | no | `daily` | Period tab: `daily`(今日) / `weekly`(本周) / `monthly`(本月). Maps to `?since=` on github.com/trending. |
+| `--language` | string | no | - | Primary programming language filter, e.g. `python`, `javascript`, `rust`, `c++`. Maps to the `/trending/<language>` URL path. |
+| `--limit` | number | no | 20 | Max repos to return (1-25). The trending page length varies by period/language (about 12-24); `limit` truncates and the response reports `available`. |
 
 ## Return Value
 
-Returns an object with the following structure:
-
 ```json
 {
-  "total_count": 12345,
-  "query": "pushed:>2026-05-02 stars:>10",
-  "period": "weekly",
-  "limit": 10,
+  "source": "github.com/trending",
+  "since": "daily",
+  "language": "python",
+  "count": 19,
+  "available": 19,
+  "partial": false,
   "repositories": [
     {
       "rank": 1,
-      "name": "repo-name",
-      "full_name": "owner/repo-name",
-      "owner": "owner",
-      "owner_avatar": "https://avatars.githubusercontent.com/u/...",
-      "description": "Project description",
-      "stars": 50000,
-      "language": "TypeScript",
-      "url": "https://github.com/owner/repo-name",
-      "created_at": "2023-01-15T08:00:00Z",
-      "pushed_at": "2026-05-08T12:00:00Z"
+      "full_name": "google / skills",
+      "html_url": "https://github.com/google/skills",
+      "description": "Agent Skills for Google products and technologies",
+      "language": "Python",
+      "stars": 16883,
+      "stars_gained": 481,
+      "forks": 1376,
+      "builders": ["cloud-ix-copybara", "holtskinner"]
     }
   ]
 }
 ```
 
+- `stars_gained` = stars gained in the selected period (today / this week / this month).
+- `partial` = `true` when `limit` truncated the page list (i.e. `limit < available`).
+- `builders` = contributor/maintainer logins (may be an empty array).
+
 ## Usage
 
-```bash
-# Default: weekly trending, all languages, top 10
+```
 websculpt github get-trending
-
-# Daily trending Python repos
-websculpt github get-trending --period daily --language python
-
-# Top 20 monthly trending Rust repos
-websculpt github get-trending --period monthly --language rust --limit 20
+websculpt github get-trending --since weekly --language python --limit 20
+websculpt github get-trending --since monthly --limit 10
 ```
 
 ## Common Error Codes
 
-- `RATE_LIMIT`: GitHub API rate limit exceeded (10 req/min unauthenticated). Retry after a minute.
-- `INVALID_PARAM`: `period` or `limit` parameter is invalid.
-- `INVALID_QUERY`: GitHub API rejected the query (e.g. invalid language).
-- `EMPTY_RESULT`: No repositories matched the search criteria.
-- `NETWORK_ERROR`: Failed to connect to GitHub API.
-- `TIMEOUT`: Request timed out after 15 seconds.
+- `INVALID_PARAM` — `since` not in `daily|weekly|monthly`, or `limit` not an integer in 1-25.
+- `EMPTY_RESULT` — page returned 0 repositories (e.g. unknown language with no trending repos).
+- `NETWORK_ERROR` — page load or SSR fetch failed, or GitHub rate-limit/bot check detected.
+- `NOT_FOUND` — reserved in the shared browser-runtime error set (github.com/trending itself does not 404).
+- `BROWSER_ATTACH_REQUIRED` — browser is not connected (produced by the daemon).

@@ -1,0 +1,31 @@
+{
+  "id": "pinterest-search",
+  "domain": "pinterest",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search Pinterest by keyword. Returns Pins (default), Boards (user-curated collections of Pins), or Users, depending on the type parameter. Also returns related_queries: the query-refinement suggestions Pinterest shows at the top of the results page. Requires a logged-in browser session.",
+  "parameters": [
+    {
+      "name": "query",
+      "type": "string",
+      "required": true,
+      "description": "Search keyword(s), e.g. \"keto recipes\"."
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "required": false,
+      "default": "pin",
+      "description": "What to search: pin (individual Pins, i.e. image/video posts, default) | board (Boards — user-curated collections that group Pins by theme) | user (Pinterest users/creators)."
+    },
+    {
+      "name": "limit",
+      "type": "integer",
+      "required": false,
+      "default": 20,
+      "description": "Maximum number of results to return (1-100, default 20). Results lazy-load on scroll; the command scrolls until the limit is reached or results are exhausted (then returns fewer with partial=true)."
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

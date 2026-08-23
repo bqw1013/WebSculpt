@@ -1,0 +1,16 @@
+{
+  "id": "stocktwits-search",
+  "domain": "stocktwits",
+  "action": "search",
+  "runtime": "node",
+  "description": "Search Stocktwits for symbols and users by keyword (the site's search box). ENTITY search only — finds tickers (stocks/crypto with symbol, company name, exchange, optional watchlist count and country) and user accounts (username, name, avatar, official/premium/verified flags), NOT posts by content (the platform has no post search). Returns what the site's search dropdown shows; the public endpoint has no pagination. Anonymous public API — no login, no browser needed.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keyword — a ticker fragment, company name, or username, e.g. \"AAPL\" or \"fredwilson\".",
+      "required": true
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

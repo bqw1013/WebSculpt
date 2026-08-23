@@ -1,0 +1,16 @@
+{
+  "id": "stocktwits-list-earnings",
+  "domain": "stocktwits",
+  "action": "list-earnings",
+  "runtime": "node",
+  "description": "List the Stocktwits earnings calendar (stocktwits.com/sentiment/calendar) — which companies report earnings in a given week, grouped by day (Mon-Fri). Optional --date YYYY-MM-DD (any day inside the target week, e.g. 2026-11-09) selects the week; omitted returns the current week; weekend dates normalize to their calendar week. Each stock carries its real scheduled earnings date (stock.date), company title, importance heat score, session time (Pre-Market | After Hours | During Market | empty) and the latest price snapshot (last_price, change, percent_change, volume). Past/current partial weeks are correctly filtered to stocks actually reporting inside the queried week (the site forward-fills past days with the next earnings date — the command filters those out before grouping). Returns { week: {from, to}, days: [{date, day, stocks: [...]}] }. Parsed from the page's embedded SSR JSON via plain HTTP — no login, no browser needed.",
+  "parameters": [
+    {
+      "name": "date",
+      "description": "Any day inside the target week, YYYY-MM-DD (e.g. \"2026-11-09\" selects the week of Nov 9-13). Omit for the current week. Weekend dates normalize to their calendar week. Invalid format raises INVALID_PARAM (the server would otherwise 307-redirect to the current week). 目标周内任意一天（YYYY-MM-DD），不传为当前周；周末归一化到所在周；非法格式抛 INVALID_PARAM。",
+      "required": false
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

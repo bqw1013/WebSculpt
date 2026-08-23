@@ -1,0 +1,41 @@
+{
+  "id": "youtube-search",
+  "domain": "youtube",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search public YouTube videos, channels, or playlists from the verified results page. Extracts native ytInitialData/lockup fields, follows continuation pagination internally, and uses a partial visible-DOM fallback when page data drifts.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "YouTube search query",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results, strict positive integer from 1 to 100",
+      "required": false,
+      "default": 20
+    },
+    {
+      "name": "type",
+      "description": "Search result type: video, channel, or playlist",
+      "required": false,
+      "default": "video"
+    },
+    {
+      "name": "sort",
+      "description": "Standard sort: default (YouTube relevance), popular (YouTube popular); latest is accepted but reported in ignoredParams because no stable current mapping was verified",
+      "required": false,
+      "default": "default"
+    },
+    {
+      "name": "time",
+      "description": "Upload-date range day, week, month, year, or all; applied to video/default search when supported",
+      "required": false,
+      "default": "all"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

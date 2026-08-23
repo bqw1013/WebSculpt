@@ -1,0 +1,17 @@
+{
+  "id": "github-list-collections",
+  "domain": "github",
+  "action": "list-collections",
+  "runtime": "browser",
+  "description": "List GitHub's curated Collections from the A-Z index at github.com/collections. limit (1-100, default 20) truncates the fixed 20-card index, so available is always 20 and partial=true when limit < 20. Returns collection cards with title, description, and URL. The page's top 'featured' spotlight is a rotating subset and is excluded for reproducibility. Reads the SSR-rendered collections page; no login required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum collections to return (1-100, default 20). The collections page has a fixed A-Z index of 20 cards; limit truncates it (available is always 20, partial=true when truncated).（条数上限；收藏集页为固定 A-Z 索引 20 条，limit 只做截断。）",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

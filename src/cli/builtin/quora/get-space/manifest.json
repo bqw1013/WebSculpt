@@ -1,0 +1,34 @@
+{
+  "id": "quora-get-space",
+  "domain": "quora",
+  "action": "get-space",
+  "runtime": "browser",
+  "description": "Fetch metadata and one view (posts, questions, about, or contributors) of a Quora Space. Spaces live on subdomains (e.g., https://thestoics.quora.com). Returns space metadata plus the requested section with lazy-loaded scrolling up to the requested limit.",
+  "parameters": [
+    {
+      "name": "space",
+      "description": "Space slug, i.e. the subdomain of the Space URL https://<space>.quora.com. Example: thestoics.",
+      "required": true
+    },
+    {
+      "name": "section",
+      "description": "Which view to return: posts (default post stream) | questions (questions asked in the space) | about (full description) | contributors (member list with credentials).",
+      "required": false,
+      "default": "posts"
+    },
+    {
+      "name": "sort",
+      "description": "Ordering for the posts section: top (default) | recent. Only affects section=posts; questions has its own default ordering.",
+      "required": false,
+      "default": "top"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum entries for list-like sections (1-100, default 20). Ignored when section=about.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

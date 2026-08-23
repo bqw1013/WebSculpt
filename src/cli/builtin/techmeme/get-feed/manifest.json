@@ -1,0 +1,22 @@
+{
+  "id": "techmeme-get-feed",
+  "domain": "techmeme",
+  "action": "get-feed",
+  "runtime": "node",
+  "description": "Fetch Techmeme's curated front-page news feed — the story clusters the editors curate each day (primary report + 'More:' related coverage + social discussion groups + official Techmeme social posts). Returns items in editorial priority order: section is 'top' (Top News), 'more' (More News), or 'earlier' (Earlier Picks). Each item has title, summary, source{name,url}, author, url, permalink (https://www.techmeme.com/{yymmdd}/p{N}, the get-story input), image, related[{source,url}], discussions{x,linkedin,bluesky,mastodon,forums}, and social_posts{x,mastodon,bluesky,threads,twid}. Optional --date YYYY-MM-DD reviews a historical snapshot (today or omitted uses the homepage; past dates resolve to the site's h2000 snapshot with h1130/h0000 fallbacks; missing snapshots raise NOT_FOUND). No login or browser required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum stories to return, 1-100, default 20. The page holds a fixed number of clusters (homepage ~43, snapshots ~31); requesting more than available returns all of them with partial=true on every item. 返回条数上限，默认 20，范围 1-100；页内故事簇数量有限（首页约 43 条、历史快照约 31 条），超过实际数量时返回全部并在每条标记 partial=true。",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "date",
+      "description": "Historical snapshot date in YYYY-MM-DD format (optional; default today). Omitted or today uses the homepage; a past date resolves to Techmeme's {yymmdd}/h2000 snapshot, falling back to h1130 then h0000, and raises NOT_FOUND if all are missing. 历史日期快照（YYYY-MM-DD，可选，默认当天）；当天或不传取首页；过去日期取该日 h2000 快照，依次回退 h1130/h0000，全部缺失抛 NOT_FOUND。",
+      "required": false
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

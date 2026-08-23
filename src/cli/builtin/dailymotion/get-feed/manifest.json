@@ -1,0 +1,17 @@
+{
+  "id": "dailymotion-get-feed",
+  "domain": "dailymotion",
+  "action": "get-feed",
+  "runtime": "browser",
+  "description": "Fetch the Dailymotion homepage Discover (发现) feed — the personalized, region-localized video stream a logged-in user sees at dailymotion.com. There is no public API for this surface (anonymous access returns 401); the feed reflects the browser session's locale and personalization. Returns video cards with ID, title, URL, duration (seconds), thumbnail, uploader (owner), verified badge, publish age (publishedAgo), ISO createdAt, and aspect ratio. The feed is a fixed batch of 40 cards — limit above 40 returns all 40 with partial=true. Requires a browser session with an active Dailymotion login.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum videos to return (1-100, default 20). The homepage feed is a fixed batch of 40 cards; requesting more than 40 returns all 40 with partial=true.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

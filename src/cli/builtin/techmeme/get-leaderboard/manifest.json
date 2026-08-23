@@ -1,0 +1,28 @@
+{
+  "id": "techmeme-get-leaderboard",
+  "domain": "techmeme",
+  "action": "get-leaderboard",
+  "runtime": "node",
+  "description": "获取 Techmeme 作者影响力榜单 Top 50（leadership=报道主导占比榜 / presence=报道出现占比榜），可选回看任意历史日期快照（滚动 180 天窗口）。返回 Array<{rank, author, twitter, percentage, sources[{name, rank, percentage?}]}>。无需登录。",
+  "parameters": [
+    {
+      "name": "board",
+      "description": "榜单口径枚举：leadership=报道主导占比榜（作者报道成为头条簇主导的比例）/ presence=报道出现占比榜（作者出现在任意收录报道中的比例）。默认 leadership。",
+      "required": false,
+      "default": "leadership"
+    },
+    {
+      "name": "limit",
+      "description": "返回条数，1-50（每榜作者恰 50 名）。默认 50。",
+      "required": false,
+      "default": 50
+    },
+    {
+      "name": "date",
+      "description": "历史快照日期，格式 YYYY-MM-DD（如 2026-08-14）。缺省返回当前榜。无归档/未来日期返回 NOT_FOUND。",
+      "required": false
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

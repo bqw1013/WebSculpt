@@ -1,0 +1,41 @@
+{
+  "id": "substack-search",
+  "domain": "substack",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search public Substack people, recent notes, posts, publications, or the mixed Top view by query. Uses the verified browser API first, applies light randomized browser pacing, and falls back to visible search-page DOM results when the API is unavailable or drifts.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Substack search keyword",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results to return, from 1 to 100",
+      "required": false,
+      "default": 20
+    },
+    {
+      "name": "type",
+      "description": "Search view: top, recent, posts, publications, or people",
+      "required": false,
+      "default": "top"
+    },
+    {
+      "name": "sort",
+      "description": "Sort order; Substack search does not support sorting, so non-default values are reported in ignoredParams",
+      "required": false,
+      "default": "default"
+    },
+    {
+      "name": "time",
+      "description": "Time range; Substack search does not support time filtering, so non-all values are reported in ignoredParams",
+      "required": false,
+      "default": "all"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

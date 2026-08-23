@@ -1,0 +1,33 @@
+{
+  "id": "huggingface-list-datasets",
+  "domain": "huggingface",
+  "action": "list-datasets",
+  "runtime": "browser",
+  "description": "List Hugging Face datasets with keyword search, sort order, and author filtering. sort is trending (default, 趋势) | likes (点赞最多) | downloads (下载最多) | created (最新创建) | modified (最近更新), internally mapped to the API tokens trendingScore/likes/downloads/createdAt/lastModified; search filters by keyword (对应 /datasets?search=); author lists one user/organization's datasets (对应 /datasets?author=). Dataset-specific dimensions (language/size_categories) are carried in each item's tags, not as separate parameters. Returns ranked items with id, url, likes, downloads, trendingScore, tags, created/updated dates. Reads HF's internal API via page-internal fetch from the browser; no login required.",
+  "parameters": [
+    {
+      "name": "search",
+      "description": "Keyword search within datasets (URL ?search=).（在数据集索引内按关键词过滤，对应 /datasets 搜索框。）",
+      "required": false
+    },
+    {
+      "name": "sort",
+      "description": "Sort order: trending (default, 趋势) | likes (点赞最多) | downloads (下载最多) | created (最新创建) | modified (最近更新). Internally mapped to the API values trendingScore/likes/downloads/createdAt/lastModified.（排序方式，默认 trending 即 HF 趋势榜。）",
+      "required": false,
+      "default": "trending"
+    },
+    {
+      "name": "author",
+      "description": "List all datasets by one author/organization (URL ?author=).（列出某作者/组织发布的所有数据集。）",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum datasets to return (a plain positive integer, 1-100, default 20). Non-integer strings such as 1.5/1e3/2abc are rejected. （返回条数上限，纯正整数 1-100，默认 20。非法字符串一律报错。）",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

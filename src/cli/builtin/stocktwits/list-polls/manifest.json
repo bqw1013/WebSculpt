@@ -1,0 +1,17 @@
+{
+  "id": "stocktwits-list-polls",
+  "domain": "stocktwits",
+  "action": "list-polls",
+  "runtime": "node",
+  "description": "List Stocktwits community polls (stocktwits.com/discussions) — question text, description, related symbols, total vote count, start/expiry times, per-choice percentages, and reply count. The page SSR-embeds a FIXED 50 polls, newest-first (mixed active + ended), with NO pagination; a --limit above the available count is silently truncated with partial=true. Each poll carries a messageId: pass it to stocktwits/get-post (optionally with --include-replies) to read the poll's discussion thread. Anonymous public SSR — no login, no browser needed.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum polls to return, 1-50 meaningful, default 20. The page embeds a fixed 50 polls with no pagination; a value above 50 (or above the actual available count) is silently truncated to what exists and partial=true is set. 返回投票条数上限，默认 20；页面固定内嵌 50 条且无翻页，超过实际条数时截断并标记 partial=true。",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "twitch-get-video",
+  "domain": "twitch",
+  "action": "get-video",
+  "runtime": "browser",
+  "description": "Fetch details of a single Twitch video (VOD) by URL or numeric ID (twitch.tv/videos/{id}). Returns title, channel (name/display name/url), game/category (name/slug/url), duration, view count, publish date, description, thumbnail, and chapter markers ({title, startAt} in seconds) when present. Chat replay is a real-time message stream, so it is intentionally not included. No login required; subscriber-only VODs may be inaccessible. Runs in the user's browser (internal Twitch GraphQL).",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Full Twitch video URL (https://www.twitch.tv/videos/2577728783) or just the numeric video id (2577728783). URLs come from twitch/get-channel-videos or twitch/search --type video results. Required.",
+      "required": true
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

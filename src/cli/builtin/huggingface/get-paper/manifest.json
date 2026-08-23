@@ -1,0 +1,16 @@
+{
+  "id": "huggingface-get-paper",
+  "domain": "huggingface",
+  "action": "get-paper",
+  "runtime": "browser",
+  "description": "Fetch a single Hugging Face paper by its arXiv id, e.g. 2608.05987 (from the /papers/2608.05987 URL or the url field in list-papers output). Returns title, abstract, authors, submitter, upvotes, comment count, publication date, and arXiv link. Reads HF's internal paper API plus the SSR comment section from the browser; no login required.",
+  "parameters": [
+    {
+      "name": "paper_id",
+      "description": "Paper id (arXiv number), e.g. 2608.05987 from the URL https://huggingface.co/papers/2608.05987. Can be extracted from the url field in list-papers output (take the last path segment). 论文编号，取自 /papers/{id} URL 或 list-papers 的 url 字段提取。",
+      "required": true
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

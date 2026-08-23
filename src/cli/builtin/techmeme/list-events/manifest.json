@@ -1,0 +1,17 @@
+{
+  "id": "techmeme-list-events",
+  "domain": "techmeme",
+  "action": "list-events",
+  "runtime": "node",
+  "description": "List upcoming tech events and earnings days from Techmeme's events calendar (techmeme.com/events). Returns each event's date range, name, location, link (Techmeme /r2/ redirect href, followable in a browser), and a featured flag for sponsored rows; earnings days (names starting with \"Earnings: \") and VIRTUAL/HYBRID online events are included in the same list. Takes --limit (1-200, default 50). The page is a single full list (~144 events covering about 5 months) with no pagination, so when fewer events are available than requested the returned items carry partial:true. No login, no browser, no API key required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of events to return (1-200, default 50). The events page is a single-page list (~144 rows covering roughly 5 months); when fewer events are available than the requested limit, the command returns everything it found and each item is marked partial:true.",
+      "required": false,
+      "default": "50"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,22 @@
+{
+  "id": "substack-get-post",
+  "domain": "substack",
+  "action": "get-post",
+  "runtime": "browser",
+  "description": "Get the full details of a single Substack post by URL, including title, author, publication, publish date, body text, like count, comment count, and restack count. Optionally fetch the comment list with --include_comments. Uses Substack's internal post API and falls back to DOM extraction if needed.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "The full URL of the Substack post, e.g. https://bettermarkets.substack.com/p/jamie-dimon-and-better-markets-agree",
+      "required": true
+    },
+    {
+      "name": "include_comments",
+      "description": "When 'true', also fetch and return the post's comment list from /p/<slug>/comments. Defaults to 'false'.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

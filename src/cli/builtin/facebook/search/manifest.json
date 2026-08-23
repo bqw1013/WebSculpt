@@ -1,0 +1,41 @@
+{
+  "id": "facebook-search",
+  "domain": "facebook",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search Facebook top, page, group, people, video, or event results with native SSR/GraphQL fields and a DOM fallback.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Facebook search query",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum results, strict positive integer from 1 to 100",
+      "required": false,
+      "default": 20
+    },
+    {
+      "name": "type",
+      "description": "Search result type: top (default, 综合) | pages (公共主页) | groups (小组) | people (用户) | videos (视频) | events (活动). Maps to the category tabs on the Facebook search results page (/search/{type}/?q=...).",
+      "required": false,
+      "default": "top"
+    },
+    {
+      "name": "sort",
+      "description": "Standard sort; Facebook path currently ignores non-default values",
+      "required": false,
+      "default": "default"
+    },
+    {
+      "name": "time",
+      "description": "Standard time range; Facebook path currently ignores non-all values",
+      "required": false,
+      "default": "all"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

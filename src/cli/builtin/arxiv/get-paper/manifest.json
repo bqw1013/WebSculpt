@@ -1,0 +1,16 @@
+{
+  "id": "arxiv-get-paper",
+  "domain": "arxiv",
+  "action": "get-paper",
+  "runtime": "node",
+  "description": "Fetch the full record of a single arXiv paper by ID or URL — everything on its abstract page (arxiv.org/abs/{id}): title, authors, abstract, primary and cross-list categories, submission and update dates, full version history, author comments, journal reference, DOI, and abs/PDF links. Append a version (e.g. 2601.00001v2) to pin a specific version; old-style IDs (hep-th/9901001) and full abs/PDF URLs are also accepted. The full text lives in the PDF — use arxiv/download-paper for that. No authentication required.",
+  "parameters": [
+    {
+      "name": "id",
+      "description": "arXiv paper ID or URL. Accepts: a new-style ID (\"2601.00001\"), a new-style ID with a version suffix (\"2601.00001v2\"), an old-style ID (\"hep-th/9901001\", optionally with a version suffix like \"hep-th/9901001v3\"), or a full abstract/PDF URL (\"https://arxiv.org/abs/1706.03762\", \"https://arxiv.org/pdf/1706.03762v2\"). IDs appear in the results of arxiv/list-papers, search, and get-author-papers.",
+      "required": true
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

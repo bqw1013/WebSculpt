@@ -1,0 +1,16 @@
+{
+  "id": "kickstarter-list-categories",
+  "domain": "kickstarter",
+  "action": "list-categories",
+  "runtime": "browser",
+  "description": "List Kickstarter's category taxonomy — 15 top-level categories (art, comics, crafts, dance, design, fashion, film & video, food, games, journalism, music, photography, publishing, technology, theater) and all 159 subcategories with their slugs. These slugs are the valid values for the `category` and `subcategory` parameters of kickstarter/discover. Pass --parent to list only one category's subcategories. Browser runtime (Node is blocked by Cloudflare's TLS fingerprint challenge); no login required.",
+  "parameters": [
+    {
+      "name": "parent",
+      "description": "Optional top-level category slug to list only its subcategories; omit for the full tree. Valid slugs (15): art 艺术, comics 漫画, crafts 手工艺, dance 舞蹈, design 设计, fashion 时尚, film & video 影视, food 食品, games 游戏, journalism 新闻, music 音乐, photography 摄影, publishing 出版, technology 科技, theater 戏剧. Unknown slugs raise INVALID_PARAM.",
+      "required": false
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

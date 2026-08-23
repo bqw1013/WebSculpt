@@ -1,0 +1,33 @@
+{
+  "id": "producthunt-get-launch-comments",
+  "domain": "producthunt",
+  "action": "get-launch-comments",
+  "runtime": "browser",
+  "description": "Fetch the currently rendered comments for one public Product Hunt launch. Compact output returns the launch summary and comment cards; detailed mode adds launch metadata, raw comment text, and thread identifiers. The verified comment page parameter is supported; unverified limit and sort inputs are intentionally not exposed.",
+  "parameters": [
+    {
+      "name": "product",
+      "description": "Required Product Hunt product slug, such as linear.",
+      "required": true
+    },
+    {
+      "name": "launch",
+      "description": "Required launch slug under the product, such as linear-diffs.",
+      "required": true
+    },
+    {
+      "name": "page",
+      "description": "Positive rendered comment page number; page 2 was verified.",
+      "required": false,
+      "default": "1"
+    },
+    {
+      "name": "detailed",
+      "description": "Add launch metadata, raw comment text, and thread identifiers. Pass true or false.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

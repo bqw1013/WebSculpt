@@ -27,14 +27,14 @@ Library 负责两类常见需求：
 websculpt scope init
 
 # 把需要的命令加进白名单
-websculpt scope add github/list-trending
+websculpt scope add github/get-trending
 websculpt scope add github          # 批量添加 github 域下已安装的全部命令
 
 # 查看当前生效的 scope
 websculpt scope show
 
 # 从白名单移除
-websculpt scope remove github/list-trending
+websculpt scope remove github/get-trending
 websculpt scope remove github
 ```
 
@@ -68,7 +68,7 @@ websculpt scope destroy
 websculpt command export --to ./my-commands
 
 # 导出指定命令或域
-websculpt command export github/list-trending --to ./my-commands
+websculpt command export github/get-trending --to ./my-commands
 websculpt command export github --to ./my-commands  # 导出 github 域下全部命令
 ```
 

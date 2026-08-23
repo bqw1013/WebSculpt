@@ -1,0 +1,33 @@
+{
+  "id": "producthunt-get-stories",
+  "domain": "producthunt",
+  "action": "get-stories",
+  "runtime": "browser",
+  "description": "List Product Hunt Stories from the main feed, a verified story category, or the Stories search control. Compact output includes article discovery fields, author URLs, and pagination metadata by default; detailed mode adds extended article and retrieval metadata. Category and query filters are mutually exclusive.",
+  "parameters": [
+    {
+      "name": "category",
+      "description": "Optional Product Hunt Stories category slug such as makers, news, opinions, announcements, how-to, or interviews; mutually exclusive with query.",
+      "required": false
+    },
+    {
+      "name": "query",
+      "description": "Optional text submitted to the verified Search Stories control on the main Stories page; mutually exclusive with category.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Local maximum number of currently loaded Stories to return; integer from 1 through 25. This is not upstream pagination.",
+      "required": false,
+      "default": 25
+    },
+    {
+      "name": "detailed",
+      "description": "Return additional description, image, section, category details, and retrieval time. Compact output already includes author URLs and pagination metadata. Pass true or false; default false.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

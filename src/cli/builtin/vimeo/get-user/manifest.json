@@ -1,0 +1,28 @@
+{
+  "id": "vimeo-get-user",
+  "domain": "vimeo",
+  "action": "get-user",
+  "runtime": "browser",
+  "description": "Fetch a Vimeo creator's public profile header (name, avatar, bio, location, follower/following counts, video count, member-since) plus one sub-page list — videos | albums | collections | followers | following — with internal pagination. The user slug comes from the profile URL vimeo.com/{user}, e.g. click any uploader name on a video page. Public profiles need no login; a browser session is required because location and follower/following counts are only served by the page's internal api.vimeo.com call, not the SSR HTML.",
+  "parameters": [
+    {
+      "name": "user",
+      "description": "User slug from the profile URL: vimeo.com/{user} (e.g. \"<user-slug>\"). Discovery: click the uploader name on any video page, or vimeo/search --type people.",
+      "required": true
+    },
+    {
+      "name": "tab",
+      "description": "Which sub-page to return: videos (default, the creator's uploads) | albums | collections | followers | following. The profile header fields are always returned regardless of tab. Note: the public profile's \"Showcases\" tab maps to /albums.",
+      "required": false,
+      "default": "videos"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum items to return for list tabs (1-100, default 20). Paginates internally; partial=true when the listing is exhausted.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

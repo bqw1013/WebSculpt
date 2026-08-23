@@ -1,0 +1,23 @@
+{
+  "id": "techcrunch-list-podcast-episodes",
+  "domain": "techcrunch",
+  "action": "list-podcast-episodes",
+  "runtime": "node",
+  "description": "List episodes of a TechCrunch podcast via the public WordPress REST API (tc_podcast post type). Three shows exist: equity (创投周谈, weekly venture-capital roundtable, default), build-mode (创业实操, startup tactics), strictlyvc-download (VC访谈, VC interviews) — reached via Podcasts in the site nav, then a show page (techcrunch.com/podcasts/{show}/). Returns the latest episode cards with title, URL, publish date, a short description, and the Megaphone audio player URL when available. limit is capped at 100; partial=true when the show's archive is exhausted. No authentication required.",
+  "parameters": [
+    {
+      "name": "show",
+      "description": "Podcast show slug. Available: equity (创投周谈 — weekly venture-capital roundtable, default), build-mode (创业实操 — startup tactics), strictlyvc-download (VC访谈 — VC interviews). These are the three shows listed on techcrunch.com/podcasts/.",
+      "required": false,
+      "default": "equity"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of episodes to return (1-100, default 20). The command fetches the latest episodes from the show's archive in one internal page and marks partial=true when the archive has fewer episodes than the limit.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

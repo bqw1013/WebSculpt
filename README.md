@@ -114,10 +114,10 @@ It can also narrow the commands shown in the current project, or back up, migrat
 WebSculpt saves a verified information retrieval path as a local CLI command. For example:
 
 ```bash
-websculpt github list-trending --limit 5
+websculpt github get-trending --limit 5
 ```
 
-Here, `github/list-trending` stores the complete browser automation path for opening GitHub Trending and extracting repositories; `--limit 5` requests the first five results.
+Here, `github/get-trending` stores the complete browser automation path for opening GitHub Trending and extracting repositories; `--limit 5` requests the first five results.
 
 Running this command directly reuses that browser automation memory, without analyzing the page or rediscovering the data path.
 
@@ -126,13 +126,35 @@ Running this command directly reuses that browser automation memory, without ana
 websculpt command list
 
 # View command usage
-websculpt github list-trending --help
+websculpt github get-trending --help
 
 # Reuse the command directly
-websculpt github list-trending --limit 5
+websculpt github get-trending --limit 5
 ```
 
-### 2.3 Core Logic: Explore Once, Reuse Long Term
+### 2.3 Builtin Command Library
+
+WebSculpt ships with a builtin command library: verified information retrieval paths for **24 platforms / 164 commands**, ready to use out of the box.
+
+| Platform | # | Platform | # | Platform | # |
+|----------|---|----------|---|----------|---|
+| 🐙 github | 15 | ❓ quora | 7 | 💌 substack | 6 |
+| 🧠 huggingface | 13 | 🎵 spotify | 7 | 📡 techmeme | 6 |
+| 🚀 producthunt | 10 | 📄 arxiv | 6 | 🎥 vimeo | 6 |
+| 📈 stocktwits | 10 | 🎬 dailymotion | 6 | ▶️ youtube | 6 |
+| ✍️ medium | 10 | 👥 facebook | 6 | 💰 kickstarter | 4 |
+| 💬 hackernews | 9 | 📸 instagram | 6 | 📺 bilibili | 1 |
+| 📰 techcrunch | 8 | 📌 pinterest | 6 | 🔥 weibo | 1 |
+| 🎮 twitch | 8 | 👽 reddit | 6 | 💡 zhihu | 1 |
+
+Browse the full set at runtime:
+
+```bash
+websculpt command domains               # All available platforms
+websculpt command list github           # Commands under one platform
+```
+
+### 2.4 Core Logic: Explore Once, Reuse Long Term
 
 **Existing Memory: Call It Directly**
 
@@ -164,7 +186,7 @@ WebSculpt provides four Skills, delivered to the user's Agent, covering the comp
 Connect the four Skills together, and you get a self-evolving command library:
 
 - **Explore → Capture: the library grows.** Each successful exploration and distillation adds one command to the library. The Agent calls it directly next time instead of re-exploring. This is not developers writing new features — every use makes the library a little stronger.
-- **User overrides Builtin: the library improves.** For the same `github/list-trending`, your distilled version replaces the builtin one. Library quality improves with use, not with releases.
+- **User overrides Builtin: the library improves.** For the same `github/get-trending`, your distilled version replaces the builtin one. Library quality improves with use, not with releases.
 - **Maintain → Capture overwrite: the library self-heals.** When a website redesign breaks a command, Maintain pulls it back into a workspace, re-explores the page structure, repairs it, and overwrites the installed version. Commands don't rot — they evolve alongside their target websites.
 
 In addition, the `websculpt/` and `websculpt-en/` directories at the repository root are bootstrap skills (Chinese/English) distributed through skill marketplaces; they are not part of the lifecycle above. Their only job is to probe the environment on the Agent's first trigger, install the CLI, and land the four lifecycle skills via `skill install`, after which they go dormant. They are not shipped with the npm package and are not managed by `skill install`, which is why they live outside `skills/`.
@@ -174,7 +196,7 @@ In addition, the `websculpt/` and `websculpt-en/` directories at the repository 
 WebSculpt has two types of commands:
 
 - **Meta commands**: Manage the CLI and command library, such as `explore`, `capture`, `command`, `skill`, `scope`. Built into the system, cannot be overridden.
-- **Extended commands**: Reusable information retrieval workflows, invoked by `domain/action` (e.g., `github/list-trending`). Further divided into:
+- **Extended commands**: Reusable information retrieval workflows, invoked by `domain/action` (e.g., `github/get-trending`). Further divided into:
   - **Builtin commands**: Distributed with WebSculpt
   - **User commands**: Distilled by the Agent into `~/.websculpt/commands/`. User commands take priority over Builtin, automatically overriding on name collision.
 
@@ -212,7 +234,7 @@ As the command library grows, `websculpt command list` may show many commands ir
 ```bash
 websculpt scope init                    # Enable scope
 websculpt scope add github              # Add an entire domain
-websculpt scope add github list-trending  # Add a single command
+websculpt scope add github get-trending  # Add a single command
 websculpt scope remove github           # Remove
 websculpt scope show                    # View current whitelist
 websculpt scope destroy                 # Disable

@@ -1,0 +1,28 @@
+{
+  "id": "quora-get-profile",
+  "domain": "quora",
+  "action": "get-profile",
+  "runtime": "browser",
+  "description": "Fetch a Quora user's public profile metadata and one content section. Returns name, credential, bio, follower/following counts, answer/question/post counts, and the selected section: profile (default mixed feed), answers, questions, posts, followers, following (Spaces the user follows), or log.",
+  "parameters": [
+    {
+      "name": "name",
+      "description": "Quora username, i.e. the last path segment of https://www.quora.com/profile/<name>. Example: Hector-Quintanilla.",
+      "required": true
+    },
+    {
+      "name": "section",
+      "description": "Which profile tab to return: profile (default recent-activity feed with metadata) | answers | questions | posts (Space-hosted posts) | followers | following (Spaces the user follows) | log (public edit history).",
+      "required": false,
+      "default": "profile"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum entries for list-like sections (1-100, default 20). Ignored when section=profile.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

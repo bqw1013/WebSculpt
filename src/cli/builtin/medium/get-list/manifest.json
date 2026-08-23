@@ -1,0 +1,22 @@
+{
+  "id": "medium-get-list",
+  "domain": "medium",
+  "action": "get-list",
+  "runtime": "browser",
+  "description": "Fetch the articles in any public Medium list (a user-curated bookmark collection) by its URL, e.g. https://medium.com/@MediumStaff/list/staff-picks-c7bc6e1ee00f. Returns list metadata (title, curator, item count, response count, claps) and the collected article cards with title, subtitle, author, publish date, clap/response counts, reading time, tags, preview image, and curator note. The list lazy-loads on scroll; the command scrolls until the limit is reached or the list is exhausted. medium/get-staff-picks is a specialized wrapper of this command for the official Medium Staff list. No login required.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Full URL of a public Medium list, in the form https://medium.com/@<user>/list/<slug>-<listId>. Found via an author's Lists tab or a story's bookmark button.",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of articles to return (1-100, default 20). The list lazy-loads on scroll; the command scrolls until the limit is reached or the list is exhausted, then returns fewer items with partial=true.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

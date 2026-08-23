@@ -1,0 +1,22 @@
+{
+  "id": "dailymotion-get-playlist",
+  "domain": "dailymotion",
+  "action": "get-playlist",
+  "runtime": "node",
+  "description": "Fetch a Dailymotion playlist by URL (dailymotion.com/playlist/{id}) or plain ID: name, description, owner, video count, and its videos in playlist order. Uses the public API, which matches the playlist page's content. Playlist IDs come from playlist page URLs, dailymotion/search --type playlist, or get-user --tab playlists. No login or browser required.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Playlist URL (https://www.dailymotion.com/playlist/xa5jms) or just the ID (xa5jms). The last path segment is used as the playlist ID. Sources: playlist page URL, dailymotion/search --type playlist, or get-user --tab playlists. A nonexistent ID returns NOT_FOUND.",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum videos to return (1-100, default 20). Paginates internally by fetching 100 videos per page; partial=true when the playlist has fewer videos than requested or the API's 1000-video pagination cap is hit.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "huggingface-get-space",
+  "domain": "huggingface",
+  "action": "get-space",
+  "runtime": "browser",
+  "description": "Fetch a Hugging Face Space's full metadata by repo id, e.g. multimodalart/minimax-h3 (or full URL https://huggingface.co/spaces/multimodalart/minimax-h3). Returns likes, SDK type (gradio/streamlit/static/docker), tags, linked models, runtime (stage/hardware/replicas), region, host/subdomain, and created/updated dates. Reads via HF's internal API from the browser; no login required.",
+  "parameters": [
+    {
+      "name": "repo",
+      "description": "Space repo as org/name (e.g. multimodalart/minimax-h3) or full URL https://huggingface.co/spaces/multimodalart/minimax-h3.",
+      "required": true
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

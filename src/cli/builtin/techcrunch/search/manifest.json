@@ -1,0 +1,22 @@
+{
+  "id": "techcrunch-search",
+  "domain": "techcrunch",
+  "action": "search",
+  "runtime": "node",
+  "description": "Search TechCrunch articles by keyword via the public WordPress REST API — the same corpus shown by the on-site search box (techcrunch.com/?s=...). Returns matching article cards with title, URL, date, excerpt, featured image, and category names, newest first (reverse-chronological; the on-site box ranks by relevance, the API returns the same posts ordered by date). Paginates internally up to the limit (max 100); partial=true when no more results exist. No authentication required.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keywords, e.g. \"openai\" or \"spacex launch\". Plain text; matches article titles and content, same as the on-site search box.",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of results to return (1-100, default 20). Paginates the API internally; partial=true when no more results exist.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

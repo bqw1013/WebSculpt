@@ -1,0 +1,16 @@
+{
+  "id": "stocktwits-get-symbol-overview",
+  "domain": "stocktwits",
+  "action": "get-symbol-overview",
+  "runtime": "node",
+  "description": "Get a one-screen intelligence snapshot for a Stocktwits symbol from its SSR page: live quote (intraday price via the combined field), bull/bear sentiment score 0-100 with server-provided label plus the current-vs-previous-day sentiment card, AI summaries (crypto only), the site-wide daily community poll, fundamentals, earnings facts and up to 10 related news items. Accepts a single required symbol (e.g. AAPL, MSTR, BTC.X); crypto symbols follow the 308 redirect to /coins/{slug} automatically. Anonymous SSR fetch, no login, no browser.",
+  "parameters": [
+    {
+      "name": "symbol",
+      "description": "标的代码（必填）。Stocktwits 标的代码，如 AAPL（苹果）、MSTR（MicroStrategy）、NVDA（英伟达）、BTC.X（比特币加密货，自动 308 重定向到 /coins/bitcoin，命令跟随重定向；最终页 symbol 仍为输入值）。大小写不敏感，命令统一转为大写。不存在的代码返回 NOT_FOUND。",
+      "required": true
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

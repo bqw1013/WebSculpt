@@ -27,14 +27,14 @@ As your command library grows, `websculpt command list` can become crowded with 
 websculpt scope init
 
 # Add commands to the allow-list
-websculpt scope add github/list-trending
+websculpt scope add github/get-trending
 websculpt scope add github          # bulk-add all installed commands in the github domain
 
 # See what is currently active
 websculpt scope show
 
 # Remove commands from the allow-list
-websculpt scope remove github/list-trending
+websculpt scope remove github/get-trending
 websculpt scope remove github
 ```
 
@@ -68,7 +68,7 @@ Use these commands when you want to share commands with teammates, move to a new
 websculpt command export --to ./my-commands
 
 # Export specific commands or domains
-websculpt command export github/list-trending --to ./my-commands
+websculpt command export github/get-trending --to ./my-commands
 websculpt command export github --to ./my-commands  # export all commands in the github domain
 ```
 

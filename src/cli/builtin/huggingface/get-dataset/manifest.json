@@ -1,0 +1,16 @@
+{
+  "id": "huggingface-get-dataset",
+  "domain": "huggingface",
+  "action": "get-dataset",
+  "runtime": "browser",
+  "description": "Fetch a Hugging Face dataset's full metadata by repo id, e.g. HuggingFaceFW/fineweb (or full URL https://huggingface.co/datasets/HuggingFaceFW/fineweb). Returns downloads, likes, tags (task_categories/language/license/size_categories), description, card data, file list, storage usage, and created/updated dates. Reads via HF's internal API from the browser; no login required.",
+  "parameters": [
+    {
+      "name": "repo",
+      "description": "Dataset repo as org/name (e.g. HuggingFaceFW/fineweb) or full URL https://huggingface.co/datasets/HuggingFaceFW/fineweb.（数据集仓库标识：org/name 或完整 URL，两种形式均可。）",
+      "required": true
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

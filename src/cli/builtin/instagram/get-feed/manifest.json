@@ -1,0 +1,18 @@
+{
+  "id": "instagram-get-feed",
+  "domain": "instagram",
+  "action": "get-feed",
+  "runtime": "browser",
+  "description": "Fetch the Instagram home feed (instagram.com/) — the timeline of accounts you follow, mixed with suggested posts and ads. Every item is labeled with its source (following / suggested / ad). Returns post cards with author, caption, like/comment counts, timestamp, and media URLs; scrolls internally up to 100 items, partial=true when the feed stops producing new items. Use instagram/get-post on any item URL for full text and comments. Requires a logged-in Instagram session.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of posts to return (1-100, default 20). Scrolls internally; partial=true when the feed stops producing new items.",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

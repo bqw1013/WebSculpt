@@ -1,0 +1,28 @@
+{
+  "id": "vimeo-get-category",
+  "domain": "vimeo",
+  "action": "get-category",
+  "runtime": "node",
+  "description": "List videos in a Vimeo category — the ten editorial categories at vimeo.com/categories: animation, adsandcommercials, brandedcontent, comedy, documentary, experimental, music, narrative, sports, travel. Sort orders match the category page's sort control (featured | relevant | date | alphabetical | plays | likes | duration). Each video card carries title, URL, duration, author name/URL, view count (when shown), and a thumbnail. Paginates internally up to the limit (max 100); partial=true when the listing runs out. Public, no login needed.",
+  "parameters": [
+    {
+      "name": "category",
+      "description": "分类 slug，10 个取值：animation | adsandcommercials | brandedcontent | comedy | documentary | experimental | music | narrative | sports | travel。对应 vimeo.com/categories 目录页，取分类页 URL 最后一段 (/categories/{category}/videos)。",
+      "required": true
+    },
+    {
+      "name": "sort",
+      "description": "列表排序：featured（默认，Vimeo 策展序）| relevant | date（最新）| alphabetical | plays（最多播放）| likes | duration。七种均在分类页实测有效。",
+      "required": false,
+      "default": "featured"
+    },
+    {
+      "name": "limit",
+      "description": "返回条数上限（1-100，默认 20）。分类页每页 18 条，命令内部翻页，列表耗尽时标记 partial=true。",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

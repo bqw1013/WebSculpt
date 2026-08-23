@@ -1,0 +1,50 @@
+{
+  "id": "arxiv-search",
+  "domain": "arxiv",
+  "action": "search",
+  "runtime": "node",
+  "description": "Search arXiv papers by keyword — the equivalent of the search box and advanced search form on arxiv.org. The query accepts plain keywords or native arXiv syntax (ti:transformer, au:\"lecun\", boolean AND/OR/ANDNOT); optional parameters add advanced-search filters without hand-writing syntax: restrict to a field (title/author/abstract/comments/journal_ref/doi/paper_id/all), a category, and/or a submission-date range. Returns the total hit count plus paper cards (arXiv ID, title, authors, categories, date, abstract, abs/PDF links). Paginates internally up to the limit (max 200, one request takes the full limit; requests spaced ≥3s per arXiv API policy when paginating); partial=true when results run out. No authentication required.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keywords (e.g. \"vision transformer\") or native arXiv syntax (e.g. \"ti:transformer AND au:vaswani\"). A plain multi-word query matches ALL words (AND) within the field chosen by --field; a query written in native syntax (contains a field prefix like ti:/au:/abs:/all: or a boolean AND/OR/ANDNOT) is passed through to the API verbatim and --field is ignored. Use quotes in native syntax for exact phrases, e.g. all:\"vision transformer\".",
+      "required": true
+    },
+    {
+      "name": "field",
+      "description": "Which field the plain keywords match — all 8 values: all = 全部字段 (all fields, default) / title = 标题 / author = 作者 / abstract = 摘要 / comments = 作者评论 (author comments) / journal_ref = 期刊引用 (journal reference) / doi = DOI / paper_id = 论文ID (arXiv ID). Mirrors the advanced search form's field dropdown. Ignored when the query is written in native syntax.",
+      "required": false,
+      "default": "all"
+    },
+    {
+      "name": "category",
+      "description": "Restrict results to one arXiv category, e.g. \"cs.AI\", \"cs.CV\", \"hep-th\". Case-sensitive (subcategory suffix is uppercase, e.g. cs.AI not cs.ai). ~176 valid values exist — run arxiv/list-categories to enumerate them, or copy the ID from any category page URL (arxiv.org/list/{category}/new).",
+      "required": false
+    },
+    {
+      "name": "date_from",
+      "description": "Submission-date range start, format YYYY-MM-DD (e.g. 2026-01-01). May be used alone (only lower bound) or together with --date_to. Maps to submittedDate:[...] in the API.",
+      "required": false
+    },
+    {
+      "name": "date_to",
+      "description": "Submission-date range end, format YYYY-MM-DD (e.g. 2026-03-31). May be used alone (only upper bound) or together with --date_from. Maps to submittedDate:[...] in the API.",
+      "required": false
+    },
+    {
+      "name": "sort_by",
+      "description": "Result ordering — all 3 values: relevance = 相关度 (best match) / submitted_date = 最新提交优先 (newest submissions first, default) / last_updated = 最近修订优先 (most recently revised first).",
+      "required": false,
+      "default": "submitted_date"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of results to return (1-200, default 50). A single API request fetches the full limit (no unnecessary pagination); partial=true when fewer results exist than requested.",
+      "required": false,
+      "default": "50"
+    }
+  ],
+  "maxLimit": 200,
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

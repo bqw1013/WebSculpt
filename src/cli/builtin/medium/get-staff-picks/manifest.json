@@ -1,0 +1,17 @@
+{
+  "id": "medium-get-staff-picks",
+  "domain": "medium",
+  "action": "get-staff-picks",
+  "runtime": "browser",
+  "description": "Fetch Medium Staff Picks, the official editorial curation list maintained by Medium Staff. Loads more entries by scrolling, up to 100 items. Returns staff-curated articles with metadata and curator notes. No API key required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of items to return (1-100). The list lazy-loads on scroll; the command scrolls until the limit is reached or the list is exhausted (then returns fewer items with partial=true).",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

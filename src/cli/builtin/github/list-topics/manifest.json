@@ -1,0 +1,17 @@
+{
+  "id": "github-list-topics",
+  "domain": "github",
+  "action": "list-topics",
+  "runtime": "browser",
+  "description": "List GitHub's popular topics from https://github.com/topics. Returns topic cards with title, description, and URL (https://github.com/topics/<slug>), usable with github/get-topic. Reads the rendered topics page; no login required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum topics to return (1-100, default 20). The topics page shows a fixed list of 16 featured topics; limit truncates that list to the first N, and with the default 20 all 16 are returned. (条数上限，页面固定 16 条特色话题，limit 仅截断，默认 20 返回全部 16 条。)",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

@@ -2,27 +2,27 @@
   "id": "github-get-trending",
   "domain": "github",
   "action": "get-trending",
-  "runtime": "node",
-  "description": "Fetch trending GitHub repositories based on recent activity and star count. Returns a ranked list of repositories with metadata including name, description, stars, language, and URL. Filters by time period (daily/weekly/monthly) and programming language.",
+  "runtime": "browser",
+  "description": "Fetch the real GitHub trending repositories from github.com/trending. since=daily (default) | weekly | monthly switches the period tab (今日/本周/本月); language filters by primary programming language via the /trending/<language> URL (e.g. python, javascript, rust). Returns ranked cards with full_name, description, language, total stars, stars gained in the period, forks, builders, and URL. Reads GitHub's actual trending ranking, unlike the previous Search-API approximation. No login required.",
   "parameters": [
     {
-      "name": "period",
-      "description": "Time range for recent activity: daily, weekly, or monthly",
+      "name": "since",
+      "description": "Trending period: daily (default, 今日) | weekly (本周) | monthly (本月). Maps to the since tabs on github.com/trending.（榜单周期 tab，对应 trending 页顶部 daily/weekly/monthly 切换。）",
       "required": false,
-      "default": "weekly"
+      "default": "daily"
     },
     {
       "name": "language",
-      "description": "Filter by primary programming language (e.g. python, javascript, rust)",
+      "description": "Filter by primary programming language, e.g. python, javascript, rust, c++. Corresponds to the /trending/<language> URL path.（按编程语言过滤，对应 trending 页的语言下拉，映射到 /trending/<language> 路径。）",
       "required": false
     },
     {
       "name": "limit",
-      "description": "Number of repositories to return (1-50)",
+      "description": "Maximum repositories to return (1-25, default 20). The trending page is a ranked list whose length varies by period/language (about 12-24 repos); limit truncates it and the response reports available (true page count).（条数上限；trending 页条数随周期/语言变化，limit 只做截断，available 字段返回页面真实条数。）",
       "required": false,
-      "default": "10"
+      "default": "20"
     }
   ],
-  "requiresBrowser": false,
+  "requiresBrowser": true,
   "authRequired": "not-required"
 }

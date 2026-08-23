@@ -1,0 +1,17 @@
+{
+  "id": "techmeme-get-timeline",
+  "domain": "techmeme",
+  "action": "get-timeline",
+  "runtime": "node",
+  "description": "获取 Techmeme River 的纯倒序时间流（未经编辑排序的完整报道，滚动约 6 天窗口）。输入可选 --limit（返回条数上限，1-200，默认 50）。返回数组，每条含 time（如 \"12:15 AM\"）、date（所属日期分组如 \"August 18, 2026\"）、title、author（约 1/3 无作者为 null）、source、url（原文链接）、permalink（Techmeme 永久链接 id，可拼 https://www.techmeme.com/{yyMMdd}/p{N} 交 get-story）。单页无翻页，超出当页实有条数时返回全部并在每条标 partial:true。无需登录，node 静态 HTML 直取。",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "返回条数上限。整数，范围 1-200（默认 50）。River 为单页无翻页，当页实有条数随发帖量浮动（实测 153 条/覆盖约 6 天）；limit 超出实有条数时返回全部并在每条标 partial:true，非报错。",
+      "required": false,
+      "default": 50
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "facebook-get-profile",
+  "domain": "facebook",
+  "action": "get-profile",
+  "runtime": "browser",
+  "description": "Fetch a Facebook personal profile (个人主页) and its sub-pages. user accepts a numeric user ID or a username (both appear in profile URLs: /profile.php?id={userId} or /{username}). tab selects the sub-page: all (default, 全部 — mixed timeline of all posts), about (简介), photos (照片), reels (Reels), followers (粉丝), following (关注), friends (好友). List tabs scroll internally up to 100 items, partial=true when exhausted. Requires an active Facebook login; visibility depends on the target's privacy settings.",
+  "parameters": [
+    {
+      "name": "user",
+      "description": "Numeric user ID or username of the profile. Both forms appear in Facebook URLs: facebook.com/profile.php?id={userId} or facebook.com/{username}. To find a user's ID/username, open their profile and copy it from the address bar, or use facebook/search --type people. (用户数字 ID 或 username；从对方主页地址栏复制，或用 search --type people 找人。)",
+      "required": true
+    },
+    {
+      "name": "tab",
+      "description": "Profile sub-page: all (default, 全部 — mixed timeline of all post types, no sk param) | about (简介, sk=about, structured bio fields) | photos (照片, sk=photos) | reels (Reels, sk=reels_tab) | followers (粉丝, sk=followers) | following (关注, sk=following) | friends (好友, sk=friends, only visible if the target's friend list is public or you are friends). Implemented via the sk= URL parameter on the profile URL.",
+      "required": false,
+      "default": "all"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum items to return (1-100, default 20). Applies to feed/list tabs (all/photos/reels/followers/following/friends); ignored for about. Scrolls internally; partial=true when the list ends early. (条数上限，仅帖子流/列表类子页生效；about 不适用。)",
+      "required": false,
+      "default": 20
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "required"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "huggingface-list-discussions",
+  "domain": "huggingface",
+  "action": "list-discussions",
+  "runtime": "browser",
+  "description": "List community discussions (open, including drafts) of a Hugging Face repo by repo id, e.g. deepseek-ai/DeepSeek-R1 (model, dataset, or Space; org/name or full URL). Returns discussion threads with number, title, URL, author username, open time (ISO), comment count, and status (open|draft|closed). Reads via HF's internal discussions API (/api/{models|datasets|spaces}/{repo}/discussions) from the browser; repo type is auto-detected (models->datasets->spaces). Supports pagination to 100 (API returns 50/page). No login required.",
+  "parameters": [
+    {
+      "name": "repo",
+      "type": "string",
+      "required": true,
+      "description": "Repo id of a model, dataset, or Space as org/name (e.g. deepseek-ai/DeepSeek-R1, HuggingFaceFW/fineweb, multimodalart/minimax-h3) or full URL https://huggingface.co/deepseek-ai/DeepSeek-R1. (模型/数据集/Space 的仓库标识：`org/name` 或完整 URL。实现按 models→datasets→spaces 顺序探测内部 API，首个 200 生效。)"
+    },
+    {
+      "name": "limit",
+      "type": "integer",
+      "required": false,
+      "default": "20",
+      "description": "Maximum discussions to return (1-100, default 20). The HF API returns a fixed 50 per page (limit/start ignored); the command fetches enough pages and slices. (返回条数上限，1-100，默认 20。API 固定 50/页，命令按需翻页并截取。)"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

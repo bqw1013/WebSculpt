@@ -1,0 +1,28 @@
+{
+  "id": "spotify-search",
+  "domain": "spotify",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search Spotify podcasts by keyword — the equivalent of the search box's 'Podcasts & Shows' tab (/search/{q}/podcastAndEpisodes). type picks the result scope: all (default, both podcast shows and episodes) | podcasts (shows only) | episodes (episodes only, the /search/{q}/episodes sub-page). Returns show cards (id, url, title, publisher, cover) and/or episode cards (id, url, title, parent show, date, duration, cover), loading internally via the app's own GraphQL (searchPodcasts/searchFullEpisodes) up to --limit per kind (max 100); partial=true when results run out. Runs in a browser context; no login needed. Music-domain tabs (songs/artists/albums/playlists) are out of scope. 中文：按关键词搜索 Spotify 播客节目与单集，等价于搜索框「播客和节目」tab。type 控制范围：all 节目+单集 / podcasts 只节目 / episodes 只单集。内部走应用自身 GraphQL 翻页。",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keyword(s), e.g. 'joe rogan'. Plain free text, no special syntax. 中文：搜索关键词，自由文本。",
+      "required": true
+    },
+    {
+      "name": "type",
+      "description": "Result scope: all (default — both podcast shows and episodes, the two sections of the 'Podcasts & Shows' tab) | podcasts (shows only, searchPodcasts) | episodes (episodes only, maps to the /search/{q}/episodes sub-page, searchFullEpisodes). 中文：结果范围。all 节目+单集 / podcasts 只节目 / episodes 只单集。",
+      "required": false,
+      "default": "all"
+    },
+    {
+      "name": "limit",
+      "description": "Max results per kind, 1-100, default 20. The command paginates internally with the app's GraphQL offset (page size 30); partial=true when a kind runs out before reaching limit. 中文：每类结果数上限 1-100，默认 20；内部 offset 翻页，耗尽标记 partial=true。",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

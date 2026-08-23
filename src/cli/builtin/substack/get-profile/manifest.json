@@ -1,0 +1,28 @@
+{
+  "id": "substack-get-profile",
+  "domain": "substack",
+  "action": "get-profile",
+  "runtime": "browser",
+  "description": "Get a single Substack user's public profile by handle. Returns profile metadata by default; optional sections include activity, posts, likes-replies, and subscriptions. Supports limiting the number of returned list items.",
+  "parameters": [
+    {
+      "name": "handle",
+      "description": "Substack username (the part after @ in https://substack.com/@username).",
+      "required": true
+    },
+    {
+      "name": "section",
+      "description": "Profile section to return. Allowed values: profile (default), activity, posts, likes-replies, subscriptions.",
+      "required": false,
+      "default": "profile"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of items to return for list sections (activity, posts, likes-replies, subscriptions). Ignored for section=profile. Range 1-100.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

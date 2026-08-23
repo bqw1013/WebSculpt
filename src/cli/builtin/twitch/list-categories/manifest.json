@@ -1,0 +1,18 @@
+{
+  "id": "twitch-list-categories",
+  "domain": "twitch",
+  "action": "list-categories",
+  "runtime": "node",
+  "description": "List Twitch's top categories (games/topics) ranked by live viewer count, from Twitch's internal GraphQL (the Browse page's Categories ranking). Returns each category's name, slug (usable as twitch/get-feed's category parameter), genre tags, live viewer count, box art URL, and page URL. Fetches the first page in a single request up to the limit (max 100); partial=true when fewer categories than requested are returned. No login required; runs via Node, no browser.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of categories to return (1-100, default 20). Fetches the first page in one request; partial=true when fewer than limit are returned. Twitch's after-cursor pagination triggers an integrity check, so the command does not paginate beyond the first page.",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "maxLimit": 100,
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}
