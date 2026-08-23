@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-24
+
 ### Added
 
 - Expanded the builtin command library from 7 commands to 164 commands across 24 platforms (github, huggingface, hackernews, arxiv, reddit, producthunt, stocktwits, medium, twitch, techcrunch, quora, spotify, youtube, vimeo, dailymotion, pinterest, techmeme, substack, kickstarter, facebook, instagram, plus the existing bilibili, weibo, zhihu). Commands whose primary behavior reproduces copyrighted media or bypasses platform access controls are excluded; open-access downloads (e.g. `arxiv/download-paper`) are included.
