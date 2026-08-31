@@ -57,7 +57,7 @@ Establish the connection as follows:
 3. Use the same unique name for both the CLI session and the attach session:
 
    ```bash
-   playwright-cli -s=<session> attach --cdp=chrome --session=<session>
+   playwright-cli -s=<session> attach --cdp=http://127.0.0.1:9222 --session=<session>
    ```
 
    > **Windows note**: `attach` on this platform often appears to hang or time out, although the CDP connection has usually been established in the background.

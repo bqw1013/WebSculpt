@@ -57,7 +57,7 @@ playwright-cli list
 3. 使用同一个唯一名称同时指定 CLI session 和 attach session：
 
    ```bash
-   playwright-cli -s=<session> attach --cdp=chrome --session=<session>
+   playwright-cli -s=<session> attach --cdp=http://127.0.0.1:9222 --session=<session>
    ```
 
    > **Windows 注意**：`attach` 在该平台常表现为挂起或超时，但 CDP 连接通常已在后台成功建立。

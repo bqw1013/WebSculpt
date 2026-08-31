@@ -24,7 +24,7 @@ export async function getBrowser(): Promise<Browser> {
 	if (!connectingPromise) {
 		connectingPromise = (async (): Promise<Browser> => {
 			try {
-				const browser = await chromium.connectOverCDP("chrome");
+				const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
 				cachedBrowser = browser;
 				hasEverConnected = true;
 				logEvent("INFO", "browser_connect");
