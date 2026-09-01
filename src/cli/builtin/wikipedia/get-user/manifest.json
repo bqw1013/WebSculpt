@@ -1,0 +1,22 @@
+{
+  "id": "wikipedia-get-user",
+  "domain": "wikipedia",
+  "action": "get-user",
+  "runtime": "node",
+  "description": "Fetch a Wikipedia editor's public account statistics by username or user-page URL. Returns name, URL, language, user ID, edit count, user groups, implicit groups, rights, registration date, gender, and derived flags for bot/admin/blocked status. Uses the public MediaWiki Action API; no login required.",
+  "parameters": [
+    {
+      "name": "user",
+      "description": "Wikipedia username (e.g. {username}) or full user-page URL https://{lang}.wikipedia.org/wiki/User:{username}.",
+      "required": true
+    },
+    {
+      "name": "language",
+      "description": "Language edition code (default zh). Common values: zh/en/ja/ko/fr/de/es/ru; any valid MediaWiki language code works.",
+      "required": false,
+      "default": "zh"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

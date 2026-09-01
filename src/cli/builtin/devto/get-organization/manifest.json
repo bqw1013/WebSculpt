@@ -1,0 +1,22 @@
+{
+  "id": "devto-get-organization",
+  "domain": "devto",
+  "action": "get-organization",
+  "runtime": "browser",
+  "description": "Fetch a DEV.to organization's public profile by username. Uses the public Forem API first; if the API returns a rate-limit or critical failure, falls back to extracting the profile from the DEV.to organization page. Optionally include member list with --include_members true.",
+  "parameters": [
+    {
+      "name": "org",
+      "description": "Organization username, the profile URL path segment (https://dev.to/<org>). Case-insensitive; normalized to lowercase.",
+      "required": true
+    },
+    {
+      "name": "include_members",
+      "description": "Also fetch the organization's member list (true | false, default false). In browser fallback mode only the first 50 visible members are returned.",
+      "required": false,
+      "default": "false"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

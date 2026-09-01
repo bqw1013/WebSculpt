@@ -133,18 +133,19 @@ websculpt zhihu get-hot --limit 5
 
 ### 2.3 内置命令库
 
-WebSculpt 内置命令库开箱即用：**24 个平台 / 164 条命令**的已验证信息获取路径。
+WebSculpt 内置命令库开箱即用：**26 个平台 / 185 条命令**的已验证信息获取路径。
 
 | 平台 | # | 平台 | # | 平台 | # |
 |------|---|------|---|------|---|
-| 🐙 github | 15 | ❓ quora | 7 | 💌 substack | 6 |
-| 🧠 huggingface | 13 | 🎵 spotify | 7 | 📡 techmeme | 6 |
-| 🚀 producthunt | 10 | 📄 arxiv | 6 | 🎥 vimeo | 6 |
-| 📈 stocktwits | 10 | 🎬 dailymotion | 6 | ▶️ youtube | 6 |
-| ✍️ medium | 10 | 👥 facebook | 6 | 💰 kickstarter | 4 |
-| 💬 hackernews | 9 | 📸 instagram | 6 | 📺 bilibili | 1 |
-| 📰 techcrunch | 8 | 📌 pinterest | 6 | 🔥 weibo | 1 |
-| 🎮 twitch | 8 | 👽 reddit | 6 | 💡 zhihu | 1 |
+| 🐙 github | 15 | 🎮 twitch | 8 | 💌 substack | 6 |
+| 🧠 huggingface | 13 | ❓ quora | 7 | 📡 techmeme | 6 |
+| 📚 wikipedia | 12 | 🎵 spotify | 7 | 🎥 vimeo | 6 |
+| 🚀 producthunt | 10 | 📄 arxiv | 6 | ▶️ youtube | 6 |
+| 📈 stocktwits | 10 | 🎬 dailymotion | 6 | 💰 kickstarter | 4 |
+| ✍️ medium | 10 | 👥 facebook | 6 | 📺 bilibili | 1 |
+| 💬 hackernews | 9 | 📸 instagram | 6 | 🔥 weibo | 1 |
+| 🧑‍💻 devto | 9 | 📌 pinterest | 6 | 💡 zhihu | 1 |
+| 📰 techcrunch | 8 | 👽 reddit | 6 | | |
 
 运行时查看完整清单：
 

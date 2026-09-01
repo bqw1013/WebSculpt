@@ -1,0 +1,29 @@
+{
+  "id": "wikipedia-get-trending",
+  "domain": "wikipedia",
+  "action": "get-trending",
+  "runtime": "node",
+  "description": "Fetch the most-viewed Wikipedia articles by daily page views for a given language edition and time window. Returns a ranked list of article titles with view counts.",
+  "parameters": [
+    {
+      "name": "period",
+      "description": "Time window: yesterday (latest available day) / 7day (trailing 7 calendar days) / 30day (trailing 30 calendar days).",
+      "required": false,
+      "default": "yesterday"
+    },
+    {
+      "name": "limit",
+      "description": "Number of results to return (1-100).",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "language",
+      "description": "MediaWiki language code for the Wikipedia edition (e.g. zh, en, ja, ko).",
+      "required": false,
+      "default": "zh"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

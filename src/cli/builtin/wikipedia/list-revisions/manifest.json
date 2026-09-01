@@ -1,0 +1,28 @@
+{
+  "id": "wikipedia-list-revisions",
+  "domain": "wikipedia",
+  "action": "list-revisions",
+  "runtime": "node",
+  "description": "List the recent edit history (revisions) of a Wikipedia article. Returns revision ID, parent ID, timestamp, editor, edit summary, size, tags, parsed comment, and a permanent URL for each revision. Supports any language edition and accepts either an article title or a full Wikipedia URL.",
+  "parameters": [
+    {
+      "name": "title",
+      "description": "Article title (e.g. '{title}') or full URL (e.g. 'https://{lang}.wikipedia.org/wiki/{title}').",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of revisions to return (1-500). Default: 20.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "language",
+      "description": "MediaWiki language edition code (e.g. 'zh', 'en', 'ja'). Default: 'zh'.",
+      "required": false,
+      "default": "zh"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

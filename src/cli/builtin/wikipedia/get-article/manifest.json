@@ -1,0 +1,28 @@
+{
+  "id": "wikipedia-get-article",
+  "domain": "wikipedia",
+  "action": "get-article",
+  "runtime": "node",
+  "description": "Fetch a Wikipedia article's structured content by title. Returns title, page ID, description, summary, optional full body, infobox key-value pairs, categories, related links, multilingual versions, main image, and last editor. Supports any language edition via --language.",
+  "parameters": [
+    {
+      "name": "title",
+      "description": "Article title (e.g. {title}) or full URL https://{lang}.wikipedia.org/wiki/{title}",
+      "required": true
+    },
+    {
+      "name": "language",
+      "description": "Language edition code (default zh). Common values: zh/en/ja/ko/fr/de/es/ru; any valid MediaWiki language code works.",
+      "required": false,
+      "default": "zh"
+    },
+    {
+      "name": "include",
+      "description": "Content scope: summary (lead only), full (lead + full body), infobox (lead + infobox), all (lead + body + infobox).",
+      "required": false,
+      "default": "summary"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

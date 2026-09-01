@@ -1,0 +1,16 @@
+{
+  "id": "devto-get-article",
+  "domain": "devto",
+  "action": "get-article",
+  "runtime": "browser",
+  "description": "Get a single DEV.to article. Uses the Forem API first and falls back to browser page extraction when the API is unavailable.",
+  "parameters": [
+    {
+      "name": "url",
+      "description": "Full DEV.to article URL, e.g. https://dev.to/{username}/{slug}",
+      "required": true
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

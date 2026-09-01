@@ -1,0 +1,22 @@
+{
+  "id": "devto-list-tags",
+  "domain": "devto",
+  "action": "list-tags",
+  "runtime": "browser",
+  "description": "List DEV.to tags. Uses the public Forem API by default and falls back to the /tags page when the API fails. Provide --query to search tags by name (uses the page search directly because the API does not support tag search). Returns tag name, summary, display colors, and posts count when available.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of tags to return (integer, 1–1000, default 50).",
+      "required": false,
+      "default": "50"
+    },
+    {
+      "name": "query",
+      "description": "Filter tags by name substring, e.g. '{query}'. When provided, the command uses the /tags page search because the Forem API does not support server-side tag search.",
+      "required": false
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

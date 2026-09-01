@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Promoted `devto` (9 commands) and `wikipedia` (12 commands) from user commands to builtin commands; the builtin library now covers **26 platforms / 185 commands**. README.md and README_zh.md platform tables updated accordingly.
+
 ## [0.4.0] - 2026-08-24
 
 ### Added

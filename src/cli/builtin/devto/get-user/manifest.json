@@ -1,0 +1,16 @@
+{
+  "id": "devto-get-user",
+  "domain": "devto",
+  "action": "get-user",
+  "runtime": "browser",
+  "description": "Get public profile information for a DEV.to user. Uses the Forem API first and falls back to the public profile page when the API is unavailable.",
+  "parameters": [
+    {
+      "name": "username",
+      "description": "DEV.to username (the path segment in https://dev.to/{username}). 2-30 characters; letters, numbers, underscores, and hyphens only.",
+      "required": true
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

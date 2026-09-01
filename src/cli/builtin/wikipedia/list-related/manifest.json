@@ -1,0 +1,28 @@
+{
+  "id": "wikipedia-list-related",
+  "domain": "wikipedia",
+  "action": "list-related",
+  "runtime": "node",
+  "description": "List the in-page links (related articles) of a Wikipedia article. Returns the article titles linked from the article's body, each with namespace and URL. Supports any language edition via --language and accepts either a title or a full Wikipedia URL. Uses the public MediaWiki Action API; no login required.",
+  "parameters": [
+    {
+      "name": "title",
+      "description": "Article title (e.g. {article_title}) or full URL https://{lang}.wikipedia.org/wiki/{article_title}.",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Number of related links to return (1-500, default 20).",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "language",
+      "description": "MediaWiki language edition code (default zh).",
+      "required": false,
+      "default": "zh"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -133,18 +133,19 @@ websculpt github get-trending --limit 5
 
 ### 2.3 Builtin Command Library
 
-WebSculpt ships with a builtin command library: verified information retrieval paths for **24 platforms / 164 commands**, ready to use out of the box.
+WebSculpt ships with a builtin command library: verified information retrieval paths for **26 platforms / 185 commands**, ready to use out of the box.
 
 | Platform | # | Platform | # | Platform | # |
 |----------|---|----------|---|----------|---|
-| 🐙 github | 15 | ❓ quora | 7 | 💌 substack | 6 |
-| 🧠 huggingface | 13 | 🎵 spotify | 7 | 📡 techmeme | 6 |
-| 🚀 producthunt | 10 | 📄 arxiv | 6 | 🎥 vimeo | 6 |
-| 📈 stocktwits | 10 | 🎬 dailymotion | 6 | ▶️ youtube | 6 |
-| ✍️ medium | 10 | 👥 facebook | 6 | 💰 kickstarter | 4 |
-| 💬 hackernews | 9 | 📸 instagram | 6 | 📺 bilibili | 1 |
-| 📰 techcrunch | 8 | 📌 pinterest | 6 | 🔥 weibo | 1 |
-| 🎮 twitch | 8 | 👽 reddit | 6 | 💡 zhihu | 1 |
+| 🐙 github | 15 | 🎮 twitch | 8 | 💌 substack | 6 |
+| 🧠 huggingface | 13 | ❓ quora | 7 | 📡 techmeme | 6 |
+| 📚 wikipedia | 12 | 🎵 spotify | 7 | 🎥 vimeo | 6 |
+| 🚀 producthunt | 10 | 📄 arxiv | 6 | ▶️ youtube | 6 |
+| 📈 stocktwits | 10 | 🎬 dailymotion | 6 | 💰 kickstarter | 4 |
+| ✍️ medium | 10 | 👥 facebook | 6 | 📺 bilibili | 1 |
+| 💬 hackernews | 9 | 📸 instagram | 6 | 🔥 weibo | 1 |
+| 🧑‍💻 devto | 9 | 📌 pinterest | 6 | 💡 zhihu | 1 |
+| 📰 techcrunch | 8 | 👽 reddit | 6 | | |
 
 Browse the full set at runtime:
 

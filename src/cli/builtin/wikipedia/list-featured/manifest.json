@@ -1,0 +1,29 @@
+{
+  "id": "wikipedia-list-featured",
+  "domain": "wikipedia",
+  "action": "list-featured",
+  "runtime": "node",
+  "description": "List Wikipedia featured content (featured articles, featured lists, or featured pictures) for a language edition. Returns titles, page IDs, namespaces, types, and URLs. Supports multiple languages via a maintained category mapping; unmapped languages or kinds return EMPTY_RESULT.",
+  "parameters": [
+    {
+      "name": "kind",
+      "description": "Type of featured content to list: articles, lists, or images. Default: articles.",
+      "required": false,
+      "default": "articles"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of items to return. Must be a positive integer. Default: 20.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "language",
+      "description": "MediaWiki language edition code (e.g. zh, en, ja, ko, fr, de, es, ru, pt, it). Default: zh.",
+      "required": false,
+      "default": "zh"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

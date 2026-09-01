@@ -1,0 +1,22 @@
+{
+  "id": "wikipedia-get-daily",
+  "domain": "wikipedia",
+  "action": "get-daily",
+  "runtime": "node",
+  "description": "Fetch Wikipedia's daily aggregation for a given UTC date (default today): featured article, most-read articles with view counts, on-this-day historical events, and picture of the day. Missing fields are omitted. Works across language editions.",
+  "parameters": [
+    {
+      "name": "date",
+      "description": "Date in YYYY-MM-DD. Defaults to today's UTC date.",
+      "required": false
+    },
+    {
+      "name": "language",
+      "description": "Wikipedia language edition code (e.g. zh, en, ja). Defaults to zh.",
+      "required": false,
+      "default": "zh"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "devto-search",
+  "domain": "devto",
+  "action": "search",
+  "runtime": "browser",
+  "description": "Search DEV.to articles by keyword. Uses the public Forem API first for relevance sorting, and falls back to the DEV.to search page when the API fails or when newest/oldest sorting is requested. Returns article cards with title, description, tags, author, comment/reaction counts, and publish date.",
+  "parameters": [
+    {
+      "name": "query",
+      "description": "Search keyword, e.g. a programming language, framework, or topic.",
+      "required": true
+    },
+    {
+      "name": "sort",
+      "description": "Result order: relevance (default, API-first) | newest | oldest. newest/oldest use the browser page because the public API does not support sorting.",
+      "required": false,
+      "default": "relevance"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of articles to return (1-1000, default 20).",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

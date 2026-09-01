@@ -1,0 +1,23 @@
+{
+  "id": "wikipedia-get-news",
+  "domain": "wikipedia",
+  "action": "get-news",
+  "runtime": "node",
+  "description": "Fetch Wikipedia's current news (news动态 / In the news) for a language edition. Returns recent major events linked to their Wikipedia articles. Supports zh/en/ja/ko/fr/de/es/ru and more; unmapped languages return EMPTY_RESULT.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of news items to return (1-100).",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "language",
+      "description": "Wikipedia language edition code (default zh). Examples: zh, en, ja, ko, fr, de, es, ru.",
+      "required": false,
+      "default": "zh"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

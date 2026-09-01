@@ -1,0 +1,34 @@
+{
+  "id": "wikipedia-list-category-members",
+  "domain": "wikipedia",
+  "action": "list-category-members",
+  "runtime": "node",
+  "description": "List members of a Wikipedia category (articles, subcategories, or files). Supports any language edition and accepts either a category name or full category URL.",
+  "parameters": [
+    {
+      "name": "category",
+      "description": "Category name without the 'Category:' prefix (e.g. '{category}') or the full category URL (e.g. 'https://{lang}.wikipedia.org/wiki/Category:{category}').",
+      "required": true
+    },
+    {
+      "name": "type",
+      "description": "Member type to return: page (articles), subcat (subcategories), file (files), or all. Default: page.",
+      "required": false,
+      "default": "page"
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of members to return (1-500). Default: 20.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "language",
+      "description": "MediaWiki language edition code (e.g. 'zh', 'en', 'ja'). Default: zh.",
+      "required": false,
+      "default": "zh"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

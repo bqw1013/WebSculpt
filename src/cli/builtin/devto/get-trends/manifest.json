@@ -1,0 +1,16 @@
+{
+  "id": "devto-get-trends",
+  "domain": "devto",
+  "action": "get-trends",
+  "runtime": "browser",
+  "description": "Fetch DEV.to community trends from the /trending page. This is a browser-only path; no public API endpoint exposes the AI-generated trend summaries. Returns trend titles, post counts, analysis summaries, key discussion areas, cover images, and the list of available filter tags. Optionally filter by --tag.",
+  "parameters": [
+    {
+      "name": "tag",
+      "description": "Optional trend tag slug (without the # prefix). Must be one of the filter tags shown on the /trending page. If omitted, all trends are returned.",
+      "required": false
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

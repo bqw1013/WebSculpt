@@ -1,0 +1,44 @@
+{
+  "id": "devto-list-articles",
+  "domain": "devto",
+  "action": "list-articles",
+  "runtime": "browser",
+  "description": "List articles from DEV.to. Uses the Forem API first and falls back to browser extraction when the API fails.",
+  "parameters": [
+    {
+      "name": "sort",
+      "description": "Sort order: popular (default), latest, or top. Only latest and top are supported for the site-wide feed via API.",
+      "required": false,
+      "default": "popular"
+    },
+    {
+      "name": "period",
+      "description": "Time period for top sorting: week, month, year, or infinity. API only.",
+      "required": false,
+      "default": "infinity"
+    },
+    {
+      "name": "tag",
+      "description": "Filter by a single tag, e.g. {tag}.",
+      "required": false
+    },
+    {
+      "name": "user",
+      "description": "Filter by a username, e.g. {user}.",
+      "required": false
+    },
+    {
+      "name": "org",
+      "description": "Filter by an organization username, e.g. {org}.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of articles to return, default 30, max 1000.",
+      "required": false,
+      "default": "30"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

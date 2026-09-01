@@ -1,0 +1,28 @@
+{
+  "id": "wikipedia-list-contribs",
+  "domain": "wikipedia",
+  "action": "list-contribs",
+  "runtime": "node",
+  "description": "List a Wikipedia user's recent contributions. Returns revision ID, parent ID, timestamp, article title, namespace, edit comment, byte size, byte change, tags, and article URL for each edit. Supports any language edition and accepts either a username or a full user page URL.",
+  "parameters": [
+    {
+      "name": "user",
+      "description": "Wikipedia username (e.g. '{user}') or the full user page URL (e.g. 'https://{lang}.wikipedia.org/wiki/User:{user}').",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of contributions to return. Must be a positive integer. The API returns up to 500 items per request; larger values are fetched across multiple pages. Default: 20.",
+      "required": false,
+      "default": "20"
+    },
+    {
+      "name": "language",
+      "description": "MediaWiki language edition code (e.g. 'zh', 'en', 'ja'). Default: 'zh'.",
+      "required": false,
+      "default": "zh"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

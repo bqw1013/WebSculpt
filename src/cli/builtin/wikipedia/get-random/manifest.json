@@ -1,0 +1,23 @@
+{
+  "id": "wikipedia-get-random",
+  "domain": "wikipedia",
+  "action": "get-random",
+  "runtime": "node",
+  "description": "Fetch one or more random Wikipedia articles from a language edition. Returns article titles, page IDs, and URLs. Supports any valid MediaWiki language code and up to 500 results per request. No login required.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Number of random articles to return (1-500, default 1).",
+      "required": false,
+      "default": "1"
+    },
+    {
+      "name": "language",
+      "description": "Language edition code (default zh). Common values: zh / en / ja / ko / fr / de / es / ru. Any valid MediaWiki language code works.",
+      "required": false,
+      "default": "zh"
+    }
+  ],
+  "requiresBrowser": false,
+  "authRequired": "not-required"
+}

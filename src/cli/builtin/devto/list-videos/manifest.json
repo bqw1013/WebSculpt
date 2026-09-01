@@ -1,0 +1,17 @@
+{
+  "id": "devto-list-videos",
+  "domain": "devto",
+  "action": "list-videos",
+  "runtime": "browser",
+  "description": "List DEV.to video articles (embedded YouTube videos posted by community members). Uses the public Forem API first and falls back to browser extraction when the API is unavailable or rate-limited. Returns title, article URL, YouTube embed URL, source URL, and author name.",
+  "parameters": [
+    {
+      "name": "limit",
+      "description": "Maximum number of videos to return (1-1000, default 20).",
+      "required": false,
+      "default": "20"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}

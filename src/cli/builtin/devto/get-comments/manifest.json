@@ -1,0 +1,33 @@
+{
+  "id": "devto-get-comments",
+  "domain": "devto",
+  "action": "get-comments",
+  "runtime": "browser",
+  "description": "Fetch comments on a DEV.to article. Uses the public Forem API first and falls back to extracting visible comments from the article page when the API is unavailable.",
+  "parameters": [
+    {
+      "name": "article_url",
+      "description": "Full DEV.to article URL, e.g. https://dev.to/{username}/{slug}. Provide this OR article_id.",
+      "required": false
+    },
+    {
+      "name": "article_id",
+      "description": "Numeric DEV.to article id. Provide this OR article_url.",
+      "required": false
+    },
+    {
+      "name": "limit",
+      "description": "Maximum number of top-level comments to return (1-1000, default 50). Applied client-side because the API does not paginate.",
+      "required": false,
+      "default": "50"
+    },
+    {
+      "name": "include_children",
+      "description": "Whether to include nested replies under each top-level comment (true | false, default true).",
+      "required": false,
+      "default": "true"
+    }
+  ],
+  "requiresBrowser": true,
+  "authRequired": "not-required"
+}
