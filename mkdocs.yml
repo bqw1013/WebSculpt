@@ -1,0 +1,74 @@
+# Static site for docs/. Local preview only: `npm run docs:serve`.
+# Build with `npm run docs:build` and finish warning-free -- it passes --strict.
+site_name: WebSculpt
+docs_dir: docs
+
+extra_css:
+  - stylesheets/extra.css
+
+theme:
+  name: material
+  language: zh
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: 切到深色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: 切到浅色模式
+  features:
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+
+# Site-only syntax that degrades poorly on GitHub -- admonition, details,
+# tabbed -- is deliberately left out. These pages are read in both places.
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search
+  - i18n:
+      # The repo keeps translations as docs/<locale>/ mirrors of docs/ root,
+      # which is exactly what the "folder" structure expects: the default
+      # language stays at docs/, other locales get a subdirectory.
+      docs_structure: folder
+      fallback_to_default: true
+      languages:
+        - locale: zh
+          default: true
+          name: 中文
+        - locale: en
+          name: English
+          # Titles in nav below are the Chinese ones; this swaps them for the
+          # English build. A title absent from the map keeps its Chinese
+          # spelling, which is correct for CLI / Capture / Daemon.
+          nav_translations:
+            首页: Home
+            CLI 参考: CLI Reference
+            架构: Architecture
+
+# An explicit nav pins the reading order -- the auto-derived one sorts
+# alphabetically and would bury the homepage mid-list.
+nav:
+  - 首页: index.md
+  - CLI 参考: CLI.md
+  - 架构: Architecture.md
+  - Capture: Capture.md
+  - Daemon: Daemon.md

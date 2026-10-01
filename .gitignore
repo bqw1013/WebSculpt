@@ -73,6 +73,12 @@ tmp/
 # OpenSpec working files
 openspec/
 
+# MkDocs build output
+site/
+
+# Python toolchain (uv) used by the docs build
+.venv/
+
 
 
 docs/Design.md

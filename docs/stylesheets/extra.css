@@ -1,0 +1,78 @@
+/* `text` blocks -- directory trees, architecture diagrams, plain output --
+   render as a dark terminal panel. `bash` blocks stay light, so a command
+   and a display-only block are told apart by panel shade before a word is
+   read. Only `text` is restyled: this repo puts output contracts in tables
+   rather than fenced samples, so there is no `json`/`yaml` output to carry.
+
+   The panel owns its token colors outright. A color scheme in the theme
+   assumes its own (light) code background, so a value inherited from the
+   light scheme lands dark-on-dark here. Defining the palette at the panel
+   is what keeps it out of reach of a scheme switch. */
+
+.md-typeset .highlight.language-text {
+  --sculpt-panel-fg: #c9d1d9;
+  --sculpt-panel-key: #7ee787;
+  --sculpt-panel-value: #a5d6ff;
+  --sculpt-panel-constant: #79c0ff;
+  --sculpt-panel-number: #ffa657;
+  --sculpt-panel-muted: #8b949e;
+
+  background-color: #1d2125;
+  border: 0.05rem solid #444c56;
+}
+
+.md-typeset .highlight.language-text pre,
+.md-typeset .highlight.language-text code {
+  color: var(--sculpt-panel-fg);
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* A token the rules below do not name falls back to the panel's foreground
+   rather than the theme's. That is what keeps a class nobody anticipated --
+   from a lexer upgrade, or from a language added to mkdocs.yml -- readable
+   instead of dark-on-dark, and it is why the list below need not be
+   exhaustive. */
+
+.md-typeset .highlight.language-text code span {
+  color: inherit;
+}
+
+/* Pygments token colors. These are ASCII diagrams rather than source, so
+   most blocks match none of them; the rules are here for the few `text`
+   blocks whose content does lex. */
+
+.md-typeset .highlight.language-text .nt {
+  color: var(--sculpt-panel-key); /* keys */
+}
+
+.md-typeset .highlight.language-text .s,
+.md-typeset .highlight.language-text .s1,
+.md-typeset .highlight.language-text .s2,
+.md-typeset .highlight.language-text .sb,
+.md-typeset .highlight.language-text .sc,
+.md-typeset .highlight.language-text .nv {
+  color: var(--sculpt-panel-value); /* strings, values */
+}
+
+.md-typeset .highlight.language-text .kc,
+.md-typeset .highlight.language-text .k,
+.md-typeset .highlight.language-text .kd,
+.md-typeset .highlight.language-text .kn,
+.md-typeset .highlight.language-text .nb {
+  color: var(--sculpt-panel-constant); /* true / false / null, built-ins */
+}
+
+.md-typeset .highlight.language-text .m,
+.md-typeset .highlight.language-text .mi,
+.md-typeset .highlight.language-text .mf {
+  color: var(--sculpt-panel-number); /* numbers */
+}
+
+.md-typeset .highlight.language-text .c,
+.md-typeset .highlight.language-text .c1,
+.md-typeset .highlight.language-text .cm,
+.md-typeset .highlight.language-text .o,
+.md-typeset .highlight.language-text .p {
+  color: var(--sculpt-panel-muted); /* comments, operators, separators */
+}
