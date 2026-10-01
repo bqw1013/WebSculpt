@@ -40,20 +40,7 @@ Explore 必须能独立使用（用户只要数据、不要沉淀）。只有当
 
 工作区位于**项目当前目录**下：
 
-```text
-.websculpt/
-└── captures/
-    └── <name>/
-        ├── capture.yaml      # 机器可读元数据 + 命令库快照（创建时写入，后续只读）
-        ├── evidence.md       # 探索证据（Agent 填写，系统审计）
-        ├── draft/            # 命令包骨架（capture new 一并生成）
-        │   ├── manifest.json # 预填 domain/action/runtime，id 留空
-        │   ├── command.js    # 运行时对应入口模板
-        │   ├── README.md     # 模板
-        │   └── context.md    # 模板
-        ├── validation.json   # 最近一次 validate 结果（含 draft 指纹）
-        └── backup/           # capture import 时写入的原命令快照，用于 capture restore 回滚
-```
+![Capture 六 Artifact 流水线](assets/capture-pipeline-zh.svg)
 
 **设计意图**：
 

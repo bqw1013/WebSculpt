@@ -69,24 +69,7 @@ The workspace is located in the **current project directory**:
 
 The Capture workflow consists of 6 artifacts, advancing through strict layered dependencies:
 
-```text
-evidence (done)
-    |
-    v
-command (ready / done / blocked)
-    |
-    v
-manifest (ready / done / blocked)
-    |
-    v
-readme (ready / done / blocked)
-    |
-    v
-context (ready / done / blocked)
-    |
-    v
-validation (blocked / done)
-```
+![Capture six-artifact pipeline](../assets/capture-pipeline-en.svg)
 
 Each artifact must wait for the preceding artifact to reach `done` before it can leave `blocked`. If a preceding artifact regresses (e.g., evidence heading is deleted, TODO is re-added), subsequent artifacts immediately regress in cascade.
 

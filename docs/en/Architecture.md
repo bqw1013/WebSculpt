@@ -8,41 +8,7 @@
 
 WebSculpt's core design goal is to turn "information acquisition paths" into locally reusable command assets. The entire system revolves around a three-stage closed loop of **explore → capture → command**:
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         AI Agent                                    │
-│  (understand requirements, explore paths, capture assets, invoke    │
-│   commands)                                                         │
-└─────────────────────────────────────────────────────────────────────┘
-    │                              │
-    ▼                              ▼
-┌──────────────┐           ┌──────────────┐
-│   explore    │  ──────►  │   capture    │
-│  discovery & │  handoff  │  capture &   │
-│  validation  │           │  solidify    │
-└──────────────┘           └──────────────┘
-    ▲                              │
-    │                              ▼
-    │                      ┌──────────────┐
-    └─────────────────────│    command   │
-       reuse existing     │  execute &   │
-       commands           │  reuse       │
-                          └──────────────┘
-                                   │
-                                   ▼
-                          ┌──────────────┐
-                          │     CLI      │
-                          │  interaction │
-                          │  & scheduler │
-                          └──────────────┘
-                                   │
-                    ┌──────────────┼──────────────┐
-                    ▼              ▼              ▼
-                ┌──────┐     ┌────────┐     ┌──────────┐
-                │ node │     │browser │     │shell/py  │
-                └──────┘     │(daemon)│     └──────────┘
-                             └────────┘
-```
+![WebSculpt architecture overview](../assets/architecture-en.svg)
 
 | Stage   | Responsibility | Corresponding Skill | Output |
 |---------|---------------|---------------------|--------|
@@ -135,9 +101,7 @@ The workspace is located in the **current project directory**:
 
 The capture workflow is driven by 6 artifacts in strict layered dependency:
 
-```text
-evidence → command → manifest → readme → context → validation
-```
+![Artifact dependency order](../assets/artifact-order-en.svg)
 
 Each artifact must wait for its predecessors to reach a completed state before it can leave the blocked state; if a predecessor is rolled back, all downstream artifacts are immediately cascaded back.
 
