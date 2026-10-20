@@ -32,20 +32,3 @@ export interface ValidationDetail {
 	message: string;
 	level: "error" | "warning";
 }
-
-/** Standard shape returned after a command execution. */
-export interface CommandResult {
-	success: boolean;
-	command: string | null;
-	data?: unknown;
-	meta?: {
-		duration: number;
-		[key: string]: unknown;
-	};
-	error?: {
-		code: string;
-		message: string;
-	};
-	suggestExplore?: boolean;
-	driftSuspected?: boolean;
-}
