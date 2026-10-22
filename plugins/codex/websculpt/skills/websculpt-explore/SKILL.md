@@ -156,3 +156,4 @@ When intervening, explain: what has been completed, what obstacle was encountere
 
 - Prohibited from installing or using `playwright` (official library), `puppeteer`, `selenium`, or other browser automation tools. Unified under the project-designated `@playwright/cli`.
 - Prohibited from executing any `playwright-cli` commands or browser operations before confirming `guide.md` has been read.
+- Prohibited from opening multiple browser pages or tabs simultaneously. Browser automation must execute serially; operate exactly one self-created page at a time (see guide.md for details).

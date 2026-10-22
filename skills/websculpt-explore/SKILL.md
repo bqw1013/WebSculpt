@@ -158,3 +158,4 @@ WebSculpt 命令库中沉淀的命令是已经验证过的信息获取路径，�
 
 - 禁止自行安装或使用 `playwright`（官方库）、`puppeteer`、`selenium` 等浏览器自动化工具。统一使用项目约定的 `@playwright/cli`。
 - 禁止在确认 `guide.md` 已读之前执行任何 `playwright-cli` 命令或浏览器操作。
+- 禁止同时打开多个浏览器页面或标签页。浏览器自动化必须串行执行，同一时刻只操作 1 个自建页面（详见 guide.md）。

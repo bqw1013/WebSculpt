@@ -269,11 +269,11 @@ playwright-cli -s=<session> goto about:blank
 
 This encourages Chrome to release the previous page's rendering process, V8 Heap, and GPU textures, and is lighter than `tab-new` / `tab-close`. After buffering, you can directly use `goto <url>` to continue the next task; **no re-attachment is needed**.
 
-### Maintain one self-created tab
+### Serial execution: keep exactly one self-created tab at a time
 
-The more tabs opened simultaneously, the greater the Chrome rendering process overhead, and **every command** (including read-only commands like `tab-list`) executes a `headerSnapshot()` poll on all existing tabs. Recommendations:
+Browser operations must execute serially. At any moment, only one AI self-created page is allowed to exist; opening multiple pages in parallel is prohibited. Parallel pages not only increase Chrome rendering process overhead (**every command**, including read-only commands like `tab-list`, executes a `headerSnapshot()` poll on all existing tabs), but also appear to the target site as concurrent requests, easily triggering anti-bot measures and account risk controls.
 
-- **Maintain exactly one self-created tab per explore session.**
+- **Maintain exactly one self-created tab per explore session.** Do not open a new tab before closing the old one — switch pages via `goto` on the current tab, or close the current tab first, then create a new one.
 - Prefer the current tab of this session; do not rely on global indexes returned by `tab-list`.
 - For consecutive tasks under the same site, if currently already in a **self-created tab**, prefer using `goto` to switch URLs rather than creating additional new tabs.
 - If a page interaction unexpectedly opens a new tab, treat it as a resource created by this explore. Verify its URL/title, handle or close it, and do not keep two tabs open.

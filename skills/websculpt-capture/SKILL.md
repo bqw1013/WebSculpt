@@ -42,7 +42,6 @@ CaptureSession:
   4. `validate` → 执行 `capture status` → `status2`
   5. `status2` → 执行 `capture finalize --force` → `finalize`
   6. `finalize` → 重置为 `null`，`repairCount += 1`，重新执行全部已设计的测试
-- `repairCount >= 3` 时，**必须**停止自动循环，向用户汇报问题并交由用户决策。
 
 ### 更新时机
 
@@ -176,7 +175,6 @@ finalize 前，先将这些测试的具体命令写入 `testScenarios`，确认�
 4. `repairStep` 更新为 `status2`，执行 `capture status <name>`。
 5. `repairStep` 更新为 `finalize`，执行 `capture finalize <name> --force`。
 6. `repairStep` 重置为 `null`，重新执行全部已设计的测试，记录结果到 `testResults`。
-7. **熔断**：`repairCount >= 3` 时，停止自动循环，向用户汇报问题并交由用户决策。
 
 ## Evidence 写作规范
 
@@ -233,7 +231,52 @@ finalize 前，先将这些测试的具体命令写入 `testScenarios`，确认�
 
 详细规范见 `skills/websculpt-capture/references/node-contract.md` 或 `skills/websculpt-capture/references/browser-contract.md`（按 runtime）。
 
-错误码规范：大写蛇形命名，语义明确。例如 `AUTH_REQUIRED`（需登录）、`NOT_FOUND`（资源不存在）、`EMPTY_RESULT`（结果为空）、`MISSING_PARAM`（缺少必填参数）、`DRIFT_DETECTED`（页面结构变化）。
+### 错误码
+
+命令必须对失败路径做完整覆盖，且仅允许使用封闭清单内的 code。
+
+- **覆盖率**：所有可预期失败分支（参数校验、资源寻址、环境前置、限流与封锁、网络与超时、结构漂移、动作执行失败）都必须抛出清单内 code；禁止静默吞错或以 `ok: false` 代替。
+- **封闭清单**：仅允许使用本节清单内的 14 个 code；清单外 code 视为违约，需要新 code 时先修订本标准。
+- **命名**：大写蛇形；code 仅标识失败类别，参数名、站点名、命令名等定位信息写入 `message`，不进入 code。
+
+**封闭清单**
+
+| 处置类别 | code | 触发条件 | 调用方处置 |
+|------|------|------|------|
+| 修正请求后重试 | `INVALID_PARAM` | 参数非法：类型、范围、枚举或 URL 形态不符；请求量超过上限 | 修正请求后重试 |
+| 修正请求后重试 | `MISSING_PARAM` | 必填参数缺失或为空 | 补充参数后重试 |
+| 修正请求后重试 | `NOT_FOUND` | 目标资源不存在：页面、条目、用户、话题、标签页、未开播直播间 | 修正寻址或跳过该条目 |
+| 修复执行环境后重试 | `AUTH_REQUIRED` | 无可用会话，需人工登录 | 完成登录后重试 |
+| 修复执行环境后重试 | `AUTH_EXPIRED` | 会话、token 或 cookie 曾有效、现已失效 | 刷新凭据后重试 |
+| 修复执行环境后重试 | `BROWSER_ATTACH_REQUIRED` | 浏览器会话未接入 | 接入浏览器后重试 |
+| 修复执行环境后重试 | `TOOL_MISSING` | 外部依赖缺失（如 yt-dlp） | 安装依赖后重试 |
+| 退避后重试 | `RATE_LIMITED` | 被明确限流：429、too many requests、daemon 忙 | 等待后原样重试 |
+| 退避后重试 | `BLOCKED` | 站点主动拒绝自动化：验证码、挑战、反爬、拒绝访问 | 延长等待或更换访问方式 |
+| 瞬时故障，原样重试 | `NETWORK_ERROR` | 传输层失败，未拿到可用响应；含浏览器导航失败 | 原样重试 |
+| 瞬时故障，原样重试 | `TIMEOUT` | 操作超时 | 稍后原样重试 |
+| 瞬时故障，原样重试 | `UPSTREAM_ERROR` | 已拿到响应但服务端出错：5xx、API 错误体、GraphQL errors | 稍后原样重试 |
+| 命令缺陷，修复命令后重试 | `DRIFT_DETECTED` | 响应到达但不符合预期：结构变化、节点缺失、解析失败、可疑的空 | 修复命令；重试无意义 |
+| 未分类执行失败 | `EXEC_FAILED` | 动作类命令（下载、上传、提交、切换）执行中途失败，且以上各类均不适用 | 排查后决定重试或修复 |
+
+**空结果约定**
+
+`EMPTY_RESULT` 已废除，禁止作为错误码使用：
+
+- 空是资源的正常状态（视频无评论、搜索无命中）→ 正常返回，`data` 为空集。
+- 空违背资源本性（热榜为空）→ `DRIFT_DETECTED`。
+- 寻址的单体资源不存在 → `NOT_FOUND`。
+
+**判定顺序**
+
+为失败分支分配 code 时，按以下顺序取第一个命中：
+
+1. 输入校验失败（在任何 I/O 之前）：缺必填 → `MISSING_PARAM`；参数非法 → `INVALID_PARAM`；目标不存在 → `NOT_FOUND`。
+2. 本地前置缺失（登录、浏览器、外部工具）→ 环境族；纯重试可恢复的不归此类，归瞬时故障族。
+3. 站点主动拒绝：明确限流 → `RATE_LIMITED`；拒绝自动化本身 → `BLOCKED`。
+4. 传输失败、超时、服务端错误 → `NETWORK_ERROR` / `TIMEOUT` / `UPSTREAM_ERROR`。
+5. 响应到达但不符合预期 → `DRIFT_DETECTED`。
+6. 动作执行失败且以上均不适用 → `EXEC_FAILED`。
+7. 一切正常只是没有结果 → 成功返回 + 空 `data`，不是错误。
 
 ## 禁止
 

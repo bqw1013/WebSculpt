@@ -42,7 +42,6 @@ CaptureSession:
   4. `validate` → execute `capture status` → `status2`
   5. `status2` → execute `capture finalize --force` → `finalize`
   6. `finalize` → reset to `null`, `repairCount += 1`, re-execute all designed tests
-- When `repairCount >= 3`, **must** stop the automatic loop, report the issue to the user, and hand the decision to the user.
 
 ### Update Timing
 
@@ -176,7 +175,6 @@ After testing completes, report results to the user:
 4. Update `repairStep` to `status2`, execute `capture status <name>`.
 5. Update `repairStep` to `finalize`, execute `capture finalize <name> --force`.
 6. Reset `repairStep` to `null`, re-execute all designed tests, record results to `testResults`.
-7. **Circuit breaker**: when `repairCount >= 3`, stop automatic loop, report issue to user, and hand decision to user.
 
 ## Evidence Writing Specifications
 
@@ -233,7 +231,52 @@ Core constraints:
 
 Detailed specifications see `skills/websculpt-capture-en/references/node-contract.md` or `skills/websculpt-capture-en/references/browser-contract.md` (according to runtime).
 
-Error code specification: uppercase snake_case, semantically clear. Examples: `AUTH_REQUIRED` (login needed), `NOT_FOUND` (resource does not exist), `EMPTY_RESULT` (result is empty), `MISSING_PARAM` (missing required parameter), `DRIFT_DETECTED` (page structure changed).
+### Error Codes
+
+Commands must fully cover failure paths and may only use codes from the closed list.
+
+- **Coverage**: every anticipated failure branch (parameter validation, resource addressing, environment prerequisites, rate limiting and blocking, network and timeout, structure drift, action execution failure) must throw a code from the list; silently swallowing errors or substituting `ok: false` is prohibited.
+- **Closed list**: only the 14 codes in the list below are allowed; codes outside the list are contract violations. When a new code is needed, revise this standard first.
+- **Naming**: uppercase snake_case; a code identifies only the failure category. Locating details such as parameter names, site names, or command names go into `message`, never into the code.
+
+**Closed List**
+
+| Disposition Category | Code | Trigger Condition | Caller Action |
+|------|------|------|------|
+| Retry after fixing the request | `INVALID_PARAM` | Invalid parameter: type, range, enum, or URL format mismatch; request volume exceeds the upper limit | Retry after fixing the request |
+| Retry after fixing the request | `MISSING_PARAM` | Required parameter missing or empty | Retry after supplying the parameter |
+| Retry after fixing the request | `NOT_FOUND` | Addressed resource does not exist: page, item, user, topic, tab, offline livestream room | Fix the addressing or skip the item |
+| Retry after fixing the environment | `AUTH_REQUIRED` | No usable session; manual login required | Retry after completing login |
+| Retry after fixing the environment | `AUTH_EXPIRED` | Session, token, or cookie was valid but has since expired | Retry after refreshing credentials |
+| Retry after fixing the environment | `BROWSER_ATTACH_REQUIRED` | Browser session not attached | Retry after attaching the browser |
+| Retry after fixing the environment | `TOOL_MISSING` | External dependency missing (e.g., yt-dlp) | Retry after installing the dependency |
+| Retry after backoff | `RATE_LIMITED` | Explicitly rate-limited: 429, too many requests, daemon busy | Retry as-is after waiting |
+| Retry after backoff | `BLOCKED` | Site actively refuses automation: CAPTCHA, challenge, anti-bot, access denied | Wait longer or switch access method |
+| Transient failure, retry as-is | `NETWORK_ERROR` | Transport-layer failure without a usable response; includes browser navigation failure | Retry as-is |
+| Transient failure, retry as-is | `TIMEOUT` | Operation timed out | Retry as-is after a pause |
+| Transient failure, retry as-is | `UPSTREAM_ERROR` | Response received but server-side error: 5xx, API error body, GraphQL errors | Retry as-is after a pause |
+| Command defect, fix before retrying | `DRIFT_DETECTED` | Response received but does not match expectations: structure change, missing node, parse failure, suspicious empty result | Fix the command; retrying is pointless |
+| Uncategorized execution failure | `EXEC_FAILED` | Action-type command (download, upload, submit, toggle) fails midway and none of the above categories apply | Investigate, then decide whether to retry or fix |
+
+**Empty Result Convention**
+
+`EMPTY_RESULT` is abolished; using it as an error code is prohibited:
+
+- An empty result is the resource's normal state (a video with no comments, a search with no hits) → return success with `data` as an empty set.
+- An empty result violates the resource's nature (an empty trending list) → `DRIFT_DETECTED`.
+- An addressed single resource does not exist → `NOT_FOUND`.
+
+**Decision Order**
+
+When assigning a code to a failure branch, take the first match in the following order:
+
+1. Input validation failure (before any I/O): missing required parameter → `MISSING_PARAM`; invalid parameter → `INVALID_PARAM`; addressed target does not exist → `NOT_FOUND`.
+2. Local prerequisite missing (login, browser, external tool) → environment family; failures recoverable by a plain retry do not belong here and fall to the transient family.
+3. Site actively refuses: explicit rate limiting → `RATE_LIMITED`; refusing automation itself → `BLOCKED`.
+4. Transport failure, timeout, or server-side error → `NETWORK_ERROR` / `TIMEOUT` / `UPSTREAM_ERROR`.
+5. Response received but does not match expectations → `DRIFT_DETECTED`.
+6. Action execution failure with none of the above applicable → `EXEC_FAILED`.
+7. Everything is normal, just no results → success with empty `data`; this is not an error.
 
 ## Prohibited
 

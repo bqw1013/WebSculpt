@@ -269,11 +269,11 @@ playwright-cli -s=<session> goto about:blank
 
 这能促使 Chrome 释放上一页的渲染进程、V8 Heap 和 GPU 纹理，且比 `tab-new` / `tab-close` 更轻量。缓冲后可直接用 `goto <url>` 继续下一任务，**不需要重新 attach**。
 
-### 只维护一个自建标签页
+### 串行执行：同一时刻只保留 1 个自建标签页
 
-同时打开的标签页越多，Chrome 渲染进程开销越大，且**每条命令**（包括 `tab-list` 等只读命令）都会对所有现存 tab 执行 `headerSnapshot()` 轮询。建议：
+浏览器操作必须串行执行，同一时刻只允许存在 1 个 AI 自建页面，禁止并行打开多个页面。并行多页不仅增大 Chrome 渲染进程开销（**每条命令**，包括 `tab-list` 等只读命令，都会对所有现存 tab 执行 `headerSnapshot()` 轮询），还会对目标站点表现为并发请求，易触发反爬和账号风控。
 
-- **每个 explore session 只维护 1 个自建标签页。**
+- **每个 explore session 只维护 1 个自建标签页。** 禁止先开新页再关旧页——切换页面一律在当前 tab 上 `goto`，或先关闭当前 tab 再新建。
 - 优先使用当前 session 的 current tab，不依赖 `tab-list` 返回的全局 index。
 - 同一站点下的连续任务，若当前已在**自建标签页**中，优先用 `goto` 切换 URL，而非额外新建标签页。
 - 若页面交互意外打开新 tab，将其视为当前 explore 创建的资源；先校验 URL/title，处理或关闭后再继续，不得长期保留两个 tab。
